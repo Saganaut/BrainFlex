@@ -6,8 +6,19 @@ services:
       - "MONGO_INITDB_ROOT_PASSWORD=secret"
       - "MONGO_INITDB_ROOT_USERNAME=root"
     ports:
-      - "27017"
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data
   redis:
-    image: "redis:latest"
+    image: redis/redis-stack-server:latest
+    container_name: brainflex-redis
     ports:
-      - "6379"
+      - "6379:6379"
+      - "8001:8001"
+    environment:
+      - REDIS_ARGS=--requirepass password
+    volumes:
+      - redis-data:/data
+volumes:
+  mongo-data:
+  redis-data:

@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthController {
 
-    @Autowired
+    // @Autowired
     private final MongoTemplate mongoTemplate;
     private final RedisConnectionFactory redisConnectionFactory;
 
@@ -44,10 +43,12 @@ public class HealthController {
 
         try {
             String redisStatus = redisConnectionFactory.getConnection().ping();
-            response.put("redis", "CONNECTED".equals(redisStatus) ? "CONNECTED" : "DISCONNECTED");
+            response.put("redis", redisStatus);
         } catch (Exception e) {
             response.put("redis", "DISCONNECTED");
             response.put("status", "DEGRADED");
+            response.put("error", e.getMessage());
+
         }
 
         return response;

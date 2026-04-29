@@ -1,13 +1,14 @@
 package cephadex.brainflex.controller;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import cephadex.brainflex.dto.HealthCheckResponse;
 
 @RestController
 public class HealthController {
@@ -23,34 +24,30 @@ public class HealthController {
 
 
     @GetMapping("/api/health")
-    public Map<String, Object> getHealth() {
-
-        Map<String, Object> response = new HashMap<>();
-
-        response.put("status", "UP");
-        response.put("message", "BrainFlex API is running");
-        response.put("timestamp", LocalDateTime.now());
+    public ResponseEntity<HealthCheckResponse> getHealth() {
+        String overallStatus = "UP";
+        String dbStatus = "DISCONNECTED";
+        String redisStatus = "DISCONNECTED";
 
         try {
             mongoTemplate.getDb().runCommand(new org.bson.Document("ping", 1));
-            response.put("database", "CONNECTED");
+            dbStatus = "CONNECTED";
         } catch (Exception e) {
-            response.put("status", "DEGRADED");
-            response.put("database", "DISCONNECTED");
-            response.put("error", e.getMessage());
+            overallStatus = "DEGRADED";
+
         }
-
-
         try {
-            String redisStatus = redisConnectionFactory.getConnection().ping();
-            response.put("redis", redisStatus);
+            String ping = redisConnectionFactory.getConnection().ping();
+            redisStatus = "PONG".equals(ping) ? "CONNECTED" : "DISCONNECTED";
         } catch (Exception e) {
-            response.put("redis", "DISCONNECTED");
-            response.put("status", "DEGRADED");
-            response.put("error", e.getMessage());
-
+            overallStatus = "DEGRADED";
         }
+        return ResponseEntity.ok(new HealthCheckResponse(
+            overallStatus,
+            "BrainFlex API is running",
+            LocalDateTime.now(),
+            dbStatus,
+            redisStatus));
 
-        return response;
     }
 }

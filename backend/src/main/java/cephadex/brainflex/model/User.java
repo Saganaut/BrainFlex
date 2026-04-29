@@ -1,0 +1,29 @@
+package cephadex.brainflex.model;
+
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import lombok.Data;
+
+
+@Data // Lombok: generates getters, setters, toString
+@Document(collection = "users") // This maps to the 'users' collection in Mongo
+public class User {
+    @Id
+    private String id; // Mongo will auto-generate this ObjectId
+
+    @Indexed(unique = true) 
+    private String email;
+
+    private String name;
+    private String googleId;
+    private String pictureUrl;
+    
+    private PlayerStats stats = new PlayerStats();
+
+    private LocalDateTime lastLogin;
+    private LocalDateTime createdAt = LocalDateTime.now();
+}

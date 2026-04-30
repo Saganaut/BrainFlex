@@ -34,8 +34,8 @@ public class HealthController {
             dbStatus = "CONNECTED";
         } catch (Exception e) {
             overallStatus = "DEGRADED";
-
         }
+        
         try {
             String ping = redisConnectionFactory.getConnection().ping();
             redisStatus = "PONG".equals(ping) ? "CONNECTED" : "DISCONNECTED";

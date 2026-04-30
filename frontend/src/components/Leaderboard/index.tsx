@@ -42,7 +42,6 @@ const Leaderboard: React.FC<LeaderBoardProps> = ({}) => {
         ) : (
           <div
             className={`${styles.playerList} ${isCollapsed ? styles.isCollapsed : ""}`}>
-            {" "}
             {data?.map((player) => (
               <div key={player.id} className={styles.playerRow}>
                 <p>{player.userName}</p>

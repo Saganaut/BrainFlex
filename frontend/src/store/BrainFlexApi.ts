@@ -22,6 +22,12 @@ const injectedRtkApi = api.injectEndpoints({
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
     }),
+    getCurrentUser: build.query<
+      GetCurrentUserApiResponse,
+      GetCurrentUserApiArg
+    >({
+      query: () => ({ url: `/api/auth/me` }),
+    }),
   }),
   overrideExisting: false,
 });
@@ -37,6 +43,8 @@ export type GetLeaderboardApiArg = {
 };
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
+export type GetCurrentUserApiResponse = /** status 200 OK */ object;
+export type GetCurrentUserApiArg = void;
 export type PlayerStats = {
   gamesPlayed?: number;
   highscore?: number;
@@ -46,7 +54,9 @@ export type PlayerStats = {
 export type Private = {
   id?: string;
   email?: string;
+  name?: string;
   userName?: string;
+  isGuest?: boolean;
   googleId?: string;
   pictureUrl?: string;
   stats?: PlayerStats;
@@ -56,6 +66,7 @@ export type Private = {
 export type Public = {
   id?: string;
   userName?: string;
+  isGuest?: boolean;
   pictureUrl?: string;
   stats?: PlayerStats;
 };
@@ -73,4 +84,6 @@ export const {
   useLazyGetLeaderboardQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
+  useGetCurrentUserQuery,
+  useLazyGetCurrentUserQuery,
 } = injectedRtkApi;

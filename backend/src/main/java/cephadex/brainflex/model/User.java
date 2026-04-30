@@ -21,6 +21,7 @@ public class User {
     private String email;
     private String name;
     private String userName;
+    private Boolean isGuest;
 
     private String googleId;
     private String pictureUrl;

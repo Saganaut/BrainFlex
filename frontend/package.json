@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.11.2",
     "@tanstack/react-router": "^1.168.26",
     "@tanstack/react-router-devtools": "^1.166.13",

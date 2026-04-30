@@ -15,9 +15,9 @@ import cephadex.brainflex.repository.UserRepository;
 public class DataSeeder {
 
     @Bean
+    @SuppressWarnings("unused")
     CommandLineRunner initDatabase(UserRepository repository) {
         return args -> {
-            // Check if we already have data to avoid duplicates
             if (repository.count() == 0) {
                 System.out.println("Seeding Middle-earth users into the database...");
 
@@ -61,8 +61,90 @@ public class DataSeeder {
                 gimli.setStats(createStats(44, 4150, 21500, 11)); // Just behind Legolas!
                 gimli.setCreatedAt(LocalDateTime.now().minusDays(7));
 
-                repository.saveAll(List.of(frodo, gandalf, aragorn, legolas, gimli));
-                System.out.println("Middle-earth has arrived in BrainFlex!");
+                // 6. Samwise Gamgee - The true hero
+                User sam = new User();
+                sam.setName("Samwise Gamgee");
+                sam.setUserName("GardenerOfTheYear");
+                sam.setEmail("sam@theshire.me");
+                sam.setStats(createStats(25, 2000, 12000, 20)); // Massive streak!
+                sam.setCreatedAt(LocalDateTime.now().minusDays(1));
+
+                // 7. Boromir
+                User boromir = new User();
+                boromir.setName("Boromir of Gondor");
+                boromir.setUserName("OneDoesNotSimply");
+                boromir.setEmail("boromir@denethor.com");
+                boromir.setStats(createStats(20, 3100, 9500, 0));
+                boromir.setCreatedAt(LocalDateTime.now().minusDays(15));
+
+                // 8. Galadriel
+                User galadriel = new User();
+                galadriel.setName("Lady Galadriel");
+                galadriel.setUserName("LightOfEarendel");
+                galadriel.setEmail("galadriel@lorien.org");
+                galadriel.setStats(createStats(60, 5500, 32000, 30)); // Top of the pack
+                galadriel.setCreatedAt(LocalDateTime.now().minusYears(1));
+
+                // 9. Gollum
+                User gollum = new User();
+                gollum.setName("Sméagol");
+                gollum.setUserName("Precious_Slinker");
+                gollum.setEmail("gollum@caves.me");
+                gollum.setStats(createStats(100, 1100, 15000, 1));
+                gollum.setCreatedAt(LocalDateTime.now().minusYears(5));
+
+                // 10. Saruman
+                User saruman = new User();
+                saruman.setName("Saruman the White");
+                saruman.setUserName("Sharkey");
+                saruman.setEmail("saruman@isengard.com");
+                saruman.setStats(createStats(55, 4800, 28000, 14));
+                saruman.setCreatedAt(LocalDateTime.now().minusDays(20));
+
+                // 11. Elrond
+                User elrond = new User();
+                elrond.setName("Elrond Half-elven");
+                elrond.setUserName("CouncilChairman");
+                elrond.setEmail("elrond@rivendell.me");
+                elrond.setStats(createStats(48, 4600, 26000, 10));
+                elrond.setCreatedAt(LocalDateTime.now().minusDays(30));
+
+                // 12. Éowyn
+                User eowyn = new User();
+                eowyn.setName("Éowyn of Rohan");
+                eowyn.setUserName("IAmNoMan");
+                eowyn.setEmail("eowyn@shieldmaiden.ro");
+                eowyn.setStats(createStats(35, 3800, 19500, 9));
+                eowyn.setCreatedAt(LocalDateTime.now().minusDays(4));
+
+                // 13. Faramir
+                User faramir = new User();
+                faramir.setName("Faramir");
+                faramir.setUserName("QualityCaptain");
+                faramir.setEmail("faramir@osgiliath.gov");
+                faramir.setStats(createStats(28, 3200, 16000, 6));
+                faramir.setCreatedAt(LocalDateTime.now().minusDays(12));
+
+                // 14. Merry
+                User merry = new User();
+                merry.setName("Meriadoc Brandybuck");
+                merry.setUserName("Merry_Buck");
+                merry.setEmail("merry@buckland.me");
+                merry.setStats(createStats(15, 1800, 5200, 4));
+                merry.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+                // 15. Pippin
+                User pippin = new User();
+                pippin.setName("Peregrin Took");
+                pippin.setUserName("FoolOfATook");
+                pippin.setEmail("pippin@greatsmials.me");
+                pippin.setStats(createStats(14, 1750, 5100, 2));
+                pippin.setCreatedAt(LocalDateTime.now().minusDays(2));
+
+                repository.saveAll(List.of(
+                        frodo, gandalf, aragorn, legolas, gimli,
+                        sam, boromir, galadriel, gollum, saruman,
+                        elrond, eowyn, faramir, merry, pippin));
             }
         };
     }

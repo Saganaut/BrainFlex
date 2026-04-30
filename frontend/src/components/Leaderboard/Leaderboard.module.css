@@ -1,3 +1,63 @@
-.bf-leaderboard-container {
+.leaderboardContainer {
   border: 1px dashed black;
+  container-type: inline-size;
+}
+
+.leaderboard {
+  display: flex;
+  border: 2px solid var(--color-primary-light);
+  flex-direction: column;
+  width: fit-content;
+  border-radius: var(--border-radius-lg);
+}
+
+.leaderboardHeader {
+  display: flex;
+  padding: 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+
+  svg {
+    height: 20px;
+    width: 20px;
+    transition: transform 300ms ease-in-out;
+    transform: rotate(180deg);
+
+    &.isCollapsed {
+      transform: rotate(0deg);
+    }
+  }
+}
+
+.leaderboardTitle {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-light);
+}
+
+.playerList {
+  padding: 10px;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  max-height: 1000px;
+  transition:
+    max-height 300ms ease-in-out,
+    padding 300ms ease-in-out;
+
+  &.isCollapsed {
+    max-height: 0px;
+    overflow: hidden;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
+}
+
+.playerRow {
+  background-color: var(--color-primary-dark);
+  display: flex;
+  padding: 6px 10px;
+  border-radius: var(--border-radius-base);
+  gap: 10px;
+  justify-content: space-between;
 }

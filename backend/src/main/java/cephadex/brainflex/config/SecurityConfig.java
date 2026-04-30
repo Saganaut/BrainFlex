@@ -20,6 +20,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/api/users/leaderboard/**").permitAll()
+                        .requestMatchers("/**/api-docs").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .defaultSuccessUrl("http://localhost:8080/dashboard", true));

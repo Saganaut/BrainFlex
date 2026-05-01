@@ -234,6 +234,10 @@ When adding backend tests, use the test starters already present in `pom.xml` â€
 | `frontend/src/routes/__root.tsx`                | Root layout                                       |
 | `frontend/src/routes/register.tsx`              | New-user registration route                       |
 | `frontend/src/components/Leaderboard/index.tsx` | Leaderboard UI                                    |
+| `frontend/src/components/PlayerInfo/index.tsx`  | Player info UI component                          |
+| `frontend/src/hooks/useCurrentUser.ts`          | Custom hook for current user authentication       |
+| `frontend/src/types/typeguards.ts`              | TypeScript type guards for user types             |
+| `frontend/src/utils/utils.ts`                   | Utility functions (e.g., camelToNormalCase)       |
 | `frontend/openapi-config.cts`                   | Config for API codegen                            |
 | `backend/.../config/SecurityConfig.java`        | Auth, CORS, public routes                         |
 | `backend/.../config/DataSeeder.java`            | Seeds 15 LOTR test users on first startup         |

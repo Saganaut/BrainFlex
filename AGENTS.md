@@ -9,9 +9,38 @@ A full-stack web app for competitive brain games. Learning project focused on Mo
 ```
 brainflex/
 ├── frontend/          # React 19 + TypeScript + Vite
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   │   ├── Common/    # Shared components (e.g., Buttons)
+│   │   │   ├── Forms/     # Form-related components
+│   │   │   ├── Leaderboard/
+│   │   │   └── PlayerInfo/
+│   │   ├── hooks/         # Custom React hooks
+│   │   ├── routes/        # TanStack Router routes
+│   │   ├── store/         # Redux store and API client
+│   │   ├── types/         # TypeScript type guards and utilities
+│   │   ├── utils/         # Utility functions
+│   │   ├── assets/        # Static assets
+│   │   ├── index.css      # Global styles and CSS custom properties
+│   │   └── main.tsx       # App entry point
+│   ├── public/            # Public assets
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   └── openapi-config.cts # API codegen config
 ├── backend/           # Java 26 + Spring Boot 4
+│   ├── src/main/java/cephadex/brainflex/
+│   │   ├── controller/    # REST endpoints
+│   │   ├── service/       # Business logic
+│   │   ├── repository/    # MongoDB repositories
+│   │   ├── model/         # MongoDB documents
+│   │   ├── dto/           # API data transfer objects
+│   │   └── config/        # Security, CORS, DataSeeder
+│   ├── src/test/          # Unit tests
+│   ├── pom.xml
+│   └── mvnw               # Maven wrapper
 ├── compose.yaml       # Docker Compose (MongoDB + Redis)
-├── .env               # Shared env vars loaded by both frontend and backend
+├── .env               # Shared environment variables
 └── README.md
 ```
 
@@ -20,11 +49,13 @@ brainflex/
 ## Running the Project
 
 ### Infrastructure (required first)
+
 ```bash
 docker compose up -d   # starts MongoDB (27017) and Redis (6379)
 ```
 
 ### Backend
+
 ```bash
 cd backend
 ./mvnw spring-boot:run
@@ -34,6 +65,7 @@ cd backend
 ```
 
 ### Frontend
+
 ```bash
 cd frontend
 npm install
@@ -42,6 +74,7 @@ npm run dev
 ```
 
 ### Regenerate the API client (after backend changes)
+
 ```bash
 cd frontend
 npx @rtk-query/codegen-openapi openapi-config.cts
@@ -54,23 +87,25 @@ npx @rtk-query/codegen-openapi openapi-config.cts
 
 ### Frontend
 
-| Concern | Tool |
-|---|---|
-| Framework | React 19 with React Compiler enabled |
-| Language | TypeScript (strict mode) |
-| Build | Vite |
-| Routing | TanStack Router (file-based, code-splitting) |
-| State / Data | Redux Toolkit + RTK Query |
-| API client | Auto-generated from OpenAPI schema |
-| Styling | CSS Modules + CSS custom properties |
-| Icons | Heroicons |
+| Concern      | Tool                                         |
+| ------------ | -------------------------------------------- |
+| Framework    | React 19 with React Compiler enabled         |
+| Language     | TypeScript (strict mode)                     |
+| Build        | Vite                                         |
+| Routing      | TanStack Router (file-based, code-splitting) |
+| State / Data | Redux Toolkit + RTK Query                    |
+| API client   | Auto-generated from OpenAPI schema           |
+| Styling      | CSS Modules + CSS custom properties          |
+| Icons        | Heroicons                                    |
 
 **Routes** (`frontend/src/routes/`):
+
 - `/` — Home, renders the Leaderboard component
 - `/register` — New-user registration; receives `googleId`, `email`, `name`, `picture` as query params after OAuth redirect
 - `/about` — About page
 
 **Key conventions:**
+
 - `BrainFlexApi.ts` is auto-generated — never edit it directly.
 - API hooks come from RTK Query: `useGetLeaderboardQuery`, `useGetCurrentUserQuery`, etc.
 - The root layout is `__root.tsx`; TanStack Router Devtools are mounted there.
@@ -78,26 +113,27 @@ npx @rtk-query/codegen-openapi openapi-config.cts
 
 ### Backend
 
-| Concern | Tool |
-|---|---|
-| Language | Java 26 |
-| Framework | Spring Boot 4 |
-| Build | Maven (`./mvnw`) |
-| Database | MongoDB (Spring Data) |
-| Cache / Pub-Sub | Redis |
-| Auth | Spring Security + Google OAuth 2.0 |
-| API docs | SpringDoc OpenAPI v2 |
-| Boilerplate | Lombok |
+| Concern         | Tool                               |
+| --------------- | ---------------------------------- |
+| Language        | Java 26                            |
+| Framework       | Spring Boot 4                      |
+| Build           | Maven (`./mvnw`)                   |
+| Database        | MongoDB (Spring Data)              |
+| Cache / Pub-Sub | Redis                              |
+| Auth            | Spring Security + Google OAuth 2.0 |
+| API docs        | SpringDoc OpenAPI v2               |
+| Boilerplate     | Lombok                             |
 
 **Package**: `cephadex.brainflex`
 
 **Layers:**
+
 ```
 controller/   ← REST endpoints
 service/      ← (business logic, if added)
 repository/   ← MongoRepository interfaces
 model/        ← MongoDB documents (@Document)
-dto/          ← API shapes (sealed UserDTO with Public/Private records)
+dto/          ← API shapes (sealed UserDTO with GuestUser/RegisteredUser records)
 config/       ← Security, CORS, DataSeeder
 ```
 
@@ -107,13 +143,13 @@ config/       ← Security, CORS, DataSeeder
 
 All endpoints are prefixed `/api`.
 
-| Method | Path | Auth | Description |
-|---|---|---|---|
-| GET | `/api/health` | Public | MongoDB + Redis health check |
-| GET | `/api/users/leaderboard` | Public | Paginated leaderboard; `?page=0&size=10` |
-| GET | `/api/users/{id}` | Required | Full user profile |
-| GET | `/api/auth/me` | Optional | Authenticated user or guest stub |
-| POST | `/api/auth/logout` | Required | Logout |
+| Method | Path                     | Auth      | Description                              |
+| ------ | ------------------------ | --------- | ---------------------------------------- |
+| GET    | `/api/health`            | GuestUser | MongoDB + Redis health check             |
+| GET    | `/api/users/leaderboard` | GuestUser | Paginated leaderboard; `?page=0&size=10` |
+| GET    | `/api/users/{id}`        | Required  | Full user profile                        |
+| GET    | `/api/auth/me`           | Optional  | Authenticated user or guest stub         |
+| POST   | `/api/auth/logout`       | Required  | Logout                                   |
 
 **CORS**: only `http://localhost:5173` is allowed, with credentials.
 
@@ -122,6 +158,7 @@ All endpoints are prefixed `/api`.
 ## Data Models
 
 ### User (MongoDB document, collection: `users`)
+
 ```
 id            String   (ObjectId)
 email         String   (unique index)
@@ -134,19 +171,22 @@ stats         PlayerStats (embedded)
 lastLogin     LocalDateTime
 createdAt     LocalDateTime
 ```
+
 Compound index on `stats.totalPoints DESC` for leaderboard sorting.
 
 ### PlayerStats (embedded)
+
 ```
 gamesPlayed     int
-highscore       int
+highScore       int
 totalPoints     int
 currentStreak   int
 ```
 
 ### DTOs
-- `UserDTO.Public` — id, userName, isGuest, pictureUrl, stats (safe for leaderboard)
-- `UserDTO.Private` — all fields including email, googleId, timestamps (authenticated only)
+
+- `UserDTO.GuestUser` — id, userName, isGuest, pictureUrl, stats (safe for leaderboard)
+- `UserDTO.RegisteredUser` — all fields including email, googleId, timestamps (authenticated only)
 
 ---
 
@@ -154,7 +194,7 @@ currentStreak   int
 
 1. User hits `/api/auth/login` → redirected to Google OAuth.
 2. On success, Spring Security calls the OAuth2 success handler:
-   - **Existing user** (googleId match) → redirect to `http://localhost:5173/dashboard`
+   - **Existing user** (googleId match) → redirect to `http://localhost:5173/`
    - **New user** → redirect to `http://localhost:5173/register?googleId=...&email=...&name=...&picture=...`
 3. The `/register` route in the frontend handles new-user form submission.
 4. Sessions are cookie-based (Spring Security default).
@@ -165,13 +205,13 @@ currentStreak   int
 
 Defined in `.env` at project root. Backend loads it via `spring.config.import=optional:file:../.env[.properties]`. Frontend accesses them with the `VITE_` prefix.
 
-| Variable | Used By |
-|---|---|
-| `GOOGLE_CLIENT_ID` | Backend (OAuth) |
-| `GOOGLE_CLIENT_SECRET` | Backend (OAuth) |
-| `MONGO_URI` | Backend |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Backend |
-| `VITE_API_BASE_URL` | Frontend (defaults to `http://localhost:8080`) |
+| Variable                                       | Used By                                        |
+| ---------------------------------------------- | ---------------------------------------------- |
+| `GOOGLE_CLIENT_ID`                             | Backend (OAuth)                                |
+| `GOOGLE_CLIENT_SECRET`                         | Backend (OAuth)                                |
+| `MONGO_URI`                                    | Backend                                        |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Backend                                        |
+| `VITE_API_BASE_URL`                            | Frontend (defaults to `http://localhost:8080`) |
 
 ---
 
@@ -187,20 +227,20 @@ When adding backend tests, use the test starters already present in `pom.xml` �
 
 ## Key Files
 
-| File | Purpose |
-|---|---|
-| `frontend/src/store/BrainFlexApi.ts` | Auto-generated RTK Query API — **do not edit** |
-| `frontend/src/store/store.ts` | Redux store config |
-| `frontend/src/routes/__root.tsx` | Root layout |
-| `frontend/src/routes/register.tsx` | New-user registration route |
-| `frontend/src/components/Leaderboard/index.tsx` | Leaderboard UI |
-| `frontend/openapi-config.cts` | Config for API codegen |
-| `backend/.../config/SecurityConfig.java` | Auth, CORS, public routes |
-| `backend/.../config/DataSeeder.java` | Seeds 15 LOTR test users on first startup |
-| `backend/.../dto/UserDTO.java` | Sealed DTO interface (Public / Private) |
-| `backend/.../repository/UserRepository.java` | MongoDB queries |
-| `compose.yaml` | Docker services (MongoDB, Redis) |
-| `.env` | All secrets and connection strings |
+| File                                            | Purpose                                           |
+| ----------------------------------------------- | ------------------------------------------------- |
+| `frontend/src/store/BrainFlexApi.ts`            | Auto-generated RTK Query API — **do not edit**    |
+| `frontend/src/store/store.ts`                   | Redux store config                                |
+| `frontend/src/routes/__root.tsx`                | Root layout                                       |
+| `frontend/src/routes/register.tsx`              | New-user registration route                       |
+| `frontend/src/components/Leaderboard/index.tsx` | Leaderboard UI                                    |
+| `frontend/openapi-config.cts`                   | Config for API codegen                            |
+| `backend/.../config/SecurityConfig.java`        | Auth, CORS, public routes                         |
+| `backend/.../config/DataSeeder.java`            | Seeds 15 LOTR test users on first startup         |
+| `backend/.../dto/UserDTO.java`                  | Sealed DTO interface (GuestUser / RegisteredUser) |
+| `backend/.../repository/UserRepository.java`    | MongoDB queries                                   |
+| `compose.yaml`                                  | Docker services (MongoDB, Redis)                  |
+| `.env`                                          | All secrets and connection strings                |
 
 ---
 

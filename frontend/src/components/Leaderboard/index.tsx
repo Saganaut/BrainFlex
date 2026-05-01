@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useGetLeaderboardQuery } from "../../store/BrainFlexApi";
 import styles from "./Leaderboard.module.css";
+import { CollapseBtn } from "../Common/Buttons/CollapseBtn";
 interface LeaderBoardProps {}
 
 const Leaderboard: React.FC<LeaderBoardProps> = ({}) => {
@@ -16,24 +17,7 @@ const Leaderboard: React.FC<LeaderBoardProps> = ({}) => {
       <div className={styles.leaderboard}>
         <div className={styles.leaderboardHeader}>
           <h3 className={styles.leaderboardTitle}>Leaderboard </h3>
-          <button
-            onClick={() => {
-              collapse(!isCollapsed);
-            }}>
-            <svg
-              xmlns='http://www.w3.org/2000/svg'
-              fill='none'
-              viewBox='0 0 24 24'
-              strokeWidth={1.5}
-              stroke='white'
-              className={`${isCollapsed ? styles.isCollapsed : ""}`}>
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                d='m19.5 8.25-7.5 7.5-7.5-7.5'
-              />
-            </svg>
-          </button>
+          <CollapseBtn isCollapsed={isCollapsed} collapse={collapse} />
         </div>
         {isLoading ? (
           <div>Loading</div>

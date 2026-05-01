@@ -47,15 +47,15 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as BrainFlex };
-export type RegisterApiResponse = /** status 200 OK */ object;
+export type RegisterApiResponse = /** status 200 OK */ RegisteredUser;
 export type RegisterApiArg = {
   registerRequest: RegisterRequest;
 };
-export type GetUserProfileApiResponse = /** status 200 OK */ Private;
+export type GetUserProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type GetUserProfileApiArg = {
   id: string;
 };
-export type GetLeaderboardApiResponse = /** status 200 OK */ Public[];
+export type GetLeaderboardApiResponse = /** status 200 OK */ GuestUser[];
 export type GetLeaderboardApiArg = {
   page?: number;
   size?: number;
@@ -68,19 +68,15 @@ export type CheckUsernameApiArg = {
 };
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
-export type GetCurrentUserApiResponse = /** status 200 OK */ object;
+export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
-export type RegisterRequest = {
-  username: string;
-  newsletter?: boolean;
-};
 export type PlayerStats = {
   gamesPlayed?: number;
-  highscore?: number;
+  highScore?: number;
   totalPoints?: number;
   currentStreak?: number;
 };
-export type Private = {
+export type RegisteredUser = {
   id?: string;
   email?: string;
   name?: string;
@@ -92,7 +88,11 @@ export type Private = {
   lastLogin?: string;
   createdAt?: string;
 };
-export type Public = {
+export type RegisterRequest = {
+  username: string;
+  newsletter?: boolean;
+};
+export type GuestUser = {
   id?: string;
   userName?: string;
   isGuest?: boolean;
@@ -106,6 +106,7 @@ export type HealthCheckResponse = {
   database?: string;
   redis?: string;
 };
+export type UserDto = GuestUser | RegisteredUser;
 export const {
   useRegisterMutation,
   useGetUserProfileQuery,

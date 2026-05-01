@@ -1,0 +1,18 @@
+svg {
+  height: 20px;
+  width: 20px;
+  display: flex;
+  stroke: var(--color-text-light);
+  align-items: center;
+  transition:
+    transform 300ms ease-in-out,
+    stroke 300ms ease-in-out;
+  transform: rotate(180deg);
+
+  &:hover {
+    stroke: var(--color-secondary);
+  }
+  &.isCollapsed {
+    transform: rotate(0deg);
+  }
+}

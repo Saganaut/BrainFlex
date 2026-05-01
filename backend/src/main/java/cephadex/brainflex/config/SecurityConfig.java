@@ -74,7 +74,7 @@ public class SecurityConfig {
             boolean userExists = userRepository.findByGoogleId(googleId).isPresent();
 
             if (userExists) {
-                getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/dashboard");
+                getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/");
             } else {
                 String email = oAuth2User.getAttribute("email");
                 String name = oAuth2User.getAttribute("name");

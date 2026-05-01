@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 
 import cephadex.brainflex.model.PlayerStats;
 import cephadex.brainflex.model.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(oneOf = { UserDTO.GuestUser.class, UserDTO.RegisteredUser.class })
 public sealed interface UserDTO {
     // The shared contract
     interface View {
@@ -13,14 +15,14 @@ public sealed interface UserDTO {
         String userName();
     }
 
-    record Public(
+    record GuestUser(
             String id,
             String userName,
             Boolean isGuest,
             String pictureUrl,
             PlayerStats stats)
             implements UserDTO, View {
-        public Public(User user) {
+        public GuestUser(User user) {
             this(
                     String.valueOf(user.getId()),
                     user.getUserName(),
@@ -31,7 +33,7 @@ public sealed interface UserDTO {
 
     }
 
-    record Private(
+    record RegisteredUser(
             String id,
             String email,
             String name,
@@ -43,7 +45,7 @@ public sealed interface UserDTO {
             LocalDateTime lastLogin,
             LocalDateTime createdAt)
             implements UserDTO, View {
-        public Private(User user) {
+        public RegisteredUser(User user) {
             this(
                     String.valueOf(user.getId()),
                     user.getEmail(),

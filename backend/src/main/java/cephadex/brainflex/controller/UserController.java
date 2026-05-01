@@ -35,14 +35,14 @@ public class UserController {
          * Returns a paginated list of users sorted by total points.
          */
         @GetMapping("/leaderboard")
-        public List<UserDTO.Public> getLeaderboard(
+        public List<UserDTO.GuestUser> getLeaderboard(
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size) {
                 PageRequest pageRequest = PageRequest.of(page, size, Sort.by("stats.totalPoints").descending());
                 Page<User> userPage = userRepository.findAll(pageRequest);
 
                 return userPage.getContent().stream()
-                                .map(user -> new UserDTO.Public(
+                                .map(user -> new UserDTO.GuestUser(
                                                 user.getId(),
                                                 user.getUserName(),
                                                 user.getIsGuest(),
@@ -61,9 +61,9 @@ public class UserController {
          * Returns a a user info
          */
         @GetMapping("/{id}")
-        public ResponseEntity<UserDTO.Private> getUserProfile(@PathVariable String id) {
+        public ResponseEntity<UserDTO.RegisteredUser> getUserProfile(@PathVariable String id) {
                 return userRepository.findById(id)
-                                .map(user -> ResponseEntity.ok(new UserDTO.Private(
+                                .map(user -> ResponseEntity.ok(new UserDTO.RegisteredUser(
                                                 user.getId(),
                                                 user.getEmail(),
                                                 user.getName(),

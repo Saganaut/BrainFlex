@@ -29,30 +29,30 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+    public ResponseEntity<UserDTO> getCurrentUser(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated() &&
                 !"anonymousUser".equals(authentication.getName())) {
 
             return userRepository.findByGoogleId(authentication.getName())
-                    .map(user -> ResponseEntity.ok(new UserDTO.Private(user)))
-                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+                    .<ResponseEntity<UserDTO>>map(user -> ResponseEntity.ok(new UserDTO.RegisteredUser(user)))
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
         }
 
-        return ResponseEntity.ok(new UserDTO.Public("0", "Guest", true, null, null));
+        return ResponseEntity.<UserDTO>ok(new UserDTO.GuestUser("0", "Guest", true, null, null));
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(
+    public ResponseEntity<UserDTO.RegisteredUser> register(
             @Valid @RequestBody RegisterRequest request,
             Authentication authentication) {
 
         if (authentication == null || !authentication.isAuthenticated() ||
                 "anonymousUser".equals(authentication.getName())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).<UserDTO.RegisteredUser>build();
         }
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UserDTO.Private(userService.register(oAuth2User, request)));
+                .body(new UserDTO.RegisteredUser(userService.register(oAuth2User, request)));
     }
 }

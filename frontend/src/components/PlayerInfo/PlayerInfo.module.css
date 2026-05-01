@@ -1,0 +1,69 @@
+.playerInfoContainer {
+  container-type: inline-size;
+}
+
+.playerInfo {
+  border: 2px solid var(--color-primary-light);
+  border-radius: var(--border-radius-lg);
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+
+  .header {
+    padding: var(--padding-base-y);
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    font-size: var(--font-size-md);
+    text-align: start;
+
+    div {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    .imgWrapper {
+      width: fit-content;
+    }
+    h5 {
+      font-size: var(--font-size-md);
+      color: var(--color-text-light);
+    }
+  }
+
+  div {
+    img {
+      border-radius: 9999px;
+      border: 2px solid var(--color-primary-light);
+    }
+  }
+
+  .playerStats {
+    display: flex;
+    flex-direction: column;
+    padding: var(--padding-base-y);
+    max-height: 1000px;
+
+    gap: 5px;
+
+    transition:
+      max-height 300ms ease-in-out,
+      padding 300ms ease-in-out;
+
+    &.isCollapsed {
+      max-height: 0px;
+      overflow: hidden;
+      padding-top: 0px;
+      padding-bottom: 0px;
+    }
+
+    .statRow {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 8px;
+      border-radius: var(--border-radius-md);
+      background-color: var(--color-primary-dark);
+    }
+  }
+}

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PlayerStats {
     private int gamesPlayed = 0;
-    private int highscore = 0;
+    private int highScore = 0;
     private int totalPoints = 0;
     private int currentStreak = 0;
 }

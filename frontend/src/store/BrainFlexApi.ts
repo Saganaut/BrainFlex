@@ -19,6 +19,14 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    checkUsername: build.query<CheckUsernameApiResponse, CheckUsernameApiArg>({
+      query: (queryArg) => ({
+        url: `/api/users/check-username`,
+        params: {
+          username: queryArg.username,
+        },
+      }),
+    }),
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
     }),
@@ -40,6 +48,12 @@ export type GetLeaderboardApiResponse = /** status 200 OK */ Public[];
 export type GetLeaderboardApiArg = {
   page?: number;
   size?: number;
+};
+export type CheckUsernameApiResponse = /** status 200 OK */ {
+  [key: string]: boolean;
+};
+export type CheckUsernameApiArg = {
+  username: string;
 };
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
@@ -82,6 +96,8 @@ export const {
   useLazyGetUserProfileQuery,
   useGetLeaderboardQuery,
   useLazyGetLeaderboardQuery,
+  useCheckUsernameQuery,
+  useLazyCheckUsernameQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
   useGetCurrentUserQuery,

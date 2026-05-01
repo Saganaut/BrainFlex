@@ -1,11 +1,8 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-
-type RegisterSearch = {
-  googleId?: string;
-  email?: string;
-  name?: string;
-  picture?: string;
-};
+import {
+  RegistrationForm,
+  type RegisterSearch,
+} from "../components/Forms/RegistrationForm";
 
 export const Route = createFileRoute("/register")({
   validateSearch: (search: Record<string, unknown>): RegisterSearch => {
@@ -26,15 +23,7 @@ function RouteComponent() {
   return (
     <div>
       <h1>What shall we call you?</h1>
-      <div>
-        <form>
-          <div>
-            <label>Username</label>
-            <input></input>
-          </div>
-          <button type='submit'>Submit</button>
-        </form>
-      </div>
+      <RegistrationForm registerSearchParams={search} />
     </div>
   );
 }

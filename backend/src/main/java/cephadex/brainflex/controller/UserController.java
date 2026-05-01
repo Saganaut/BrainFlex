@@ -1,6 +1,7 @@
 package cephadex.brainflex.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,16 +16,18 @@ import org.springframework.web.bind.annotation.RestController;
 import cephadex.brainflex.dto.UserDTO;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.UserService;
 
 @RestController
 @RequestMapping("/api/users")
-// @RequiredArgsConstructor
 public class UserController {
 
         private final UserRepository userRepository;
+        private final UserService userService;
 
-        public UserController(UserRepository userRepository) {
+        public UserController(UserRepository userRepository, UserService userService) {
                 this.userRepository = userRepository;
+                this.userService = userService;
         }
 
         /**
@@ -46,6 +49,11 @@ public class UserController {
                                                 user.getPictureUrl(),
                                                 user.getStats()))
                                 .toList();
+        }
+
+        @GetMapping("/check-username")
+        public ResponseEntity<Map<String, Boolean>> checkUsername(@RequestParam String username) {
+                return ResponseEntity.ok(Map.of("available", userService.isUsernameAvailable(username)));
         }
 
         /**

@@ -18,23 +18,31 @@
   justify-content: space-between;
   padding-left: 14px;
 
+  .leaderboardTitle {
+    font-size: var(--font-size-lg);
+    color: var(--color-text-light);
+  }
+
   svg {
     height: 20px;
     width: 20px;
     display: flex;
+    stroke: var(--color-text-light);
+
     align-items: center;
-    transition: transform 300ms ease-in-out;
+    transition:
+      transform 300ms ease-in-out,
+      stroke 300ms ease-in-out;
     transform: rotate(180deg);
+
+    &:hover {
+      stroke: var(--color-secondary);
+    }
 
     &.isCollapsed {
       transform: rotate(0deg);
     }
   }
-}
-
-.leaderboardTitle {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-light);
 }
 
 .playerList {

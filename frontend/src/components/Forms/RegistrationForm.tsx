@@ -55,7 +55,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
 
     const timer = setTimeout(async () => {
       try {
-        const result = await checkUsername(username).unwrap();
+        const result = await checkUsername({ username: username }).unwrap();
         if (result.available) {
           setUsernameStatus("available");
         } else {

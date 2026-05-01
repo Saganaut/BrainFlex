@@ -28,6 +28,8 @@ public class User {
 
     private PlayerStats stats = new PlayerStats();
 
+    private Boolean newsletter;
+
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt = LocalDateTime.now();
 }

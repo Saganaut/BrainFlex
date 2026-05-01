@@ -153,7 +153,7 @@ public class DataSeeder {
     private PlayerStats createStats(int games, int high, int total, int streak) {
         PlayerStats stats = new PlayerStats();
         stats.setGamesPlayed(games);
-        stats.setHighscore(high);
+        stats.setHighScore(high);
         stats.setTotalPoints(total);
         stats.setCurrentStreak(streak);
         return stats;

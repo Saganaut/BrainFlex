@@ -100,8 +100,8 @@ npx @rtk-query/codegen-openapi openapi-config.cts
 
 **Routes** (`frontend/src/routes/`):
 
-- `/` — Home, renders the Leaderboard component
-- `/register` — New-user registration; receives `googleId`, `email`, `name`, `picture` as query params after OAuth redirect
+- `/` — Home, renders the Leaderboard component and shared auth bar
+- `/register` — New-user registration; receives `googleId`, `email`, `name`, `picture`, and optional `returnUrl` as query params after OAuth redirect
 - `/about` — About page
 
 **Key conventions:**
@@ -148,7 +148,9 @@ All endpoints are prefixed `/api`.
 | GET    | `/api/health`            | GuestUser | MongoDB + Redis health check             |
 | GET    | `/api/users/leaderboard` | GuestUser | Paginated leaderboard; `?page=0&size=10` |
 | GET    | `/api/users/{id}`        | Required  | Full user profile                        |
-| GET    | `/api/auth/me`           | Optional  | Authenticated user or guest stub         |
+| GET    | `/api/auth/me`           | Optional  | Authenticated user or guest session      |
+| GET    | `/api/auth/login`        | Public    | Starts Google OAuth and preserves returnUrl |
+| POST   | `/api/auth/guest`        | Public    | Create a guest session with a username   |
 | POST   | `/api/auth/logout`       | Required  | Logout                                   |
 
 **CORS**: only `http://localhost:5173` is allowed, with credentials.
@@ -192,12 +194,14 @@ currentStreak   int
 
 ## Authentication Flow
 
-1. User hits `/api/auth/login` → redirected to Google OAuth.
+1. User hits `/api/auth/login` → redirected to Google OAuth. The request preserves the current page via `returnUrl`.
 2. On success, Spring Security calls the OAuth2 success handler:
-   - **Existing user** (googleId match) → redirect to `http://localhost:5173/`
-   - **New user** → redirect to `http://localhost:5173/register?googleId=...&email=...&name=...&picture=...`
-3. The `/register` route in the frontend handles new-user form submission.
-4. Sessions are cookie-based (Spring Security default).
+   - **Existing user** (googleId match) → redirect back to the original page
+   - **New user** → redirect to `/register?googleId=...&email=...&name=...&picture=...&returnUrl=...`
+   - **Guest user who signs in with Google** → convert the guest record to a registered account and redirect back to the original page
+3. The `/register` route in the frontend handles new-user form submission and redirects to `returnUrl` after registration.
+4. Guests can also start a session via `POST /api/auth/guest` with a username. This creates a guest account and allows play without Google auth.
+5. Sessions are cookie-based (Spring Security default).
 
 ---
 
@@ -231,8 +235,9 @@ When adding backend tests, use the test starters already present in `pom.xml` �
 | ----------------------------------------------- | ------------------------------------------------- |
 | `frontend/src/store/BrainFlexApi.ts`            | Auto-generated RTK Query API — **do not edit**    |
 | `frontend/src/store/store.ts`                   | Redux store config                                |
-| `frontend/src/routes/__root.tsx`                | Root layout                                       |
+| `frontend/src/routes/__root.tsx`                | Root layout with shared AuthBar                   |
 | `frontend/src/routes/register.tsx`              | New-user registration route                       |
+| `frontend/src/components/Common/AuthBar.tsx`    | Login / logout / guest play UI                    |
 | `frontend/src/components/Leaderboard/index.tsx` | Leaderboard UI                                    |
 | `frontend/src/components/PlayerInfo/index.tsx`  | Player info UI component                          |
 | `frontend/src/hooks/useCurrentUser.ts`          | Custom hook for current user authentication       |

@@ -8,6 +8,13 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.registerRequest,
       }),
     }),
+    guestLogin: build.mutation<GuestLoginApiResponse, GuestLoginApiArg>({
+      query: (queryArg) => ({
+        url: `/api/auth/guest`,
+        method: "POST",
+        body: queryArg.guestLoginRequest,
+      }),
+    }),
     getUserProfile: build.query<
       GetUserProfileApiResponse,
       GetUserProfileApiArg
@@ -50,6 +57,10 @@ export { injectedRtkApi as BrainFlex };
 export type RegisterApiResponse = /** status 200 OK */ RegisteredUser;
 export type RegisterApiArg = {
   registerRequest: RegisterRequest;
+};
+export type GuestLoginApiResponse = /** status 200 OK */ GuestUser;
+export type GuestLoginApiArg = {
+  guestLoginRequest: GuestLoginRequest;
 };
 export type GetUserProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type GetUserProfileApiArg = {
@@ -99,6 +110,9 @@ export type GuestUser = {
   pictureUrl?: string;
   stats?: PlayerStats;
 };
+export type GuestLoginRequest = {
+  username?: string;
+};
 export type HealthCheckResponse = {
   status?: string;
   message?: string;
@@ -109,6 +123,7 @@ export type HealthCheckResponse = {
 export type UserDto = GuestUser | RegisteredUser;
 export const {
   useRegisterMutation,
+  useGuestLoginMutation,
   useGetUserProfileQuery,
   useLazyGetUserProfileQuery,
   useGetLeaderboardQuery,

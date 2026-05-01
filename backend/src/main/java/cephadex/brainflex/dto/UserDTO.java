@@ -15,6 +15,8 @@ public sealed interface UserDTO {
         String userName();
     }
 
+    record GuestLoginRequest(String username) {}
+
     record GuestUser(
             String id,
             String userName,

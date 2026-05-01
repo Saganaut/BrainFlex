@@ -42,6 +42,18 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User createGuest(String username) {
+        if (userRepository.findByUserName(username).isPresent())
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
+
+        User user = new User();
+        user.setUserName(username);
+        user.setIsGuest(true);
+        user.setLastLogin(LocalDateTime.now());
+
+        return userRepository.save(user);
+    }
+
     public boolean isUsernameAvailable(String username) {
         return userRepository.findByUserName(username).isEmpty();
     }

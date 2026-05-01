@@ -1,6 +1,8 @@
 package cephadex.brainflex.config;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -41,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/check-username").permitAll()
                         .requestMatchers("/**/api-docs").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -70,24 +74,53 @@ public class SecurityConfig {
 
             OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
             String googleId = oAuth2User.getAttribute("sub");
+            String sessionReturnUrl = null;
+            String guestId = null;
+            if (request.getSession(false) != null) {
+                sessionReturnUrl = (String) request.getSession(false).getAttribute("returnUrl");
+                guestId = (String) request.getSession(false).getAttribute("guestId");
+                request.getSession(false).removeAttribute("returnUrl");
+                request.getSession(false).removeAttribute("guestId");
+            }
 
             boolean userExists = userRepository.findByGoogleId(googleId).isPresent();
 
             if (userExists) {
-                getRedirectStrategy().sendRedirect(request, response, "http://localhost:5173/");
-            } else {
-                String email = oAuth2User.getAttribute("email");
-                String name = oAuth2User.getAttribute("name");
-                String picture = oAuth2User.getAttribute("picture");
-                String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/register")
-                        .queryParam("googleId", googleId)
-                        .queryParam("email", email)
-                        .queryParam("name", name)
-                        .queryParam("picture", picture)
-                        .build().toUriString();
-
-                getRedirectStrategy().sendRedirect(request, response, targetUrl);
+                User user = userRepository.findByGoogleId(googleId).get();
+                String redirectUrl = sessionReturnUrl != null ? sessionReturnUrl : "http://localhost:5173/";
+                getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+                return;
             }
+
+            if (guestId != null && !guestId.isBlank()) {
+                userRepository.findById(guestId).ifPresent(guestUser -> {
+                    if (guestUser.getIsGuest()) {
+                        guestUser.setIsGuest(false);
+                        guestUser.setGoogleId(googleId);
+                        guestUser.setEmail(oAuth2User.getAttribute("email"));
+                        guestUser.setName(oAuth2User.getAttribute("name"));
+                        guestUser.setPictureUrl(oAuth2User.getAttribute("picture"));
+                        userRepository.save(guestUser);
+                    }
+                });
+                String redirectUrl = sessionReturnUrl != null ? sessionReturnUrl : "http://localhost:5173/";
+                getRedirectStrategy().sendRedirect(request, response, redirectUrl);
+                return;
+            }
+
+            String email = oAuth2User.getAttribute("email");
+            String name = oAuth2User.getAttribute("name");
+            String picture = oAuth2User.getAttribute("picture");
+            String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/register")
+                    .queryParam("googleId", googleId)
+                    .queryParam("email", email)
+                    .queryParam("name", name)
+                    .queryParam("picture", picture)
+                    .build().toUriString();
+            if (sessionReturnUrl != null) {
+                targetUrl += "&returnUrl=" + URLEncoder.encode(sessionReturnUrl, StandardCharsets.UTF_8);
+            }
+            getRedirectStrategy().sendRedirect(request, response, targetUrl);
         }
     }
 }

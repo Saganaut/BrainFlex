@@ -10,9 +10,10 @@ export type RegisterSearch = {
   email?: string;
   name?: string;
   picture?: string;
+  returnUrl?: string;
 };
 
-type RegistrationPayload = RegisterSearch & {
+type RegistrationPayload = {
   username: string;
   newsletter: boolean;
 };
@@ -110,7 +111,6 @@ const useRegister = (
     if (!canSubmit) return;
 
     const payload: RegistrationPayload = {
-      ...registerSearchParams,
       username,
       newsletter,
     };
@@ -118,7 +118,7 @@ const useRegister = (
     try {
       const user = await register({ registerRequest: payload }).unwrap();
       console.log("registered", user);
-      // TODO: navigate to dashboard
+      window.location.href = registerSearchParams.returnUrl ?? "/";
     } catch (err) {
       if (isApiError(err)) {
         setSubmitError(err.data.message);

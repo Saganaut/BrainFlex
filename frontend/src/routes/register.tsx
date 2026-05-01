@@ -7,10 +7,11 @@ import {
 export const Route = createFileRoute("/register")({
   validateSearch: (search: Record<string, unknown>): RegisterSearch => {
     return {
-      googleId: search.googleId as string,
-      email: search.email as string,
-      name: search.name as string,
-      picture: search.picture as string,
+      googleId: typeof search.googleId === "string" ? search.googleId : undefined,
+      email: typeof search.email === "string" ? search.email : undefined,
+      name: typeof search.name === "string" ? search.name : undefined,
+      picture: typeof search.picture === "string" ? search.picture : undefined,
+      returnUrl: typeof search.returnUrl === "string" ? search.returnUrl : undefined,
     };
   },
   component: RouteComponent,

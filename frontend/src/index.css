@@ -27,6 +27,7 @@
   --font-heading: system-ui, "Segoe UI", Roboto, sans-serif;
   --font-sans: ui-monospace, Consolas, monospace;
 
+  --font-size-xs: 8px;
   --font-size-sm: 12px;
   --font-size-base: 16px;
   --font-size-md: 18px;
@@ -34,7 +35,16 @@
   --font-size-3xl: 52px;
 
   --border-radius-base: 10px;
+  --border-radius-md: calc(var(--border-radius-base) * 0.8);
+  --border-radius-sm: calc(var(--border-radius-base) / 2);
   --border-radius-lg: calc(var(--border-radius-base) * 1.5);
+
+  --padding-base-y: 8px;
+  --padding-base-x: 16px;
+  --padding-sm-y: calc(var(--padding-base-y) * 0.5);
+  --padding-sm-x: calc(var(--padding-base-x) * 0.5);
+  --padding-lg-y: calc(var(--padding-base-y) * 2);
+  --padding-lg-x: calc(var(--padding-base-x) * 2);
 
   font: 18px / 145% var(--sans-mono);
   letter-spacing: 0.18px;
@@ -115,13 +125,25 @@ p {
 button {
   appearance: none;
   border: none;
-  padding: 0;
+  padding: var(--padding-base-y) var(--padding-base-x);
   margin: 0;
   cursor: pointer;
   display: inline-block;
   outline: none;
   -webkit-tap-highlight-color: transparent;
   background-color: transparent;
+  border: 2px solid var(--color-primary-light);
+  border-radius: var(--border-radius-md);
+  color: var(--color-primary-light);
+  font-weight: 700;
+  transition:
+    color 300ms ease-in-out,
+    border-color 300ms ease-in-out;
+
+  &:hover {
+    border: 2px solid var(--color-text-light);
+    color: var(--color-text-light);
+  }
 }
 
 code,
@@ -134,6 +156,20 @@ code,
 code {
   font-size: 15px;
   line-height: 135%;
-  padding: 4px 8px;
+  padding: var(--padding-base-y) var(--padding-base-x);
   background: var(--code-bg);
+}
+
+input {
+  border: 2px solid var(--color-primary-light);
+  border-radius: var(--border-radius-md);
+  padding: var(--padding-sm-y) var(--padding-sm-x);
+  background-color: transparent;
+  transition:
+    color 300ms ease-in-out,
+    border-color 300ms ease-in-out;
+
+  &:hover {
+    border-color: var(--color-text);
+  }
 }

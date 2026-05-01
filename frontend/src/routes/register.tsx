@@ -22,7 +22,6 @@ function RouteComponent() {
   console.log("search", search);
   return (
     <div>
-      <h1>What shall we call you?</h1>
       <RegistrationForm registerSearchParams={search} />
     </div>
   );

@@ -28,7 +28,6 @@
     width: 20px;
     display: flex;
     stroke: var(--color-text-light);
-
     align-items: center;
     transition:
       transform 300ms ease-in-out,

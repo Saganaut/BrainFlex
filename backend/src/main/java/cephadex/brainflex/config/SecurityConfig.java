@@ -15,7 +15,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -88,7 +87,7 @@ public class SecurityConfig {
             boolean userExists = userRepository.findByGoogleId(googleId).isPresent();
 
             if (userExists) {
-                User user = userRepository.findByGoogleId(googleId).get();
+                // User user = userRepository.findByGoogleId(googleId).get();
                 String redirectUrl = sessionReturnUrl != null ? sessionReturnUrl : "http://localhost:5173/";
                 getRedirectStrategy().sendRedirect(request, response, redirectUrl);
                 return;

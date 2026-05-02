@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useGuestLoginMutation } from "../../store/BrainFlexApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+import { apiBaseUrl } from "../../store/emptyApi";
 
 export function AuthBar() {
   const { user, authenticated, isGuestSession, isLoading } = useCurrentUser();
@@ -10,7 +9,7 @@ export function AuthBar() {
   const [guestError, setGuestError] = useState<string | null>(null);
   const [guestLogin, { isLoading: guestLoading }] = useGuestLoginMutation();
 
-  const currentUrl = window.location.pathname + window.location.search;
+  const currentUrl = window.location.href;
 
   const handleLogin = () => {
     const loginUrl = new URL(`${apiBaseUrl}/api/auth/login`);
@@ -43,7 +42,9 @@ export function AuthBar() {
     }
 
     try {
-      await guestLogin({ guestLoginRequest: { username: trimmedName } }).unwrap();
+      await guestLogin({
+        guestLoginRequest: { username: trimmedName },
+      }).unwrap();
       window.location.reload();
     } catch (error) {
       setGuestError("Unable to create guest session. Try another name.");
@@ -55,7 +56,15 @@ export function AuthBar() {
   }
 
   return (
-    <div style={{ display: "flex", gap: "1rem", padding: "1rem", alignItems: "center", flexWrap: "wrap", borderBottom: "1px solid #ddd" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "1rem",
+        padding: "1rem",
+        alignItems: "center",
+        flexWrap: "wrap",
+        borderBottom: "1px solid #ddd",
+      }}>
       {authenticated ? (
         <>
           <span>Signed in as {user?.userName}</span>
@@ -74,14 +83,16 @@ export function AuthBar() {
             <input
               value={guestName}
               onChange={(e) => setGuestName(e.target.value)}
-              placeholder="Guest username"
+              placeholder='Guest username'
               maxLength={20}
             />
             <button onClick={handleGuestLogin} disabled={guestLoading}>
               Play as guest
             </button>
           </div>
-          {guestError ? <span style={{ color: "red" }}>{guestError}</span> : null}
+          {guestError ? (
+            <span style={{ color: "red" }}>{guestError}</span>
+          ) : null}
         </>
       )}
     </div>

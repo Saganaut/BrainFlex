@@ -44,6 +44,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/check-username").permitAll()
                         .requestMatchers("/**/api-docs").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/me").permitAll()
+                        .requestMatchers("/api/auth/guest").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception

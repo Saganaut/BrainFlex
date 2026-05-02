@@ -1,10 +1,8 @@
 package cephadex.brainflex.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
+import java.io.IOException;
+import java.util.Collections;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,8 +21,9 @@ import cephadex.brainflex.dto.UserDTO;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.UserService;
-import java.io.IOException;
-import java.util.Collections;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -48,7 +47,8 @@ public class AuthController {
                 String id = name.substring(6);
                 return userRepository.findById(id)
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.GuestUser(user)))
-                        .orElseGet(() -> ResponseEntity.<UserDTO>ok(new UserDTO.GuestUser("0", "Guest", true, null, null)));
+                        .orElseGet(() -> ResponseEntity
+                                .<UserDTO>ok(new UserDTO.GuestUser("0", "Guest", true, null, null)));
             } else {
                 return userRepository.findByGoogleId(name)
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.RegisteredUser(user)))

@@ -143,15 +143,15 @@ config/       ← Security, CORS, DataSeeder
 
 All endpoints are prefixed `/api`.
 
-| Method | Path                     | Auth      | Description                              |
-| ------ | ------------------------ | --------- | ---------------------------------------- |
-| GET    | `/api/health`            | GuestUser | MongoDB + Redis health check             |
-| GET    | `/api/users/leaderboard` | GuestUser | Paginated leaderboard; `?page=0&size=10` |
-| GET    | `/api/users/{id}`        | Required  | Full user profile                        |
-| GET    | `/api/auth/me`           | Optional  | Authenticated user or guest session      |
+| Method | Path                     | Auth      | Description                                 |
+| ------ | ------------------------ | --------- | ------------------------------------------- |
+| GET    | `/api/health`            | GuestUser | MongoDB + Redis health check                |
+| GET    | `/api/users/leaderboard` | GuestUser | Paginated leaderboard; `?page=0&size=10`    |
+| GET    | `/api/users/{id}`        | Required  | Full user profile                           |
+| GET    | `/api/auth/me`           | Optional  | Authenticated user or guest session         |
 | GET    | `/api/auth/login`        | Public    | Starts Google OAuth and preserves returnUrl |
-| POST   | `/api/auth/guest`        | Public    | Create a guest session with a username   |
-| POST   | `/api/auth/logout`       | Required  | Logout                                   |
+| POST   | `/api/auth/guest`        | Public    | Create a guest session with a username      |
+| POST   | `/api/auth/logout`       | Required  | Logout                                      |
 
 **CORS**: only `http://localhost:5173` is allowed, with credentials.
 

@@ -3,7 +3,11 @@ import type { RegisteredUser, GuestUser as Guest } from "../store/BrainFlexApi";
 
 type AuthenticatedUser = { authenticated: true; user: RegisteredUser };
 type GuestSession = { authenticated: false; user: Guest; isGuestSession: true };
-type AnonymousUser = { authenticated: false; user: undefined; isGuestSession: false };
+type AnonymousUser = {
+  authenticated: false;
+  user: undefined;
+  isGuestSession: false;
+};
 
 export type CurrentUser = AuthenticatedUser | GuestSession | AnonymousUser;
 

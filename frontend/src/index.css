@@ -1,87 +1,11 @@
+@import url("./tokens.css");
+
 :root {
-  --color-primary: oklch(21.839% 0.0612 249.645deg);
-  --color-primary-light: oklch(from var(--color-primary) 75% c h);
-  --color-primary-dark: oklch(from var(--color-primary) 35% c h);
-  --color-primary-subtle: oklch(from var(--color-primary) 93% calc(c / 4) h);
-  --color-primary-muted: oklch(from var(--color-primary) l calc(c * 0.5) h);
-  --color-secondary: oklch(92.1% 0.0301 307.11deg);
-  --color-secondary-light: oklch(from var(--color-secondary) 97% calc(c / 2) h);
-  --color-secondary-dark: oklch(
-    from var(--color-secondary) 68% calc(c * 2.5) h
-  );
-  --color-secondary-subtle: oklch(
-    from var(--color-secondary) 97% calc(c / 4) h
-  );
-  --color-secondary-muted: oklch(from var(--color-secondary) l calc(c * 0.5) h);
-  --color-accent: oklch(60.65% 0.0751 181.5deg);
-  --color-accent-light: oklch(from var(--color-accent) 75% c h);
-  --color-accent-dark: oklch(from var(--color-accent) 47% c h);
-  --color-accent-subtle: oklch(from var(--color-accent) 93% calc(c / 4) h);
-  --color-accent-muted: oklch(from var(--color-accent) l calc(c * 0.5) h);
-  --color-text: oklch(53.369% 0.1147 25.041deg);
-  --color-text-light: oklch(73.52% 0.1604 25.99deg);
-  --shadow:
-    rgb(0, 0, 0 / 10%) 0 10px 15px -3px, rgb(0, 0, 0 / 5%) 0 4px 6px -2px;
-  --font-mono: "IBM Plex Mono", monospace;
-  --font-heading: system-ui, "Segoe UI", "Roboto", sans-serif;
-  --font-sans: ui-monospace, "Consolas", monospace;
-
-  /* --- Typography (Expanded Scale) --- */
-  --font-size-xs: 0.75rem; /* 12px */
-  --font-size-sm: 0.875rem; /* 14px */
-  --font-size-base: 1rem; /* 16px */
-  --font-size-md: 1.125rem; /* 18px */
-  --font-size-lg: 1.5rem; /* 24px */
-  --font-size-xl: 2rem; /* 32px */
-  --font-size-2xl: 3rem; /* 48px */
-  --font-size-3xl: 3.75rem; /* 60px */
-
-  /* --- Spacing System --- */
-  --space-1: 0.25rem; /* 4px */
-  --space-2: 0.5rem; /* 8px */
-  --space-3: 0.75rem; /* 12px */
-  --space-4: 1rem; /* 16px */
-  --space-6: 1.5rem; /* 24px */
-  --space-8: 2rem; /* 32px */
-  --space-12: 3rem; /* 48px */
-
-  /* --- Component Padding (Semantic) --- */
-  --p-sm: var(--space-2) var(--space-3);
-  --p-md: var(--space-4) var(--space-6);
-  --p-lg: var(--space-8) var(--space-12);
-
-  /* --- Border Radius --- */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-full: 9999px;
-
-  /* --- Elevation & Shadows--- */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
-  --shadow-md:
-    0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0, 0, 0 / 6%);
-  --shadow-lg:
-    0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0, 0, 0 /5%);
-
-  /* --- Z-Index Layering (Prevents "z-index: 999999" chaos) --- */
-  --z-negative: -1;
-  --z-base: 1;
-  --z-dropdown: 100;
-  --z-sticky: 200;
-  --z-modal: 1000;
-  --z-tooltip: 1100;
-
-  /* --- Transitions & Timing --- */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 150ms;
-  --duration-base: 300ms;
-  --duration-slow: 500ms;
-
-  font: 18px / 145% var(--sans-mono);
+  font: 18px / 145% var(--font-mono);
   letter-spacing: 0.18px;
   color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  color: var(--text-primary);
+  background: var(--bg-canvas);
   font-synthesis: none;
   text-rendering: optimizelegibility;
   -webkit-font-smoothing: antialiased;
@@ -117,7 +41,7 @@
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
-  border-inline: 1px solid var(--border);
+  border-inline: 1px solid var(--radius-md);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -127,8 +51,8 @@
 body {
   margin: 0;
   font-family: var(--font-mono);
-  background-color: var(--color-primary);
-  color: var(--color-secondary-light);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
 }
 
 h1,
@@ -157,24 +81,24 @@ p {
 
 button {
   appearance: none;
-  padding: var(--padding-base-y) var(--padding-base-x);
+  padding: var(--p-sm);
   margin: 0;
   cursor: pointer;
   display: inline-block;
   outline: none;
   -webkit-tap-highlight-color: transparent;
-  background-color: transparent;
-  border: 2px solid var(--color-primary-light);
-  border-radius: var(--border-radius-md);
-  color: var(--color-primary-light);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
   font-weight: 700;
+  background-color: var(--bg-surface-raised);
   transition:
     color 300ms ease-in-out,
     border-color 300ms ease-in-out;
 
   &:hover {
-    border: 2px solid var(--color-text-light);
-    color: var(--color-text-light);
+    border: 2px solid var(--action-hover);
+    color: var(--action-hover);
   }
 }
 
@@ -182,26 +106,25 @@ code,
 .counter {
   display: inline-flex;
   border-radius: 4px;
-  color: var(--text-h);
 }
 
 code {
   font-size: 15px;
   line-height: 135%;
-  padding: var(--padding-base-y) var(--padding-base-x);
-  background: var(--code-bg);
+  padding: var(--p-md);
+  background: var(--bg-canvas);
 }
 
 input {
-  border: 2px solid var(--color-primary-light);
-  border-radius: var(--border-radius-md);
-  padding: var(--padding-sm-y) var(--padding-sm-x);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--p-sm);
   background-color: transparent;
   transition:
     color 300ms ease-in-out,
     border-color 300ms ease-in-out;
 
   &:hover {
-    border-color: var(--color-text);
+    border-color: var(--action-hover);
   }
 }

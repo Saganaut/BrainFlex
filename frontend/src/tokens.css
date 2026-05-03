@@ -1,0 +1,231 @@
+:root {
+  /* --- Color Palette --- */
+  --azure-200: oklch(93% 0.04 250deg);
+  --azure-300: oklch(88% 0.06 250deg);
+  --azure-400: oklch(75% 0.13 250deg);
+  --azure-500: oklch(51% 0.11 250deg);
+  --azure-600: oklch(61% 0.13 250deg);
+  --azure-700: oklch(38% 0.08 250deg);
+  --azure-800: oklch(27% 0.06 250deg);
+  --azure-900: oklch(22% 0.05 250deg);
+  --red-200: oklch(93% 0.04 25deg);
+  --red-300: oklch(89% 0.06 25deg);
+  --red-400: oklch(77% 0.13 25deg);
+  --red-500: oklch(52% 0.11 25deg);
+  --red-600: oklch(63% 0.13 25deg);
+  --red-700: oklch(39% 0.08 25deg);
+  --red-800: oklch(28% 0.06 25deg);
+  --red-900: oklch(22% 0.05 25deg);
+  --yellow-200: oklch(93% 0.04 78deg);
+  --yellow-300: oklch(88% 0.06 78deg);
+  --yellow-400: oklch(76% 0.13 78deg);
+  --yellow-500: oklch(51% 0.11 78deg);
+  --yellow-600: oklch(62% 0.13 78deg);
+  --yellow-700: oklch(38% 0.08 78deg);
+  --yellow-800: oklch(28% 0.06 78deg);
+  --yellow-900: oklch(22% 0.05 78deg);
+  --green-200: oklch(92% 0.04 170deg);
+  --green-300: oklch(87% 0.06 170deg);
+  --green-400: oklch(74% 0.13 170deg);
+  --green-500: oklch(49% 0.11 170deg);
+  --green-600: oklch(60% 0.13 170deg);
+  --green-700: oklch(37% 0.08 170deg);
+  --green-800: oklch(27% 0.06 170deg);
+  --green-900: oklch(21% 0.05 170deg);
+  --turqoise-200: oklch(92% 0.04 200deg);
+  --turqoise-300: oklch(87% 0.06 200deg);
+  --turqoise-400: oklch(74% 0.13 200deg);
+  --turqoise-500: oklch(49% 0.11 200deg);
+  --turqoise-600: oklch(59% 0.13 200deg);
+  --turqoise-700: oklch(37% 0.08 200deg);
+  --turqoise-800: oklch(27% 0.06 200deg);
+  --turqoise-900: oklch(21% 0.05 200deg);
+  --cerulean-200: oklch(93% 0.04 230deg);
+  --cerulean-300: oklch(87% 0.06 230deg);
+  --cerulean-400: oklch(75% 0.13 230deg);
+  --cerulean-500: oklch(50% 0.11 230deg);
+  --cerulean-600: oklch(60% 0.13 230deg);
+  --cerulean-700: oklch(38% 0.08 230deg);
+  --cerulean-800: oklch(27% 0.06 230deg);
+  --cerulean-900: oklch(22% 0.05 230deg);
+  --blue-200: oklch(93% 0.04 260deg);
+  --blue-300: oklch(88% 0.06 260deg);
+  --blue-400: oklch(76% 0.13 260deg);
+  --blue-500: oklch(51% 0.11 260deg);
+  --blue-600: oklch(62% 0.13 260deg);
+  --blue-700: oklch(38% 0.08 260deg);
+  --blue-800: oklch(28% 0.06 260deg);
+  --blue-900: oklch(22% 0.05 260deg);
+  --lavender-200: oklch(93% 0.04 290deg);
+  --lavender-300: oklch(88% 0.06 290deg);
+  --lavender-400: oklch(77% 0.13 290deg);
+  --lavender-500: oklch(52% 0.11 290deg);
+  --lavender-600: oklch(63% 0.13 290deg);
+  --lavender-700: oklch(39% 0.08 290deg);
+  --lavender-800: oklch(28% 0.06 290deg);
+  --lavender-900: oklch(22% 0.05 290deg);
+  --fuchsia-200: oklch(93% 0.04 320deg);
+  --fuchsia-300: oklch(88% 0.06 320deg);
+  --fuchsia-400: oklch(77% 0.13 320deg);
+  --fuchsia-500: oklch(52% 0.11 320deg);
+  --fuchsia-600: oklch(63% 0.13 320deg);
+  --fuchsia-700: oklch(39% 0.08 320deg);
+  --fuchsia-800: oklch(28% 0.06 320deg);
+  --fuchsia-900: oklch(22% 0.05 320deg);
+  --mulberry-200: oklch(93% 0.04 350deg);
+  --mulberry-300: oklch(89% 0.06 350deg);
+  --mulberry-400: oklch(78% 0.13 350deg);
+  --mulberry-500: oklch(52% 0.11 350deg);
+  --mulberry-600: oklch(63% 0.13 350deg);
+  --mulberry-700: oklch(39% 0.08 350deg);
+  --mulberry-800: oklch(28% 0.06 350deg);
+  --mulberry-900: oklch(23% 0.05 350deg);
+  --flamingo-200: oklch(93% 0.04 360deg);
+  --flamingo-300: oklch(89% 0.06 360deg);
+  --flamingo-400: oklch(77% 0.13 360deg);
+  --flamingo-500: oklch(52% 0.11 360deg);
+  --flamingo-600: oklch(63% 0.13 360deg);
+  --flamingo-700: oklch(39% 0.08 360deg);
+  --flamingo-800: oklch(28% 0.06 360deg);
+  --flamingo-900: oklch(23% 0.05 360deg);
+
+  /* --color-primary: oklch(21.839% 0.0612 249.645deg);
+  --color-primary-light: oklch(from var(--color-primary) 75% c h);
+  --color-primary-dark: oklch(from var(--color-primary) 35% c h);
+  --color-primary-subtle: oklch(from var(--color-primary) 93% calc(c / 4) h);
+  --color-primary-muted: oklch(from var(--color-primary) l calc(c * 0.5) h);
+  --color-secondary: oklch(92.1% 0.0301 307.11deg);
+  --color-secondary-light: oklch(from var(--color-secondary) 97% calc(c / 2) h);
+  --color-secondary-dark: oklch(
+    from var(--color-secondary) 68% calc(c * 2.5) h
+  );
+  --color-secondary-subtle: oklch(
+    from var(--color-secondary) 97% calc(c / 4) h
+  );
+  --color-secondary-muted: oklch(from var(--color-secondary) l calc(c * 0.5) h);
+  --color-accent: oklch(60.65% 0.0751 181.5deg);
+  --color-accent-light: oklch(from var(--color-accent) 75% c h);
+  --color-accent-dark: oklch(from var(--color-accent) 47% c h);
+  --color-accent-subtle: oklch(from var(--color-accent) 93% calc(c / 4) h);
+  --color-accent-muted: oklch(from var(--color-accent) l calc(c * 0.5) h);
+  --color-text: oklch(53.369% 0.1147 25.041deg);
+  --color-text-light: oklch(73.52% 0.1604 25.99deg); */
+
+  /* --- Color tokens light mode -200 -500 --- */
+
+  --bg-canvas: var(--blue-200);
+  --bg-surface: var(--lavender-300);
+  --bg-surface-raised: var(--blue-300);
+  --bg-subtle: var(--blue-400);
+  --bg-brand: var(--blue-200);
+  --text-primary: var(--cerulean-700);
+  --text-secondary: var(--azure-700);
+  --text-muted: var(--azure-600);
+  --text-on-brand: var(--azure-900);
+  --text-error: var(--red-600);
+  --text-success: var(--green-600);
+  --text-warning: var(--yellow-600);
+  --text-info: var(--blue-600);
+  --border-default: var(--cerulean-700);
+  --border-subtle: var(--azure-800);
+  --border-focus: var(--azure-500);
+  --border-brand: var(--red-600);
+  --action-hover: var(--red-400);
+  --action-active: var(--red-300);
+  --action-disabled: var(--lavender-700);
+  --status-success: var(--green-400);
+  --status-warning: var(--yellow-400);
+  --status-error: var(--red-400);
+  --status-info: var(--blue-400);
+
+  /* --- Shadow (Expanded Scale) --- */
+  --shadow:
+    rgb(0, 0, 0 / 10%) 0 10px 15px -3px, rgb(0, 0, 0 / 5%) 0 4px 6px -2px;
+
+  /* --- Typography (Expanded Scale) --- */
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-heading: system-ui, "Segoe UI", "Roboto", sans-serif;
+  --font-sans: ui-monospace, "Consolas", monospace;
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-md: 1.125rem; /* 18px */
+  --font-size-lg: 1.5rem; /* 24px */
+  --font-size-xl: 2rem; /* 32px */
+  --font-size-2xl: 3rem; /* 48px */
+  --font-size-3xl: 3.75rem; /* 60px */
+
+  /* --- Spacing System --- */
+  --space-1: 0.25rem; /* 4px */
+  --space-2: 0.5rem; /* 8px */
+  --space-3: 0.75rem; /* 12px */
+  --space-4: 1rem; /* 16px */
+  --space-6: 1.5rem; /* 24px */
+  --space-8: 2rem; /* 32px */
+  --space-12: 3rem; /* 48px */
+
+  /* --- Component Padding (Semantic) --- */
+  --p-sm: var(--space-2) var(--space-3);
+  --p-md: var(--space-4) var(--space-6);
+  --p-lg: var(--space-8) var(--space-12);
+
+  /* --- Border Radius --- */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* --- Elevation & Shadows--- */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
+  --shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 10%), 0 2px 4px -1px rgb(0, 0, 0 / 6%);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 10%), 0 4px 6px -2px rgb(0, 0, 0 /5%);
+
+  /* --- Z-Index Layering (Prevents "z-index: 999999" chaos) --- */
+  --z-negative: -1;
+  --z-base: 1;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 1000;
+  --z-tooltip: 1100;
+
+  /* --- Transitions & Timing --- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+:root.theme-dark {
+  --bg-canvas: var(--azure-900);
+  --bg-surface: var(--azure-700);
+  --bg-surface-raised: var(--azure-600);
+  --bg-subtle: var(--azure-600);
+  --bg-brand: var(--azure-900);
+  --text-primary: var(--red-200);
+  --text-secondary: var(--red-400);
+  --text-muted: var(--red-400);
+  --text-on-brand: var(--red-400);
+  --text-error: var(--red-300);
+  --text-success: var(--green-300);
+  --text-warning: var(--yellow-300);
+  --text-info: var(--blue-300);
+  --border-default: var(--azure-200);
+  --border-subtle: var(--azure-300);
+  --border-focus: var(--azure-400);
+  --border-brand: var(--red-400);
+  --action-hover: var(--red-300);
+  --action-active: var(--red-200);
+  --action-disabled: var(--lavender-800);
+  --status-success: var(--green-400);
+  --status-warning: var(--green-400);
+  --status-error: var(--red-400);
+  --status-info: var(--blue-400);
+  --shadow: rgb(0 0 0 / 40%) 0 10px 15px -3px, rgb(0 0 0 / 25%) 0 4px 6px -2px;
+}
+
+/* #social .button-icon {
+    filter: invert(1) brightness(2);
+  } */

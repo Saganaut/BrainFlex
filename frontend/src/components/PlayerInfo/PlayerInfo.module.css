@@ -3,14 +3,14 @@
 }
 
 .playerInfo {
-  border: 2px solid var(--color-primary-light);
-  border-radius: var(--border-radius-lg);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
   width: fit-content;
 
   .header {
-    padding: var(--padding-base-y);
+    padding: var(--p-sm);
     display: flex;
     flex-direction: row;
     gap: 20px;
@@ -23,47 +23,46 @@
       justify-content: space-between;
       width: 100%;
     }
+
     .imgWrapper {
       width: fit-content;
     }
+
     h5 {
       font-size: var(--font-size-md);
-      color: var(--color-text-light);
     }
   }
 
   div {
     img {
       border-radius: 9999px;
-      border: 2px solid var(--color-primary-light);
+      border: 2px solid var(--border-default);
     }
   }
 
   .playerStats {
     display: flex;
     flex-direction: column;
-    padding: var(--padding-base-y);
+    padding: var(--p-sm);
     max-height: 1000px;
-
     gap: 5px;
-
     transition:
       max-height 300ms ease-in-out,
       padding 300ms ease-in-out;
 
     &.isCollapsed {
-      max-height: 0px;
+      max-height: 0;
       overflow: hidden;
-      padding-top: 0px;
-      padding-bottom: 0px;
+      padding-top: 0;
+      padding-bottom: 0;
     }
 
     .statRow {
       display: flex;
       justify-content: space-between;
       padding: 4px 8px;
-      border-radius: var(--border-radius-md);
-      background-color: var(--color-primary-dark);
+      border-radius: var(--radius-md);
+      background-color: var(--bg-surface);
     }
   }
 }

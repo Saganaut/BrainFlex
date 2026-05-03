@@ -1,0 +1,215 @@
+.container {
+  padding: 24px;
+  display: grid;
+  gap: 32px;
+  max-width: 1260px;
+  margin: 0 auto;
+}
+
+.card {
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 6%);
+}
+
+.sectionTitle {
+  margin-bottom: 12px;
+  font-size: 1.4rem;
+  color: var(--text-primary);
+}
+
+.sectionDescription {
+  color: var(--text-secondary);
+  margin-top: 0;
+}
+
+.backLink {
+  color: var(--bg-brand);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.paletteContainer {
+  display: grid;
+  gap: 16px;
+}
+
+.paletteGroup {
+  display: grid;
+  gap: 12px;
+}
+
+.paletteGroupTitle {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.colorGrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.colorSwatch {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgb(0 0 0 / 8%);
+  background: var(--bg-canvas);
+}
+
+.colorBox {
+  height: 72px;
+  border-radius: 12px;
+  border: 1px solid rgb(0 0 0 / 8%);
+}
+
+.colorToken {
+  font-size: 12px;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.tokensContainer {
+  display: grid;
+  gap: 12px;
+}
+
+.tokenRow {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr auto;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  align-items: center;
+}
+
+.tokenLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tokenVar {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tokenSample {
+  width: 96px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-on-brand);
+  border: 1px solid var(--border-subtle);
+  font-size: 12px;
+}
+
+.examplesContainer {
+  display: grid;
+  gap: 16px;
+}
+
+.cardExample {
+  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+}
+
+.cardExampleTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cardExampleDescription {
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.buttonPrimary {
+  padding: 0.85rem 1.4rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--bg-brand);
+  color: var(--text-on-brand);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.buttonPrimary:hover {
+  opacity: 0.9;
+}
+
+.buttonSecondary {
+  padding: 0.85rem 1.4rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.buttonSecondary:hover {
+  opacity: 0.9;
+}
+
+.buttonDisabled {
+  padding: 0.85rem 1.4rem;
+  border-radius: 12px;
+  border: none;
+  background: var(--action-disabled);
+  color: var(--text-on-brand);
+  cursor: not-allowed;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.badgeGroup {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 0.6rem 1rem;
+  border-radius: 9999px;
+  color: var(--text-on-brand);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.badgeSuccess {
+  background: var(--status-success);
+}
+
+.badgeWarning {
+  background: var(--status-warning);
+}
+
+.badgeError {
+  background: var(--status-error);
+}
+
+.badgeInfo {
+  background: var(--status-info);
+}

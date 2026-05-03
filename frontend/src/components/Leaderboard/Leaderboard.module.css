@@ -4,10 +4,10 @@
 
 .leaderboard {
   display: flex;
-  border: 2px solid var(--color-primary-light);
+  border: 2px solid var(--border-default);
   flex-direction: column;
   width: fit-content;
-  border-radius: var(--border-radius-lg);
+  border-radius: var(--radius-lg);
 }
 
 .leaderboardHeader {
@@ -20,7 +20,6 @@
 
   .leaderboardTitle {
     font-size: var(--font-size-lg);
-    color: var(--color-text-light);
   }
 }
 
@@ -35,18 +34,18 @@
     padding 300ms ease-in-out;
 
   &.isCollapsed {
-    max-height: 0px;
+    max-height: 0;
     overflow: hidden;
-    padding-top: 0px;
-    padding-bottom: 0px;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 }
 
 .playerRow {
-  background-color: var(--color-primary-dark);
+  background-color: var(--bg-surface);
   display: flex;
   padding: 6px 10px;
-  border-radius: var(--border-radius-base);
+  border-radius: var(--radius-md);
   gap: 10px;
   justify-content: space-between;
 }

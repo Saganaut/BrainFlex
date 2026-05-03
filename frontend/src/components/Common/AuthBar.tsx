@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { useGuestLoginMutation } from "../../store/BrainFlexApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
+import { useTheme } from "../../hooks/useTheme";
 import { apiBaseUrl } from "../../store/emptyApi";
 
 export function AuthBar() {
   const { user, authenticated, isGuestSession, isLoading } = useCurrentUser();
+  const { theme, toggleTheme } = useTheme();
   const [guestName, setGuestName] = useState("");
   const [guestError, setGuestError] = useState<string | null>(null);
   const [guestLogin, { isLoading: guestLoading }] = useGuestLoginMutation();
@@ -65,6 +68,14 @@ export function AuthBar() {
         flexWrap: "wrap",
         borderBottom: "1px solid #ddd",
       }}>
+      <Link
+        to='/design-system'
+        style={{ color: "var(--bg-brand)", textDecoration: "underline" }}>
+        Design system
+      </Link>
+      <button type='button' onClick={toggleTheme}>
+        {theme === "dark" ? "Switch to light" : "Switch to dark"}
+      </button>
       {authenticated ? (
         <>
           <span>Signed in as {user?.userName}</span>

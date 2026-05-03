@@ -6,7 +6,14 @@ export default {
     "csstools/value-no-unknown-custom-properties": [
       true,
       {
-        importFrom: ["./src/index.css"],
+        importFrom: ["./src/tokens.css"],
+      },
+    ],
+    // using lowerCamelCase for compatibility with css modules
+    "selector-class-pattern": [
+      "^[a-z][a-zA-Z0-9]+$",
+      {
+        message: "Expected class selector to be lowerCamelCase",
       },
     ],
   },

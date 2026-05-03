@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
@@ -22,6 +23,11 @@ const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DesignSystemRoute = DesignSystemRouteImport.update({
+  id: '/design-system',
+  path: '/design-system',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -38,12 +44,14 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/design-system': typeof DesignSystemRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/design-system': typeof DesignSystemRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
 }
@@ -51,20 +59,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/design-system': typeof DesignSystemRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/register' | '/terms-and-conditions'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/design-system'
+    | '/register'
+    | '/terms-and-conditions'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/register' | '/terms-and-conditions'
-  id: '__root__' | '/' | '/about' | '/register' | '/terms-and-conditions'
+  to: '/' | '/about' | '/design-system' | '/register' | '/terms-and-conditions'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/design-system'
+    | '/register'
+    | '/terms-and-conditions'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  DesignSystemRoute: typeof DesignSystemRoute
   RegisterRoute: typeof RegisterRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
 }
@@ -83,6 +104,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/design-system': {
+      id: '/design-system'
+      path: '/design-system'
+      fullPath: '/design-system'
+      preLoaderRoute: typeof DesignSystemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -105,6 +133,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  DesignSystemRoute: DesignSystemRoute,
   RegisterRoute: RegisterRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
 }

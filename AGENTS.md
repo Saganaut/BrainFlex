@@ -223,9 +223,19 @@ Defined in `.env` at project root. Backend loads it via `spring.config.import=op
 
 **Backend**: Spring Boot test slice in `BrainflexApplicationTests.java` (context load test). Test starters for MongoDB, Redis, Security, and WebMVC are on the classpath.
 
-**Frontend**: No test files currently. ESLint is configured for code quality.
+Controller tests added:
 
-When adding backend tests, use the test starters already present in `pom.xml` — no new dependencies needed for standard Spring test slices.
+- `HealthControllerTest.java` - Tests `/api/health` endpoint with mocked MongoDB and Redis connections
+- `UserControllerTest.java` - Tests leaderboard, user profile, and username check endpoints
+- `AuthControllerTest.java` - Tests auth endpoints including guest login and registration
+
+Service tests added:
+
+- `UserServiceTest.java` - Tests user creation, registration, and username validation logic
+
+When adding backend tests, use the test starters already present in `pom.xml` — no new dependencies needed for standard Spring test slices. Use `@MockitoBean` for mocking in Spring Boot 4 tests. Tests use the "test" profile with `TestSecurityConfig` that permits all requests to avoid authentication redirects.
+
+**Frontend**: No test files currently. ESLint is configured for code quality.
 
 ---
 

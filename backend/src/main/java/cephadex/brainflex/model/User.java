@@ -30,6 +30,9 @@ public class User {
 
     private Boolean newsletter;
 
+    private Boolean isClosed;
+    private LocalDateTime closedAt;
+
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt = LocalDateTime.now();
 }

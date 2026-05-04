@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { useGuestLoginMutation } from "../../store/BrainFlexApi";
-import { useCurrentUser } from "../../hooks/useCurrentUser";
-import { useTheme } from "../../hooks/useTheme";
-import { apiBaseUrl } from "../../store/emptyApi";
+import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useTheme } from "../../../hooks/useTheme";
+import { useGuestLoginMutation } from "../../../store/BrainFlexApi";
+import { apiBaseUrl } from "../../../store/emptyApi";
+import styles from "./NavBar.module.css";
 
-export function AuthBar() {
+export function NavBar() {
   const { user, authenticated, isGuestSession, isLoading } = useCurrentUser();
   const { theme, toggleTheme } = useTheme();
   const [guestName, setGuestName] = useState("");
@@ -59,26 +60,15 @@ export function AuthBar() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        gap: "1rem",
-        padding: "1rem",
-        alignItems: "center",
-        flexWrap: "wrap",
-        borderBottom: "1px solid #ddd",
-      }}>
-      <Link
-        to='/design-system'
-        style={{ color: "var(--bg-brand)", textDecoration: "underline" }}>
-        Design system
-      </Link>
+    <div className={styles.navContainer}>
+      <Link to='/design-system'>Design system</Link>
       <button type='button' onClick={toggleTheme}>
         {theme === "dark" ? "Switch to light" : "Switch to dark"}
       </button>
       {authenticated ? (
         <>
           <span>Signed in as {user?.userName}</span>
+          <Link to='/account'>Account</Link>
           <button onClick={handleLogout}>Logout</button>
         </>
       ) : isGuestSession ? (

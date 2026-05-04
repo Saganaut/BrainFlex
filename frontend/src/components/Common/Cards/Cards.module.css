@@ -1,0 +1,18 @@
+.card {
+  --color: var(--text-primary);
+  --background-color: var(--bg-surface);
+  --border-color: var(--border-default);
+
+  background-color: var(--background-color);
+  color: var(--color);
+  border-color: var(--border-color);
+
+  .header {
+  }
+
+  .body {
+  }
+
+  .footer {
+  }
+}

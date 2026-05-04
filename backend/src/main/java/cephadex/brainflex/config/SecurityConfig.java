@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,6 +37,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
@@ -84,7 +86,9 @@ public class SecurityConfig {
                 request.getSession(false).removeAttribute("guestId");
             }
 
-            boolean userExists = userRepository.findByGoogleId(googleId).isPresent();
+            boolean userExists = userRepository.findByGoogleId(googleId)
+                    .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()))
+                    .isPresent();
 
             if (userExists) {
                 // User user = userRepository.findByGoogleId(googleId).get();

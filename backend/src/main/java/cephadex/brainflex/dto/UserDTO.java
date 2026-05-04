@@ -45,6 +45,7 @@ public sealed interface UserDTO {
             String googleId,
             String pictureUrl,
             PlayerStats stats,
+            Boolean newsletter,
             LocalDateTime lastLogin,
             LocalDateTime createdAt)
             implements UserDTO, View {
@@ -58,6 +59,7 @@ public sealed interface UserDTO {
                     user.getGoogleId(),
                     user.getPictureUrl(),
                     user.getStats(),
+                    user.getNewsletter(),
                     user.getLastLogin(),
                     user.getCreatedAt());
         }

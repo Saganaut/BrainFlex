@@ -1,20 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import styles from "./DesignSystem.module.css";
+import { Btn } from "../../components/Common/Buttons/Btn";
+import { Card } from "../../components/Common/Cards/Card";
 
 const colorPalette = [
-  {
-    label: "Azure",
-    tokens: [
-      "--azure-200",
-      "--azure-300",
-      "--azure-400",
-      "--azure-500",
-      "--azure-600",
-      "--azure-700",
-      "--azure-800",
-      "--azure-900",
-    ],
-  },
   {
     label: "Red",
     tokens: [
@@ -67,19 +56,7 @@ const colorPalette = [
       "--turqoise-900",
     ],
   },
-  {
-    label: "Cerulean",
-    tokens: [
-      "--cerulean-200",
-      "--cerulean-300",
-      "--cerulean-400",
-      "--cerulean-500",
-      "--cerulean-600",
-      "--cerulean-700",
-      "--cerulean-800",
-      "--cerulean-900",
-    ],
-  },
+
   {
     label: "Blue",
     tokens: [
@@ -130,19 +107,6 @@ const colorPalette = [
       "--mulberry-700",
       "--mulberry-800",
       "--mulberry-900",
-    ],
-  },
-  {
-    label: "Flamingo",
-    tokens: [
-      "--flamingo-200",
-      "--flamingo-300",
-      "--flamingo-400",
-      "--flamingo-500",
-      "--flamingo-600",
-      "--flamingo-700",
-      "--flamingo-800",
-      "--flamingo-900",
     ],
   },
 ];
@@ -245,10 +209,19 @@ export function DesignSystem() {
         <div className={styles.sectionTitle}>Example components</div>
         <div className={styles.examplesContainer}>
           <div className={styles.cardExample}>
-            <div className={styles.cardExampleTitle}>Card surface</div>
-            <div className={styles.cardExampleDescription}>
-              Use surface palettes for card backgrounds, panels, and groups.
-            </div>
+            <Card
+              header={<h3>Header</h3>}
+              body={
+                <p>
+                  Lorem ipsum dolor sit, amet consectetur adipisicing elit. A,
+                  architecto! Tempore illo eos voluptatibus optio dolorem qui, .
+                </p>
+              }
+              footer={<span>Footer</span>}
+              onClick={() => {
+                console.log("this is a footer");
+              }}
+            />
           </div>
 
           <div className={styles.buttonGroup}>
@@ -270,6 +243,22 @@ export function DesignSystem() {
               Error
             </span>
             <span className={`${styles.badge} ${styles.badgeInfo}`}>Info</span>
+          </div>
+
+          <div className={styles.buttonGroup}>
+            <Btn children={<span>Primary md</span>} />
+            <Btn size={"sm"} children={<span>Primary sm</span>} />
+            <Btn size={"lg"} children={<span>Primary lg</span>} />
+
+            <Btn variant={"error"} children={<span>Error </span>} />
+            <Btn variant={"success"} children={<span>Success </span>} />
+            <Btn variant={"warning"} children={<span>Warning </span>} />
+            <Btn variant={"info"} children={<span>Info</span>} />
+            <Btn disabled={true} children={<span>Disabled </span>} />
+            <Btn shape={"pill"} children={<span>Pill</span>} />
+            <Btn shape={"pill"} size={"sm"} children={<span>Pill sm</span>} />
+            <Btn shape={"pill"} size={"lg"} children={<span>Pill lg</span>} />
+            <Btn children={<span>Primary lg</span>} />
           </div>
         </div>
       </div>

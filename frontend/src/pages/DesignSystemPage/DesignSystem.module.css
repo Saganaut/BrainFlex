@@ -28,7 +28,6 @@
 }
 
 .backLink {
-  color: var(--bg-brand);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -146,7 +145,6 @@
 .buttonPrimary {
   padding: 0.85rem 1.4rem;
   border-radius: 12px;
-  border: none;
   background: var(--bg-brand);
   color: var(--text-on-brand);
   cursor: pointer;
@@ -161,7 +159,7 @@
 .buttonSecondary {
   padding: 0.85rem 1.4rem;
   border-radius: 12px;
-  border: 1px solid var(--border-default);
+  border: 2px solid var(--border-default);
   background: var(--bg-canvas);
   color: var(--text-primary);
   cursor: pointer;
@@ -176,7 +174,6 @@
 .buttonDisabled {
   padding: 0.85rem 1.4rem;
   border-radius: 12px;
-  border: none;
   background: var(--action-disabled);
   color: var(--text-on-brand);
   cursor: not-allowed;

@@ -21,6 +21,18 @@ services:
       ["redis-server", "--requirepass", "password", "--protected-mode", "no"]
     volumes:
       - redis-data:/data
+  garage:
+    image: dxflrs/garage:v1.0.1
+    container_name: brainflex-garage
+    ports:
+      - "3900:3900"   # S3 API
+      - "3903:3903"   # Admin API
+    volumes:
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+      - ./garage.toml:/etc/garage.toml:ro
 volumes:
   mongo-data:
   redis-data:
+  garage-meta:
+  garage-data:

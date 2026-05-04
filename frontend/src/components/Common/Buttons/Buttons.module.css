@@ -1,3 +1,88 @@
+.btn {
+  --border-color: var(--border-default);
+  --color: var(--text-primary);
+  --background-color: var(--bg-surface);
+
+  display: flex;
+  align-items: center;
+  height: fit-content;
+  width: fit-content;
+  border-radius: var(--radius-lg);
+  color: var(--color);
+  background-color: var(--background-color);
+  border-color: var(--border-color);
+  transition:
+    background-color 300ms ease-in-out,
+    color 300ms ease-in-out,
+    border-color 300ms ease-in-out;
+
+  &.sm {
+    padding: var(--p-sm);
+    font-size: var(--font-size-xs);
+    border-radius: var(--radius-md);
+  }
+
+  &.md {
+    padding: var(--p-md);
+    font-size: var(--font-size-md);
+  }
+
+  &.lg {
+    padding: var(--p-lg);
+    font-size: var(--font-size-lg);
+    border-radius: var(--radius-lg);
+  }
+
+  &.pill {
+    border-radius: var(--radius-full);
+  }
+
+  &.error {
+    --border-color: var(--text-error);
+    --color: var(--text-error);
+    --background-color: var(--bg-error);
+  }
+
+  &.success {
+    --border-color: var(--text-success);
+    --color: var(--text-success);
+    --background-color: var(--bg-success);
+  }
+
+  &.warning {
+    --border-color: var(--text-warning);
+    --color: var(--text-warning);
+    --background-color: var(--bg-warning);
+  }
+
+  &.info {
+    --border-color: var(--text-info);
+    --color: var(--text-info);
+    --background-color: var(--bg-info);
+  }
+
+  &.error,
+  &.info,
+  &.success,
+  &.warning {
+    &:hover {
+      border-color: oklch(
+        from var(--border-color) calc(l - 0.1) calc(c + 0.02) h
+      );
+      color: oklch(from var(--color) calc(l - 0.1) calc(c + 0.01) h);
+      background-color: oklch(
+        from var(--background-color) calc(l + 0.8) calc(c + 0.02) h
+      );
+    }
+  }
+
+  &.isDisabled,
+  &.isDisabled:hover {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+}
+
 svg {
   height: 20px;
   width: 20px;

@@ -6,6 +6,9 @@ import babel from "@rolldown/plugin-babel";
 
 // https://vite.dev/config/
 export default defineConfig({
+  css: {
+    devSourcemap: true,
+  },
   plugins: [
     tanstackRouter({
       target: "react",

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.RegisterRequest;
+import cephadex.brainflex.dto.UpdateProfileRequest;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 
@@ -23,8 +24,26 @@ public class UserService {
     public User register(OAuth2User oAuth2User, RegisterRequest request) {
         String googleId = oAuth2User.getAttribute("sub");
 
-        if (userRepository.findByGoogleId(googleId).isPresent())
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already registered");
+        var existingByGoogleId = userRepository.findByGoogleId(googleId);
+        if (existingByGoogleId.isPresent()) {
+            User existing = existingByGoogleId.get();
+            if (!Boolean.TRUE.equals(existing.getIsClosed()))
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "User already registered");
+
+            // Reopen a closed account — username check excludes the user's own record
+            var usernameTaken = userRepository.findByUserName(request.username());
+            if (usernameTaken.isPresent() && !usernameTaken.get().getId().equals(existing.getId()))
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
+
+            existing.setIsClosed(false);
+            existing.setClosedAt(null);
+            existing.setUserName(request.username());
+            existing.setNewsletter(request.newsletter());
+            existing.setPictureUrl(oAuth2User.getAttribute("picture"));
+            existing.setName(oAuth2User.getAttribute("name"));
+            existing.setLastLogin(LocalDateTime.now());
+            return userRepository.save(existing);
+        }
 
         if (userRepository.findByUserName(request.username()).isPresent())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
@@ -56,5 +75,21 @@ public class UserService {
 
     public boolean isUsernameAvailable(String username) {
         return userRepository.findByUserName(username).isEmpty();
+    }
+
+    public User updateProfile(User user, UpdateProfileRequest request) {
+        if (request.pictureUrl() != null && !request.pictureUrl().isBlank()) {
+            user.setPictureUrl(request.pictureUrl());
+        }
+        if (request.newsletter() != null) {
+            user.setNewsletter(request.newsletter());
+        }
+        return userRepository.save(user);
+    }
+
+    public void closeAccount(User user) {
+        user.setIsClosed(true);
+        user.setClosedAt(LocalDateTime.now());
+        userRepository.save(user);
     }
 }

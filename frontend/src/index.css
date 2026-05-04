@@ -55,6 +55,10 @@ body {
   color: var(--text-primary);
 }
 
+a {
+  color: var(--text-primary);
+}
+
 h1,
 h2,
 h3,
@@ -91,15 +95,10 @@ button {
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-weight: 700;
-  background-color: var(--bg-surface-raised);
+  background-color: transparent;
   transition:
     color 300ms ease-in-out,
     border-color 300ms ease-in-out;
-
-  &:hover {
-    border: 2px solid var(--action-hover);
-    color: var(--action-hover);
-  }
 }
 
 code,

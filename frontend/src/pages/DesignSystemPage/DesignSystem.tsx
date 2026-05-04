@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import styles from "./DesignSystem.module.css";
 import { Btn } from "../../components/Common/Buttons/Btn";
 import { Card } from "../../components/Common/Cards/Card";
+import { Badge } from "../../components/Common/Badge";
 
 const colorPalette = [
   {
@@ -179,42 +180,18 @@ export function DesignSystem() {
           Back to home
         </Link>
       </div>
-
-      <div className={styles.card}>
-        <div className={styles.sectionTitle}>Color palette</div>
-        <div className={styles.paletteContainer}>
-          {colorPalette.map((group) => (
-            <div key={group.label} className={styles.paletteGroup}>
-              <div className={styles.paletteGroupTitle}>{group.label}</div>
-              <div className={styles.colorGrid}>
-                {group.tokens.map((token) => (
-                  <ColorSwatch key={token} token={token} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className={styles.card}>
-        <div className={styles.sectionTitle}>Semantic tokens</div>
-        <div className={styles.tokensContainer}>
-          {semanticTokens.map((token) => (
-            <TokenRow key={token} token={token} />
-          ))}
-        </div>
-      </div>
-
       <div className={styles.card}>
         <div className={styles.sectionTitle}>Example components</div>
         <div className={styles.examplesContainer}>
-          <div className={styles.cardExample}>
+          <h4> Cards </h4>
+          <div className={styles.cardContainer}>
             <Card
-              header={<h3>Header</h3>}
+              header={<h5>Header</h5>}
               body={
                 <p>
-                  Lorem ipsum dolor sit, amet consectetur adipisicing elit. A,
-                  architecto! Tempore illo eos voluptatibus optio dolorem qui, .
+                  Chuck Norris’ tears cure cancer. Too bad he has never cried.
+                  Chuck Norris can have both feet on the ground and kick butt at
+                  the same time.
                 </p>
               }
               footer={<span>Footer</span>}
@@ -222,29 +199,48 @@ export function DesignSystem() {
                 console.log("this is a footer");
               }}
             />
+            <Card
+              header={<h5>Header</h5>}
+              body={
+                <div>
+                  <img src='https://picsum.photos/200/200' />
+                  <p>
+                    Chuck Norris’ tears cure cancer. Too bad he has never cried.
+                    Chuck Norris can have both feet on the ground and kick butt
+                    at the same time.
+                  </p>{" "}
+                </div>
+              }
+              footer={<span>Footer</span>}
+              onClick={() => {
+                console.log("this is a footer");
+              }}
+            />
+            <Card
+              header={<h5>Header</h5>}
+              body={
+                <div>
+                  <img src='https://picsum.photos/200/200' />
+                </div>
+              }
+              footer={<span>Footer</span>}
+              onClick={() => {
+                console.log("this is a footer");
+              }}
+            />
           </div>
-
-          <div className={styles.buttonGroup}>
-            <button className={styles.buttonPrimary}>Primary action</button>
-            <button className={styles.buttonSecondary}>Secondary action</button>
-            <button className={styles.buttonDisabled} disabled>
-              Disabled
-            </button>
-          </div>
+          <h4> Badges </h4>
 
           <div className={styles.badgeGroup}>
-            <span className={`${styles.badge} ${styles.badgeSuccess}`}>
-              Success
-            </span>
-            <span className={`${styles.badge} ${styles.badgeWarning}`}>
-              Warning
-            </span>
-            <span className={`${styles.badge} ${styles.badgeError}`}>
-              Error
-            </span>
-            <span className={`${styles.badge} ${styles.badgeInfo}`}>Info</span>
+            <Badge label={"Error"} variant={"error"} />
+            <Badge label={"Success"} variant={"success"} />
+            <Badge label={"Warning"} variant={"warning"} />
+            <Badge label={"Info"} variant={"info"} />
           </div>
-
+          <div className={styles.badgeGroup}>
+            <Badge label={"Info Lg"} size={"lg"} variant={"info"} />
+          </div>
+          <h4> Buttons </h4>
           <div className={styles.buttonGroup}>
             <Btn children={<span>Primary md</span>} />
             <Btn size={"sm"} children={<span>Primary sm</span>} />
@@ -260,6 +256,29 @@ export function DesignSystem() {
             <Btn shape={"pill"} size={"lg"} children={<span>Pill lg</span>} />
             <Btn children={<span>Primary lg</span>} />
           </div>
+        </div>
+      </div>
+      <div className={styles.card}>
+        <div className={styles.sectionTitle}>Color palette</div>
+        <div className={styles.paletteContainer}>
+          {colorPalette.map((group) => (
+            <div key={group.label} className={styles.paletteGroup}>
+              <div className={styles.paletteGroupTitle}>{group.label}</div>
+              <div className={styles.colorGrid}>
+                {group.tokens.map((token) => (
+                  <ColorSwatch key={token} token={token} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>{" "}
+      <div className={styles.card}>
+        <div className={styles.sectionTitle}>Semantic tokens</div>
+        <div className={styles.tokensContainer}>
+          {semanticTokens.map((token) => (
+            <TokenRow key={token} token={token} />
+          ))}
         </div>
       </div>
     </div>

@@ -118,11 +118,20 @@
   gap: 16px;
 }
 
+.cardContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
 .cardExample {
+  display: flex;
   padding: 20px;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: 16px;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .cardExampleTitle {
@@ -196,17 +205,17 @@
 }
 
 .badgeSuccess {
-  background: var(--status-success);
+  background: var(--bg-success);
 }
 
 .badgeWarning {
-  background: var(--status-warning);
+  background: var(--bg-warning);
 }
 
 .badgeError {
-  background: var(--status-error);
+  background: var(--bg-error);
 }
 
 .badgeInfo {
-  background: var(--status-info);
+  background: var(--bg-info);
 }

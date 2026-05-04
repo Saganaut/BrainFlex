@@ -22,13 +22,19 @@ const Card = ({
   orientation = "portrait",
   onClick,
 }: CardProps) => {
+  const clickable = onClick != null ? "isClickable" : "";
   return (
     <div
       onClick={onClick}
-      className={`${[styles.card, styles[orientation], styles[size], styles[variant]].join(" ")}`}>
+      className={`${[
+        styles.card,
+        styles[orientation],
+        styles[clickable],
+        styles[size],
+        styles[variant],
+      ].join(" ")}`}>
       <div className={styles.header}>{header}</div>
       <div className={styles.body}>{body}</div>
-
       <div className={styles.footer}>{footer}</div>
     </div>
   );

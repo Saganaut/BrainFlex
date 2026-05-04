@@ -1,7 +1,7 @@
 .btn {
-  --border-color: var(--border-default);
+  --border-color: var(--lavender-600);
   --color: var(--text-primary);
-  --background-color: var(--bg-surface);
+  --background-color: var(--lavender-200);
 
   display: flex;
   align-items: center;

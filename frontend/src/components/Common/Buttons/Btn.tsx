@@ -25,7 +25,16 @@ const Btn = ({
   const withIcon = icon ? "withIcon" : "";
   return (
     <button
-      className={`${[styles.btn, styles[iconPosition], styles[shape], styles[isDisabled], styles[size], styles[variant], styles[type], styles[withIcon]].join(" ")}`}>
+      className={`${[
+        styles.btn,
+        styles[iconPosition],
+        styles[shape],
+        styles[isDisabled],
+        styles[size],
+        styles[variant],
+        styles[type],
+        styles[withIcon],
+      ].join(" ")}`}>
       {icon != null && <span>{icon}</span>}
       {children}
     </button>

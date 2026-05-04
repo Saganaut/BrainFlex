@@ -1,9 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { TermsPage } from "../pages/TermsPage";
 
 export const Route = createFileRoute("/terms-and-conditions")({
-  component: RouteComponent,
+  component: TermsPage,
 });
-
-function RouteComponent() {
-  return <div>Hello "/terms-and-conditions"!</div>;
-}

@@ -1,0 +1,32 @@
+.badge {
+  padding: var(--p-xs);
+  border-radius: 9999px;
+  color: var(--text-on-brand);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+
+  &.success {
+    background: var(--bg-success);
+    color: var(--text-success);
+  }
+
+  &.warning {
+    background: var(--bg-warning);
+    color: var(--text-warning);
+  }
+
+  &.error {
+    background: var(--bg-error);
+    color: var(--text-error);
+  }
+
+  &.info {
+    background: var(--bg-info);
+    color: var(--text-info);
+  }
+
+  &.lg {
+    padding: var(--p-sm);
+    font-size: var(--font-size-md);
+  }
+}

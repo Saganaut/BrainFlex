@@ -114,6 +114,23 @@ code {
   background: var(--bg-canvas);
 }
 
+img {
+  /* 1. Remove the 'inline' gap at the bottom */
+  display: block;
+
+  /* 2. Responsive: make sure they don't overflow their container */
+  max-width: 100%;
+
+  /* 3. Maintain aspect ratio while being responsive */
+  height: auto;
+
+  /* 4. Improve scaling quality */
+  interpolation-mode: high-quality;
+
+  /* 5. Prevent selection issues during drags */
+  -webkit-user-drag: none;
+}
+
 input {
   border: 2px solid var(--border-default);
   border-radius: var(--radius-md);

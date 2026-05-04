@@ -111,7 +111,7 @@
   /** Background Variants  <= 500 **/
   --bg-canvas: var(--blue-200);
   --bg-surface: var(--blue-300);
-  --bg-surface-raised: var(--blue-400);
+  --bg-surface-raised: var(--turqoise-200);
   --bg-subtle: var(--blue-400);
   --bg-brand: var(--blue-900);
   --bg-disabled: var(--grey-200);
@@ -123,9 +123,9 @@
   --bg-warning: var(--yellow-200);
 
   /** Text variants >= 600 **/
-  --text-primary: var(--red-700);
-  --text-secondary: var(--turqoise-700);
-  --text-muted: var(--red-400);
+  --text-primary: var(--lavender-700);
+  --text-secondary: var(--blue-900);
+  --text-muted: var(--red-200);
   --text-on-brand: var(--red-400);
 
   /** Text States >= 600 **/
@@ -136,7 +136,7 @@
   --text-disabled: var(--grey-300);
 
   /** Borders >= 600  **/
-  --border-default: var(--blue-200);
+  --border-default: var(--blue-400);
   --border-subtle: var(--blue-300);
   --border-focus: var(--blue-400);
   --border-brand: var(--red-400);
@@ -180,6 +180,7 @@
   --space-12: 3rem; /* 48px */
 
   /* --- Component Padding (Semantic) --- */
+  --p-xs: var(--space-1) var(--space-3);
   --p-sm: var(--space-2) var(--space-3);
   --p-md: var(--space-4) var(--space-6);
   --p-lg: var(--space-8) var(--space-12);

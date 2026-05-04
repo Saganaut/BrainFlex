@@ -53,7 +53,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
           <div>
             <label htmlFor='terms'>
               Agree to our{" "}
-              <Link to='/terms-and-conditions'>Terms &amp; Conditions</Link>
+              <Link to='/terms-and-conditions' viewTransition>
+                Terms &amp; Conditions
+              </Link>
             </label>
             <input
               id='terms'

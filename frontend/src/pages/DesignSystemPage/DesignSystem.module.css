@@ -1,35 +1,63 @@
 .container {
-  padding: 24px;
+  padding: var(--p-lg);
   display: grid;
-  gap: 32px;
-  max-width: 1260px;
+  gap: var(--space-6);
+  max-width: var(--max-screen-width);
   margin: 0 auto;
-}
 
-.card {
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 24px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
-  box-shadow: 0 10px 24px rgb(0 0 0 / 6%);
-}
+  section {
+    border-radius: var(--radius-lg);
+    padding: var(--p-sm);
+    margin-bottom: 24px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
 
-.sectionTitle {
-  margin-bottom: 12px;
-  font-size: 1.4rem;
-  color: var(--text-primary);
-}
+    .sectionTitle {
+      margin-bottom: 12px;
+      font-size: 1.4rem;
+      color: var(--text-primary);
+    }
 
-.sectionDescription {
-  color: var(--text-secondary);
-  margin-top: 0;
-}
+    .sectionDescription {
+      color: var(--text-secondary);
+      margin-top: 0;
+    }
 
-.backLink {
-  text-decoration: underline;
-  cursor: pointer;
+    .examplesContainer {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+
+      h4 {
+        font-size: var(--font-size-xl);
+        padding: var(--p-md);
+      }
+
+      .cardComponentContainer {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-2);
+        padding-bottom: var(--space-4);
+      }
+
+      .badgeGroup {
+        display: flex;
+        gap: var(--space-3);
+      }
+
+      .buttonGroup {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-3);
+      }
+
+      .toastGroup {
+        display: flex;
+        gap: var(--space-3);
+      }
+    }
+  }
 }
 
 .paletteContainer {
@@ -111,111 +139,4 @@
   color: var(--text-on-brand);
   border: 1px solid var(--border-subtle);
   font-size: 12px;
-}
-
-.examplesContainer {
-  display: grid;
-  gap: 16px;
-}
-
-.cardContainer {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.cardExample {
-  display: flex;
-  padding: 20px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: 16px;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.cardExampleTitle {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.cardExampleDescription {
-  color: var(--text-secondary);
-  margin-top: 8px;
-}
-
-.buttonGroup {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.buttonPrimary {
-  padding: 0.85rem 1.4rem;
-  border-radius: 12px;
-  background: var(--bg-brand);
-  color: var(--text-on-brand);
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color var(--duration-fast) var(--ease-out);
-}
-
-.buttonPrimary:hover {
-  opacity: 0.9;
-}
-
-.buttonSecondary {
-  padding: 0.85rem 1.4rem;
-  border-radius: 12px;
-  border: 2px solid var(--border-default);
-  background: var(--bg-canvas);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color var(--duration-fast) var(--ease-out);
-}
-
-.buttonSecondary:hover {
-  opacity: 0.9;
-}
-
-.buttonDisabled {
-  padding: 0.85rem 1.4rem;
-  border-radius: 12px;
-  background: var(--action-disabled);
-  color: var(--text-on-brand);
-  cursor: not-allowed;
-  opacity: 0.9;
-  font-weight: 500;
-}
-
-.badgeGroup {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.badge {
-  padding: 0.6rem 1rem;
-  border-radius: 9999px;
-  color: var(--text-on-brand);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.badgeSuccess {
-  background: var(--bg-success);
-}
-
-.badgeWarning {
-  background: var(--bg-warning);
-}
-
-.badgeError {
-  background: var(--bg-error);
-}
-
-.badgeInfo {
-  background: var(--bg-info);
 }

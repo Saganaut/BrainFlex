@@ -18,6 +18,7 @@ const Btn = ({
   iconPosition = "left",
   type = "button",
   shape = "default",
+  onClick,
   icon,
   children,
 }: BtnProps) => {
@@ -25,6 +26,9 @@ const Btn = ({
   const withIcon = icon ? "withIcon" : "";
   return (
     <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
       className={`${[
         styles.btn,
         styles[iconPosition],

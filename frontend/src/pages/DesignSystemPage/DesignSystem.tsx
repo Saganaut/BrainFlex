@@ -3,141 +3,9 @@ import styles from "./DesignSystem.module.css";
 import { Btn } from "../../components/Common/Buttons/Btn";
 import { Card } from "../../components/Common/Cards/Card";
 import { Badge } from "../../components/Common/Badge";
-
-const colorPalette = [
-  {
-    label: "Red",
-    tokens: [
-      "--red-200",
-      "--red-300",
-      "--red-400",
-      "--red-500",
-      "--red-600",
-      "--red-700",
-      "--red-800",
-      "--red-900",
-    ],
-  },
-  {
-    label: "Yellow",
-    tokens: [
-      "--yellow-200",
-      "--yellow-300",
-      "--yellow-400",
-      "--yellow-500",
-      "--yellow-600",
-      "--yellow-700",
-      "--yellow-800",
-      "--yellow-900",
-    ],
-  },
-  {
-    label: "Green",
-    tokens: [
-      "--green-200",
-      "--green-300",
-      "--green-400",
-      "--green-500",
-      "--green-600",
-      "--green-700",
-      "--green-800",
-      "--green-900",
-    ],
-  },
-  {
-    label: "Turqoise",
-    tokens: [
-      "--turqoise-200",
-      "--turqoise-300",
-      "--turqoise-400",
-      "--turqoise-500",
-      "--turqoise-600",
-      "--turqoise-700",
-      "--turqoise-800",
-      "--turqoise-900",
-    ],
-  },
-
-  {
-    label: "Blue",
-    tokens: [
-      "--blue-200",
-      "--blue-300",
-      "--blue-400",
-      "--blue-500",
-      "--blue-600",
-      "--blue-700",
-      "--blue-800",
-      "--blue-900",
-    ],
-  },
-  {
-    label: "Lavender",
-    tokens: [
-      "--lavender-200",
-      "--lavender-300",
-      "--lavender-400",
-      "--lavender-500",
-      "--lavender-600",
-      "--lavender-700",
-      "--lavender-800",
-      "--lavender-900",
-    ],
-  },
-  {
-    label: "Fuchsia",
-    tokens: [
-      "--fuchsia-200",
-      "--fuchsia-300",
-      "--fuchsia-400",
-      "--fuchsia-500",
-      "--fuchsia-600",
-      "--fuchsia-700",
-      "--fuchsia-800",
-      "--fuchsia-900",
-    ],
-  },
-  {
-    label: "Mulberry",
-    tokens: [
-      "--mulberry-200",
-      "--mulberry-300",
-      "--mulberry-400",
-      "--mulberry-500",
-      "--mulberry-600",
-      "--mulberry-700",
-      "--mulberry-800",
-      "--mulberry-900",
-    ],
-  },
-];
-
-const semanticTokens = [
-  "--bg-canvas",
-  "--bg-surface",
-  "--bg-surface-raised",
-  "--bg-subtle",
-  "--bg-brand",
-  "--text-primary",
-  "--text-secondary",
-  "--text-muted",
-  "--text-on-brand",
-  "--text-error",
-  "--text-success",
-  "--text-warning",
-  "--text-info",
-  "--border-default",
-  "--border-subtle",
-  "--border-focus",
-  "--border-brand",
-  "--action-hover",
-  "--action-active",
-  "--action-disabled",
-  "--status-success",
-  "--status-warning",
-  "--status-error",
-  "--status-info",
-];
+import { colorPalette, semanticTokens } from "./data";
+import { Toast } from "../../components/Common/Toast/Toast";
+import { useModal } from "../../context/ModalProvider";
 
 function ColorSwatch({ token }: { token: string }) {
   return (
@@ -168,9 +36,20 @@ function TokenRow({ token }: { token: string }) {
 }
 
 export function DesignSystem() {
+  const { openModal, closeModal } = useModal();
+
+  const openDesignModal = () => {
+    const modalConfig = {
+      title: "Design Modal",
+      content: <div>This is the content, it can be any React Node</div>,
+    };
+
+    openModal(modalConfig);
+  };
+
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
+      <div>
         <div className={styles.sectionTitle}>Design System</div>
         <p className={styles.sectionDescription}>
           A quick view of the app palette, semantic token set, and simple
@@ -180,11 +59,11 @@ export function DesignSystem() {
           Back to home
         </Link>
       </div>
-      <div className={styles.card}>
+      <section>
         <div className={styles.sectionTitle}>Example components</div>
         <div className={styles.examplesContainer}>
           <h4> Cards </h4>
-          <div className={styles.cardContainer}>
+          <div className={styles.cardComponentContainer}>
             <Card
               header={<h5>Header</h5>}
               body={
@@ -229,8 +108,52 @@ export function DesignSystem() {
               }}
             />
           </div>
+          <h4> Modal </h4>
+          <div className={styles.modalGroup}>
+            <Btn onClick={() => openDesignModal()} size={"sm"} shape={"pill"}>
+              Open Modal{" "}
+            </Btn>
+          </div>
+          <h4> Toasts </h4>
+          <div className={styles.toastGroup}>
+            <Toast
+              id={"0"}
+              onDismiss={() => {
+                console.log("dismissed");
+              }}
+              duration={10}
+              variant={"error"}
+              message={"error"}
+            />
+            <Toast
+              id={"0"}
+              onDismiss={() => {
+                console.log("dismissed");
+              }}
+              duration={10}
+              variant={"success"}
+              message={"success"}
+            />{" "}
+            <Toast
+              id={"0"}
+              onDismiss={() => {
+                console.log("dismissed");
+              }}
+              duration={10}
+              variant={"warning"}
+              message={"warning"}
+            />
+            <Toast
+              id={"0"}
+              onDismiss={() => {
+                console.log("dismissed");
+              }}
+              duration={10}
+              variant={"info"}
+              message={"info"}
+            />
+          </div>
           <h4> Badges </h4>
-
           <div className={styles.badgeGroup}>
             <Badge label={"Error"} variant={"error"} />
             <Badge label={"Success"} variant={"success"} />
@@ -245,7 +168,6 @@ export function DesignSystem() {
             <Btn children={<span>Primary md</span>} />
             <Btn size={"sm"} children={<span>Primary sm</span>} />
             <Btn size={"lg"} children={<span>Primary lg</span>} />
-
             <Btn variant={"error"} children={<span>Error </span>} />
             <Btn variant={"success"} children={<span>Success </span>} />
             <Btn variant={"warning"} children={<span>Warning </span>} />
@@ -257,8 +179,8 @@ export function DesignSystem() {
             <Btn children={<span>Primary lg</span>} />
           </div>
         </div>
-      </div>
-      <div className={styles.card}>
+      </section>
+      <section>
         <div className={styles.sectionTitle}>Color palette</div>
         <div className={styles.paletteContainer}>
           {colorPalette.map((group) => (
@@ -272,15 +194,15 @@ export function DesignSystem() {
             </div>
           ))}
         </div>
-      </div>{" "}
-      <div className={styles.card}>
+      </section>{" "}
+      <section>
         <div className={styles.sectionTitle}>Semantic tokens</div>
         <div className={styles.tokensContainer}>
           {semanticTokens.map((token) => (
             <TokenRow key={token} token={token} />
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

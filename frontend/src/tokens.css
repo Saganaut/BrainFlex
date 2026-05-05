@@ -211,6 +211,9 @@
   --duration-fast: 150ms;
   --duration-base: 300ms;
   --duration-slow: 500ms;
+
+  /* ---- MAX SIZES ---- */
+  --max-screen-width: 1440px;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */

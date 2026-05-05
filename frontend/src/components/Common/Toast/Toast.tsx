@@ -6,7 +6,13 @@ interface ToastProps extends ToastItem {
   onDismiss: (id: string) => void;
 }
 
-const Toast = ({ id, message, variant = "info", duration, onDismiss }: ToastProps) => {
+const Toast = ({
+  id,
+  message,
+  variant = "info",
+  duration = 30,
+  onDismiss,
+}: ToastProps) => {
   useEffect(() => {
     if (duration === 0) return;
     const timer = setTimeout(() => onDismiss(id), duration);
@@ -16,17 +22,15 @@ const Toast = ({ id, message, variant = "info", duration, onDismiss }: ToastProp
   return (
     <div
       className={`${styles.toast} ${styles[variant]}`}
-      role="alert"
-      aria-live="polite"
-      aria-atomic="true"
-    >
+      role='alert'
+      aria-live='polite'
+      aria-atomic='true'>
       <span className={styles.message}>{message}</span>
       <button
-        type="button"
+        type='button'
         className={styles.dismiss}
-        aria-label="Dismiss notification"
-        onClick={() => onDismiss(id)}
-      >
+        aria-label='Dismiss notification'
+        onClick={() => onDismiss(id)}>
         ×
       </button>
     </div>
@@ -34,7 +38,7 @@ const Toast = ({ id, message, variant = "info", duration, onDismiss }: ToastProp
 };
 
 const ToastContainer = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.toastContainer} aria-label="Notifications">
+  <div className={styles.toastContainer} aria-label='Notifications'>
     {children}
   </div>
 );

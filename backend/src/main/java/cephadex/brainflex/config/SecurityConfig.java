@@ -3,6 +3,9 @@ package cephadex.brainflex.config;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,9 +14,17 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import cephadex.brainflex.repository.UserRepository;
@@ -31,29 +42,50 @@ public class SecurityConfig {
     }
 
     @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
+    }
+
+    @Bean
+    public GrantedAuthoritiesMapper oauthUserAuthoritiesMapper() {
+        return (authorities) -> {
+            Set<GrantedAuthority> mapped = new HashSet<>(authorities);
+            mapped.add(new SimpleGrantedAuthority("ROLE_USER"));
+            return mapped;
+        };
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        System.out.println("✅ SecurityConfig has been initialized by Spring!");
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
+                .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/swagger-ui/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/**/api-docs").permitAll()
                         .requestMatchers("/api/users/leaderboard/**").permitAll()
                         .requestMatchers("/api/users/check-username").permitAll()
-                        .requestMatchers("/**/api-docs").permitAll()
-                        .requestMatchers("/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/me").permitAll()
-                        .requestMatchers("/api/auth/guest").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/me", "/api/auth/guest").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/content-packs/**").permitAll()
+                        // Guests and registered users can join/leave/cancel
+                        .requestMatchers(HttpMethod.POST, "/api/games/*/join").hasAnyRole("GUEST", "USER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasAnyRole("GUEST", "USER")
+                        // Creating games is registered-only
+                        .requestMatchers(HttpMethod.POST, "/api/games").hasRole("USER")
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         }))
                 .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userAuthoritiesMapper(oauthUserAuthoritiesMapper()))
                         .successHandler(new OAuth2SuccessHandler(userRepository)))
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
@@ -62,6 +94,19 @@ public class SecurityConfig {
                         }));
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
     }
 
     private static class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
@@ -91,7 +136,6 @@ public class SecurityConfig {
                     .isPresent();
 
             if (userExists) {
-                // User user = userRepository.findByGoogleId(googleId).get();
                 String redirectUrl = sessionReturnUrl != null ? sessionReturnUrl : "http://localhost:5173/";
                 getRedirectStrategy().sendRedirect(request, response, redirectUrl);
                 return;

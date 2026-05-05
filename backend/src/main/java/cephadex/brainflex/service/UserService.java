@@ -1,8 +1,10 @@
 package cephadex.brainflex.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -91,5 +93,40 @@ public class UserService {
         user.setIsClosed(true);
         user.setClosedAt(LocalDateTime.now());
         userRepository.save(user);
+    }
+
+    public Optional<User> resolveRegisteredUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) return Optional.empty();
+        boolean isRegistered = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
+        if (!isRegistered) return Optional.empty();
+        return userRepository.findByGoogleId(authentication.getName());
+    }
+
+    public Optional<User> resolveAnyAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) return Optional.empty();
+        boolean hasRole = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_GUEST")
+                        || a.getAuthority().equals("ROLE_USER"));
+        if (!hasRole) return Optional.empty();
+        String name = authentication.getName();
+        if (name.startsWith("guest:")) return userRepository.findById(name.substring(6));
+        return userRepository.findByGoogleId(name);
+    }
+
+    /**
+     * Applies end-of-game stat changes to a registered user.
+     * Called by GameService after each game finishes; guests are excluded
+     * because their accounts are ephemeral and not tracked on the leaderboard.
+     */
+    public void updateStatsAfterGame(String userId, int finalScore, boolean won) {
+        userRepository.findById(userId).ifPresent(user -> {
+            var stats = user.getStats();
+            stats.setGamesPlayed(stats.getGamesPlayed() + 1);
+            stats.setTotalPoints(stats.getTotalPoints() + finalScore);
+            if (finalScore > stats.getHighScore()) stats.setHighScore(finalScore);
+            stats.setCurrentStreak(won ? stats.getCurrentStreak() + 1 : 0);
+            userRepository.save(user);
+        });
     }
 }

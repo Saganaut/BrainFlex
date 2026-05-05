@@ -16,6 +16,12 @@ import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GamesIndexRouteImport } from './routes/games/index'
+import { Route as GamesJoinRouteImport } from './routes/games/join'
+import { Route as GamesCreateRouteImport } from './routes/games/create'
+import { Route as GamesRoomCodeResultsRouteImport } from './routes/games/$roomCode/results'
+import { Route as GamesRoomCodePlayRouteImport } from './routes/games/$roomCode/play'
+import { Route as GamesRoomCodeLobbyRouteImport } from './routes/games/$roomCode/lobby'
 
 const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
   id: '/terms-and-conditions',
@@ -52,6 +58,36 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GamesIndexRoute = GamesIndexRouteImport.update({
+  id: '/games/',
+  path: '/games/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesJoinRoute = GamesJoinRouteImport.update({
+  id: '/games/join',
+  path: '/games/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesCreateRoute = GamesCreateRouteImport.update({
+  id: '/games/create',
+  path: '/games/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesRoomCodeResultsRoute = GamesRoomCodeResultsRouteImport.update({
+  id: '/games/$roomCode/results',
+  path: '/games/$roomCode/results',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesRoomCodePlayRoute = GamesRoomCodePlayRouteImport.update({
+  id: '/games/$roomCode/play',
+  path: '/games/$roomCode/play',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesRoomCodeLobbyRoute = GamesRoomCodeLobbyRouteImport.update({
+  id: '/games/$roomCode/lobby',
+  path: '/games/$roomCode/lobby',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +97,12 @@ export interface FileRoutesByFullPath {
   '/landing-page': typeof LandingPageRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/games/create': typeof GamesCreateRoute
+  '/games/join': typeof GamesJoinRoute
+  '/games/': typeof GamesIndexRoute
+  '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
+  '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
+  '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +112,12 @@ export interface FileRoutesByTo {
   '/landing-page': typeof LandingPageRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/games/create': typeof GamesCreateRoute
+  '/games/join': typeof GamesJoinRoute
+  '/games': typeof GamesIndexRoute
+  '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
+  '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
+  '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +128,12 @@ export interface FileRoutesById {
   '/landing-page': typeof LandingPageRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/games/create': typeof GamesCreateRoute
+  '/games/join': typeof GamesJoinRoute
+  '/games/': typeof GamesIndexRoute
+  '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
+  '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
+  '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +145,12 @@ export interface FileRouteTypes {
     | '/landing-page'
     | '/register'
     | '/terms-and-conditions'
+    | '/games/create'
+    | '/games/join'
+    | '/games/'
+    | '/games/$roomCode/lobby'
+    | '/games/$roomCode/play'
+    | '/games/$roomCode/results'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +160,12 @@ export interface FileRouteTypes {
     | '/landing-page'
     | '/register'
     | '/terms-and-conditions'
+    | '/games/create'
+    | '/games/join'
+    | '/games'
+    | '/games/$roomCode/lobby'
+    | '/games/$roomCode/play'
+    | '/games/$roomCode/results'
   id:
     | '__root__'
     | '/'
@@ -109,6 +175,12 @@ export interface FileRouteTypes {
     | '/landing-page'
     | '/register'
     | '/terms-and-conditions'
+    | '/games/create'
+    | '/games/join'
+    | '/games/'
+    | '/games/$roomCode/lobby'
+    | '/games/$roomCode/play'
+    | '/games/$roomCode/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +191,12 @@ export interface RootRouteChildren {
   LandingPageRoute: typeof LandingPageRoute
   RegisterRoute: typeof RegisterRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
+  GamesCreateRoute: typeof GamesCreateRoute
+  GamesJoinRoute: typeof GamesJoinRoute
+  GamesIndexRoute: typeof GamesIndexRoute
+  GamesRoomCodeLobbyRoute: typeof GamesRoomCodeLobbyRoute
+  GamesRoomCodePlayRoute: typeof GamesRoomCodePlayRoute
+  GamesRoomCodeResultsRoute: typeof GamesRoomCodeResultsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +250,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/games/': {
+      id: '/games/'
+      path: '/games'
+      fullPath: '/games/'
+      preLoaderRoute: typeof GamesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/join': {
+      id: '/games/join'
+      path: '/games/join'
+      fullPath: '/games/join'
+      preLoaderRoute: typeof GamesJoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/create': {
+      id: '/games/create'
+      path: '/games/create'
+      fullPath: '/games/create'
+      preLoaderRoute: typeof GamesCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/$roomCode/results': {
+      id: '/games/$roomCode/results'
+      path: '/games/$roomCode/results'
+      fullPath: '/games/$roomCode/results'
+      preLoaderRoute: typeof GamesRoomCodeResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/$roomCode/play': {
+      id: '/games/$roomCode/play'
+      path: '/games/$roomCode/play'
+      fullPath: '/games/$roomCode/play'
+      preLoaderRoute: typeof GamesRoomCodePlayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games/$roomCode/lobby': {
+      id: '/games/$roomCode/lobby'
+      path: '/games/$roomCode/lobby'
+      fullPath: '/games/$roomCode/lobby'
+      preLoaderRoute: typeof GamesRoomCodeLobbyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +303,12 @@ const rootRouteChildren: RootRouteChildren = {
   LandingPageRoute: LandingPageRoute,
   RegisterRoute: RegisterRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
+  GamesCreateRoute: GamesCreateRoute,
+  GamesJoinRoute: GamesJoinRoute,
+  GamesIndexRoute: GamesIndexRoute,
+  GamesRoomCodeLobbyRoute: GamesRoomCodeLobbyRoute,
+  GamesRoomCodePlayRoute: GamesRoomCodePlayRoute,
+  GamesRoomCodeResultsRoute: GamesRoomCodeResultsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

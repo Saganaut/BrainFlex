@@ -1,14 +1,17 @@
 package cephadex.brainflex.controller;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,10 +34,13 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final UserService userService;
+    private final SecurityContextRepository securityContextRepository;
 
-    public AuthController(UserRepository userRepository, UserService userService) {
+    public AuthController(UserRepository userRepository, UserService userService,
+            SecurityContextRepository securityContextRepository) {
         this.userRepository = userRepository;
         this.userService = userService;
+        this.securityContextRepository = securityContextRepository;
     }
 
     @GetMapping("/me")
@@ -42,15 +48,17 @@ public class AuthController {
         if (authentication != null && authentication.isAuthenticated() &&
                 !"anonymousUser".equals(authentication.getName())) {
 
-            String name = authentication.getName();
-            if (name.startsWith("guest:")) {
-                String id = name.substring(6);
+            boolean isGuest = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_GUEST"));
+
+            if (isGuest) {
+                String id = authentication.getName().substring(6);
                 return userRepository.findById(id)
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.GuestUser(user)))
                         .orElseGet(() -> ResponseEntity
                                 .<UserDTO>ok(new UserDTO.GuestUser("0", "Guest", true, null, null)));
             } else {
-                return userRepository.findByGoogleId(name)
+                return userRepository.findByGoogleId(authentication.getName())
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.RegisteredUser(user)))
                         .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
             }
@@ -92,12 +100,16 @@ public class AuthController {
     @PostMapping("/guest")
     public ResponseEntity<UserDTO.GuestUser> guestLogin(
             @RequestBody UserDTO.GuestLoginRequest request,
-            HttpServletRequest httpRequest) {
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
         User user = userService.createGuest(request.username());
         String authName = "guest:" + user.getId();
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(authName, null, Collections.emptyList()));
-        httpRequest.getSession(true);
+        var authentication = new UsernamePasswordAuthenticationToken(
+                authName, null, List.of(new SimpleGrantedAuthority("ROLE_GUEST")));
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(context, httpRequest, httpResponse);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new UserDTO.GuestUser(user));
     }

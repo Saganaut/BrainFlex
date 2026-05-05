@@ -1,0 +1,80 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-8) var(--space-4);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.title {
+  font-size: var(--font-size-2xl);
+}
+
+.authMsg {
+  color: var(--text-secondary);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  width: 100%;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  text-align: left;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md);
+}
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.setting {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.numberInput {
+  width: 72px;
+  text-align: center;
+}
+
+.errorMsg {
+  color: var(--text-error);
+  font-size: var(--font-size-sm);
+}
+
+.createBtn {
+  width: 100%;
+  padding: var(--p-md);
+  font-size: var(--font-size-md);
+  border-color: var(--border-success);
+  color: var(--text-success);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.backLink {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}

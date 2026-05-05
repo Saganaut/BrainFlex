@@ -2,7 +2,6 @@ package cephadex.brainflex.controller;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -78,7 +77,7 @@ public class UserController {
         public ResponseEntity<UserDTO.RegisteredUser> updateProfile(
                         @RequestBody UpdateProfileRequest request,
                         Authentication authentication) {
-                return resolveRegisteredUser(authentication)
+                return userService.resolveRegisteredUser(authentication)
                                 .map(user -> ResponseEntity.ok(
                                                 new UserDTO.RegisteredUser(userService.updateProfile(user, request))))
                                 .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
@@ -86,21 +85,12 @@ public class UserController {
 
         @PostMapping("/me/close")
         public ResponseEntity<Void> closeAccount(Authentication authentication) {
-                return resolveRegisteredUser(authentication)
+                return userService.resolveRegisteredUser(authentication)
                                 .map(user -> {
                                         userService.closeAccount(user);
                                         return new ResponseEntity<Void>(HttpStatus.OK);
                                 })
                                 .orElseGet(() -> new ResponseEntity<Void>(HttpStatus.FORBIDDEN));
-        }
-
-        private Optional<User> resolveRegisteredUser(Authentication authentication) {
-                if (authentication == null || !authentication.isAuthenticated()
-                                || "anonymousUser".equals(authentication.getName())
-                                || authentication.getName().startsWith("guest:")) {
-                        return Optional.empty();
-                }
-                return userRepository.findByGoogleId(authentication.getName());
         }
 
 }

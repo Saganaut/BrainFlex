@@ -1,5 +1,11 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { Modal } from "../components/Common/Modal";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  type ReactNode,
+} from "react";
+import { Modal } from "../components/Common/Modal/Modal";
 
 interface ModalConfig {
   content: ReactNode;

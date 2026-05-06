@@ -8,7 +8,11 @@ import { apiBaseUrl } from "../../../store/emptyApi";
 import styles from "./NavBar.module.css";
 
 export function NavBar() {
-  const { user, authenticated, isGuestSession, isLoading } = useCurrentUser();
+  const userState = useCurrentUser();
+  const user =
+    userState.state === "registered" || userState.state === "guest"
+      ? userState.user
+      : undefined;
   const { theme, toggleTheme } = useTheme();
   const [guestName, setGuestName] = useState("");
   const [guestError, setGuestError] = useState<string | null>(null);
@@ -36,8 +40,8 @@ export function NavBar() {
   const handleLogin = () => {
     const loginUrl = new URL(`${apiBaseUrl}/api/auth/login`);
     loginUrl.searchParams.set("returnUrl", currentUrl);
-    if (isGuestSession && user?.id) {
-      loginUrl.searchParams.set("guestId", user.id);
+    if (userState.state === "guest" && userState.user.id) {
+      loginUrl.searchParams.set("guestId", userState.user.id);
     }
     window.location.href = loginUrl.toString();
   };
@@ -93,7 +97,7 @@ export function NavBar() {
     return <UserCircleIcon className={styles.avatarIcon} />;
   };
 
-  if (isLoading) {
+  if (userState.state === "loading") {
     return <div style={{ padding: "1rem" }}>Loading auth...</div>;
   }
 
@@ -113,7 +117,7 @@ export function NavBar() {
 
         {dropdownOpen && (
           <div className={styles.dropdown}>
-            {authenticated ? (
+            {userState.state === "registered" ? (
               <>
                 <span className={styles.dropdownLabel}>
                   Signed in as {user?.userName}
@@ -128,7 +132,7 @@ export function NavBar() {
                   Logout
                 </button>
               </>
-            ) : isGuestSession ? (
+            ) : userState.state === "guest" ? (
               <>
                 <span className={styles.dropdownLabel}>
                   Guest: {user?.userName}

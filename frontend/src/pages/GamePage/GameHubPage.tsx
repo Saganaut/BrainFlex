@@ -8,7 +8,7 @@ import { useCurrentUser } from "../../hooks/useCurrentUser";
 import styles from "./GameHub.module.css";
 
 const GameHubPage = () => {
-  const { authenticated } = useCurrentUser();
+  const userState = useCurrentUser();
 
   return (
     <div className={styles.hub}>
@@ -17,7 +17,7 @@ const GameHubPage = () => {
         Challenge your brain in a live multiplayer trivia session.
       </p>
       <div className={styles.cards}>
-        {authenticated ? (
+        {userState.state === "registered" ? (
           <Link to='/games/create' className={styles.card}>
             <span className={styles.icon}>+</span>
             <span className={styles.cardTitle}>Create Game</span>

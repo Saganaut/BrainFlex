@@ -6,7 +6,6 @@ import {
   useUpdateProfileMutation,
   useUploadProfileImageMutation,
 } from "../../store/BrainFlexApi";
-import type { RegisteredUser } from "../../store/BrainFlexApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { apiBaseUrl } from "../../store/emptyApi";
 import styles from "./AccountPage.module.css";
@@ -15,11 +14,12 @@ const MAX_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export function AccountPage() {
-  const { user, authenticated, isLoading } = useCurrentUser();
+  const userState = useCurrentUser();
   const { refetch } = useGetCurrentUserQuery();
   const navigate = useNavigate();
 
-  const registeredUser = authenticated ? (user as RegisteredUser) : null;
+  const registeredUser =
+    userState.state === "registered" ? userState.user : null;
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pictureSuccess, setPictureSuccess] = useState(false);
@@ -43,13 +43,14 @@ export function AccountPage() {
   }, [registeredUser]);
 
   useEffect(() => {
-    if (!isLoading && !authenticated) {
+    if (userState.state !== "loading" && userState.state !== "registered") {
       navigate({ to: "/" });
     }
-  }, [isLoading, authenticated, navigate]);
+  }, [userState.state, navigate]);
 
-  if (isLoading) return <div className={styles.loading}>Loading...</div>;
-  if (!authenticated) return null;
+  if (userState.state === "loading")
+    return <div className={styles.loading}>Loading...</div>;
+  if (userState.state !== "registered") return null;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

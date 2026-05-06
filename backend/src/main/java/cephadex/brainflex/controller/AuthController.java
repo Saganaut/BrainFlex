@@ -50,21 +50,23 @@ public class AuthController {
 
             boolean isGuest = authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_GUEST"));
+            boolean isRegistered = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
 
             if (isGuest) {
                 String id = authentication.getName().substring(6);
                 return userRepository.findById(id)
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.GuestUser(user)))
-                        .orElseGet(() -> ResponseEntity
-                                .<UserDTO>ok(new UserDTO.GuestUser("0", "Guest", true, null, null)));
-            } else {
+                        .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
+            } else if (isRegistered) {
                 return userRepository.findByGoogleId(authentication.getName())
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.RegisteredUser(user)))
                         .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
             }
         }
 
-        return ResponseEntity.<UserDTO>ok(new UserDTO.GuestUser("0", "Guest", true, null, null));
+        // Unauthenticated visitor — no session
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/register")
@@ -100,8 +102,13 @@ public class AuthController {
     @PostMapping("/guest")
     public ResponseEntity<UserDTO.GuestUser> guestLogin(
             @RequestBody UserDTO.GuestLoginRequest request,
+            Authentication authentication,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
+        if (authentication != null && authentication.isAuthenticated() &&
+                !"anonymousUser".equals(authentication.getName())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
         User user = userService.createGuest(request.username());
         String authName = "guest:" + user.getId();
         var authentication = new UsernamePasswordAuthenticationToken(

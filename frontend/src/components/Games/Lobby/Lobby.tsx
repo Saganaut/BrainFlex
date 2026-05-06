@@ -20,7 +20,7 @@ interface LobbyProps {
 const Lobby = ({ roomCode }: LobbyProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user } = useCurrentUser();
+  const userState = useCurrentUser();
   const game = useGameSession();
   const { sendStart, sendLeave } = useGameWebSocket(roomCode);
 
@@ -36,7 +36,11 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     }
   }, [game.status, navigate, roomCode]);
 
-  const isHost = !!user?.id && session?.hostUserId === user.id;
+  const userId =
+    userState.state === "registered" || userState.state === "guest"
+      ? userState.user.id
+      : undefined;
+  const isHost = !!userId && session?.hostUserId === userId;
   const players = game.players;
 
   return (

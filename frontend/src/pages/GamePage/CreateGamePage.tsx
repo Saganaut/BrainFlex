@@ -6,14 +6,14 @@ import { useCreateGameMutation } from "../../store/BrainFlexApi";
 import styles from "./Game.module.css";
 const CreateGamePage = () => {
   const navigate = useNavigate();
-  const { authenticated, isLoading: authLoading } = useCurrentUser();
+  const userState = useCurrentUser();
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [totalRounds, setTotalRounds] = useState(10);
   const [timePerQuestion, setTimePerQuestion] = useState(15);
   const [speedBonus, setSpeedBonus] = useState(true);
   const [createGame, { isLoading, error }] = useCreateGameMutation();
 
-  if (!authLoading && !authenticated) {
+  if (userState.state !== "loading" && userState.state !== "registered") {
     return (
       <div className={styles.page}>
         <p className={styles.authMsg}>

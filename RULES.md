@@ -33,8 +33,13 @@ This document outlines essential rules and conventions for consistency, maintain
 5.  **CSS Modules & Custom Properties:** Use lower camelCase for selector names. Utilize tokens defined in `frontend/src/tokens.css` for colors, spacing, font sizes, borders, etc.
 6.  **TanStack Router:** Implement all client-side routing using TanStack Router's file-based convention (`frontend/src/routes/`).
 7.  **State Management:**
-    *   **Avoid RTK for Global State:** Minimize the use of Redux Toolkit's core store for generic global state.
-    *   **Prefer Cached RTK Query:** Leverage RTK Query's caching and data fetching capabilities as the primary mechanism for managing server-side data and associated UI state.
+    - **Avoid RTK for Global State:** Minimize the use of Redux Toolkit's core store for generic global state.
+    - **Prefer Cached RTK Query:** Leverage RTK Query's caching and data fetching capabilities as the primary mechanism for managing server-side data and associated UI state.
 8.  **Auto-generated API Client:** **NEVER manually edit** `frontend/src/store/BrainFlexApi.ts`. Regenerate it via `npm run generate-api` after backend API changes (backend must be running).
 9.  **Testing:** Implement frontend tests following best practices for React/TypeScript.
 10. **File Structure:** Adhere to the established frontend file structure. Avoid placing hand-written files in `frontend/src/store/` due to ESLint exclusion.
+11. **Component Design:** Always use const ComponentName = ({}:ComponentNameProps) => {} ... export { ComponentName } for all React components. Avoid default exports to maintain consistency and improve readability.
+    Routes are only for routing, they should refer to a RouteNamePage component in the Pages dir.
+    Data such as JSON used in a component should be placed in a data.ts file in the same directory as the component
+    Never use index.tsx files, instead use explicit file names
+    Favor interfaces over types. Props interfaces should be named ComponentNameProps

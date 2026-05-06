@@ -15,7 +15,7 @@ const routeApi = getRouteApi("/games/$roomCode/results");
 const ResultsPage = () => {
   const { roomCode } = routeApi.useParams();
   const dispatch = useAppDispatch();
-  const { user } = useCurrentUser();
+  const userState = useCurrentUser();
   const game = useGameSession();
 
   const { data: session } = useGetSessionQuery({ roomCode });
@@ -24,6 +24,11 @@ const ResultsPage = () => {
   useEffect(() => {
     if (session) dispatch(setSession(session));
   }, [session, dispatch]);
+
+  const userId =
+    userState.state === "registered" || userState.state === "guest"
+      ? userState.user.id
+      : undefined;
 
   const placements =
     game.finalPlacements.length > 0
@@ -38,7 +43,7 @@ const ResultsPage = () => {
     );
   }
 
-  return <GameOver placements={placements} currentUserId={user?.id} />;
+  return <GameOver placements={placements} currentUserId={userId} />;
 };
 
 export { ResultsPage };

@@ -18,11 +18,16 @@ const PlayPage = () => {
   const { roomCode } = routeApi.useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { user } = useCurrentUser();
+  const userState = useCurrentUser();
   const game = useGameSession();
   const { sendAnswer, sendNextRound } = useGameWebSocket(roomCode);
   const { data: session } = useGetSessionQuery({ roomCode });
   const [timeRemaining, setTimeRemaining] = useState(0);
+
+  const userId =
+    userState.state === "registered" || userState.state === "guest"
+      ? userState.user.id
+      : undefined;
 
   useEffect(() => {
     if (session) dispatch(setSession(session));
@@ -66,14 +71,14 @@ const PlayPage = () => {
     sendAnswer(game.currentQuestion.id, index);
   };
 
-  const isHost = !!user?.id && session?.hostUserId === user.id;
+  const isHost = !!userId && session?.hostUserId === userId;
   const isTurnBased = session?.settings?.gameMode === "TURN_BASED";
 
   if (!game.currentQuestion) {
     return (
       <div className={styles.waiting}>
         <p className={styles.waitingMsg}>Waiting for the first question…</p>
-        <ScoreBoard players={game.players} currentUserId={user?.id} />
+        <ScoreBoard players={game.players} currentUserId={userId} />
       </div>
     );
   }
@@ -96,12 +101,12 @@ const PlayPage = () => {
         />
       </div>
       <aside className={styles.sidebar}>
-        <ScoreBoard players={game.players} currentUserId={user?.id} />
+        <ScoreBoard players={game.players} currentUserId={userId} />
       </aside>
       {game.roundResult && (
         <RoundResult
           result={game.roundResult}
-          currentUserId={user?.id}
+          currentUserId={userId}
           isHost={isHost}
           isTurnBased={isTurnBased}
           onNextRound={sendNextRound}

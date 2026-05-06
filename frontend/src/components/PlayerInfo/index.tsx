@@ -16,13 +16,14 @@ const StatRow = ({ label, stat }: { label: string; stat: number }) => {
 };
 
 const PlayerInfo: React.FC<PlayerInfoProps> = ({}) => {
-  const { user, isLoading, isError } = useCurrentUser();
+  const userState = useCurrentUser();
 
   const [isCollapsed, collapse] = useState(false);
-  if (isLoading) return <div> Loading...</div>;
-  if (isError) return <div> Error...</div>;
-  if (user == undefined) return <div> No user </div>;
+  if (userState.state === "loading") return <div> Loading...</div>;
+  if (userState.state === "error") return <div> Error...</div>;
+  if (userState.state === "visitor") return <div> No user </div>;
 
+  const { user } = userState;
   const statsArray = Object.entries(user.stats ?? {});
   console.log("user", user);
   //TODO: Either save profile images to server or cache google images

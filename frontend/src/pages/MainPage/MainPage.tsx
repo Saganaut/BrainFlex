@@ -1,4 +1,4 @@
-import { Leaderboard } from "../../components/Leaderboard";
+import { Leaderboard } from "../../components/Leaderboard/Leaderboard";
 import { PlayerInfo } from "../../components/PlayerInfo";
 
 const MainPage = () => {

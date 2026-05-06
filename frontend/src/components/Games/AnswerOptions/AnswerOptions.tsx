@@ -15,6 +15,7 @@ interface AnswerOptionsProps {
 
 const LABELS = ["A", "B", "C", "D"];
 
+//TODO: Instead of using the text.substring as a key each option should have its own ID
 const AnswerOptions = ({
   options,
   selectedOption,
@@ -31,7 +32,7 @@ const AnswerOptions = ({
 
         return (
           <button
-            key={i}
+            key={text.substring(0, 20)}
             type='button'
             disabled={disabled}
             onClick={() => {

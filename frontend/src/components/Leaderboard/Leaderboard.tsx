@@ -1,23 +1,22 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useGetLeaderboardQuery } from "../../store/BrainFlexApi";
 import styles from "./Leaderboard.module.css";
 import { CollapseBtn } from "../Common/Buttons/CollapseBtn";
-interface LeaderBoardProps {}
 
-const Leaderboard: React.FC<LeaderBoardProps> = ({}) => {
+const Leaderboard = () => {
   const { data, isLoading, isError } = useGetLeaderboardQuery({
     page: 0,
     size: 10,
   });
 
-  const [isCollapsed, collapse] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <div className={styles.leaderboardContainer}>
       <div className={styles.leaderboard}>
         <div className={styles.leaderboardHeader}>
           <h3 className={styles.leaderboardTitle}>Leaderboard </h3>
-          <CollapseBtn isCollapsed={isCollapsed} collapse={collapse} />
+          <CollapseBtn isCollapsed={isCollapsed} collapse={setIsCollapsed} />
         </div>
         {isLoading ? (
           <div>Loading</div>

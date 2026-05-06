@@ -1,6 +1,4 @@
-import styles from "./TermsPage.module.css";
-
-const SECTIONS = [
+export const SECTIONS = [
   {
     id: "acceptance",
     title: "1. Acceptance of Terms",
@@ -24,7 +22,7 @@ const SECTIONS = [
   {
     id: "ip",
     title: "5. Intellectual Property",
-    body: `All content, features, and functionality on BrainFlex — including but not limited to text, graphics, logos, game mechanics, and software — are owned by BrainFlex and are protected by applicable intellectual property laws. You may not reproduce, distribute, or create derivative works without express written permission. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum.`,
+    body: "All content, features, and functionality on BrainFlex — including but not limited to text, graphics, logos, game mechanics, and software — are owned by BrainFlex and are protected by applicable intellectual property laws. You may not reproduce, distribute, or create derivative works without express written permission. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum.",
   },
   {
     id: "privacy",
@@ -42,43 +40,3 @@ const SECTIONS = [
     body: `We reserve the right to modify these terms at any time. We will provide notice of significant changes by updating the date at the top of this page. Your continued use of BrainFlex after any changes constitutes your acceptance of the new terms. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Cras ultricies ligula sed magna dictum porta. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae.`,
   },
 ];
-
-export function TermsPage() {
-  return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <p className={styles.eyebrow}>legal</p>
-        <h1 className={styles.title}>Terms and Conditions</h1>
-        <p className={styles.meta}>Last updated: May 4, 2026</p>
-        <p className={styles.intro}>
-          Please read these terms carefully before using BrainFlex. They govern
-          your access to and use of the service.
-        </p>
-      </header>
-
-      <div className={styles.content}>
-        <nav className={styles.toc} aria-label="Table of contents">
-          <p className={styles.tocLabel}>On this page</p>
-          <ol className={styles.tocList}>
-            {SECTIONS.map((s) => (
-              <li key={s.id}>
-                <a href={`#${s.id}`} className={styles.tocLink}>
-                  {s.title}
-                </a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-
-        <article className={styles.body}>
-          {SECTIONS.map((s) => (
-            <section key={s.id} id={s.id} className={styles.section}>
-              <h2 className={styles.sectionTitle}>{s.title}</h2>
-              <p className={styles.sectionBody}>{s.body}</p>
-            </section>
-          ))}
-        </article>
-      </div>
-    </main>
-  );
-}

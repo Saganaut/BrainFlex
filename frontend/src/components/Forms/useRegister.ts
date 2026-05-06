@@ -1,30 +1,31 @@
+/* eslint-disable react-x/set-state-in-effect */
 import { useState, useEffect } from "react";
-import type { FormEvent, Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import {
   useLazyCheckUsernameQuery,
   useRegisterMutation,
 } from "../../store/BrainFlexApi";
 
-export type RegisterSearch = {
+export interface RegisterSearch {
   googleId?: string;
   email?: string;
   name?: string;
   picture?: string;
   returnUrl?: string;
-};
+}
 
-type RegistrationPayload = {
+interface RegistrationPayload {
   username: string;
   newsletter: boolean;
-};
+}
 
 type UsernameStatus = "idle" | "checking" | "available" | "taken" | "invalid";
 
-type SpringError = {
+interface SpringError {
   status: number;
   error: string;
   message: string;
-};
+}
 
 function isApiError(
   err: unknown,
@@ -33,7 +34,7 @@ function isApiError(
     typeof err === "object" &&
     err !== null &&
     "status" in err &&
-    typeof (err as { status: unknown }).status === "number"
+    typeof err.status === "number"
   );
 }
 
@@ -57,7 +58,7 @@ export interface UseRegisterReturn {
   submitError: string | null;
   canSubmit: boolean;
   isLoading: boolean;
-  handleSubmit: (e: FormEvent) => Promise<void>;
+  handleSubmit: (e: SubmitEvent) => Promise<void>;
 }
 
 const useRegister = (
@@ -74,6 +75,7 @@ const useRegister = (
   const [register, { isLoading }] = useRegisterMutation();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUsernameStatus("idle");
     setUsernameMessage("");
     if (!username) return;
@@ -87,6 +89,7 @@ const useRegister = (
 
     setUsernameStatus("checking");
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     const timer = setTimeout(async () => {
       try {
         const result = await checkUsername({ username }).unwrap();
@@ -101,12 +104,14 @@ const useRegister = (
       }
     }, 500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [username, checkUsername]);
 
   const canSubmit = agreedToTerms && usernameStatus === "available";
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
 

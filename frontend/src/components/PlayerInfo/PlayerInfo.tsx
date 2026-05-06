@@ -1,10 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import styles from "./PlayerInfo.module.css";
 import { camelToNormalCase } from "../../utils/utils";
 import { CollapseBtn } from "../Common/Buttons/CollapseBtn";
-
-interface PlayerInfoProps {}
 
 const StatRow = ({ label, stat }: { label: string; stat: number }) => {
   return (
@@ -15,10 +13,10 @@ const StatRow = ({ label, stat }: { label: string; stat: number }) => {
   );
 };
 
-const PlayerInfo: React.FC<PlayerInfoProps> = ({}) => {
+const PlayerInfo = () => {
   const userState = useCurrentUser();
 
-  const [isCollapsed, collapse] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   if (userState.state === "loading") return <div> Loading...</div>;
   if (userState.state === "error") return <div> Error...</div>;
   if (userState.state === "visitor") return <div> No user </div>;
@@ -43,7 +41,7 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({}) => {
                 <p> {user.email} </p>{" "}
               </>
             )} */}
-            <CollapseBtn collapse={collapse} isCollapsed={isCollapsed} />
+            <CollapseBtn collapse={setIsCollapsed} isCollapsed={isCollapsed} />
           </div>
         </div>
 
@@ -51,7 +49,7 @@ const PlayerInfo: React.FC<PlayerInfoProps> = ({}) => {
           <div
             className={` ${styles.playerStats} ${isCollapsed ? styles.isCollapsed : ""} `}>
             {statsArray.map(([key, value]) => (
-              <StatRow label={key} stat={value} />
+              <StatRow key={key} label={key} stat={value} />
             ))}
           </div>
         </div>

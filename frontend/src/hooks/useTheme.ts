@@ -44,7 +44,7 @@ export function useTheme() {
   }, [theme]);
 
   const toggleTheme = () =>
-    setTheme((current) => (current === "dark" ? "light" : "dark"));
+    { setTheme((current) => (current === "dark" ? "light" : "dark")); };
 
   return { theme, toggleTheme, setTheme };
 }

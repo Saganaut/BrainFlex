@@ -13,7 +13,7 @@ export interface ModalContextValue {
 
 const ModalContext = createContext<ModalContextValue | null>(null);
 
-export function ModalProvider({ children }: { children: ReactNode }) {
+const ModalProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<ModalConfig | null>(null);
 
   const openModal = useCallback((cfg: ModalConfig) => {
@@ -33,6 +33,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
       )}
     </ModalContext>
   );
-}
+};
 
 export { ModalContext };
+export { ModalProvider };

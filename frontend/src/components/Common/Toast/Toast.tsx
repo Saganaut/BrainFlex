@@ -9,14 +9,14 @@ interface ToastProps extends ToastItem {
 const Toast = ({
   id,
   message,
-  variant = "info",
-  duration = 30,
+  variant,
+  duration,
   onDismiss,
 }: ToastProps) => {
   useEffect(() => {
     if (duration === 0) return;
-    const timer = setTimeout(() => onDismiss(id), duration);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(() => { onDismiss(id); }, duration);
+    return () => { clearTimeout(timer); };
   }, [id, duration, onDismiss]);
 
   return (
@@ -30,7 +30,7 @@ const Toast = ({
         type='button'
         className={styles.dismiss}
         aria-label='Dismiss notification'
-        onClick={() => onDismiss(id)}>
+        onClick={() => { onDismiss(id); }}>
         ×
       </button>
     </div>

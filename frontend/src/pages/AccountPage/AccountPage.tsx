@@ -13,7 +13,7 @@ import styles from "./AccountPage.module.css";
 const MAX_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-export function AccountPage() {
+const AccountPage = () => {
   const userState = useCurrentUser();
   const { refetch } = useGetCurrentUserQuery();
   const navigate = useNavigate();
@@ -35,16 +35,15 @@ export function AccountPage() {
   const [uploadProfileImage, { isLoading: isUploading }] =
     useUploadProfileImageMutation();
   const [closeAccount, { isLoading: isClosing }] = useCloseAccountMutation();
-
-  useEffect(() => {
-    if (registeredUser) {
-      setNewsletter(registeredUser.newsletter ?? false);
-    }
-  }, [registeredUser]);
+  if (registeredUser) {
+    const isSubscribed = registeredUser.newsletter ? true : false;
+    setNewsletter(isSubscribed);
+  }
+  // useEffect(() => {}, [registeredUser]);
 
   useEffect(() => {
     if (userState.state !== "loading" && userState.state !== "registered") {
-      navigate({ to: "/" });
+      void navigate({ to: "/" });
     }
   }, [userState.state, navigate]);
 
@@ -81,11 +80,11 @@ export function AccountPage() {
         body: formData as unknown as { image: Blob },
       }).unwrap();
       setPictureSuccess(true);
-      refetch();
+      await refetch();
     } catch (err: unknown) {
       const msg =
         err && typeof err === "object" && "data" in err
-          ? String((err as { data: unknown }).data)
+          ? String(err.data)
           : null;
       setPictureError(msg ?? "Upload failed. Please try again.");
     }
@@ -135,7 +134,9 @@ export function AccountPage() {
           ref={fileInputRef}
           type='file'
           accept='image/jpeg,image/png,image/webp,image/gif'
-          onChange={handleFileChange}
+          onChange={(e) => {
+            void handleFileChange(e);
+          }}
           className={styles.fileInputHidden}
           aria-label='Upload profile picture'
         />
@@ -160,7 +161,9 @@ export function AccountPage() {
           <input
             type='checkbox'
             checked={newsletter}
-            onChange={(e) => handleNewsletterChange(e.target.checked)}
+            onChange={(e) => {
+              void handleNewsletterChange(e.target.checked);
+            }}
           />
           Receive newsletter emails
         </label>
@@ -179,7 +182,9 @@ export function AccountPage() {
           <button
             type='button'
             className={styles.dangerButton}
-            onClick={() => setCloseConfirm(true)}>
+            onClick={() => {
+              setCloseConfirm(true);
+            }}>
             Close my account
           </button>
         ) : (
@@ -189,11 +194,15 @@ export function AccountPage() {
               <button
                 type='button'
                 className={styles.dangerButton}
-                onClick={handleCloseAccount}
+                onClick={() => void handleCloseAccount}
                 disabled={isClosing}>
                 {isClosing ? "Closing..." : "Yes, close my account"}
               </button>
-              <button type='button' onClick={() => setCloseConfirm(false)}>
+              <button
+                type='button'
+                onClick={() => {
+                  setCloseConfirm(false);
+                }}>
                 Cancel
               </button>
             </div>
@@ -203,4 +212,6 @@ export function AccountPage() {
       </section>
     </div>
   );
-}
+};
+
+export { AccountPage };

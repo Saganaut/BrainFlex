@@ -13,7 +13,7 @@ import {
 } from "./data";
 import { Toast } from "../../components/Common/Toast/Toast";
 import { useModal } from "../../context/useModal";
-import { Leaderboard } from "../../components/Leaderboard";
+import { Leaderboard } from "../../components/Leaderboard/Leaderboard";
 import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { useEffect, useState } from "react";

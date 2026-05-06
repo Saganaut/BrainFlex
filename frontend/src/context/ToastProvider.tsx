@@ -1,8 +1,11 @@
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useState, type ReactNode } from "react";
 import { Toast, ToastContainer } from "../components/Common/Toast/Toast";
-import type { ToastConfig, ToastItem } from "../components/Common/Toast/ToastTypes";
+import type {
+  ToastConfig,
+  ToastItem,
+} from "../components/Common/Toast/ToastTypes";
 
-interface ToastContextValue {
+export interface ToastContextValue {
   addToast: (config: ToastConfig) => void;
   dismissToast: (id: string) => void;
 }
@@ -11,7 +14,7 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 let nextId = 0;
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const dismissToast = useCallback((id: string) => {
@@ -29,7 +32,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <ToastContext.Provider value={{ addToast, dismissToast }}>
+    <ToastContext value={{ addToast, dismissToast }}>
       {children}
       {toasts.length > 0 && (
         <ToastContainer>
@@ -38,12 +41,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           ))}
         </ToastContainer>
       )}
-    </ToastContext.Provider>
+    </ToastContext>
   );
-}
+};
 
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext);
-  if (!ctx) throw new Error("useToast must be used within a ToastProvider");
-  return ctx;
-}
+export { ToastContext };
+export { ToastProvider };

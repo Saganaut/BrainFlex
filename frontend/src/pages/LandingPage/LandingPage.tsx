@@ -25,7 +25,7 @@ const STATS = [
   { number: "Daily", label: "Challenges" },
 ];
 
-export function LandingPage() {
+const LandingPage = () => {
   return (
     <>
       <section className={styles.hero}>
@@ -81,4 +81,5 @@ export function LandingPage() {
       </section>
     </>
   );
-}
+};
+export { LandingPage };

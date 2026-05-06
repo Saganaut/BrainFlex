@@ -1,4 +1,4 @@
-import { Lobby } from "../../components/Games/Lobby";
+import { Lobby } from "../../components/Games/Lobby/Lobby";
 import { getRouteApi } from "@tanstack/react-router";
 const routeApi = getRouteApi("/games/$roomCode/lobby");
 

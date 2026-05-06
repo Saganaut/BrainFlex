@@ -34,7 +34,9 @@ export function NavBar() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   const handleLogin = () => {
@@ -110,7 +112,9 @@ export function NavBar() {
         <button
           type='button'
           className={styles.avatarButton}
-          onClick={() => setDropdownOpen((prev) => !prev)}
+          onClick={() => {
+            setDropdownOpen((prev) => !prev);
+          }}
           aria-label='User menu'>
           {avatarContent()}
         </button>
@@ -125,10 +129,14 @@ export function NavBar() {
                 <Link
                   to='/account'
                   className={styles.dropdownItem}
-                  onClick={() => setDropdownOpen(false)}>
+                  onClick={() => {
+                    setDropdownOpen(false);
+                  }}>
                   Account
                 </Link>
-                <button className={styles.dropdownItem} onClick={handleLogout}>
+                <button
+                  className={styles.dropdownItem}
+                  onClick={void handleLogout}>
                   Logout
                 </button>
               </>
@@ -140,7 +148,9 @@ export function NavBar() {
                 <button className={styles.dropdownItem} onClick={handleLogin}>
                   Sign in with Google
                 </button>
-                <button className={styles.dropdownItem} onClick={handleLogout}>
+                <button
+                  className={styles.dropdownItem}
+                  onClick={void handleLogout}>
                   Logout guest
                 </button>
               </>
@@ -151,7 +161,9 @@ export function NavBar() {
                 </button>
                 <button
                   className={styles.dropdownItem}
-                  onClick={() => setShowGuestInput((prev) => !prev)}>
+                  onClick={() => {
+                    setShowGuestInput((prev) => !prev);
+                  }}>
                   Play as guest
                 </button>
                 {showGuestInput && (
@@ -159,13 +171,15 @@ export function NavBar() {
                     <input
                       className={styles.guestInput}
                       value={guestName}
-                      onChange={(e) => setGuestName(e.target.value)}
+                      onChange={(e) => {
+                        setGuestName(e.target.value);
+                      }}
                       placeholder='Guest username'
                       maxLength={20}
                     />
                     <button
                       className={styles.dropdownItem}
-                      onClick={handleGuestLogin}
+                      onClick={void handleGuestLogin}
                       disabled={guestLoading}>
                       Confirm
                     </button>

@@ -59,7 +59,7 @@ export function useGameWebSocket(roomCode: string | null) {
     client.activate();
 
     return () => {
-      client.deactivate();
+      void client.deactivate();
       clientRef.current = null;
     };
   }, [roomCode, dispatch]);
@@ -77,25 +77,23 @@ export function useGameWebSocket(roomCode: string | null) {
 
   return {
     /** Host: transitions session from LOBBY → IN_PROGRESS and fires first question. */
-    sendStart: useCallback(
-      () => send(`/app/game/${roomCode}/start`),
-      [roomCode, send],
-    ),
+    sendStart: useCallback(() => {
+      send(`/app/game/${roomCode}/start`);
+    }, [roomCode, send]),
     /** Player: submits the selected answer option for the current round. */
     sendAnswer: useCallback(
-      (questionId: string, selectedOption: number) =>
-        send(`/app/game/${roomCode}/answer`, { questionId, selectedOption }),
+      (questionId: string, selectedOption: number) => {
+        send(`/app/game/${roomCode}/answer`, { questionId, selectedOption });
+      },
       [roomCode, send],
     ),
     /** Host (TURN_BASED): advances to the next question after reviewing the result. */
-    sendNextRound: useCallback(
-      () => send(`/app/game/${roomCode}/nextRound`),
-      [roomCode, send],
-    ),
+    sendNextRound: useCallback(() => {
+      send(`/app/game/${roomCode}/nextRound`);
+    }, [roomCode, send]),
     /** Any player: leaves the session and broadcasts updated lobby state. */
-    sendLeave: useCallback(
-      () => send(`/app/game/${roomCode}/leave`),
-      [roomCode, send],
-    ),
+    sendLeave: useCallback(() => {
+      send(`/app/game/${roomCode}/leave`);
+    }, [roomCode, send]),
   };
 }

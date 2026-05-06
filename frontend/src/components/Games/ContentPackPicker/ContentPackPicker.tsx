@@ -30,7 +30,9 @@ const ContentPackPicker = ({
           key={pack.id}
           type='button'
           className={`${styles.pack} ${selectedPackId === pack.id ? styles.selected : ""}`}
-          onClick={() => pack.id && onSelect(pack.id)}>
+          onClick={() => {
+            if (pack.id) onSelect(pack.id);
+          }}>
           <span className={styles.packName}>{pack.name}</span>
           <span className={styles.packMeta}>
             {pack.questionCount ?? 0} questions

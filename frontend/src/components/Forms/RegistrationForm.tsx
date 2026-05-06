@@ -30,14 +30,16 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
   return (
     <div className={styles.registrationFormContainer}>
       <h1>What shall we call you?</h1>
-      <form className={styles.registrationForm} onSubmit={handleSubmit}>
+      <form className={styles.registrationForm} onSubmit={void handleSubmit}>
         <div>
           <div>
             <label htmlFor='username'>Username</label>
             <input
               id='username'
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+              }}
               maxLength={20}
             />
           </div>
@@ -61,7 +63,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
               id='terms'
               type='checkbox'
               checked={agreedToTerms}
-              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              onChange={(e) => {
+                setAgreedToTerms(e.target.checked);
+              }}
             />{" "}
           </div>
           <div></div>
@@ -73,7 +77,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
               id='newsletter'
               type='checkbox'
               checked={newsletter}
-              onChange={(e) => setNewsletter(e.target.checked)}
+              onChange={(e) => {
+                setNewsletter(e.target.checked);
+              }}
             />
           </div>
           <div></div>

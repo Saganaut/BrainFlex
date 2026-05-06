@@ -6,27 +6,31 @@
 import { useListPacksQuery } from "../../../store/BrainFlexApi";
 import styles from "./ContentPackPicker.module.css";
 
-type Props = {
+interface ContentPackPickerProps {
   selectedPackId: string | null;
   onSelect: (packId: string) => void;
-};
+}
 
-export function ContentPackPicker({ selectedPackId, onSelect }: Props) {
+const ContentPackPicker = ({
+  selectedPackId,
+  onSelect,
+}: ContentPackPickerProps) => {
   const { data: packs, isLoading, isError } = useListPacksQuery();
 
   if (isLoading) return <p className={styles.message}>Loading packs…</p>;
-  if (isError) return <p className={styles.message}>Failed to load content packs.</p>;
-  if (!packs?.length) return <p className={styles.message}>No content packs available.</p>;
+  if (isError)
+    return <p className={styles.message}>Failed to load content packs.</p>;
+  if (!packs?.length)
+    return <p className={styles.message}>No content packs available.</p>;
 
   return (
     <div className={styles.grid}>
       {packs.map((pack) => (
         <button
           key={pack.id}
-          type="button"
+          type='button'
           className={`${styles.pack} ${selectedPackId === pack.id ? styles.selected : ""}`}
-          onClick={() => pack.id && onSelect(pack.id)}
-        >
+          onClick={() => pack.id && onSelect(pack.id)}>
           <span className={styles.packName}>{pack.name}</span>
           <span className={styles.packMeta}>
             {pack.questionCount ?? 0} questions
@@ -39,4 +43,6 @@ export function ContentPackPicker({ selectedPackId, onSelect }: Props) {
       ))}
     </div>
   );
-}
+};
+
+export { ContentPackPicker };

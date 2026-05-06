@@ -29,7 +29,7 @@ const Btn = ({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className={`${[
+      className={[
         styles.btn,
         styles[iconPosition],
         styles[shape],
@@ -38,7 +38,7 @@ const Btn = ({
         styles[variant],
         styles[type],
         styles[withIcon],
-      ].join(" ")}`}>
+      ].join(" ")}>
       {icon != null && <span>{icon}</span>}
       {children}
     </button>

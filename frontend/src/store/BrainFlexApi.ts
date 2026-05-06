@@ -14,6 +14,22 @@ const injectedRtkApi = api.injectEndpoints({
     closeAccount: build.mutation<CloseAccountApiResponse, CloseAccountApiArg>({
       query: () => ({ url: `/api/users/me/close`, method: "POST" }),
     }),
+    createGame: build.mutation<CreateGameApiResponse, CreateGameApiArg>({
+      query: (queryArg) => ({
+        url: `/api/games`,
+        method: "POST",
+        body: queryArg.createGameRequest,
+      }),
+    }),
+    joinByRoomCode: build.mutation<
+      JoinByRoomCodeApiResponse,
+      JoinByRoomCodeApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/games/${queryArg.roomCode}/join`,
+        method: "POST",
+      }),
+    }),
     register: build.mutation<RegisterApiResponse, RegisterApiArg>({
       query: (queryArg) => ({
         url: `/api/auth/register`,
@@ -67,6 +83,30 @@ const injectedRtkApi = api.injectEndpoints({
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
     }),
+    getSession: build.query<GetSessionApiResponse, GetSessionApiArg>({
+      query: (queryArg) => ({ url: `/api/games/${queryArg.roomCode}` }),
+    }),
+    cancelGame: build.mutation<CancelGameApiResponse, CancelGameApiArg>({
+      query: (queryArg) => ({
+        url: `/api/games/${queryArg.roomCode}`,
+        method: "DELETE",
+      }),
+    }),
+    getResults: build.query<GetResultsApiResponse, GetResultsApiArg>({
+      query: (queryArg) => ({ url: `/api/games/${queryArg.roomCode}/results` }),
+    }),
+    getByInviteToken: build.query<
+      GetByInviteTokenApiResponse,
+      GetByInviteTokenApiArg
+    >({
+      query: (queryArg) => ({ url: `/api/games/join/${queryArg.inviteToken}` }),
+    }),
+    listPacks: build.query<ListPacksApiResponse, ListPacksApiArg>({
+      query: () => ({ url: `/api/content-packs` }),
+    }),
+    getPack: build.query<GetPackApiResponse, GetPackApiArg>({
+      query: (queryArg) => ({ url: `/api/content-packs/${queryArg.id}` }),
+    }),
     getCurrentUser: build.query<
       GetCurrentUserApiResponse,
       GetCurrentUserApiArg
@@ -94,6 +134,14 @@ export type UploadProfileImageApiArg = {
 };
 export type CloseAccountApiResponse = unknown;
 export type CloseAccountApiArg = void;
+export type CreateGameApiResponse = /** status 200 OK */ GameSessionDto;
+export type CreateGameApiArg = {
+  createGameRequest: CreateGameRequest;
+};
+export type JoinByRoomCodeApiResponse = /** status 200 OK */ GameSessionDto;
+export type JoinByRoomCodeApiArg = {
+  roomCode: string;
+};
 export type RegisterApiResponse = /** status 200 OK */ RegisteredUser;
 export type RegisterApiArg = {
   registerRequest: RegisterRequest;
@@ -123,6 +171,28 @@ export type CheckUsernameApiArg = {
 };
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
+export type GetSessionApiResponse = /** status 200 OK */ GameSessionDto;
+export type GetSessionApiArg = {
+  roomCode: string;
+};
+export type CancelGameApiResponse = unknown;
+export type CancelGameApiArg = {
+  roomCode: string;
+};
+export type GetResultsApiResponse = /** status 200 OK */ GameResult;
+export type GetResultsApiArg = {
+  roomCode: string;
+};
+export type GetByInviteTokenApiResponse = /** status 200 OK */ GameSessionDto;
+export type GetByInviteTokenApiArg = {
+  inviteToken: string;
+};
+export type ListPacksApiResponse = /** status 200 OK */ ContentPackDto[];
+export type ListPacksApiArg = void;
+export type GetPackApiResponse = /** status 200 OK */ ContentPackDto;
+export type GetPackApiArg = {
+  id: string;
+};
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -149,6 +219,44 @@ export type RegisteredUser = {
   lastLogin?: string;
   createdAt?: string;
 };
+export type GameSettings = {
+  maxPlayers?: number;
+  totalRounds?: number;
+  timePerQuestion?: number;
+  speedBonus?: boolean;
+  allowGuests?: boolean;
+  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+};
+export type SessionPlayerDto = {
+  userId?: string;
+  userName?: string;
+  pictureUrl?: string;
+  isGuest?: boolean;
+  score?: number;
+};
+export type GameSessionDto = {
+  id?: string;
+  roomCode?: string;
+  inviteToken?: string;
+  type?: "TRIVIA" | "IMAGE" | "WORD";
+  status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
+  hostUserId?: string;
+  contentPackId?: string;
+  settings?: GameSettings;
+  players?: SessionPlayerDto[];
+  currentRound?: number;
+  createdAt?: string;
+  startedAt?: string;
+};
+export type CreateGameRequest = {
+  contentPackId: string;
+  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+  totalRounds?: number;
+  timePerQuestion?: number;
+  speedBonus?: boolean;
+  allowGuests?: boolean;
+  maxPlayers?: number;
+};
 export type RegisterRequest = {
   username: string;
   newsletter?: boolean;
@@ -174,10 +282,36 @@ export type HealthCheckResponse = {
   database?: string;
   redis?: string;
 };
+export type PlayerPlacement = {
+  userId?: string;
+  userName?: string;
+  finalScore?: number;
+  placement?: number;
+  correctAnswers?: number;
+  totalQuestions?: number;
+  guest?: boolean;
+};
+export type GameResult = {
+  id?: string;
+  gameSessionId?: string;
+  placements?: PlayerPlacement[];
+  endedAt?: string;
+};
+export type ContentPackDto = {
+  id?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  questionCount?: number;
+  isSystem?: boolean;
+  createdAt?: string;
+};
 export type UserDto = GuestUser | RegisteredUser;
 export const {
   useUploadProfileImageMutation,
   useCloseAccountMutation,
+  useCreateGameMutation,
+  useJoinByRoomCodeMutation,
   useRegisterMutation,
   useGuestLoginMutation,
   useUpdateProfileMutation,
@@ -189,6 +323,17 @@ export const {
   useLazyCheckUsernameQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
+  useGetSessionQuery,
+  useLazyGetSessionQuery,
+  useCancelGameMutation,
+  useGetResultsQuery,
+  useLazyGetResultsQuery,
+  useGetByInviteTokenQuery,
+  useLazyGetByInviteTokenQuery,
+  useListPacksQuery,
+  useLazyListPacksQuery,
+  useGetPackQuery,
+  useLazyGetPackQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

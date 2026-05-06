@@ -5,10 +5,14 @@
  * passing props through the route tree.
  */
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { GameSessionDto, PlayerPlacement, SessionPlayerDto } from "./BrainFlexApi";
+import type {
+  GameSessionDto,
+  PlayerPlacement,
+  SessionPlayerDto,
+} from "./BrainFlexApi";
 
 // Types for WebSocket broadcast payloads (not in the REST API client)
-export type QuestionData = {
+export interface QuestionData {
   id: string;
   questionText: string;
   options: string[];
@@ -16,34 +20,34 @@ export type QuestionData = {
   timeLimit: number;
   type: string;
   imageUrl?: string;
-};
+}
 
-export type RoundStartPayload = {
+export interface RoundStartPayload {
   round: number;
   totalRounds: number;
   question: QuestionData;
   startedAt: string;
-};
+}
 
-export type PlayerRoundResult = {
+export interface PlayerRoundResult {
   userId: string;
   userName: string;
   selectedOption: number;
   wasCorrect: boolean;
   pointsAwarded: number;
   totalScore: number;
-};
+}
 
-export type RoundResultPayload = {
+export interface RoundResultPayload {
   round: number;
   correctAnswer: number;
   correctAnswerText: string;
   playerResults: PlayerRoundResult[];
-};
+}
 
-export type GameOverPayload = {
+export interface GameOverPayload {
   placements: PlayerPlacement[];
-};
+}
 
 interface GameState {
   roomCode: string | null;

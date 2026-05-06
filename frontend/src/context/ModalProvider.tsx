@@ -1,10 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useState, type ReactNode } from "react";
 import { Modal } from "../components/Common/Modal/Modal";
 
 interface ModalConfig {
@@ -12,7 +6,7 @@ interface ModalConfig {
   title?: string;
 }
 
-interface ModalContextValue {
+export interface ModalContextValue {
   openModal: (config: ModalConfig) => void;
   closeModal: () => void;
 }
@@ -22,23 +16,23 @@ const ModalContext = createContext<ModalContextValue | null>(null);
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [config, setConfig] = useState<ModalConfig | null>(null);
 
-  const openModal = useCallback((cfg: ModalConfig) => setConfig(cfg), []);
-  const closeModal = useCallback(() => setConfig(null), []);
+  const openModal = useCallback((cfg: ModalConfig) => {
+    setConfig(cfg);
+  }, []);
+  const closeModal = useCallback(() => {
+    setConfig(null);
+  }, []);
 
   return (
-    <ModalContext.Provider value={{ openModal, closeModal }}>
+    <ModalContext value={{ openModal, closeModal }}>
       {children}
       {config && (
         <Modal title={config.title} onClose={closeModal}>
           {config.content}
         </Modal>
       )}
-    </ModalContext.Provider>
+    </ModalContext>
   );
 }
 
-export function useModal(): ModalContextValue {
-  const ctx = useContext(ModalContext);
-  if (!ctx) throw new Error("useModal must be used within a ModalProvider");
-  return ctx;
-}
+export { ModalContext };

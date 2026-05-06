@@ -5,14 +5,19 @@
 import styles from "./QuestionCard.module.css";
 import type { QuestionData } from "../../../store/gameSlice";
 
-type Props = {
+export interface QuestionCardProps {
   question: QuestionData;
   round: number;
   totalRounds: number;
   timeRemaining: number;
-};
+}
 
-export function QuestionCard({ question, round, totalRounds, timeRemaining }: Props) {
+const QuestionCard = ({
+  question,
+  round,
+  totalRounds,
+  timeRemaining,
+}: QuestionCardProps) => {
   const pct = Math.max(0, (timeRemaining / question.timeLimit) * 100);
   const urgent = timeRemaining <= 5;
 
@@ -28,15 +33,17 @@ export function QuestionCard({ question, round, totalRounds, timeRemaining }: Pr
       <div className={`${styles.timerTrack} ${urgent ? styles.urgent : ""}`}>
         <div className={styles.timerBar} style={{ width: `${pct}%` }} />
       </div>
-      <span className={`${styles.timerText} ${urgent ? styles.urgentText : ""}`}>
+      <span
+        className={`${styles.timerText} ${urgent ? styles.urgentText : ""}`}>
         {timeRemaining}s
       </span>
 
       {question.imageUrl && (
-        <img src={question.imageUrl} alt="" className={styles.image} />
+        <img src={question.imageUrl} alt='' className={styles.image} />
       )}
 
       <p className={styles.questionText}>{question.questionText}</p>
     </div>
   );
-}
+};
+export { QuestionCard };

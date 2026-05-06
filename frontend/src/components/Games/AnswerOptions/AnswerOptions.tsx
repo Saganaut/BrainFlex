@@ -5,23 +5,23 @@
  */
 import styles from "./AnswerOptions.module.css";
 
-type Props = {
+interface AnswerOptionsProps {
   options: string[];
   selectedOption: number | null;
   correctOption?: number;
   onSelect: (index: number) => void;
   disabled: boolean;
-};
+}
 
 const LABELS = ["A", "B", "C", "D"];
 
-export function AnswerOptions({
+const AnswerOptions = ({
   options,
   selectedOption,
   correctOption,
   onSelect,
   disabled,
-}: Props) {
+}: AnswerOptionsProps) => {
   return (
     <div className={styles.grid}>
       {options.map((text, i) => {
@@ -32,9 +32,11 @@ export function AnswerOptions({
         return (
           <button
             key={i}
-            type="button"
+            type='button'
             disabled={disabled}
-            onClick={() => onSelect(i)}
+            onClick={() => {
+              onSelect(i);
+            }}
             className={[
               styles.option,
               isSelected ? styles.selected : "",
@@ -42,8 +44,7 @@ export function AnswerOptions({
               isWrong ? styles.wrong : "",
             ]
               .filter(Boolean)
-              .join(" ")}
-          >
+              .join(" ")}>
             <span className={styles.label}>{LABELS[i]}</span>
             <span className={styles.text}>{text}</span>
           </button>
@@ -51,4 +52,6 @@ export function AnswerOptions({
       })}
     </div>
   );
-}
+};
+
+export { AnswerOptions };

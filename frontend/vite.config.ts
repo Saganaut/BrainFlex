@@ -6,6 +6,9 @@ import babel from "@rolldown/plugin-babel";
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    global: "globalThis",
+  },
   css: {
     devSourcemap: true,
   },

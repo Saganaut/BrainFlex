@@ -1,8 +1,6 @@
-import { createFileRoute, useSearch } from "@tanstack/react-router";
-import {
-  RegistrationForm,
-  type RegisterSearch,
-} from "../components/Forms/RegistrationForm";
+import { createFileRoute } from "@tanstack/react-router";
+import { type RegisterSearch } from "../components/Forms/RegistrationForm";
+import { RegisterPage } from "../pages/RegisterPage/RegisterPage";
 
 export const Route = createFileRoute("/register")({
   validateSearch: (search: Record<string, unknown>): RegisterSearch => {
@@ -16,16 +14,5 @@ export const Route = createFileRoute("/register")({
         typeof search.returnUrl === "string" ? search.returnUrl : undefined,
     };
   },
-  component: RouteComponent,
+  component: RegisterPage,
 });
-
-function RouteComponent() {
-  const search = useSearch({ from: "/register" });
-
-  console.log("search", search);
-  return (
-    <div>
-      <RegistrationForm registerSearchParams={search} />
-    </div>
-  );
-}

@@ -1,8 +1,8 @@
 // Or from '@reduxjs/toolkit/query' if not using the auto-generated hooks
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
-export const apiBaseUrl =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+export const apiBaseUrl: string =
+  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8080";
 
 // initialize an empty api service that we'll inject endpoints into later as needed
 export const emptySplitApi = createApi({

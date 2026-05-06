@@ -17,7 +17,7 @@ const CollapseBtn: React.FC<CollapseBtnProps> = ({ collapse, isCollapsed }) => {
         viewBox='0 0 24 24'
         strokeWidth={1.5}
         stroke='white'
-        className={`${isCollapsed ? styles.isCollapsed : ""}`}>
+        className={isCollapsed ? styles.isCollapsed : ""}>
         <path
           strokeLinecap='round'
           strokeLinejoin='round'

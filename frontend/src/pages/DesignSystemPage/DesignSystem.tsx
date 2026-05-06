@@ -3,9 +3,23 @@ import styles from "./DesignSystem.module.css";
 import { Btn } from "../../components/Common/Buttons/Btn";
 import { Card } from "../../components/Common/Cards/Card";
 import { Badge } from "../../components/Common/Badge";
-import { colorPalette, semanticTokens } from "./data";
+import {
+  colorPalette,
+  gameOverData,
+  playersData,
+  questionCardData,
+  RoundResultData,
+  semanticTokens,
+} from "./data";
 import { Toast } from "../../components/Common/Toast/Toast";
-import { useModal } from "../../context/ModalProvider";
+import { useModal } from "../../context/useModal";
+import { Leaderboard } from "../../components/Leaderboard";
+import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
+import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
+import { useEffect, useState } from "react";
+import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
+import { GameOver } from "../../components/Games/GameOver/GameOver";
+import { ContentPackPicker } from "../../components/Games/ContentPackPicker/ContentPackPicker";
 
 function ColorSwatch({ token }: { token: string }) {
   return (
@@ -36,8 +50,8 @@ function TokenRow({ token }: { token: string }) {
 }
 
 export function DesignSystem() {
-  const { openModal, closeModal } = useModal();
-
+  const { openModal } = useModal();
+  const [roundResultIsOpen, setRoundResultIsOpen] = useState(false);
   const openDesignModal = () => {
     const modalConfig = {
       title: "Design Modal",
@@ -46,6 +60,15 @@ export function DesignSystem() {
 
     openModal(modalConfig);
   };
+  useEffect(() => {
+    console.log("use effect triggered");
+    if (roundResultIsOpen) {
+      setTimeout(() => {
+        console.log("time's up");
+        setRoundResultIsOpen(false);
+      }, 2000);
+    }
+  }, [roundResultIsOpen]);
 
   return (
     <div className={styles.container}>
@@ -110,7 +133,12 @@ export function DesignSystem() {
           </div>
           <h4> Modal </h4>
           <div className={styles.modalGroup}>
-            <Btn onClick={() => openDesignModal()} size={"sm"} shape={"pill"}>
+            <Btn
+              onClick={() => {
+                openDesignModal();
+              }}
+              size={"sm"}
+              shape={"pill"}>
               Open Modal{" "}
             </Btn>
           </div>
@@ -177,6 +205,52 @@ export function DesignSystem() {
             <Btn shape={"pill"} size={"sm"} children={<span>Pill sm</span>} />
             <Btn shape={"pill"} size={"lg"} children={<span>Pill lg</span>} />
             <Btn children={<span>Primary lg</span>} />
+          </div>
+        </div>
+      </section>
+      <section>
+        <div className={styles.sectionTitle}>Game Components</div>
+        <div className={styles.examplesContainer}>
+          <h4> Scoring </h4>
+          <div className={styles.cardComponentContainer}>
+            <Leaderboard />
+            <ScoreBoard
+              players={playersData.players}
+              currentUserId={playersData.currentUserId}
+            />
+
+            <Btn
+              onClick={() => {
+                setRoundResultIsOpen(!roundResultIsOpen);
+              }}>
+              {" "}
+              Trigger Round Result{" "}
+            </Btn>
+
+            {roundResultIsOpen && (
+              <RoundResult
+                result={RoundResultData}
+                isHost={true}
+                isTurnBased={false}
+                onNextRound={() => {
+                  console.log("next round");
+                }}
+              />
+            )}
+            <GameOver {...gameOverData} />
+          </div>
+          <h4> Question card </h4>
+          <div className={styles.cardComponentContainer}>
+            <QuestionCard {...questionCardData} />
+          </div>
+          <h4> Content Pack Picker </h4>
+          <div className={styles.cardComponentContainer}>
+            <ContentPackPicker
+              selectedPackId={"1"}
+              onSelect={() => {
+                console.log("selected 1");
+              }}
+            />{" "}
           </div>
         </div>
       </section>

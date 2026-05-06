@@ -6,21 +6,21 @@
 import styles from "./RoundResult.module.css";
 import type { RoundResultPayload } from "../../../store/gameSlice";
 
-type Props = {
+interface RoundResultProps {
   result: RoundResultPayload;
   currentUserId?: string;
   isHost: boolean;
   isTurnBased: boolean;
   onNextRound: () => void;
-};
+}
 
-export function RoundResult({
+const RoundResult = ({
   result,
   currentUserId,
   isHost,
   isTurnBased,
   onNextRound,
-}: Props) {
+}: RoundResultProps) => {
   const myResult = result.playerResults.find((r) => r.userId === currentUserId);
   const sorted = [...result.playerResults].sort(
     (a, b) => b.totalScore - a.totalScore,
@@ -38,8 +38,7 @@ export function RoundResult({
 
         {myResult && (
           <div
-            className={`${styles.myResult} ${myResult.wasCorrect ? styles.myCorrect : styles.myWrong}`}
-          >
+            className={`${styles.myResult} ${myResult.wasCorrect ? styles.myCorrect : styles.myWrong}`}>
             {myResult.wasCorrect
               ? `Correct! +${myResult.pointsAwarded} pts`
               : "Incorrect"}
@@ -50,12 +49,10 @@ export function RoundResult({
           {sorted.map((r) => (
             <li
               key={r.userId}
-              className={`${styles.resultRow} ${r.userId === currentUserId ? styles.me : ""}`}
-            >
+              className={`${styles.resultRow} ${r.userId === currentUserId ? styles.me : ""}`}>
               <span className={styles.playerName}>{r.userName}</span>
               <span
-                className={`${styles.badge} ${r.wasCorrect ? styles.badgeCorrect : styles.badgeWrong}`}
-              >
+                className={`${styles.badge} ${r.wasCorrect ? styles.badgeCorrect : styles.badgeWrong}`}>
                 {r.wasCorrect ? `+${r.pointsAwarded}` : "x"}
               </span>
               <span className={styles.total}>{r.totalScore}</span>
@@ -64,7 +61,10 @@ export function RoundResult({
         </ol>
 
         {isHost && isTurnBased ? (
-          <button type="button" onClick={onNextRound} className={styles.nextBtn}>
+          <button
+            type='button'
+            onClick={onNextRound}
+            className={styles.nextBtn}>
             Next Round
           </button>
         ) : (
@@ -73,4 +73,6 @@ export function RoundResult({
       </div>
     </div>
   );
-}
+};
+
+export { RoundResult };

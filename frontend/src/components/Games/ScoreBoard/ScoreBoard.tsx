@@ -6,12 +6,12 @@
 import styles from "./ScoreBoard.module.css";
 import type { SessionPlayerDto } from "../../../store/BrainFlexApi";
 
-type Props = {
+export interface ScoreBoardProps {
   players: SessionPlayerDto[];
   currentUserId?: string;
-};
+}
 
-export function ScoreBoard({ players, currentUserId }: Props) {
+const ScoreBoard = ({ players, currentUserId }: ScoreBoardProps) => {
   const sorted = [...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
   return (
@@ -21,8 +21,7 @@ export function ScoreBoard({ players, currentUserId }: Props) {
         {sorted.map((p, i) => (
           <li
             key={p.userId}
-            className={`${styles.row} ${p.userId === currentUserId ? styles.me : ""}`}
-          >
+            className={`${styles.row} ${p.userId === currentUserId ? styles.me : ""}`}>
             <span className={styles.rank}>{i + 1}</span>
             <span className={styles.name}>{p.userName}</span>
             {p.isGuest && <span className={styles.guest}>guest</span>}
@@ -32,4 +31,5 @@ export function ScoreBoard({ players, currentUserId }: Props) {
       </ol>
     </div>
   );
-}
+};
+export { ScoreBoard };

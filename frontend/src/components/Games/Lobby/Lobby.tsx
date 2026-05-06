@@ -13,9 +13,11 @@ import { useGameWebSocket } from "../../../hooks/useGameWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import styles from "./Lobby.module.css";
 
-type Props = { roomCode: string };
+interface LobbyProps {
+  roomCode: string;
+}
 
-export function Lobby({ roomCode }: Props) {
+const Lobby = ({ roomCode }: LobbyProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user } = useCurrentUser();
@@ -56,7 +58,7 @@ export function Lobby({ roomCode }: Props) {
           {players.map((p) => (
             <li key={p.userId} className={styles.player}>
               {p.pictureUrl ? (
-                <img src={p.pictureUrl} alt="" className={styles.avatar} />
+                <img src={p.pictureUrl} alt='' className={styles.avatar} />
               ) : (
                 <div className={styles.avatarFallback}>
                   {(p.userName?.[0] ?? "?").toUpperCase()}
@@ -78,20 +80,21 @@ export function Lobby({ roomCode }: Props) {
       <div className={styles.actions}>
         {isHost ? (
           <button
-            type="button"
+            type='button'
             className={styles.startBtn}
             onClick={sendStart}
-            disabled={players.length < 1}
-          >
+            disabled={players.length < 1}>
             Start Game
           </button>
         ) : (
           <p className={styles.waitingMsg}>Waiting for the host to start…</p>
         )}
-        <button type="button" className={styles.leaveBtn} onClick={sendLeave}>
+        <button type='button' className={styles.leaveBtn} onClick={sendLeave}>
           Leave
         </button>
       </div>
     </div>
   );
-}
+};
+
+export { Lobby };

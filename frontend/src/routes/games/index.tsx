@@ -4,8 +4,8 @@
  * as a registered user, or join an existing session via room code.
  */
 import { createFileRoute } from "@tanstack/react-router";
-import { GameHub } from "../../components/Games/GameHub";
+import { GameHubPage } from "../../pages/GamePage/GameHubPage";
 
 export const Route = createFileRoute("/games/")({
-  component: GameHub,
+  component: GameHubPage,
 });

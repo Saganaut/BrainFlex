@@ -26,13 +26,13 @@ const Card = ({
   return (
     <div
       onClick={onClick}
-      className={`${[
+      className={[
         styles.card,
         styles[orientation],
         styles[clickable],
         styles[size],
         styles[variant],
-      ].join(" ")}`}>
+      ].join(" ")}>
       <div className={styles.header}>{header}</div>
       <div className={styles.body}>{body}</div>
       <div className={styles.footer}>{footer}</div>

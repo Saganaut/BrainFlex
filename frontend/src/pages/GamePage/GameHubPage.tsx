@@ -4,10 +4,10 @@
  * routing users to the create or join flows from a single screen.
  */
 import { Link } from "@tanstack/react-router";
-import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useCurrentUser } from "../../hooks/useCurrentUser";
 import styles from "./GameHub.module.css";
 
-export function GameHub() {
+const GameHubPage = () => {
   const { authenticated } = useCurrentUser();
 
   return (
@@ -18,7 +18,7 @@ export function GameHub() {
       </p>
       <div className={styles.cards}>
         {authenticated ? (
-          <Link to="/games/create" className={styles.card}>
+          <Link to='/games/create' className={styles.card}>
             <span className={styles.icon}>+</span>
             <span className={styles.cardTitle}>Create Game</span>
             <span className={styles.cardDesc}>
@@ -32,7 +32,7 @@ export function GameHub() {
             <span className={styles.cardDesc}>Sign in to host a game.</span>
           </div>
         )}
-        <Link to="/games/join" className={styles.card}>
+        <Link to='/games/join' className={styles.card}>
           <span className={styles.icon}>-&gt;</span>
           <span className={styles.cardTitle}>Join Game</span>
           <span className={styles.cardDesc}>
@@ -42,4 +42,6 @@ export function GameHub() {
       </div>
     </div>
   );
-}
+};
+
+export { GameHubPage };

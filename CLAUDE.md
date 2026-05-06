@@ -2,6 +2,8 @@
 
 A full-stack web app for competitive brain games. Learning project focused on MongoDB, Java, and Spring Boot. Built as a paired-down version of Cephadex Games.
 
+> **DO NOT TAKE SHORTCUTS.** Always follow the established rules and conventions. Do not bypass testing, documentation, or code review processes for expediency. Quality and maintainability are paramount.
+
 ---
 
 ## Project Layout
@@ -109,7 +111,22 @@ npx @rtk-query/codegen-openapi openapi-config.cts
 - `BrainFlexApi.ts` is auto-generated — never edit it directly.
 - API hooks come from RTK Query: `useGetLeaderboardQuery`, `useGetCurrentUserQuery`, etc.
 - The root layout is `__root.tsx`; TanStack Router Devtools are mounted there.
-- CSS custom properties are defined in `src/index.css` (oklch color space, IBM Plex Mono font).
+- Global styles and CSS custom properties are in `src/index.css` (oklch color space, IBM Plex Mono font). Design tokens (colors, spacing, font sizes, borders) are defined in `src/tokens.css` — always use those tokens, never hardcode values.
+- Use semantic HTML/JSX elements and build all components with accessibility in mind (proper ARIA attributes, keyboard navigation).
+- Strictly adhere to both ESLint and Stylelint rules. Resolve all linting issues before committing.
+
+**State management:**
+
+- **Avoid RTK for generic global state.** Minimize use of the Redux Toolkit core store for non-server state.
+- **Prefer RTK Query caching** as the primary mechanism for server-side data and associated UI state.
+
+**Component design:**
+
+- Declare components as `const ComponentName = ({}: ComponentNameProps) => {}` and use named exports: `export { ComponentName }`. Never use default exports.
+- Route files are for routing only — they must delegate to a `RouteNamePage` component in `src/pages/`.
+- Place component-specific data (JSON, constants) in a `data.ts` file in the same directory as the component.
+- Never use `index.tsx` files — use explicit file names (e.g., `MyComponent.tsx`).
+- Favor `interface` over `type`. Props interfaces must be named `ComponentNameProps`.
 
 ### Backend
 
@@ -234,6 +251,8 @@ Service tests added:
 - `UserServiceTest.java` - Tests user creation, registration, and username validation logic
 
 When adding backend tests, use the test starters already present in `pom.xml` — no new dependencies needed for standard Spring test slices. Use `@MockitoBean` for mocking in Spring Boot 4 tests. Tests use the "test" profile with `TestSecurityConfig` that permits all requests to avoid authentication redirects.
+
+**Never change a test to make it pass without addressing the underlying issue. Always fix the code or the test to ensure correctness.**
 
 **Frontend**: No test files currently. ESLint is configured for code quality.
 

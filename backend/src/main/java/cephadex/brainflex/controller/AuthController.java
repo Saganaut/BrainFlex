@@ -111,10 +111,10 @@ public class AuthController {
         }
         User user = userService.createGuest(request.username());
         String authName = "guest:" + user.getId();
-        var authentication = new UsernamePasswordAuthenticationToken(
+        var guestAuth = new UsernamePasswordAuthenticationToken(
                 authName, null, List.of(new SimpleGrantedAuthority("ROLE_GUEST")));
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
+        context.setAuthentication(guestAuth);
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, httpRequest, httpResponse);
         return ResponseEntity.status(HttpStatus.CREATED)

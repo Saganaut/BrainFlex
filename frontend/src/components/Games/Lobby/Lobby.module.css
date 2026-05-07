@@ -138,13 +138,13 @@
   border-color: var(--border-success);
   color: var(--text-success);
 
-  &:hover:not(:disabled) {
-    border-color: var(--action-hover);
-  }
-
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--action-hover);
   }
 }
 

@@ -254,7 +254,40 @@ When adding backend tests, use the test starters already present in `pom.xml` �
 
 **Never change a test to make it pass without addressing the underlying issue. Always fix the code or the test to ensure correctness.**
 
-**Frontend**: No test files currently. ESLint is configured for code quality.
+### CI
+
+GitHub Actions runs both test suites on every push to `main` and every PR targeting `main`. Workflow: `.github/workflows/ci.yml`. Both jobs run in parallel; the push/merge is blocked if either fails.
+
+To enforce this at the repository level, enable branch protection on `main` in GitHub repo Settings → Branches → Require status checks (select `Frontend tests` and `Backend tests`).
+
+### Pre-push hook (local)
+
+Two hook scripts are committed in `scripts/`. Install both once per clone:
+
+```bash
+ln -sf ../../scripts/pre-commit .git/hooks/pre-commit
+ln -sf ../../scripts/pre-push   .git/hooks/pre-push
+```
+
+- **pre-commit** — runs `lint:all` (ESLint + Stylelint) on every commit. The commit is blocked if any lint error is reported.
+- **pre-push** — runs both test suites only when pushing to `main`. Pushes to other branches are unaffected.
+
+**Frontend**: Vitest + jsdom + React Testing Library.
+
+| Tool                          | Role                                      |
+| ----------------------------- | ----------------------------------------- |
+| `vitest`                      | Test runner and assertions                |
+| `jsdom`                       | DOM environment for component rendering   |
+| `@testing-library/react`      | Component rendering and querying          |
+| `@testing-library/user-event` | Realistic user interaction simulation     |
+| `@testing-library/jest-dom`   | Custom DOM matchers (toBeInTheDocument, etc.) |
+| `msw`                         | API mocking at the network layer          |
+
+Setup file: `frontend/src/test-setup.ts` — imports `@testing-library/jest-dom` to register custom matchers.
+
+Run tests: `npm test` (watch mode) or `npm run test:run` (single pass).
+
+Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to `Btn.tsx`). Test files must follow the same naming and comment conventions as source files.
 
 ---
 

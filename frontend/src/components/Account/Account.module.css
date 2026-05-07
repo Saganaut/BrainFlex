@@ -69,7 +69,7 @@
 }
 
 .dangerSection {
-  border-color: var(--status-error);
+  border-color: var(--border-error);
 }
 
 .dangerText {
@@ -79,7 +79,7 @@
 }
 
 .dangerButton {
-  background-color: var(--status-error);
+  background-color: var(--border-error);
   color: var(--text-on-brand);
   border: none;
   cursor: pointer;

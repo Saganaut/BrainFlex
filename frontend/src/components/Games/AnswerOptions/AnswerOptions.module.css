@@ -21,12 +21,12 @@
     border-color var(--duration-fast) var(--ease-out),
     background var(--duration-fast) var(--ease-out);
 
-  &:hover:not(:disabled) {
-    border-color: var(--action-hover);
-  }
-
   &:disabled {
     cursor: default;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--action-hover);
   }
 }
 

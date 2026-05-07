@@ -30,7 +30,11 @@
   width: 600px;
   height: 600px;
   border-radius: var(--radius-full);
-  background: radial-gradient(circle, oklch(52% 0.2 25deg / 15%) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    oklch(52% 0.2 25deg / 15%) 0%,
+    transparent 70%
+  );
   pointer-events: none;
   animation: pulse 4s ease-in-out infinite;
 }
@@ -43,7 +47,7 @@
   letter-spacing: 0.2em;
   text-transform: uppercase;
   margin: 0 0 var(--space-4);
-  animation: fadeUp var(--duration-slow) var(--ease-out) both;
+  animation: fade-up var(--duration-slow) var(--ease-out) both;
 }
 
 .eyebrow::before {
@@ -59,11 +63,17 @@
   font-weight: 900;
   line-height: 1;
   margin: 0 0 var(--space-6);
-  background: linear-gradient(135deg, var(--red-500) 0%, var(--red-400) 40%, var(--yellow-500) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--red-500) 0%,
+    var(--red-400) 40%,
+    var(--yellow-500) 100%
+  );
   background-clip: text;
+  /* stylelint-disable-next-line property-no-vendor-prefix */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: fadeUp var(--duration-slow) var(--ease-out) 100ms both;
+  animation: fade-up var(--duration-slow) var(--ease-out) 100ms both;
 }
 
 .heroTagline {
@@ -74,7 +84,7 @@
   max-width: 540px;
   margin: 0 auto var(--space-8);
   line-height: 1.6;
-  animation: fadeUp var(--duration-slow) var(--ease-out) 200ms both;
+  animation: fade-up var(--duration-slow) var(--ease-out) 200ms both;
 }
 
 .heroActions {
@@ -83,7 +93,7 @@
   gap: var(--space-4);
   flex-wrap: wrap;
   justify-content: center;
-  animation: fadeUp var(--duration-slow) var(--ease-out) 300ms both;
+  animation: fade-up var(--duration-slow) var(--ease-out) 300ms both;
 }
 
 .btnPrimary {
@@ -144,7 +154,7 @@
   align-items: center;
   padding: var(--space-8) var(--space-6);
   border-right: 1px solid var(--border-default);
-  animation: fadeUp var(--duration-slow) var(--ease-out) 400ms both;
+  animation: fade-up var(--duration-slow) var(--ease-out) 400ms both;
 }
 
 .statItem:last-child {
@@ -280,7 +290,11 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, oklch(52% 0.2 25deg / 8%) 0%, transparent 70%);
+  background: radial-gradient(
+    ellipse at center,
+    oklch(52% 0.2 25deg / 8%) 0%,
+    transparent 70%
+  );
   pointer-events: none;
 }
 
@@ -309,7 +323,7 @@
 
 /* ── Animations ────────────────────────────────────────────────── */
 
-@keyframes fadeUp {
+@keyframes fade-up {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -336,7 +350,7 @@
 
 /* ── Responsive ────────────────────────────────────────────────── */
 
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .stats {
     grid-template-columns: 1fr;
   }

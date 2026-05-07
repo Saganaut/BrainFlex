@@ -1,5 +1,5 @@
 import { Leaderboard } from "../../components/Leaderboard/Leaderboard";
-import { PlayerInfo } from "../../components/PlayerInfo";
+import { PlayerInfo } from "../../components/PlayerInfo/PlayerInfo";
 
 const MainPage = () => {
   console.log("HI!");

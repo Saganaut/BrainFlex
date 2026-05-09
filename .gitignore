@@ -63,3 +63,6 @@ frontend/*.sw?
 
 ### ENV ###
 .env
+dev.env
+prod.env
+staging.env

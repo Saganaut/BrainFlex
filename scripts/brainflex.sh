@@ -14,7 +14,7 @@ echo "⚛️ Starting Frontend..."
 echo "🍃 Starting Backend..."
 (
   set -a
-  source .env
+  source dev.env
   set +a
   cd backend
   ./mvnw spring-boot:run

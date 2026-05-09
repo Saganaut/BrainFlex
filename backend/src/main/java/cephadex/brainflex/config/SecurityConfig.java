@@ -78,6 +78,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasAnyRole("GUEST", "USER")
                         // Creating games is registered-only
                         .requestMatchers(HttpMethod.POST, "/api/games").hasRole("USER")
+                        // Themes and organizations are registered-only
+                        .requestMatchers("/api/themes/**").hasRole("USER")
+                        .requestMatchers("/api/organizations/**").hasRole("USER")
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {

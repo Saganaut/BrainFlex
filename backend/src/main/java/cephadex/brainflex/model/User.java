@@ -33,6 +33,12 @@ public class User {
     private Boolean isClosed;
     private LocalDateTime closedAt;
 
+    /** The organization this user belongs to (nullable). */
+    private String organizationId;
+
+    /** The id of the user's currently active custom Theme (nullable). */
+    private String activeThemeId;
+
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt = LocalDateTime.now();
 }

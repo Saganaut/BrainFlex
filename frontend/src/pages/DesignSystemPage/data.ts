@@ -1,5 +1,20 @@
 import type { ScoreBoardProps } from "../../components/Games/ScoreBoard/ScoreBoard";
 
+export interface ThemePreset {
+  label: string;
+  huePrimary: number;
+  hueAccent: number;
+}
+
+export const themePresets: ThemePreset[] = [
+  { label: "Default", huePrimary: 260, hueAccent: 25 },
+  { label: "Forest", huePrimary: 160, hueAccent: 35 },
+  { label: "Sunset", huePrimary: 30, hueAccent: 280 },
+  { label: "Ocean", huePrimary: 210, hueAccent: 60 },
+  { label: "Orchid", huePrimary: 300, hueAccent: 45 },
+  { label: "Midnight", huePrimary: 240, hueAccent: 180 },
+];
+
 export const questionCardData = {
   round: 8,
   totalRounds: 10,

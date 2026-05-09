@@ -42,6 +42,30 @@ public class S3Service {
         return generatePresignedUrl(key);
     }
 
+    public String uploadThemeBackground(String themeId, byte[] imageBytes) {
+        String key = "theme-backgrounds/" + themeId + "/bg.webp";
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(props.bucket())
+                        .key(key)
+                        .contentType("image/webp")
+                        .build(),
+                RequestBody.fromBytes(imageBytes));
+        return generatePresignedUrl(key);
+    }
+
+    public String uploadThemeLogo(String themeId, byte[] imageBytes) {
+        String key = "theme-logos/" + themeId + "/logo.webp";
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(props.bucket())
+                        .key(key)
+                        .contentType("image/webp")
+                        .build(),
+                RequestBody.fromBytes(imageBytes));
+        return generatePresignedUrl(key);
+    }
+
     private String generatePresignedUrl(String key) {
         return s3Presigner.presignGetObject(
                 GetObjectPresignRequest.builder()

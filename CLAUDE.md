@@ -172,6 +172,26 @@ All endpoints are prefixed `/api`.
 
 **CORS**: only `http://localhost:5173` is allowed, with credentials.
 
+### Theme Endpoints (`/api/themes`) — requires `ROLE_USER`
+
+| Method | Path                         | Description                                               |
+| ------ | ---------------------------- | --------------------------------------------------------- |
+| GET    | `/api/themes`                | All themes owned by caller + org-shared themes            |
+| POST   | `/api/themes`                | Create a theme (name, huePrimary, hueAccent, mode)        |
+| PUT    | `/api/themes/{id}`           | Update name/colors/scope/mode (owner only)                |
+| DELETE | `/api/themes/{id}`           | Delete theme (owner only)                                 |
+| POST   | `/api/themes/{id}/background`| Upload background image (multipart, max 5 MB, 2000 px)    |
+| POST   | `/api/themes/{id}/logo`      | Upload logo image (multipart, max 2 MB, 400×400 px)       |
+
+### Organization Endpoints (`/api/organizations`) — requires `ROLE_USER`
+
+| Method | Path                        | Description                                      |
+| ------ | --------------------------- | ------------------------------------------------ |
+| GET    | `/api/organizations/me`     | Caller's current organization (404 if none)      |
+| POST   | `/api/organizations`        | Create org and set caller as owner/first member  |
+| POST   | `/api/organizations/join`   | Join an org by ID; body: `{ organizationId }`    |
+| DELETE | `/api/organizations/me/leave`| Leave current org (sets organizationId to null) |
+
 ---
 
 ## Data Models
@@ -179,16 +199,18 @@ All endpoints are prefixed `/api`.
 ### User (MongoDB document, collection: `users`)
 
 ```
-id            String   (ObjectId)
-email         String   (unique index)
-name          String
-userName      String
-isGuest       Boolean
-googleId      String
-pictureUrl    String
-stats         PlayerStats (embedded)
-lastLogin     LocalDateTime
-createdAt     LocalDateTime
+id               String   (ObjectId)
+email            String   (unique index)
+name             String
+userName         String
+isGuest          Boolean
+googleId         String
+pictureUrl       String
+organizationId   String   (nullable — set when user joins an org)
+activeThemeId    String   (nullable — ID of the user's active custom theme)
+stats            PlayerStats (embedded)
+lastLogin        LocalDateTime
+createdAt        LocalDateTime
 ```
 
 Compound index on `stats.totalPoints DESC` for leaderboard sorting.
@@ -202,10 +224,51 @@ totalPoints     int
 currentStreak   int
 ```
 
+### Organization (MongoDB document, collection: `organizations`)
+
+```
+id          String   (ObjectId)
+name        String
+ownerId     String   (userId of creator)
+createdAt   LocalDateTime
+```
+
+One user belongs to at most one organization at a time. Joining a new org requires leaving the current one first.
+
+### Theme (MongoDB document, collection: `themes`)
+
+```
+id                  String   (ObjectId)
+name                String
+ownerId             String   (userId)
+organizationId      String   (nullable — if set, all org members can view it)
+huePrimary          int      (0–360, oklch hue for the primary palette)
+hueAccent           int      (0–360, oklch hue for the accent palette)
+mode                String   ("light" | "dark" | "system")
+backgroundImageUrl  String   (nullable, S3 presigned URL)
+logoImageUrl        String   (nullable, S3 presigned URL)
+createdAt           LocalDateTime
+```
+
 ### DTOs
 
 - `UserDTO.GuestUser` — id, userName, isGuest, pictureUrl, stats (safe for leaderboard)
-- `UserDTO.RegisteredUser` — all fields including email, googleId, timestamps (authenticated only)
+- `UserDTO.RegisteredUser` — all fields including email, googleId, organizationId, activeThemeId, timestamps (authenticated only)
+
+### Image Processing Tiers
+
+Images are validated by byte-header MIME detection (not Content-Type), resized with Scrimage, and stored as WebP in S3.
+
+| Tier       | Endpoint                      | Max size | Max dimension | Allowed types          |
+| ---------- | ----------------------------- | -------- | ------------- | ---------------------- |
+| Avatar     | `POST /api/users/me/profile-image` | 1 MB | 500×500 px   | JPEG, PNG, WebP, GIF   |
+| Logo       | `POST /api/themes/{id}/logo`  | 2 MB     | 400×400 px    | JPEG, PNG, WebP, GIF   |
+| Background | `POST /api/themes/{id}/background` | 5 MB | 2000px (longest side) | JPEG, PNG, WebP |
+
+S3 keys follow deterministic patterns so re-uploading overwrites the same object:
+- `profile-images/{userId}/avatar.webp`
+- `theme-logos/{themeId}/logo.webp`
+- `theme-backgrounds/{themeId}/bg.webp`
 
 ---
 
@@ -303,13 +366,21 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 | `frontend/src/components/Leaderboard/index.tsx` | Leaderboard UI                                    |
 | `frontend/src/components/PlayerInfo/index.tsx`  | Player info UI component                          |
 | `frontend/src/hooks/useCurrentUser.ts`          | Custom hook for current user authentication       |
+| `frontend/src/hooks/useTheme.ts`                | Light/dark mode + huePrimary/hueAccent, persisted to localStorage |
 | `frontend/src/types/typeguards.ts`              | TypeScript type guards for user types             |
 | `frontend/src/utils/utils.ts`                   | Utility functions (e.g., camelToNormalCase)       |
+| `frontend/src/pages/AccountPage/ThemeSection.tsx` | Theme settings UI (presets + custom themes)     |
+| `frontend/src/pages/AccountPage/ThemeEditor.tsx`  | Create/edit theme form with image upload        |
+| `frontend/src/pages/AccountPage/ThemeCard.tsx`    | Single theme card with activate/edit/delete     |
+| `frontend/src/pages/AccountPage/OrgSection.tsx`   | Organization create/join/leave UI               |
+| `frontend/src/pages/DesignSystemPage/ThemePicker.tsx` | Hue sliders for live design-system exploration |
 | `frontend/openapi-config.cts`                   | Config for API codegen                            |
 | `backend/.../config/SecurityConfig.java`        | Auth, CORS, public routes                         |
 | `backend/.../config/DataSeeder.java`            | Seeds 15 LOTR test users on first startup         |
 | `backend/.../dto/UserDTO.java`                  | Sealed DTO interface (GuestUser / RegisteredUser) |
 | `backend/.../repository/UserRepository.java`    | MongoDB queries                                   |
+| `backend/.../controller/ThemeController.java`   | REST endpoints at `/api/themes`                   |
+| `backend/.../controller/OrganizationController.java` | REST endpoints at `/api/organizations`       |
 | `compose.yaml`                                  | Docker services (MongoDB, Redis)                  |
 | `.env`                                          | All secrets and connection strings                |
 

@@ -8,6 +8,8 @@ import {
 } from "../../store/BrainFlexApi";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { apiBaseUrl } from "../../store/emptyApi";
+import { ThemeSection } from "./ThemeSection";
+import { OrgSection } from "./OrgSection";
 import styles from "./AccountPage.module.css";
 
 const MAX_FILE_SIZE = 1024 * 1024;
@@ -25,7 +27,12 @@ const AccountPage = () => {
   const [pictureSuccess, setPictureSuccess] = useState(false);
   const [pictureError, setPictureError] = useState<string | null>(null);
 
-  const [newsletter, setNewsletter] = useState(false);
+  // Pending newsletter value: null means "use server value"; non-null means
+  // the user has toggled it locally (optimistic update before the API responds).
+  const [pendingNewsletter, setPendingNewsletter] = useState<boolean | null>(
+    null,
+  );
+  const newsletter = pendingNewsletter ?? (registeredUser?.newsletter ?? false);
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
   const [closeConfirm, setCloseConfirm] = useState(false);
@@ -35,11 +42,6 @@ const AccountPage = () => {
   const [uploadProfileImage, { isLoading: isUploading }] =
     useUploadProfileImageMutation();
   const [closeAccount, { isLoading: isClosing }] = useCloseAccountMutation();
-  if (registeredUser) {
-    const isSubscribed = registeredUser.newsletter ? true : false;
-    setNewsletter(isSubscribed);
-  }
-  // useEffect(() => {}, [registeredUser]);
 
   useEffect(() => {
     if (userState.state !== "loading" && userState.state !== "registered") {
@@ -91,15 +93,16 @@ const AccountPage = () => {
   };
 
   const handleNewsletterChange = async (checked: boolean) => {
-    setNewsletter(checked);
+    setPendingNewsletter(checked);
     setNewsletterSuccess(false);
     try {
       await updateProfile({
         updateProfileRequest: { newsletter: checked },
       }).unwrap();
       setNewsletterSuccess(true);
+      setPendingNewsletter(null); // revert to server value (which now matches)
     } catch {
-      setNewsletter(!checked);
+      setPendingNewsletter(null); // revert optimistic update on failure
     }
   };
 
@@ -172,6 +175,10 @@ const AccountPage = () => {
         )}
       </section>
 
+      <ThemeSection />
+
+      <OrgSection />
+
       <section className={`${styles.section} ${styles.dangerSection}`}>
         <h2 className={styles.sectionTitle}>Close Account</h2>
         <p className={styles.dangerText}>
@@ -194,7 +201,7 @@ const AccountPage = () => {
               <button
                 type='button'
                 className={styles.dangerButton}
-                onClick={() => void handleCloseAccount}
+                onClick={() => void handleCloseAccount()}
                 disabled={isClosing}>
                 {isClosing ? "Closing..." : "Yes, close my account"}
               </button>

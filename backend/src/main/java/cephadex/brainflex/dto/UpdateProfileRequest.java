@@ -2,5 +2,7 @@ package cephadex.brainflex.dto;
 
 public record UpdateProfileRequest(
         String pictureUrl,
-        Boolean newsletter) {
+        Boolean newsletter,
+        String organizationId,
+        String activeThemeId) {
 }

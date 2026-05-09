@@ -30,7 +30,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
   return (
     <div className={styles.registrationFormContainer}>
       <h1>What shall we call you?</h1>
-      <form className={styles.registrationForm} onSubmit={void handleSubmit}>
+      <form className={styles.registrationForm} onSubmit={(e) => void handleSubmit(e)}>
         <div>
           <div>
             <label htmlFor='username'>Username</label>

@@ -46,6 +46,8 @@ public sealed interface UserDTO {
             String pictureUrl,
             PlayerStats stats,
             Boolean newsletter,
+            String organizationId,
+            String activeThemeId,
             LocalDateTime lastLogin,
             LocalDateTime createdAt)
             implements UserDTO, View {
@@ -60,6 +62,8 @@ public sealed interface UserDTO {
                     user.getPictureUrl(),
                     user.getStats(),
                     user.getNewsletter(),
+                    user.getOrganizationId(),
+                    user.getActiveThemeId(),
                     user.getLastLogin(),
                     user.getCreatedAt());
         }

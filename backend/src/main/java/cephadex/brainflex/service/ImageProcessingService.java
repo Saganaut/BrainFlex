@@ -18,31 +18,56 @@ import com.sksamuel.scrimage.webp.WebpWriter;
 @Service
 public class ImageProcessingService {
 
-    private static final long MAX_UPLOAD_BYTES = 1024L * 1024L;
-    private static final int MAX_DIMENSION = 500;
+    private static final long MAX_AVATAR_BYTES = 1024L * 1024L;
+    private static final long MAX_LOGO_BYTES = 2L * 1024L * 1024L;
+    private static final long MAX_BACKGROUND_BYTES = 5L * 1024L * 1024L;
+
+    private static final int MAX_AVATAR_DIMENSION = 500;
+    private static final int MAX_LOGO_DIMENSION = 400;
+    private static final int MAX_BACKGROUND_DIMENSION = 2000;
+
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/gif");
+    private static final Set<String> ALLOWED_TYPES_NO_GIF = Set.of(
+            "image/jpeg", "image/png", "image/webp");
 
+    /** Avatar: max 1 MB, max 500×500, JPEG/PNG/WebP/GIF → WebP. */
     public byte[] validateAndProcess(MultipartFile file) throws IOException {
+        return process(file, MAX_AVATAR_BYTES, MAX_AVATAR_DIMENSION, ALLOWED_TYPES, "1 MB");
+    }
+
+    /** Logo: max 2 MB, max 400×400, JPEG/PNG/WebP/GIF → WebP. */
+    public byte[] validateAndProcessLogo(MultipartFile file) throws IOException {
+        return process(file, MAX_LOGO_BYTES, MAX_LOGO_DIMENSION, ALLOWED_TYPES, "2 MB");
+    }
+
+    /** Background: max 5 MB, max 2000px on longest side, JPEG/PNG/WebP → WebP. */
+    public byte[] validateAndProcessBackground(MultipartFile file) throws IOException {
+        return process(file, MAX_BACKGROUND_BYTES, MAX_BACKGROUND_DIMENSION, ALLOWED_TYPES_NO_GIF, "5 MB");
+    }
+
+    private byte[] process(MultipartFile file, long maxBytes, int maxDimension,
+            Set<String> allowedTypes, String limitLabel) throws IOException {
         if (file.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No image provided");
         }
-        if (file.getSize() > MAX_UPLOAD_BYTES) {
+        if (file.getSize() > maxBytes) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Image exceeds the 1 MB size limit");
+                    "Image exceeds the " + limitLabel + " size limit");
         }
 
         byte[] bytes = file.getBytes();
 
         String detected = detectMimeType(bytes);
-        if (!ALLOWED_TYPES.contains(detected)) {
+        if (!allowedTypes.contains(detected)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Invalid file type. Only JPEG, PNG, WebP, and GIF are accepted");
+                    "Invalid file type. Only JPEG, PNG, WebP"
+                            + (allowedTypes.contains("image/gif") ? ", and GIF" : "") + " are accepted");
         }
 
         ImmutableImage image = ImmutableImage.loader().fromBytes(bytes);
-        if (image.width > MAX_DIMENSION || image.height > MAX_DIMENSION) {
-            image = image.bound(MAX_DIMENSION, MAX_DIMENSION);
+        if (image.width > maxDimension || image.height > maxDimension) {
+            image = image.bound(maxDimension, maxDimension);
         }
 
         return image.bytes(WebpWriter.DEFAULT);

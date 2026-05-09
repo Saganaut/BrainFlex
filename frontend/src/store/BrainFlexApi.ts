@@ -1,6 +1,19 @@
 import { emptySplitApi as api } from "./emptyApi";
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
+    updateTheme: build.mutation<UpdateThemeApiResponse, UpdateThemeApiArg>({
+      query: (queryArg) => ({
+        url: `/api/themes/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateThemeRequest,
+      }),
+    }),
+    deleteTheme: build.mutation<DeleteThemeApiResponse, DeleteThemeApiArg>({
+      query: (queryArg) => ({
+        url: `/api/themes/${queryArg.id}`,
+        method: "DELETE",
+      }),
+    }),
     uploadProfileImage: build.mutation<
       UploadProfileImageApiResponse,
       UploadProfileImageApiArg
@@ -13,6 +26,47 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     closeAccount: build.mutation<CloseAccountApiResponse, CloseAccountApiArg>({
       query: () => ({ url: `/api/users/me/close`, method: "POST" }),
+    }),
+    listThemes: build.query<ListThemesApiResponse, ListThemesApiArg>({
+      query: () => ({ url: `/api/themes` }),
+    }),
+    createTheme: build.mutation<CreateThemeApiResponse, CreateThemeApiArg>({
+      query: (queryArg) => ({
+        url: `/api/themes`,
+        method: "POST",
+        body: queryArg.createThemeRequest,
+      }),
+    }),
+    uploadLogo: build.mutation<UploadLogoApiResponse, UploadLogoApiArg>({
+      query: (queryArg) => ({
+        url: `/api/themes/${queryArg.id}/logo`,
+        method: "POST",
+        body: queryArg.body,
+      }),
+    }),
+    uploadBackground: build.mutation<
+      UploadBackgroundApiResponse,
+      UploadBackgroundApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/themes/${queryArg.id}/background`,
+        method: "POST",
+        body: queryArg.body,
+      }),
+    }),
+    createOrg: build.mutation<CreateOrgApiResponse, CreateOrgApiArg>({
+      query: (queryArg) => ({
+        url: `/api/organizations`,
+        method: "POST",
+        body: queryArg.createOrganizationRequest,
+      }),
+    }),
+    joinOrg: build.mutation<JoinOrgApiResponse, JoinOrgApiArg>({
+      query: (queryArg) => ({
+        url: `/api/organizations/join`,
+        method: "POST",
+        body: queryArg.joinOrganizationRequest,
+      }),
     }),
     createGame: build.mutation<CreateGameApiResponse, CreateGameApiArg>({
       query: (queryArg) => ({
@@ -80,6 +134,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    getMyOrg: build.query<GetMyOrgApiResponse, GetMyOrgApiArg>({
+      query: () => ({ url: `/api/organizations/me` }),
+    }),
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
     }),
@@ -122,10 +179,22 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    leaveOrg: build.mutation<LeaveOrgApiResponse, LeaveOrgApiArg>({
+      query: () => ({ url: `/api/organizations/me/leave`, method: "DELETE" }),
+    }),
   }),
   overrideExisting: false,
 });
 export { injectedRtkApi as BrainFlex };
+export type UpdateThemeApiResponse = /** status 200 OK */ ThemeResponse;
+export type UpdateThemeApiArg = {
+  id: string;
+  updateThemeRequest: UpdateThemeRequest;
+};
+export type DeleteThemeApiResponse = unknown;
+export type DeleteThemeApiArg = {
+  id: string;
+};
 export type UploadProfileImageApiResponse = /** status 200 OK */ RegisteredUser;
 export type UploadProfileImageApiArg = {
   body: {
@@ -134,6 +203,34 @@ export type UploadProfileImageApiArg = {
 };
 export type CloseAccountApiResponse = unknown;
 export type CloseAccountApiArg = void;
+export type ListThemesApiResponse = /** status 200 OK */ ThemeResponse[];
+export type ListThemesApiArg = void;
+export type CreateThemeApiResponse = /** status 200 OK */ ThemeResponse;
+export type CreateThemeApiArg = {
+  createThemeRequest: CreateThemeRequest;
+};
+export type UploadLogoApiResponse = /** status 200 OK */ ThemeResponse;
+export type UploadLogoApiArg = {
+  id: string;
+  body: {
+    image: Blob;
+  };
+};
+export type UploadBackgroundApiResponse = /** status 200 OK */ ThemeResponse;
+export type UploadBackgroundApiArg = {
+  id: string;
+  body: {
+    image: Blob;
+  };
+};
+export type CreateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
+export type CreateOrgApiArg = {
+  createOrganizationRequest: CreateOrganizationRequest;
+};
+export type JoinOrgApiResponse = /** status 200 OK */ OrganizationResponse;
+export type JoinOrgApiArg = {
+  joinOrganizationRequest: JoinOrganizationRequest;
+};
 export type CreateGameApiResponse = /** status 200 OK */ GameSessionDto;
 export type CreateGameApiArg = {
   createGameRequest: CreateGameRequest;
@@ -169,6 +266,8 @@ export type CheckUsernameApiResponse = /** status 200 OK */ {
 export type CheckUsernameApiArg = {
   username: string;
 };
+export type GetMyOrgApiResponse = /** status 200 OK */ OrganizationResponse;
+export type GetMyOrgApiArg = void;
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
 export type GetSessionApiResponse = /** status 200 OK */ GameSessionDto;
@@ -200,6 +299,27 @@ export type LoginApiArg = {
   returnUrl?: string;
   guestId?: string;
 };
+export type LeaveOrgApiResponse = unknown;
+export type LeaveOrgApiArg = void;
+export type ThemeResponse = {
+  id?: string;
+  name?: string;
+  ownerId?: string;
+  organizationId?: string;
+  huePrimary?: number;
+  hueAccent?: number;
+  mode?: string;
+  backgroundImageUrl?: string;
+  logoImageUrl?: string;
+  createdAt?: string;
+};
+export type UpdateThemeRequest = {
+  name?: string;
+  huePrimary?: number;
+  hueAccent?: number;
+  mode?: string;
+  organizationId?: string;
+};
 export type PlayerStats = {
   gamesPlayed?: number;
   highScore?: number;
@@ -216,8 +336,29 @@ export type RegisteredUser = {
   pictureUrl?: string;
   stats?: PlayerStats;
   newsletter?: boolean;
+  organizationId?: string;
+  activeThemeId?: string;
   lastLogin?: string;
   createdAt?: string;
+};
+export type CreateThemeRequest = {
+  name?: string;
+  huePrimary?: number;
+  hueAccent?: number;
+  mode?: string;
+  organizationId?: string;
+};
+export type OrganizationResponse = {
+  id?: string;
+  name?: string;
+  ownerId?: string;
+  createdAt?: string;
+};
+export type CreateOrganizationRequest = {
+  name?: string;
+};
+export type JoinOrganizationRequest = {
+  organizationId?: string;
 };
 export type GameSettings = {
   maxPlayers?: number;
@@ -274,6 +415,8 @@ export type GuestLoginRequest = {
 export type UpdateProfileRequest = {
   pictureUrl?: string;
   newsletter?: boolean;
+  organizationId?: string;
+  activeThemeId?: string;
 };
 export type HealthCheckResponse = {
   status?: string;
@@ -308,8 +451,17 @@ export type ContentPackDto = {
 };
 export type UserDto = GuestUser | RegisteredUser;
 export const {
+  useUpdateThemeMutation,
+  useDeleteThemeMutation,
   useUploadProfileImageMutation,
   useCloseAccountMutation,
+  useListThemesQuery,
+  useLazyListThemesQuery,
+  useCreateThemeMutation,
+  useUploadLogoMutation,
+  useUploadBackgroundMutation,
+  useCreateOrgMutation,
+  useJoinOrgMutation,
   useCreateGameMutation,
   useJoinByRoomCodeMutation,
   useRegisterMutation,
@@ -321,6 +473,8 @@ export const {
   useLazyGetLeaderboardQuery,
   useCheckUsernameQuery,
   useLazyCheckUsernameQuery,
+  useGetMyOrgQuery,
+  useLazyGetMyOrgQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
   useGetSessionQuery,
@@ -338,4 +492,5 @@ export const {
   useLazyGetCurrentUserQuery,
   useLoginQuery,
   useLazyLoginQuery,
+  useLeaveOrgMutation,
 } = injectedRtkApi;

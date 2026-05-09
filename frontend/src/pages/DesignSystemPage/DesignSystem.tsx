@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import styles from "./DesignSystem.module.css";
+import { ThemePicker } from "./ThemePicker";
 import { Btn } from "../../components/Common/Buttons/Btn";
 import { Card } from "../../components/Common/Cards/Card";
 import { Badge } from "../../components/Common/Badge";
@@ -82,6 +83,7 @@ export function DesignSystem() {
           Back to home
         </Link>
       </div>
+      <ThemePicker />
       <section>
         <div className={styles.sectionTitle}>Example components</div>
         <div className={styles.examplesContainer}>

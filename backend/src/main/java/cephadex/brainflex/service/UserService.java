@@ -86,6 +86,12 @@ public class UserService {
         if (request.newsletter() != null) {
             user.setNewsletter(request.newsletter());
         }
+        if (request.organizationId() != null) {
+            user.setOrganizationId(request.organizationId().isBlank() ? null : request.organizationId());
+        }
+        if (request.activeThemeId() != null) {
+            user.setActiveThemeId(request.activeThemeId().isBlank() ? null : request.activeThemeId());
+        }
         return userRepository.save(user);
     }
 

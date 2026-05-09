@@ -1,5 +1,9 @@
 :root {
-  /* --- Color Palette --- */
+  /* ─── Named Color Palette ─────────────────────────────────────────────────── */
+
+  /* Reference palette — kept for status colors and any non-semantic usage.     */
+
+  /* Semantic tokens below derive from --hue-primary / --hue-accent instead.   */
 
   --red-200: oklch(93% 0.2 25deg);
   --red-300: oklch(89% 0.2 25deg);
@@ -10,11 +14,11 @@
   --red-800: oklch(28% 0.2 25deg);
   --red-900: oklch(22% 0.2 25deg);
 
-  /* --red-200: oklch(92% 0.05 28);  
+  /* --red-200: oklch(92% 0.05 28);
 --red-300: oklch(85% 0.12 28);
---red-400: oklch(75% 0.20 28);  
---red-500: oklch(62% 0.26 28);  
---red-600: oklch(52% 0.24 28);  
+--red-400: oklch(75% 0.20 28);
+--red-500: oklch(62% 0.26 28);
+--red-600: oklch(52% 0.24 28);
 --red-700: oklch(42% 0.20 28);
 --red-800: oklch(32% 0.15 28);
 --red-900: oklch(25% 0.10 28); */
@@ -106,52 +110,73 @@
   --color-text: oklch(53.369% 0.1147 25.041deg);
   --color-text-light: oklch(73.52% 0.1604 25.99deg); */
 
-  /* --- Color tokens light mode -200 -500 --- */
+  /* ─── Brand Hues (user-customizable) ─────────────────────────────────────── */
 
-  /** Background Variants  <= 500 **/
-  --bg-canvas: var(--blue-200);
-  --bg-surface: var(--blue-300);
-  --bg-surface-raised: var(--turqoise-200);
-  --bg-subtle: var(--blue-400);
-  --bg-brand: var(--blue-900);
-  --bg-disabled: var(--grey-200);
+  /* Set these two values to retheme the entire UI. Extract the hue from any   */
 
-  /** Background States <= 500 **/
-  --bg-error: var(--red-200);
-  --bg-success: var(--green-200);
-  --bg-info: var(--blue-200);
-  --bg-warning: var(--yellow-200);
+  /* oklch color (or convert from hex) and assign it here. All backgrounds,    */
 
-  /** Text variants >= 600 **/
-  --text-primary: var(--lavender-700);
-  --text-secondary: var(--blue-900);
-  --text-muted: var(--red-200);
-  --text-on-brand: var(--red-400);
+  /* surfaces, borders, and text scale from --hue-primary. Action states and   */
 
-  /** Text States >= 600 **/
-  --text-error: var(--red-600);
-  --text-success: var(--green-600);
-  --text-warning: var(--yellow-600);
-  --text-info: var(--blue-600);
-  --text-disabled: var(--grey-300);
+  /* brand accents scale from --hue-accent. Lightness and chroma are fixed per */
 
-  /** Borders >= 600  **/
-  --border-default: var(--blue-400);
-  --border-subtle: var(--blue-300);
-  --border-focus: var(--blue-400);
-  --border-brand: var(--red-400);
+  /* step so contrast ratios are preserved across light and dark modes.        */
 
-  /**  Border states >= 600 **/
-  --border-success: var(--green-400);
-  --border-warning: var(--green-400);
-  --border-error: var(--red-400);
-  --border-info: var(--blue-400);
-  --border-disabled: var(--grey-300);
+  --hue-primary: 260deg; /* default: blue   — controls surfaces & borders  */
+  --hue-accent:   25deg; /* default: coral  — controls actions & brand accents */
 
-  /** Action states >= 600 **/
-  --action-hover: var(--red-300);
-  --action-active: var(--red-200);
-  --action-disabled: var(--lavender-800);
+  /* ─── Light Mode Semantic Tokens ─────────────────────────────────────────── */
+
+  /** Background Variants **/
+  --bg-canvas:         oklch(93% 0.04 var(--hue-primary));
+  --bg-surface:        oklch(88% 0.06 var(--hue-primary));
+
+  /* surface-raised shifts -60° from primary (blue→turquoise at default) */
+  --bg-surface-raised: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
+  --bg-subtle:         oklch(76% 0.13 var(--hue-primary));
+  --bg-brand:          oklch(22% 0.05 var(--hue-primary));
+  --bg-disabled:       oklch(80% 0.001 271.152deg);
+
+  /** Background States — fixed hues; semantic meaning must not shift with brand **/
+  --bg-error:   oklch(93% 0.2  25deg);
+  --bg-success: oklch(92% 0.04 170deg);
+  --bg-info:    oklch(93% 0.04 260deg);
+  --bg-warning: oklch(96% 0.06  95deg);
+
+  /** Text Variants **/
+
+  /* text-primary shifts +30° from primary (blue→lavender at default) */
+  --text-primary:   oklch(39% 0.08 calc(var(--hue-primary) + 30deg));
+  --text-secondary: oklch(22% 0.05 var(--hue-primary));
+  --text-muted:     oklch(93% 0.2  var(--hue-accent));
+  --text-on-brand:  oklch(77% 0.2  var(--hue-accent));
+
+  /** Text States — fixed **/
+  --text-error:    oklch(45% 0.2   25deg);
+  --text-success:  oklch(60% 0.13 170deg);
+  --text-warning:  oklch(82% 0.19  90deg);
+  --text-info:     oklch(62% 0.13 260deg);
+  --text-disabled: oklch(70% 0.001 271.152deg);
+
+  /** Borders **/
+  --border-default: oklch(76% 0.13 var(--hue-primary));
+  --border-subtle:  oklch(88% 0.06 var(--hue-primary));
+  --border-focus:   oklch(76% 0.13 var(--hue-primary));
+  --border-brand:   oklch(77% 0.2  var(--hue-accent));
+
+  /** Border States — fixed **/
+  --border-success:  oklch(74% 0.13 170deg);
+  --border-warning:  oklch(90% 0.22  95deg);
+  --border-error:    oklch(77% 0.2   25deg);
+  --border-info:     oklch(76% 0.13 260deg);
+  --border-disabled: oklch(70% 0.001 271.152deg);
+
+  /** Action States **/
+  --action-hover:    oklch(89% 0.2  var(--hue-accent));
+  --action-active:   oklch(93% 0.2  var(--hue-accent));
+
+  /* action-disabled shifts +30° from primary, matching text-primary hue */
+  --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
 
   /* --- Shadow (Expanded Scale) --- */
   --shadow:
@@ -218,54 +243,62 @@
 
 /* stylelint-disable-next-line selector-class-pattern */
 :root.theme-dark {
-  /** BG/surfaces should be dark (600 and up), text or borders should be light (500 and below) **/
+  /* ─── Dark Mode Semantic Tokens ───────────────────────────────────────────── */
 
-  /** Background Variants >= 600  **/
-  --bg-canvas: var(--blue-900);
-  --bg-surface: var(--blue-800);
-  --bg-surface-raised: var(--blue-700);
-  --bg-subtle: var(--blue-600);
-  --bg-brand: var(--blue-900);
+  /* Only color tokens change; --hue-primary and --hue-accent carry through,   */
 
-  /** Background States >= 600 **/
-  --bg-error: var(--red-200);
-  --bg-success: var(--green-200);
-  --bg-info: var(--blue-200);
-  --bg-warning: var(--yellow-200);
-  --bg-disabled: var(--grey-200);
+  /* so user-set brand hues apply automatically in dark mode too.              */
 
-  /** Text variants <= 500 **/
-  --text-primary: var(--red-400);
-  --text-secondary: var(--turqoise-200);
-  --text-muted: var(--red-200);
-  --text-on-brand: var(--red-400);
+  /** Background Variants — deep end of the primary scale **/
+  --bg-canvas:         oklch(22% 0.05 var(--hue-primary));
+  --bg-surface:        oklch(28% 0.06 var(--hue-primary));
 
-  /** Text States <= 500 **/
-  --text-error: var(--red-500);
-  --text-success: var(--green-500);
-  --text-warning: var(--yellow-700);
-  --text-info: var(--blue-500);
-  --text-disabled: var(--grey-500);
+  /* dark surface-raised stays on primary hue (no turquoise shift in dark mode) */
+  --bg-surface-raised: oklch(38% 0.08 var(--hue-primary));
+  --bg-subtle:         oklch(62% 0.13 var(--hue-primary));
+  --bg-brand:          oklch(22% 0.05 var(--hue-primary));
+  --bg-disabled:       oklch(80% 0.001 271.152deg);
 
-  /** Borders <= 500 **/
-  --border-default: var(--blue-200);
-  --border-subtle: var(--blue-300);
-  --border-focus: var(--blue-400);
-  --border-brand: var(--red-400);
+  /** Background States — same as light mode **/
+  --bg-error:   oklch(93% 0.2  25deg);
+  --bg-success: oklch(92% 0.04 170deg);
+  --bg-info:    oklch(93% 0.04 260deg);
+  --bg-warning: oklch(96% 0.06  95deg);
 
-  /**  Border states <= 500 **/
-  --border-success: var(--green-400);
-  --border-warning: var(--yellow-400);
-  --border-error: var(--red-400);
-  --border-info: var(--blue-400);
-  --border-disabled: var(--grey-300);
+  /** Text Variants **/
+  --text-primary:   oklch(77% 0.2  var(--hue-accent));
 
-  /** Action states <= 500 **/
-  --action-hover: var(--red-300);
-  --action-active: var(--red-200);
-  --action-disabled: var(--lavender-800);
+  /* text-secondary shifts -60° from primary (blue→turquoise at default) */
+  --text-secondary: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
+  --text-muted:     oklch(93% 0.2  var(--hue-accent));
+  --text-on-brand:  oklch(77% 0.2  var(--hue-accent));
 
-  /** Shadows  **/
+  /** Text States — fixed **/
+  --text-error:    oklch(52% 0.2   25deg);
+  --text-success:  oklch(49% 0.11 170deg);
+  --text-warning:  oklch(72% 0.16  85deg);
+  --text-info:     oklch(51% 0.11 260deg);
+  --text-disabled: oklch(50% 0.001 271.152deg);
+
+  /** Borders — light end of the primary scale **/
+  --border-default: oklch(93% 0.04 var(--hue-primary));
+  --border-subtle:  oklch(88% 0.06 var(--hue-primary));
+  --border-focus:   oklch(76% 0.13 var(--hue-primary));
+  --border-brand:   oklch(77% 0.2  var(--hue-accent));
+
+  /** Border States — fixed **/
+  --border-success:  oklch(74% 0.13 170deg);
+  --border-warning:  oklch(90% 0.22  95deg);
+  --border-error:    oklch(77% 0.2   25deg);
+  --border-info:     oklch(76% 0.13 260deg);
+  --border-disabled: oklch(70% 0.001 271.152deg);
+
+  /** Action States — same as light mode **/
+  --action-hover:    oklch(89% 0.2  var(--hue-accent));
+  --action-active:   oklch(93% 0.2  var(--hue-accent));
+  --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
+
+  /** Shadows **/
   --shadow: rgb(0 0 0 / 40%) 0 10px 15px -3px, rgb(0 0 0 / 25%) 0 4px 6px -2px;
 }
 

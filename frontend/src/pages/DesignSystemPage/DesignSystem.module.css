@@ -15,7 +15,8 @@
 
     .sectionTitle {
       margin-bottom: 12px;
-      font-size: 1.4rem;
+      padding: var(--p-md);
+      font-size: var(--font-size-2xl);
       color: var(--text-primary);
     }
 

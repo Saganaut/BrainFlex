@@ -63,6 +63,10 @@ const DesignSystemPage = () => {
 
     openModal(modalConfig);
   };
+
+  /**The round result screen cant be closed manually so adding this
+   *
+   * TODO:should add option to close manually **/
   useEffect(() => {
     console.log("use effect triggered");
     if (roundResultIsOpen) {
@@ -85,7 +89,13 @@ const DesignSystemPage = () => {
           Back to home
         </Link>
       </div>
-      <ThemePicker />
+      <section>
+        <div className={styles.examplesContainer}>
+          <Accordion titleBar='Theme Picker'>
+            <ThemePicker />
+          </Accordion>
+        </div>
+      </section>
       <FormsSection />
       <section>
         <div className={styles.sectionTitle}>Common components</div>

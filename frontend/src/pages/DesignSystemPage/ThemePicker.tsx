@@ -3,7 +3,7 @@
 // ripple instantly through every semantic token on the page.
 import { useTheme } from "../../hooks/useTheme";
 import { Btn } from "../../components/Common/Buttons/Btn";
-import { HuePicker } from "../../components/Common/Form/HuePicker";
+import { HuePicker } from "../../components/Common/Input/HuePicker";
 import { themePresets } from "./data";
 import styles from "./DesignSystem.module.css";
 
@@ -12,13 +12,7 @@ const ThemePicker = () => {
     useTheme();
 
   return (
-    <section>
-      <div className={styles.sectionTitle}>Color Scheme</div>
-      <p className={styles.sectionDescription}>
-        Drag the sliders or click a swatch to pick a color. Changes apply
-        instantly to every semantic token on this page and are saved to
-        localStorage.
-      </p>
+    <>
       <div className={styles.hueControls}>
         <HuePicker
           label='Primary'
@@ -52,7 +46,7 @@ const ThemePicker = () => {
           Reset
         </Btn>
       </div>
-    </section>
+    </>
   );
 };
 

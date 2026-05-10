@@ -2,7 +2,7 @@
 // Persists all three values to localStorage so they survive page refreshes.
 import { useEffect, useState } from "react";
 
-type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark";
 
 const STORAGE_KEY = "brainflex-theme";
 const HUE_PRIMARY_KEY = "brainflex-hue-primary";

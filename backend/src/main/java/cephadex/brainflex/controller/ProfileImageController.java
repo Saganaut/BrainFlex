@@ -1,7 +1,6 @@
 package cephadex.brainflex.controller;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,20 +17,24 @@ import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.ImageProcessingService;
 import cephadex.brainflex.service.S3Service;
+import cephadex.brainflex.service.UserService;
 
 @RestController
 @RequestMapping("/api/users")
 public class ProfileImageController {
 
     private final UserRepository userRepository;
+    private final UserService userService;
     private final S3Service s3Service;
     private final ImageProcessingService imageProcessingService;
 
     public ProfileImageController(
             UserRepository userRepository,
+            UserService userService,
             S3Service s3Service,
             ImageProcessingService imageProcessingService) {
         this.userRepository = userRepository;
+        this.userService = userService;
         this.s3Service = s3Service;
         this.imageProcessingService = imageProcessingService;
     }
@@ -41,11 +44,11 @@ public class ProfileImageController {
             @RequestParam("image") MultipartFile file,
             Authentication authentication) throws IOException {
 
-        Optional<User> userOpt = resolveRegisteredUser(authentication);
-        if (userOpt.isEmpty()) {
+        User user = userService.resolveRegisteredUser(authentication)
+                .orElse(null);
+        if (user == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        User user = userOpt.get();
 
         byte[] processed = imageProcessingService.validateAndProcess(file);
         String presignedUrl = s3Service.uploadProfileImage(user.getId(), processed);
@@ -54,14 +57,5 @@ public class ProfileImageController {
         userRepository.save(user);
 
         return ResponseEntity.ok(new UserDTO.RegisteredUser(user));
-    }
-
-    private Optional<User> resolveRegisteredUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getName())
-                || authentication.getName().startsWith("guest:")) {
-            return Optional.empty();
-        }
-        return userRepository.findByGoogleId(authentication.getName());
     }
 }

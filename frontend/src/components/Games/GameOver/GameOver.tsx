@@ -49,10 +49,10 @@ const GameOver = ({ placements, currentUserId }: GameOverProps) => {
       )}
 
       <div className={styles.footer}>
-        <Link to='/games' className={styles.footerLink}>
+        <Link to='/games' className={styles.footerLink} viewTransition>
           Play Again
         </Link>
-        <Link to='/' className={styles.footerLink}>
+        <Link to='/' className={styles.footerLink} viewTransition>
           Home
         </Link>
       </div>

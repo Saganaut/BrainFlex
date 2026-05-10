@@ -18,7 +18,7 @@ const GameHubPage = () => {
       </p>
       <div className={styles.cards}>
         {userState.state === "registered" ? (
-          <Link to='/games/create' className={styles.card}>
+          <Link to='/games/create' className={styles.card} viewTransition>
             <span className={styles.icon}>+</span>
             <span className={styles.cardTitle}>Create Game</span>
             <span className={styles.cardDesc}>
@@ -32,7 +32,7 @@ const GameHubPage = () => {
             <span className={styles.cardDesc}>Sign in to host a game.</span>
           </div>
         )}
-        <Link to='/games/join' className={styles.card}>
+        <Link to='/games/join' className={styles.card} viewTransition>
           <span className={styles.icon}>-&gt;</span>
           <span className={styles.cardTitle}>Join Game</span>
           <span className={styles.cardDesc}>

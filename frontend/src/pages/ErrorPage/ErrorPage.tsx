@@ -38,7 +38,7 @@ const ErrorPage = ({ statusCode, title, message, image }: ErrorPageProps) => {
       <h1 className={styles.title}>{title}</h1>
       <p className={styles.message}>{message}</p>
       <div className={styles.actions}>
-        <Link to='/' className={styles.homeLink}>
+        <Link to='/' className={styles.homeLink} viewTransition>
           Take me home
         </Link>
         <button

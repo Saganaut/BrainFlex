@@ -19,7 +19,7 @@ const CreateGamePage = () => {
         <p className={styles.authMsg}>
           You must be signed in to create a game.
         </p>
-        <Link to='/games' className={styles.backLink}>
+        <Link to='/games' className={styles.backLink} viewTransition>
           Back to hub
         </Link>
       </div>
@@ -121,7 +121,7 @@ const CreateGamePage = () => {
         </button>
       </form>
 
-      <Link to='/games' className={styles.backLink}>
+      <Link to='/games' className={styles.backLink} viewTransition>
         Back to hub
       </Link>
     </div>

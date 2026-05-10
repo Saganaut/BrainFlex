@@ -85,7 +85,7 @@ const DesignSystemPage = () => {
           A quick view of the app palette, semantic token set, and simple
           component examples.
         </p>
-        <Link to='/' className={styles.backLink}>
+        <Link to='/' className={styles.backLink} viewTransition>
           Back to home
         </Link>
       </div>

@@ -55,7 +55,7 @@ const JoinGamePage = () => {
         )}
       </form>
 
-      <Link to='/games' className={styles.backLink}>
+      <Link to='/games' className={styles.backLink} viewTransition>
         Back to hub
       </Link>
     </div>

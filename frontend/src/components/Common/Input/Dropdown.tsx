@@ -1,6 +1,6 @@
 // Dropdown with optional multi-select and searchable filtering of options
 import React, { useEffect, useId, useRef, useState } from "react";
-import styles from "./Form.module.css";
+import styles from "./Input.module.css";
 import { Btn } from "../Buttons/Btn";
 
 interface DropdownOption {

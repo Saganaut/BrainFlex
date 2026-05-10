@@ -1,9 +1,8 @@
 // Common textarea component matching Input structure for multi-line text entry
 import React from "react";
-import styles from "./Form.module.css";
+import styles from "./Input.module.css";
 
-interface TextAreaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   variant?: "default";
   infoMessage?: string;
   errorMessage?: string;

@@ -1,0 +1,182 @@
+/* Pack editor: metadata form + inline question list with add/edit/delete. */
+
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  margin: 0;
+}
+
+.section {
+  margin-bottom: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.metaActions {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: var(--space-4) 0;
+}
+
+/* ─── Question list ─────────────────────────────────────────────────────────── */
+
+.questionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.questionRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.questionNum {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  min-width: 1.5rem;
+}
+
+.questionText {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.questionRowActions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.emptyQuestions {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  padding: var(--space-3) 0;
+}
+
+/* ─── Question form (inline) ────────────────────────────────────────────────── */
+
+.questionForm {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.questionFormTitle {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  margin: 0;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.optionLabel {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  min-width: 1.5rem;
+}
+
+.optionCorrect {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.settingsRow {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.settingField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 120px;
+}
+
+.questionFormActions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.dangerBtn {
+  color: var(--red-500);
+  border-color: var(--red-500);
+}
+
+.dangerBtn:hover {
+  background: var(--red-200);
+}
+
+.error {
+  color: var(--red-500);
+  font-size: var(--font-size-sm);
+}
+
+.backLink {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--text-primary);
+}

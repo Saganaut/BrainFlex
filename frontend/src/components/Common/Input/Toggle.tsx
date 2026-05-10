@@ -1,6 +1,6 @@
 // Toggle switch built on a visually-hidden checkbox; CSS :has() drives all visual state
 import React, { useId } from "react";
-import styles from "./Form.module.css";
+import styles from "./Input.module.css";
 
 interface ToggleProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;

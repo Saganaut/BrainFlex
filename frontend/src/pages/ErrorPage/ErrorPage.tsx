@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { BrainMascot } from "./BrainMascot";
 import styles from "./ErrorPage.module.css";
-import type { Btn } from "@/components/Common/Buttons/Btn";
+import { Btn } from "@/components/Common/Buttons/Btn";
 
 interface ErrorPageProps {
   statusCode: number;

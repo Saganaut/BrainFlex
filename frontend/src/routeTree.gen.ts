@@ -16,9 +16,12 @@ import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MyPacksIndexRouteImport } from './routes/my-packs/index'
 import { Route as GamesIndexRouteImport } from './routes/games/index'
+import { Route as MyPacksCreateRouteImport } from './routes/my-packs/create'
 import { Route as GamesJoinRouteImport } from './routes/games/join'
 import { Route as GamesCreateRouteImport } from './routes/games/create'
+import { Route as MyPacksPackIdEditRouteImport } from './routes/my-packs/$packId/edit'
 import { Route as GamesRoomCodeResultsRouteImport } from './routes/games/$roomCode/results'
 import { Route as GamesRoomCodePlayRouteImport } from './routes/games/$roomCode/play'
 import { Route as GamesRoomCodeLobbyRouteImport } from './routes/games/$roomCode/lobby'
@@ -58,9 +61,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyPacksIndexRoute = MyPacksIndexRouteImport.update({
+  id: '/my-packs/',
+  path: '/my-packs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesIndexRoute = GamesIndexRouteImport.update({
   id: '/games/',
   path: '/games/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyPacksCreateRoute = MyPacksCreateRouteImport.update({
+  id: '/my-packs/create',
+  path: '/my-packs/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesJoinRoute = GamesJoinRouteImport.update({
@@ -71,6 +84,11 @@ const GamesJoinRoute = GamesJoinRouteImport.update({
 const GamesCreateRoute = GamesCreateRouteImport.update({
   id: '/games/create',
   path: '/games/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyPacksPackIdEditRoute = MyPacksPackIdEditRouteImport.update({
+  id: '/my-packs/$packId/edit',
+  path: '/my-packs/$packId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesRoomCodeResultsRoute = GamesRoomCodeResultsRouteImport.update({
@@ -99,10 +117,13 @@ export interface FileRoutesByFullPath {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/games/create': typeof GamesCreateRoute
   '/games/join': typeof GamesJoinRoute
+  '/my-packs/create': typeof MyPacksCreateRoute
   '/games/': typeof GamesIndexRoute
+  '/my-packs/': typeof MyPacksIndexRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
   '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
+  '/my-packs/$packId/edit': typeof MyPacksPackIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -114,10 +135,13 @@ export interface FileRoutesByTo {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/games/create': typeof GamesCreateRoute
   '/games/join': typeof GamesJoinRoute
+  '/my-packs/create': typeof MyPacksCreateRoute
   '/games': typeof GamesIndexRoute
+  '/my-packs': typeof MyPacksIndexRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
   '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
+  '/my-packs/$packId/edit': typeof MyPacksPackIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,10 +154,13 @@ export interface FileRoutesById {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/games/create': typeof GamesCreateRoute
   '/games/join': typeof GamesJoinRoute
+  '/my-packs/create': typeof MyPacksCreateRoute
   '/games/': typeof GamesIndexRoute
+  '/my-packs/': typeof MyPacksIndexRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
   '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
+  '/my-packs/$packId/edit': typeof MyPacksPackIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,10 +174,13 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/games/create'
     | '/games/join'
+    | '/my-packs/create'
     | '/games/'
+    | '/my-packs/'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
     | '/games/$roomCode/results'
+    | '/my-packs/$packId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -162,10 +192,13 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/games/create'
     | '/games/join'
+    | '/my-packs/create'
     | '/games'
+    | '/my-packs'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
     | '/games/$roomCode/results'
+    | '/my-packs/$packId/edit'
   id:
     | '__root__'
     | '/'
@@ -177,10 +210,13 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/games/create'
     | '/games/join'
+    | '/my-packs/create'
     | '/games/'
+    | '/my-packs/'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
     | '/games/$roomCode/results'
+    | '/my-packs/$packId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -193,10 +229,13 @@ export interface RootRouteChildren {
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   GamesCreateRoute: typeof GamesCreateRoute
   GamesJoinRoute: typeof GamesJoinRoute
+  MyPacksCreateRoute: typeof MyPacksCreateRoute
   GamesIndexRoute: typeof GamesIndexRoute
+  MyPacksIndexRoute: typeof MyPacksIndexRoute
   GamesRoomCodeLobbyRoute: typeof GamesRoomCodeLobbyRoute
   GamesRoomCodePlayRoute: typeof GamesRoomCodePlayRoute
   GamesRoomCodeResultsRoute: typeof GamesRoomCodeResultsRoute
+  MyPacksPackIdEditRoute: typeof MyPacksPackIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -250,11 +289,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-packs/': {
+      id: '/my-packs/'
+      path: '/my-packs'
+      fullPath: '/my-packs/'
+      preLoaderRoute: typeof MyPacksIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games/': {
       id: '/games/'
       path: '/games'
       fullPath: '/games/'
       preLoaderRoute: typeof GamesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-packs/create': {
+      id: '/my-packs/create'
+      path: '/my-packs/create'
+      fullPath: '/my-packs/create'
+      preLoaderRoute: typeof MyPacksCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/join': {
@@ -269,6 +322,13 @@ declare module '@tanstack/react-router' {
       path: '/games/create'
       fullPath: '/games/create'
       preLoaderRoute: typeof GamesCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-packs/$packId/edit': {
+      id: '/my-packs/$packId/edit'
+      path: '/my-packs/$packId/edit'
+      fullPath: '/my-packs/$packId/edit'
+      preLoaderRoute: typeof MyPacksPackIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/$roomCode/results': {
@@ -305,10 +365,13 @@ const rootRouteChildren: RootRouteChildren = {
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   GamesCreateRoute: GamesCreateRoute,
   GamesJoinRoute: GamesJoinRoute,
+  MyPacksCreateRoute: MyPacksCreateRoute,
   GamesIndexRoute: GamesIndexRoute,
+  MyPacksIndexRoute: MyPacksIndexRoute,
   GamesRoomCodeLobbyRoute: GamesRoomCodeLobbyRoute,
   GamesRoomCodePlayRoute: GamesRoomCodePlayRoute,
   GamesRoomCodeResultsRoute: GamesRoomCodeResultsRoute,
+  MyPacksPackIdEditRoute: MyPacksPackIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

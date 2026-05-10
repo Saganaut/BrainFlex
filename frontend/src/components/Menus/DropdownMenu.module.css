@@ -1,0 +1,71 @@
+/* Reusable dropdown panel anchored to an arbitrary trigger element */
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  min-width: 180px;
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel.alignRight {
+  right: 0;
+}
+
+.panel.alignLeft {
+  left: 0;
+}
+
+.item {
+  padding: 0.625rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  font-family: inherit;
+  transition: background var(--duration-fast);
+}
+
+.item:hover {
+  background: var(--action-hover);
+}
+
+.item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.item a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.label {
+  padding: 0.5rem 1rem;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 0.25rem 0;
+}

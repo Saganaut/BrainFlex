@@ -1,6 +1,6 @@
 // File upload component with drag-and-drop support and multi-file selection
 import React, { useRef, useState, useCallback } from "react";
-import styles from "./Form.module.css";
+import styles from "./Input.module.css";
 import { IconBtn } from "../Buttons/IconBtn";
 
 interface FileUploadProps {

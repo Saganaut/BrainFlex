@@ -19,4 +19,6 @@ public interface QuestionRepository extends MongoRepository<Question, String> {
     List<Question> findByContentPackIdAndDifficulty(String contentPackId, Difficulty difficulty);
 
     int countByContentPackId(String contentPackId);
+
+    void deleteByContentPackId(String contentPackId);
 }

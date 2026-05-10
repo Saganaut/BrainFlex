@@ -1,0 +1,22 @@
+[
+  {
+    "id": "6640000000000000000000a1",
+    "name": "General Knowledge",
+    "description": "A broad mix of trivia covering science, history, pop culture, and everyday facts.",
+    "category": "General",
+    "system": true,
+    "public": true,
+    "questionCount": 12,
+    "createdAt": "2026-01-01T00:00:00"
+  },
+  {
+    "id": "6640000000000000000000a2",
+    "name": "Science & Nature",
+    "description": "Questions about biology, chemistry, physics, and the natural world.",
+    "category": "Science",
+    "system": true,
+    "public": true,
+    "questionCount": 12,
+    "createdAt": "2026-01-01T00:00:00"
+  }
+]

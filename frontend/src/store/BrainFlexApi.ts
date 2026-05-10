@@ -14,6 +14,41 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    getPack: build.query<GetPackApiResponse, GetPackApiArg>({
+      query: (queryArg) => ({ url: `/api/content-packs/${queryArg.id}` }),
+    }),
+    updatePack: build.mutation<UpdatePackApiResponse, UpdatePackApiArg>({
+      query: (queryArg) => ({
+        url: `/api/content-packs/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateContentPackRequest,
+      }),
+    }),
+    deletePack: build.mutation<DeletePackApiResponse, DeletePackApiArg>({
+      query: (queryArg) => ({
+        url: `/api/content-packs/${queryArg.id}`,
+        method: "DELETE",
+      }),
+    }),
+    updateQuestion: build.mutation<
+      UpdateQuestionApiResponse,
+      UpdateQuestionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/content-packs/${queryArg.id}/questions/${queryArg.questionId}`,
+        method: "PUT",
+        body: queryArg.upsertQuestionRequest,
+      }),
+    }),
+    deleteQuestion: build.mutation<
+      DeleteQuestionApiResponse,
+      DeleteQuestionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/content-packs/${queryArg.id}/questions/${queryArg.questionId}`,
+        method: "DELETE",
+      }),
+    }),
     uploadProfileImage: build.mutation<
       UploadProfileImageApiResponse,
       UploadProfileImageApiArg
@@ -82,6 +117,28 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/games/${queryArg.roomCode}/join`,
         method: "POST",
+      }),
+    }),
+    listPacks: build.query<ListPacksApiResponse, ListPacksApiArg>({
+      query: () => ({ url: `/api/content-packs` }),
+    }),
+    createPack: build.mutation<CreatePackApiResponse, CreatePackApiArg>({
+      query: (queryArg) => ({
+        url: `/api/content-packs`,
+        method: "POST",
+        body: queryArg.createContentPackRequest,
+      }),
+    }),
+    listQuestions: build.query<ListQuestionsApiResponse, ListQuestionsApiArg>({
+      query: (queryArg) => ({
+        url: `/api/content-packs/${queryArg.id}/questions`,
+      }),
+    }),
+    addQuestion: build.mutation<AddQuestionApiResponse, AddQuestionApiArg>({
+      query: (queryArg) => ({
+        url: `/api/content-packs/${queryArg.id}/questions`,
+        method: "POST",
+        body: queryArg.upsertQuestionRequest,
       }),
     }),
     register: build.mutation<RegisterApiResponse, RegisterApiArg>({
@@ -158,11 +215,8 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/api/games/join/${queryArg.inviteToken}` }),
     }),
-    listPacks: build.query<ListPacksApiResponse, ListPacksApiArg>({
-      query: () => ({ url: `/api/content-packs` }),
-    }),
-    getPack: build.query<GetPackApiResponse, GetPackApiArg>({
-      query: (queryArg) => ({ url: `/api/content-packs/${queryArg.id}` }),
+    listMyPacks: build.query<ListMyPacksApiResponse, ListMyPacksApiArg>({
+      query: () => ({ url: `/api/content-packs/mine` }),
     }),
     getCurrentUser: build.query<
       GetCurrentUserApiResponse,
@@ -194,6 +248,30 @@ export type UpdateThemeApiArg = {
 export type DeleteThemeApiResponse = unknown;
 export type DeleteThemeApiArg = {
   id: string;
+};
+export type GetPackApiResponse = /** status 200 OK */ ContentPackDto;
+export type GetPackApiArg = {
+  id: string;
+};
+export type UpdatePackApiResponse = /** status 200 OK */ ContentPackDto;
+export type UpdatePackApiArg = {
+  id: string;
+  updateContentPackRequest: UpdateContentPackRequest;
+};
+export type DeletePackApiResponse = unknown;
+export type DeletePackApiArg = {
+  id: string;
+};
+export type UpdateQuestionApiResponse = /** status 200 OK */ QuestionEditorDto;
+export type UpdateQuestionApiArg = {
+  id: string;
+  questionId: string;
+  upsertQuestionRequest: UpsertQuestionRequest;
+};
+export type DeleteQuestionApiResponse = unknown;
+export type DeleteQuestionApiArg = {
+  id: string;
+  questionId: string;
 };
 export type UploadProfileImageApiResponse = /** status 200 OK */ RegisteredUser;
 export type UploadProfileImageApiArg = {
@@ -238,6 +316,21 @@ export type CreateGameApiArg = {
 export type JoinByRoomCodeApiResponse = /** status 200 OK */ GameSessionDto;
 export type JoinByRoomCodeApiArg = {
   roomCode: string;
+};
+export type ListPacksApiResponse = /** status 200 OK */ ContentPackDto[];
+export type ListPacksApiArg = void;
+export type CreatePackApiResponse = /** status 200 OK */ ContentPackDto;
+export type CreatePackApiArg = {
+  createContentPackRequest: CreateContentPackRequest;
+};
+export type ListQuestionsApiResponse = /** status 200 OK */ QuestionEditorDto[];
+export type ListQuestionsApiArg = {
+  id: string;
+};
+export type AddQuestionApiResponse = /** status 200 OK */ QuestionEditorDto;
+export type AddQuestionApiArg = {
+  id: string;
+  upsertQuestionRequest: UpsertQuestionRequest;
 };
 export type RegisterApiResponse = /** status 200 OK */ RegisteredUser;
 export type RegisterApiArg = {
@@ -286,12 +379,8 @@ export type GetByInviteTokenApiResponse = /** status 200 OK */ GameSessionDto;
 export type GetByInviteTokenApiArg = {
   inviteToken: string;
 };
-export type ListPacksApiResponse = /** status 200 OK */ ContentPackDto[];
-export type ListPacksApiArg = void;
-export type GetPackApiResponse = /** status 200 OK */ ContentPackDto;
-export type GetPackApiArg = {
-  id: string;
-};
+export type ListMyPacksApiResponse = /** status 200 OK */ ContentPackDto[];
+export type ListMyPacksApiArg = void;
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -319,6 +408,39 @@ export type UpdateThemeRequest = {
   hueAccent?: number;
   mode?: string;
   organizationId?: string;
+};
+export type ContentPackDto = {
+  id?: string;
+  name?: string;
+  description?: string;
+  category?: string;
+  questionCount?: number;
+  isSystem?: boolean;
+  createdAt?: string;
+};
+export type UpdateContentPackRequest = {
+  name?: string;
+  description?: string;
+  category?: string;
+};
+export type QuestionEditorDto = {
+  id?: string;
+  questionText?: string;
+  options?: string[];
+  correctAnswer?: number;
+  pointValue?: number;
+  timeLimit?: number;
+  type?: "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+  imageUrl?: string;
+};
+export type UpsertQuestionRequest = {
+  questionText: string;
+  options: string[];
+  correctAnswer?: number;
+  pointValue?: number;
+  timeLimit?: number;
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
 };
 export type PlayerStats = {
   gamesPlayed?: number;
@@ -398,6 +520,11 @@ export type CreateGameRequest = {
   allowGuests?: boolean;
   maxPlayers?: number;
 };
+export type CreateContentPackRequest = {
+  name: string;
+  description?: string;
+  category?: string;
+};
 export type RegisterRequest = {
   username: string;
   newsletter?: boolean;
@@ -440,19 +567,16 @@ export type GameResult = {
   placements?: PlayerPlacement[];
   endedAt?: string;
 };
-export type ContentPackDto = {
-  id?: string;
-  name?: string;
-  description?: string;
-  category?: string;
-  questionCount?: number;
-  isSystem?: boolean;
-  createdAt?: string;
-};
 export type UserDto = GuestUser | RegisteredUser;
 export const {
   useUpdateThemeMutation,
   useDeleteThemeMutation,
+  useGetPackQuery,
+  useLazyGetPackQuery,
+  useUpdatePackMutation,
+  useDeletePackMutation,
+  useUpdateQuestionMutation,
+  useDeleteQuestionMutation,
   useUploadProfileImageMutation,
   useCloseAccountMutation,
   useListThemesQuery,
@@ -464,6 +588,12 @@ export const {
   useJoinOrgMutation,
   useCreateGameMutation,
   useJoinByRoomCodeMutation,
+  useListPacksQuery,
+  useLazyListPacksQuery,
+  useCreatePackMutation,
+  useListQuestionsQuery,
+  useLazyListQuestionsQuery,
+  useAddQuestionMutation,
   useRegisterMutation,
   useGuestLoginMutation,
   useUpdateProfileMutation,
@@ -484,10 +614,8 @@ export const {
   useLazyGetResultsQuery,
   useGetByInviteTokenQuery,
   useLazyGetByInviteTokenQuery,
-  useListPacksQuery,
-  useLazyListPacksQuery,
-  useGetPackQuery,
-  useLazyGetPackQuery,
+  useListMyPacksQuery,
+  useLazyListMyPacksQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

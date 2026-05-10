@@ -128,6 +128,8 @@ npx @rtk-query/codegen-openapi openapi-config.cts
 - Place component-specific data (JSON, constants) in a `data.ts` file in the same directory as the component.
 - Never use `index.tsx` files — use explicit file names (e.g., `MyComponent.tsx`).
 - Favor `interface` over `type`. Props interfaces must be named `ComponentNameProps`.
+- Logic should go into a custom hook (e.g., `useComponentName`) in the same directory, and the component should call that hook for all data and behavior.
+- Logic that will be used in many components (e.g., auth, theme) should go into a hook in `src/hooks/`.
 
 ### Backend
 

@@ -1,17 +1,24 @@
 // Form components showcase for the design system page.
-// Shows all Common/Form primitives (Input, TextArea, Checkbox, Radio, HuePicker)
+// Shows all Common/Form primitives (Input, TextArea, Checkbox, Radio, RadioGroup, HuePicker)
 // with controlled state so they are actually interactive.
 import { useState } from "react";
 import { Input } from "../../components/Common/Input/Input";
 import { TextArea } from "../../components/Common/Input/TextArea";
 import { Checkbox } from "../../components/Common/Input/Checkbox";
-import { Radio } from "../../components/Common/Input/Radio";
+import { RadioGroup } from "../../components/Common/Input/RadioGroup";
 import { HuePicker } from "../../components/Common/Input/HuePicker";
 import { Accordion } from "../../components/Containers/Accordion";
 import styles from "./DesignSystem.module.css";
 
+const GAME_MODE_OPTIONS: { value: string; label: string }[] = [
+  { value: "solo", label: "Solo" },
+  { value: "team", label: "Team" },
+  { value: "tournament", label: "Tournament" },
+];
+
 const FormsSection = () => {
   const [hue, setHue] = useState(260);
+  const [gameMode, setGameMode] = useState("solo");
 
   return (
     <section>
@@ -57,7 +64,21 @@ const FormsSection = () => {
 
           <h4>Radio Group</h4>
           <div className={styles.formExampleRow}>
-            <Radio label='Game Mode' />
+            <RadioGroup
+              name='game-mode'
+              legend='Game Mode'
+              options={GAME_MODE_OPTIONS}
+              value={gameMode}
+              onChange={setGameMode}
+            />
+            <RadioGroup
+              name='game-mode-disabled'
+              legend='Disabled'
+              options={GAME_MODE_OPTIONS}
+              value='team'
+              onChange={() => { /* disabled */ }}
+              disabled
+            />
           </div>
 
           <h4>Hue Picker</h4>

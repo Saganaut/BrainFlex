@@ -14,7 +14,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import cephadex.brainflex.model.ContentPack;
+import cephadex.brainflex.model.Question;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.repository.ContentPackRepository;
+import cephadex.brainflex.repository.QuestionRepository;
 import cephadex.brainflex.repository.UserRepository;
 
 @Configuration
@@ -26,9 +30,14 @@ public class DataSeeder {
 
     @Bean
     @SuppressWarnings("unused")
-    CommandLineRunner initDatabase(UserRepository userRepository) {
+    CommandLineRunner initDatabase(
+            UserRepository userRepository,
+            ContentPackRepository contentPackRepository,
+            QuestionRepository questionRepository) {
         return args -> {
             seedCollection(userRepository, "seed/users.json", User.class);
+            seedCollection(contentPackRepository, "seed/content_packs.json", ContentPack.class);
+            seedCollection(questionRepository, "seed/questions.json", Question.class);
         };
     }
 

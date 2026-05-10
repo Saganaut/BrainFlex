@@ -9,7 +9,7 @@ import {
   type ChangeEvent,
   type MouseEvent as ReactMouseEvent,
 } from "react";
-import styles from "./Form.module.css";
+import styles from "./Input.module.css";
 import { Btn } from "../Buttons/Btn";
 
 // Named hues aligned with the design system's palette stops.

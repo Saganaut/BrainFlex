@@ -1,12 +1,13 @@
-import { useRef, type JSX } from "react";
+// Auth and avatar logic for the UserMenu component
+import { type JSX, useState } from "react";
 
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { useTheme, type ThemeMode } from "../../../hooks/useTheme";
 import { useGuestLoginMutation } from "../../../store/BrainFlexApi";
 import { apiBaseUrl } from "../../../store/emptyApi";
-import { useEffect, useState } from "react";
 import styles from "./NavBar.module.css";
+
 interface useUserMenuResponse {
   handleLogin: () => void;
   handleLogout: () => Promise<void>;
@@ -18,19 +19,14 @@ interface useUserMenuResponse {
   showGuestInput: boolean;
   theme: ThemeMode;
   toggleTheme: () => void;
-  dropdownOpen: boolean;
-  setDropdownOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setShowGuestInput: React.Dispatch<React.SetStateAction<boolean>>;
   guestName: string;
 }
 
 const useUserMenu = (): useUserMenuResponse => {
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const [guestName, setGuestName] = useState("");
   const [guestError, setGuestError] = useState<string | null>(null);
   const [guestLogin, { isLoading: guestLoading }] = useGuestLoginMutation();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showGuestInput, setShowGuestInput] = useState(false);
   const currentUrl = window.location.href;
 
@@ -40,22 +36,6 @@ const useUserMenu = (): useUserMenuResponse => {
     userState.state === "registered" || userState.state === "guest"
       ? userState.user
       : undefined;
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setDropdownOpen(false);
-        setShowGuestInput(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
 
   const handleLogin = () => {
     const loginUrl = new URL(`${apiBaseUrl}/api/auth/login`);
@@ -67,6 +47,7 @@ const useUserMenu = (): useUserMenuResponse => {
   };
 
   const handleLogout = async () => {
+    console.log("Logging out");
     await fetch(`${apiBaseUrl}/api/auth/logout`, {
       method: "POST",
       credentials: "include",
@@ -96,6 +77,7 @@ const useUserMenu = (): useUserMenuResponse => {
       setGuestError("Unable to create guest session. Try another name.");
     }
   };
+
   const avatarContent = () => {
     if (user?.pictureUrl) {
       return <img src={user.pictureUrl} alt={user.userName} />;
@@ -109,6 +91,7 @@ const useUserMenu = (): useUserMenuResponse => {
     }
     return <UserCircleIcon className={styles.avatarIcon} />;
   };
+
   return {
     handleGuestLogin,
     handleLogin,
@@ -116,12 +99,10 @@ const useUserMenu = (): useUserMenuResponse => {
     setGuestName,
     guestError,
     guestLoading,
-    dropdownOpen,
     showGuestInput,
     theme,
     toggleTheme,
     avatarContent,
-    setDropdownOpen,
     setShowGuestInput,
     guestName,
   };

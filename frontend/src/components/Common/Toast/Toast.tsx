@@ -1,22 +1,21 @@
 import { useEffect } from "react";
 import type { ToastItem } from "./ToastTypes";
 import styles from "./Toast.module.css";
+import { IconBtn } from "../Buttons/IconBtn";
 
 interface ToastProps extends ToastItem {
   onDismiss: (id: string) => void;
 }
 
-const Toast = ({
-  id,
-  message,
-  variant,
-  duration,
-  onDismiss,
-}: ToastProps) => {
+const Toast = ({ id, message, variant, duration, onDismiss }: ToastProps) => {
   useEffect(() => {
     if (duration === 0) return;
-    const timer = setTimeout(() => { onDismiss(id); }, duration);
-    return () => { clearTimeout(timer); };
+    const timer = setTimeout(() => {
+      onDismiss(id);
+    }, duration);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [id, duration, onDismiss]);
 
   return (
@@ -26,13 +25,14 @@ const Toast = ({
       aria-live='polite'
       aria-atomic='true'>
       <span className={styles.message}>{message}</span>
-      <button
-        type='button'
+      <IconBtn
+        type='close'
+        size='xs'
         className={styles.dismiss}
         aria-label='Dismiss notification'
-        onClick={() => { onDismiss(id); }}>
-        ×
-      </button>
+        onClick={() => {
+          onDismiss(id);
+        }}></IconBtn>
     </div>
   );
 };

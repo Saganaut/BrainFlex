@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import style from "./Modal.module.css";
+import { IconBtn } from "../Buttons/IconBtn";
 interface ModalProps {
   children: ReactNode;
   title?: string;
@@ -36,9 +37,7 @@ const Modal = ({ children, title, onClose }: ModalProps) => {
             {title}
           </h2>
         )}
-        <button type='button' aria-label='Close modal' onClick={onClose}>
-          ×
-        </button>
+        <IconBtn type='close' aria-label='Close modal' onClick={onClose} />
       </div>
       <div className={style.content}>{children}</div>
     </dialog>

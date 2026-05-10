@@ -12,6 +12,7 @@ import { useGameSession } from "../../../hooks/useGameSession";
 import { useGameWebSocket } from "../../../hooks/useGameWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import styles from "./Lobby.module.css";
+import { Btn } from "@/components/Common/Buttons/Btn";
 
 interface LobbyProps {
   roomCode: string;
@@ -83,19 +84,19 @@ const Lobby = ({ roomCode }: LobbyProps) => {
 
       <div className={styles.actions}>
         {isHost ? (
-          <button
+          <Btn
             type='button'
             className={styles.startBtn}
             onClick={sendStart}
             disabled={players.length < 1}>
             Start Game
-          </button>
+          </Btn>
         ) : (
           <p className={styles.waitingMsg}>Waiting for the host to start…</p>
         )}
-        <button type='button' className={styles.leaveBtn} onClick={sendLeave}>
+        <Btn type='button' className={styles.leaveBtn} onClick={sendLeave}>
           Leave
-        </button>
+        </Btn>
       </div>
     </div>
   );

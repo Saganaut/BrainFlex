@@ -123,56 +123,56 @@
   /* step so contrast ratios are preserved across light and dark modes.        */
 
   --hue-primary: 260deg; /* default: blue   — controls surfaces & borders  */
-  --hue-accent:   25deg; /* default: coral  — controls actions & brand accents */
+  --hue-accent: 25deg; /* default: coral  — controls actions & brand accents */
 
   /* ─── Light Mode Semantic Tokens ─────────────────────────────────────────── */
 
   /** Background Variants **/
-  --bg-canvas:         oklch(93% 0.04 var(--hue-primary));
-  --bg-surface:        oklch(88% 0.06 var(--hue-primary));
+  --bg-canvas: oklch(93% 0.04 var(--hue-primary));
+  --bg-surface: oklch(88% 0.06 var(--hue-primary));
 
   /* surface-raised shifts -60° from primary (blue→turquoise at default) */
   --bg-surface-raised: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
-  --bg-subtle:         oklch(76% 0.13 var(--hue-primary));
-  --bg-brand:          oklch(22% 0.05 var(--hue-primary));
-  --bg-disabled:       oklch(80% 0.001 271.152deg);
+  --bg-subtle: oklch(76% 0.13 var(--hue-primary));
+  --bg-brand: oklch(22% 0.05 var(--hue-primary));
+  --bg-disabled: oklch(80% 0.001 271.152deg);
 
   /** Background States — fixed hues; semantic meaning must not shift with brand **/
-  --bg-error:   oklch(93% 0.2  25deg);
+  --bg-error: oklch(93% 0.2 25deg);
   --bg-success: oklch(92% 0.04 170deg);
-  --bg-info:    oklch(93% 0.04 260deg);
-  --bg-warning: oklch(96% 0.06  95deg);
+  --bg-info: oklch(93% 0.04 260deg);
+  --bg-warning: oklch(96% 0.06 95deg);
 
   /** Text Variants **/
 
-  --text-primary:   oklch(39% 0.2  var(--hue-accent));
+  --text-primary: oklch(39% 0.2 var(--hue-accent));
   --text-secondary: oklch(22% 0.05 var(--hue-primary));
-  --text-muted:     oklch(93% 0.2  var(--hue-accent));
-  --text-on-brand:  oklch(77% 0.2  var(--hue-accent));
+  --text-muted: oklch(93% 0.2 var(--hue-accent));
+  --text-on-brand: oklch(77% 0.2 var(--hue-accent));
 
   /** Text States — fixed **/
-  --text-error:    oklch(45% 0.2   25deg);
-  --text-success:  oklch(60% 0.13 170deg);
-  --text-warning:  oklch(82% 0.19  90deg);
-  --text-info:     oklch(62% 0.13 260deg);
+  --text-error: oklch(45% 0.2 25deg);
+  --text-success: oklch(60% 0.13 170deg);
+  --text-warning: oklch(82% 0.19 90deg);
+  --text-info: oklch(62% 0.13 260deg);
   --text-disabled: oklch(70% 0.001 271.152deg);
 
   /** Borders **/
   --border-default: oklch(76% 0.13 var(--hue-primary));
-  --border-subtle:  oklch(88% 0.06 var(--hue-primary));
-  --border-focus:   oklch(76% 0.13 var(--hue-primary));
-  --border-brand:   oklch(77% 0.2  var(--hue-accent));
+  --border-subtle: oklch(88% 0.06 var(--hue-primary));
+  --border-focus: oklch(76% 0.13 var(--hue-primary));
+  --border-brand: oklch(77% 0.2 var(--hue-accent));
 
   /** Border States — fixed **/
-  --border-success:  oklch(74% 0.13 170deg);
-  --border-warning:  oklch(90% 0.22  95deg);
-  --border-error:    oklch(77% 0.2   25deg);
-  --border-info:     oklch(76% 0.13 260deg);
+  --border-success: oklch(74% 0.13 170deg);
+  --border-warning: oklch(90% 0.22 95deg);
+  --border-error: oklch(77% 0.2 25deg);
+  --border-info: oklch(76% 0.13 260deg);
   --border-disabled: oklch(70% 0.001 271.152deg);
 
   /** Action States **/
-  --action-hover:    oklch(60% 0.2  var(--hue-accent));
-  --action-active:   oklch(45% 0.2  var(--hue-accent));
+  --action-hover: oklch(60% 0.2 var(--hue-accent));
+  --action-active: oklch(45% 0.2 var(--hue-accent));
 
   /* action-disabled shifts +30° from primary, matching text-primary hue */
   --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
@@ -204,6 +204,7 @@
   --space-12: 3rem; /* 48px */
 
   /* --- Component Padding (Semantic) --- */
+  --p-xxs: var(--space-1) var(--space-1);
   --p-xs: var(--space-1) var(--space-3);
   --p-sm: var(--space-2) var(--space-3);
   --p-md: var(--space-4) var(--space-6);
@@ -249,52 +250,52 @@
   /* so user-set brand hues apply automatically in dark mode too.              */
 
   /** Background Variants — deep end of the primary scale **/
-  --bg-canvas:         oklch(22% 0.05 var(--hue-primary));
-  --bg-surface:        oklch(28% 0.06 var(--hue-primary));
+  --bg-canvas: oklch(22% 0.05 var(--hue-primary));
+  --bg-surface: oklch(28% 0.06 var(--hue-primary));
 
   /* dark surface-raised stays on primary hue (no turquoise shift in dark mode) */
   --bg-surface-raised: oklch(38% 0.08 var(--hue-primary));
-  --bg-subtle:         oklch(62% 0.13 var(--hue-primary));
-  --bg-brand:          oklch(22% 0.05 var(--hue-primary));
-  --bg-disabled:       oklch(80% 0.001 271.152deg);
+  --bg-subtle: oklch(62% 0.13 var(--hue-primary));
+  --bg-brand: oklch(22% 0.05 var(--hue-primary));
+  --bg-disabled: oklch(80% 0.001 271.152deg);
 
   /** Background States — same as light mode **/
-  --bg-error:   oklch(93% 0.2  25deg);
+  --bg-error: oklch(93% 0.2 25deg);
   --bg-success: oklch(92% 0.04 170deg);
-  --bg-info:    oklch(93% 0.04 260deg);
-  --bg-warning: oklch(96% 0.06  95deg);
+  --bg-info: oklch(93% 0.04 260deg);
+  --bg-warning: oklch(96% 0.06 95deg);
 
   /** Text Variants **/
-  --text-primary:   oklch(77% 0.2  var(--hue-accent));
+  --text-primary: oklch(77% 0.2 var(--hue-accent));
 
   /* text-secondary shifts -60° from primary (blue→turquoise at default) */
   --text-secondary: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
-  --text-muted:     oklch(93% 0.2  var(--hue-accent));
-  --text-on-brand:  oklch(77% 0.2  var(--hue-accent));
+  --text-muted: oklch(93% 0.2 var(--hue-accent));
+  --text-on-brand: oklch(77% 0.2 var(--hue-accent));
 
   /** Text States — fixed **/
-  --text-error:    oklch(52% 0.2   25deg);
-  --text-success:  oklch(49% 0.11 170deg);
-  --text-warning:  oklch(72% 0.16  85deg);
-  --text-info:     oklch(51% 0.11 260deg);
+  --text-error: oklch(52% 0.2 25deg);
+  --text-success: oklch(49% 0.11 170deg);
+  --text-warning: oklch(72% 0.16 85deg);
+  --text-info: oklch(51% 0.11 260deg);
   --text-disabled: oklch(50% 0.001 271.152deg);
 
   /** Borders — light end of the primary scale **/
   --border-default: oklch(93% 0.04 var(--hue-primary));
-  --border-subtle:  oklch(88% 0.06 var(--hue-primary));
-  --border-focus:   oklch(76% 0.13 var(--hue-primary));
-  --border-brand:   oklch(77% 0.2  var(--hue-accent));
+  --border-subtle: oklch(88% 0.06 var(--hue-primary));
+  --border-focus: oklch(76% 0.13 var(--hue-primary));
+  --border-brand: oklch(77% 0.2 var(--hue-accent));
 
   /** Border States — fixed **/
-  --border-success:  oklch(74% 0.13 170deg);
-  --border-warning:  oklch(90% 0.22  95deg);
-  --border-error:    oklch(77% 0.2   25deg);
-  --border-info:     oklch(76% 0.13 260deg);
+  --border-success: oklch(74% 0.13 170deg);
+  --border-warning: oklch(90% 0.22 95deg);
+  --border-error: oklch(77% 0.2 25deg);
+  --border-info: oklch(76% 0.13 260deg);
   --border-disabled: oklch(70% 0.001 271.152deg);
 
   /** Action States — same as light mode **/
-  --action-hover:    oklch(89% 0.2  var(--hue-accent));
-  --action-active:   oklch(93% 0.2  var(--hue-accent));
+  --action-hover: oklch(89% 0.2 var(--hue-accent));
+  --action-active: oklch(93% 0.2 var(--hue-accent));
   --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
 
   /** Shadows **/

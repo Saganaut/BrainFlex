@@ -2,6 +2,8 @@ import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
 import styles from "./GameHub.module.css";
+import { Btn } from "@/components/Common/Buttons/Btn";
+import { Input } from "@/components/Common/Input/Input";
 const JoinGamePage = () => {
   const navigate = useNavigate();
   const [code, setCode] = useState("");
@@ -23,42 +25,44 @@ const JoinGamePage = () => {
   };
 
   return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>Join Game</h1>
-      <p className={styles.subtitle}>
-        Enter the 6-character room code from your host.
-      </p>
+    <>
+      <div className={styles.page}>
+        <h1 className={styles.title}>Join Game</h1>
+        <p className={styles.subtitle}>
+          Enter the 6-character room code from your host.
+        </p>
 
-      <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
-        <input
-          className={styles.codeInput}
-          value={code}
-          onChange={(e) => {
-            setCode(e.target.value.toUpperCase());
-          }}
-          placeholder='ABCD12'
-          maxLength={6}
-          autoFocus
-          autoComplete='off'
-          spellCheck={false}
-        />
-        <button
-          type='submit'
-          className={styles.joinBtn}
-          disabled={code.trim().length !== 6 || isLoading}>
-          {isLoading ? "Joining…" : "Join Game"}
-        </button>
-        {error && (
-          <p className={styles.errorMsg}>
-            Could not join — check the room code and try again.
-          </p>
-        )}
-      </form>
+        <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
+          <Input
+            className={styles.codeInput}
+            value={code}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setCode(e.target.value.toUpperCase());
+            }}
+            placeholder='ABCD12'
+            maxLength={6}
+            autoFocus
+            autoComplete='off'
+            spellCheck={false}
+          />
+          <Btn
+            type='submit'
+            className={styles.joinBtn}
+            disabled={code.trim().length !== 6 || isLoading}>
+            {isLoading ? "Joining…" : "Join Game"}
+          </Btn>
+          {error && (
+            <p className={styles.errorMsg}>
+              Could not join — check the room code and try again.
+            </p>
+          )}
+        </form>
 
-      <Link to='/games' className={styles.backLink} viewTransition>
-        Back to hub
-      </Link>
-    </div>
+        <Link to='/games' className={styles.backLink} viewTransition>
+          Back to hub
+        </Link>
+      </div>
+    </>
   );
 };
 

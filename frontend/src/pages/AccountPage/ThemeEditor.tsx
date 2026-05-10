@@ -14,6 +14,7 @@ import {
   useUploadLogoMutation,
 } from "../../store/BrainFlexApi";
 import styles from "./ThemeSection.module.css";
+import { Btn } from "@/components/Common/Buttons/Btn";
 
 // Converts a hex color string to its oklch hue angle (0–360°) via Oklab matrices.
 function hexToOklchHue(hex: string): number {
@@ -34,7 +35,7 @@ function hexToOklchHue(hex: string): number {
   const sC = Math.cbrt(
     0.0883024619 * rl + 0.2817188376 * gl + 0.6299787005 * bl,
   );
-  const a = 1.977998495 * lC - 2.428592205 * mC + 0.450593710 * sC;
+  const a = 1.977998495 * lC - 2.428592205 * mC + 0.45059371 * sC;
   const bOk = 0.025904037 * lC + 0.782771766 * mC - 0.808675766 * sC;
   const hue = (Math.atan2(bOk, a) * 180) / Math.PI;
   return hue < 0 ? hue + 360 : hue;
@@ -181,7 +182,10 @@ const ThemeEditor = ({
           mode,
           organizationId: orgId,
         };
-        saved = await updateTheme({ id: existing.id, updateThemeRequest: req }).unwrap();
+        saved = await updateTheme({
+          id: existing.id,
+          updateThemeRequest: req,
+        }).unwrap();
       } else {
         const req: CreateThemeRequest = {
           name: name.trim(),
@@ -244,11 +248,7 @@ const ThemeEditor = ({
 
       <div className={styles.fieldGroup}>
         <span className={styles.fieldLabel}>Colors</span>
-        <HueSlider
-          label='Primary'
-          hue={huePrimary}
-          onChange={setHuePrimary}
-        />
+        <HueSlider label='Primary' hue={huePrimary} onChange={setHuePrimary} />
         <HueSlider label='Accent' hue={hueAccent} onChange={setHueAccent} />
       </div>
 
@@ -256,7 +256,7 @@ const ThemeEditor = ({
         <span className={styles.fieldLabel}>Mode</span>
         <div className={styles.modeRow}>
           {(["light", "dark", "system"] as const).map((m) => (
-            <button
+            <Btn
               key={m}
               type='button'
               className={`${styles.modeBtn} ${mode === m ? styles.modeBtnActive : ""}`}
@@ -264,7 +264,7 @@ const ThemeEditor = ({
                 setMode(m);
               }}>
               {m.charAt(0).toUpperCase() + m.slice(1)}
-            </button>
+            </Btn>
           ))}
         </div>
       </div>
@@ -292,13 +292,13 @@ const ThemeEditor = ({
               style={{ display: "none" }}
               aria-label='Upload background image'
             />
-            <button
+            <Btn
               type='button'
               onClick={() => {
                 bgInputRef.current?.click();
               }}>
               {bgPreview ? "Replace" : "Upload"}
-            </button>
+            </Btn>
             <p className={styles.uploadHint}>
               JPEG, PNG, or WebP · max 5 MB · max 2000 px
             </p>
@@ -329,13 +329,13 @@ const ThemeEditor = ({
               style={{ display: "none" }}
               aria-label='Upload logo image'
             />
-            <button
+            <Btn
               type='button'
               onClick={() => {
                 logoInputRef.current?.click();
               }}>
               {logoPreview ? "Replace" : "Upload"}
-            </button>
+            </Btn>
             <p className={styles.uploadHint}>
               JPEG, PNG, WebP, or GIF · max 2 MB · resized to 400×400
             </p>
@@ -359,17 +359,17 @@ const ThemeEditor = ({
       {error && <p className={styles.editorError}>{error}</p>}
 
       <div className={styles.editorActions}>
-        <button type='button' onClick={onCancel} disabled={isSaving}>
+        <Btn type='button' onClick={onCancel} disabled={isSaving}>
           Cancel
-        </button>
-        <button
+        </Btn>
+        <Btn
           type='button'
           onClick={() => {
             void handleSave();
           }}
           disabled={isSaving}>
           {isSaving ? "Saving..." : "Save theme"}
-        </button>
+        </Btn>
       </div>
     </div>
   );

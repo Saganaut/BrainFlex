@@ -4,6 +4,9 @@ import { ContentPackPicker } from "../../components/Games/ContentPackPicker/Cont
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useCreateGameMutation } from "../../store/BrainFlexApi";
 import styles from "./Game.module.css";
+import { Btn } from "@/components/Common/Buttons/Btn";
+import { Input } from "@/components/Common/Input/Input";
+import { Checkbox } from "@/components/Common/Input/Checkbox";
 const CreateGamePage = () => {
   const navigate = useNavigate();
   const userState = useCurrentUser();
@@ -70,25 +73,25 @@ const CreateGamePage = () => {
           <div className={styles.settings}>
             <label className={styles.setting}>
               <span>Rounds</span>
-              <input
+              <Input
                 type='number'
                 min={3}
                 max={30}
                 value={totalRounds}
-                onChange={(e) => {
-                  setTotalRounds(Number(e.target.value));
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setTotalRounds(e.target.valueAsNumber);
                 }}
                 className={styles.numberInput}
               />
             </label>
             <label className={styles.setting}>
               <span>Seconds per question</span>
-              <input
+              <Input
                 type='number'
                 min={5}
                 max={60}
                 value={timePerQuestion}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setTimePerQuestion(Number(e.target.value));
                 }}
                 className={styles.numberInput}
@@ -96,10 +99,9 @@ const CreateGamePage = () => {
             </label>
             <label className={styles.setting}>
               <span>Speed bonus</span>
-              <input
-                type='checkbox'
+              <Checkbox
                 checked={speedBonus}
-                onChange={(e) => {
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                   setSpeedBonus(e.target.checked);
                 }}
               />
@@ -113,12 +115,12 @@ const CreateGamePage = () => {
           </p>
         )}
 
-        <button
+        <Btn
           type='submit'
           className={styles.createBtn}
           disabled={!selectedPackId || isLoading}>
           {isLoading ? "Creating…" : "Create Game"}
-        </button>
+        </Btn>
       </form>
 
       <Link to='/games' className={styles.backLink} viewTransition>

@@ -5,6 +5,7 @@ import styles from "./Forms.module.css";
 import { Link } from "@tanstack/react-router";
 import { Input } from "../Common/Input/Input";
 import { Checkbox } from "../Common/Input/Checkbox";
+import { Btn } from "../Common/Buttons/Btn";
 export type { RegisterSearch };
 
 interface RegistrationFormProps {
@@ -85,9 +86,9 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
         <div>
           <div className={styles.finalRow}>
             {submitError && <p>{submitError}</p>}
-            <button type='submit' disabled={!canSubmit || isLoading}>
+            <Btn type='submit' disabled={!canSubmit || isLoading}>
               Submit
-            </button>
+            </Btn>
           </div>
         </div>
       </form>

@@ -8,6 +8,8 @@ import {
 } from "../../store/BrainFlexApi";
 import styles from "./ThemeSection.module.css";
 import accountStyles from "./AccountPage.module.css";
+import { Btn } from "@/components/Common/Buttons/Btn";
+import { Input } from "@/components/Common/Input/Input";
 
 const OrgSection = () => {
   const { data: org, refetch, isLoading } = useGetMyOrgQuery();
@@ -95,38 +97,34 @@ const OrgSection = () => {
           <p className={styles.orgName}>{org.name}</p>
           <p className={styles.orgId}>ID: {org.id}</p>
           <div style={{ display: "flex", gap: "var(--space-3)" }}>
-            <button
-              type='button'
+            <Btn
               onClick={() => {
                 void handleCopyId();
               }}>
               {copied ? "Copied!" : "Copy ID"}
-            </button>
+            </Btn>
             {!leaveConfirm ? (
-              <button
-                type='button'
+              <Btn
                 onClick={() => {
                   setLeaveConfirm(true);
                 }}>
                 Leave organization
-              </button>
+              </Btn>
             ) : (
               <>
-                <button
-                  type='button'
+                <Btn
                   onClick={() => {
                     void handleLeave();
                   }}
                   disabled={isLeaving}>
                   {isLeaving ? "Leaving..." : "Confirm leave"}
-                </button>
-                <button
-                  type='button'
+                </Btn>
+                <Btn
                   onClick={() => {
                     setLeaveConfirm(false);
                   }}>
                   Cancel
-                </button>
+                </Btn>
               </>
             )}
           </div>
@@ -134,50 +132,50 @@ const OrgSection = () => {
       ) : (
         <div className={styles.orgJoinForm}>
           <div className={styles.orgRow}>
-            <input
+            <Input
               type='text'
               className={styles.orgInput}
               placeholder='Organization name'
               value={createName}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setCreateName(e.target.value);
               }}
               maxLength={128}
               aria-label='New organization name'
             />
-            <button
-              type='button'
+            <Btn
               onClick={() => {
                 void handleCreate();
               }}
               disabled={isCreating}>
               {isCreating ? "Creating..." : "Create"}
-            </button>
+            </Btn>
           </div>
 
           <div className={styles.orgDivider}>
-            <span className={styles.orgDividerText}>or join an existing one</span>
+            <span className={styles.orgDividerText}>
+              or join an existing one
+            </span>
           </div>
 
           <div className={styles.orgRow}>
-            <input
+            <Input
               type='text'
               className={styles.orgInput}
               placeholder='Organization ID'
               value={joinId}
-              onChange={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setJoinId(e.target.value);
               }}
               aria-label='Organization ID to join'
             />
-            <button
-              type='button'
+            <Btn
               onClick={() => {
                 void handleJoin();
               }}
               disabled={isJoining}>
               {isJoining ? "Joining..." : "Join"}
-            </button>
+            </Btn>
           </div>
         </div>
       )}

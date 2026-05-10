@@ -1,6 +1,7 @@
 // Dropdown with optional multi-select and searchable filtering of options
 import React, { useEffect, useId, useRef, useState } from "react";
 import styles from "./Form.module.css";
+import { Btn } from "../Buttons/Btn";
 
 interface DropdownOption {
   value: string;
@@ -125,7 +126,7 @@ const Dropdown: React.FC<DropdownProps> = ({
     <div className={[styles.inputContainer, styles[labelPosition]].join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.dropdown} ref={containerRef}>
-        <button
+        <Btn
           type='button'
           id={id}
           className={styles.dropdownTrigger}
@@ -148,7 +149,7 @@ const Dropdown: React.FC<DropdownProps> = ({
               d='m19.5 8.25-7.5 7.5-7.5-7.5'
             />
           </svg>
-        </button>
+        </Btn>
 
         {isOpen && (
           <div className={styles.dropdownPanel}>

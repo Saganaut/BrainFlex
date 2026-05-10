@@ -15,6 +15,7 @@ import { ThemeCard } from "./ThemeCard";
 import { ThemeEditor } from "./ThemeEditor";
 import styles from "./ThemeSection.module.css";
 import accountStyles from "./AccountPage.module.css";
+import { Btn } from "@/components/Common/Buttons/Btn";
 
 const ThemeSection = () => {
   const userState = useCurrentUser();
@@ -92,13 +93,13 @@ const ThemeSection = () => {
     <section className={accountStyles.section}>
       <div className={styles.sectionHeader}>
         <h2 className={accountStyles.sectionTitle}>Theme Settings</h2>
-        <button
+        <Btn
           type='button'
           onClick={() => {
             setEditing("new");
           }}>
           + New theme
-        </button>
+        </Btn>
       </div>
 
       {editing != null && (
@@ -146,7 +147,7 @@ const ThemeSection = () => {
                 </div>
               </div>
               <div className={styles.cardActions}>
-                <button
+                <Btn
                   type='button'
                   className={`${styles.cardActionBtn} ${styles.cardActionBtnPrimary}`}
                   onClick={() => {
@@ -156,7 +157,7 @@ const ThemeSection = () => {
                     );
                   }}>
                   Activate
-                </button>
+                </Btn>
               </div>
             </div>
           ))}

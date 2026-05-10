@@ -1,6 +1,7 @@
 // File upload component with drag-and-drop support and multi-file selection
 import React, { useRef, useState, useCallback } from "react";
 import styles from "./Form.module.css";
+import { IconBtn } from "../Buttons/IconBtn";
 
 interface FileUploadProps {
   label?: string;
@@ -61,19 +62,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
         className={[styles.dropZone, isDragging && styles.dragging]
           .filter(Boolean)
           .join(" ")}
-        onClick={() => { inputRef.current?.click(); }}
+        onClick={() => {
+          inputRef.current?.click();
+        }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        role="button"
+        role='button'
         tabIndex={0}
-        onKeyDown={(e) => { if (e.key === "Enter") { inputRef.current?.click(); } }}>
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            inputRef.current?.click();
+          }
+        }}>
         <input
           ref={inputRef}
-          type="file"
+          type='file'
           multiple
           accept={accept}
-          onChange={(e) => { addFiles(e.target.files); }}
+          onChange={(e) => {
+            addFiles(e.target.files);
+          }}
         />
         <span className={styles.dropZoneText}>
           {isDragging ? "Drop files here" : "Click or drag files here"}
@@ -82,15 +91,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       {files.length > 0 && (
         <ul className={styles.fileList}>
           {files.map((file, i) => (
-            <li key={`${file.name}-${file.size}-${file.lastModified}`} className={styles.fileItem}>
+            <li
+              key={`${file.name}-${file.size}-${file.lastModified}`}
+              className={styles.fileItem}>
               <span className={styles.fileName}>{file.name}</span>
-              <button
-                type="button"
+
+              <IconBtn
+                type='close'
+                size='xs'
                 className={styles.removeFile}
-                onClick={() => { removeFile(i); }}
-                aria-label={`Remove ${file.name}`}>
-                &times;
-              </button>
+                onClick={() => {
+                  removeFile(i);
+                }}
+                aria-label={`Remove ${file.name}`}
+              />
             </li>
           ))}
         </ul>

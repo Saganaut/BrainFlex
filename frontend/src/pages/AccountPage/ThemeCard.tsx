@@ -1,4 +1,5 @@
 // Single theme card: color swatch preview, name, activate/edit/delete actions.
+import { Btn } from "@components/Common/Buttons/Btn";
 import type { ThemeResponse } from "../../store/BrainFlexApi";
 import styles from "./ThemeSection.module.css";
 
@@ -53,34 +54,31 @@ const ThemeCard = ({
       </div>
       <div className={styles.cardActions}>
         {!isActive && (
-          <button
-            type='button'
+          <Btn
             className={`${styles.cardActionBtn} ${styles.cardActionBtnPrimary}`}
             onClick={() => {
               onActivate(theme);
             }}>
             Activate
-          </button>
+          </Btn>
         )}
         {isOwned && onEdit && (
-          <button
-            type='button'
+          <Btn
             className={styles.cardActionBtn}
             onClick={() => {
               onEdit(theme);
             }}>
             Edit
-          </button>
+          </Btn>
         )}
         {isOwned && onDelete && (
-          <button
-            type='button'
+          <Btn
             className={`${styles.cardActionBtn} ${styles.cardActionBtnDanger}`}
             onClick={() => {
               onDelete(theme);
             }}>
             Delete
-          </button>
+          </Btn>
         )}
       </div>
     </div>

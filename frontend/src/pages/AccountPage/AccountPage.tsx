@@ -11,7 +11,8 @@ import { apiBaseUrl } from "../../store/emptyApi";
 import { ThemeSection } from "./ThemeSection";
 import { OrgSection } from "./OrgSection";
 import styles from "./AccountPage.module.css";
-import { Btn } from "../../components/Common/Btns/Btn";
+import { Btn } from "@components/Common/Buttons/Btn";
+import { Checkbox } from "@/components/Common/Input/Checkbox";
 
 const MAX_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -145,7 +146,6 @@ const AccountPage = () => {
           aria-label='Upload profile picture'
         />
         <Btn
-          type='Btn'
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}>
           {isUploading ? "Uploading..." : "Upload new photo"}
@@ -162,10 +162,9 @@ const AccountPage = () => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Newsletter</h2>
         <label className={styles.checkboxLabel}>
-          <input
-            type='checkbox'
+          <Checkbox
             checked={newsletter}
-            onChange={(e) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               void handleNewsletterChange(e.target.checked);
             }}
           />
@@ -188,7 +187,6 @@ const AccountPage = () => {
         </p>
         {!closeConfirm ? (
           <Btn
-            type='Btn'
             className={styles.dangerBtn}
             onClick={() => {
               setCloseConfirm(true);
@@ -200,14 +198,12 @@ const AccountPage = () => {
             <p>Are you sure? This cannot be undone.</p>
             <div className={styles.confirmActions}>
               <Btn
-                type='Btn'
                 className={styles.dangerBtn}
                 onClick={() => void handleCloseAccount()}
                 disabled={isClosing}>
                 {isClosing ? "Closing..." : "Yes, close my account"}
               </Btn>
               <Btn
-                type='Btn'
                 onClick={() => {
                   setCloseConfirm(false);
                 }}>

@@ -6,6 +6,11 @@ import { useTheme } from "../../../hooks/useTheme";
 import { useGuestLoginMutation } from "../../../store/BrainFlexApi";
 import { apiBaseUrl } from "../../../store/emptyApi";
 import styles from "./NavBar.module.css";
+import { Btn } from "@/components/Common/Buttons/Btn";
+import { Input } from "@/components/Common/Input/Input";
+import { IconBtn } from "@/components/Common/Buttons/IconBtn";
+import lightModeIcon from "@/assets/nav/LightModeIcon.svg";
+import darkModeIcon from "@/assets/nav/DarkModeIcon.svg";
 
 export function NavBar() {
   const userState = useCurrentUser();
@@ -81,13 +86,7 @@ export function NavBar() {
 
   const avatarContent = () => {
     if (user?.pictureUrl) {
-      return (
-        <img
-          src={user.pictureUrl}
-          alt={user.userName}
-          className={styles.avatarImage}
-        />
-      );
+      return <img src={user.pictureUrl} alt={user.userName} />;
     }
     if (user?.userName) {
       return (
@@ -102,22 +101,26 @@ export function NavBar() {
   if (userState.state === "loading") {
     return <div style={{ padding: "1rem" }}>Loading auth...</div>;
   }
-
+  console.log("user picture", user?.pictureUrl);
   return (
     <div className={styles.navContainer}>
       <div className={styles.userMenuWrapper} ref={dropdownRef}>
         <Link to='/design-system' viewTransition>
           Design system
         </Link>
-        <button
-          type='button'
-          className={styles.avatarButton}
+        <IconBtn
+          type='avatar'
+          className={styles.avatarBtn}
           onClick={() => {
             setDropdownOpen((prev) => !prev);
           }}
-          aria-label='User menu'>
-          {avatarContent()}
-        </button>
+          shape='round'
+          bordered={true}
+          backgroundColor={true}
+          size='lg'
+          aria-label='User menu'
+          icon={avatarContent()}
+        />
 
         {dropdownOpen && (
           <div className={styles.dropdown}>
@@ -134,55 +137,55 @@ export function NavBar() {
                   }}>
                   Account
                 </Link>
-                <button
+                <Btn
                   className={styles.dropdownItem}
                   onClick={void handleLogout}>
                   Logout
-                </button>
+                </Btn>
               </>
             ) : userState.state === "guest" ? (
               <>
                 <span className={styles.dropdownLabel}>
                   Guest: {user?.userName}
                 </span>
-                <button className={styles.dropdownItem} onClick={handleLogin}>
+                <Btn className={styles.dropdownItem} onClick={handleLogin}>
                   Sign in with Google
-                </button>
-                <button
+                </Btn>
+                <Btn
                   className={styles.dropdownItem}
                   onClick={void handleLogout}>
                   Logout guest
-                </button>
+                </Btn>
               </>
             ) : (
               <>
-                <button className={styles.dropdownItem} onClick={handleLogin}>
+                <Btn className={styles.dropdownItem} onClick={handleLogin}>
                   Login with Google
-                </button>
-                <button
+                </Btn>
+                <Btn
                   className={styles.dropdownItem}
                   onClick={() => {
                     setShowGuestInput((prev) => !prev);
                   }}>
                   Play as guest
-                </button>
+                </Btn>
                 {showGuestInput && (
                   <div className={styles.guestInputWrapper}>
-                    <input
+                    <Input
                       className={styles.guestInput}
                       value={guestName}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setGuestName(e.target.value);
                       }}
                       placeholder='Guest username'
                       maxLength={20}
                     />
-                    <button
+                    <Btn
                       className={styles.dropdownItem}
                       onClick={void handleGuestLogin}
                       disabled={guestLoading}>
                       Confirm
-                    </button>
+                    </Btn>
                     {guestError && (
                       <span className={styles.guestError}>{guestError}</span>
                     )}
@@ -191,9 +194,19 @@ export function NavBar() {
               </>
             )}
             <div className={styles.dropdownDivider} />
-            <button className={styles.dropdownItem} onClick={toggleTheme}>
-              {theme === "dark" ? "Switch to light" : "Switch to dark"}
-            </button>
+            <IconBtn
+              type='default'
+              className={styles.dropdownItem}
+              onClick={toggleTheme}
+              size='lg'
+              icon={
+                theme === "dark" ? (
+                  <img src={lightModeIcon} />
+                ) : (
+                  <img src={darkModeIcon} />
+                )
+              }
+            />
           </div>
         )}
       </div>

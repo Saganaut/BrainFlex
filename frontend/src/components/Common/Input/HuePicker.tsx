@@ -10,6 +10,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import styles from "./Form.module.css";
+import { Btn } from "../Buttons/Btn";
 
 // Named hues aligned with the design system's palette stops.
 const quickPickHues = [
@@ -74,7 +75,7 @@ const ColorPickerPopover = ({ value, onChange }: ColorPickerPopoverProps) => {
       {/* Quick-pick named hue swatches */}
       <div className={styles.quickPicks}>
         {quickPickHues.map(({ hue, label }) => (
-          <button
+          <Btn
             key={hue}
             type='button'
             className={styles.quickPickSwatch}
@@ -138,7 +139,7 @@ const HuePicker = ({ label, value, onChange }: HuePickerProps) => {
         </div>
       </div>
       <div className={styles.huePickerControls}>
-        <button
+        <Btn
           type='button'
           className={styles.huePickerSwatch}
           style={{ background: `oklch(65% 0.2 ${value}deg)` }}

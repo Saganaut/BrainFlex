@@ -10,7 +10,7 @@
   border-radius: var(--radius-lg);
   color: var(--color);
   background-color: var(--background-color);
-  border-color: var(--border-color);
+  border-color: currentcolor;
   transition:
     background-color 300ms ease-in-out,
     color 300ms ease-in-out,
@@ -83,22 +83,110 @@
   }
 }
 
-svg {
-  height: 20px;
-  width: 20px;
+.iconBtn {
+  --padding: var(--p-md);
+  --height: 80px;
+  --width: 80px;
+  --border-color: var(--border-default);
+  --color: var(--border-default);
+
+  height: var(--height);
+  width: var(--width);
   display: flex;
-  stroke: var(--text-primary);
   align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  color: var(--color);
+  background: transparent;
+  overflow: hidden;
   transition:
-    transform 300ms ease-in-out,
-    stroke 300ms ease-in-out;
-  transform: rotate(180deg);
+    background-color 300ms ease-in-out,
+    color 300ms ease-in-out;
+
+  &.withBackground {
+    background-color: var(--bg-surface);
+
+    &:hover {
+      background-color: var(--action-hover);
+    }
+  }
+
+  svg,
+  img {
+    --max-height: 28px;
+    --max-width: 28px;
+
+    display: flex;
+    stroke: var(--color);
+    align-items: center;
+    max-height: 100%;
+    width: 100%;
+    transition:
+      transform 300ms ease-in-out,
+      stroke 300ms ease-in-out;
+  }
+
+  &.xs {
+    --padding: 0px;
+    --height: 28px;
+    --width: 28px;
+  }
+
+  &.sm {
+    --padding: var(--p-xs);
+    --height: 36px;
+    --width: 36px;
+  }
+
+  &.md {
+    --padding: var(--p-xs);
+    --height: 56px;
+    --width: 56px;
+  }
+
+  &.lg {
+    --padding: var(--p-md);
+    --height: 72px;
+    --width: 72px;
+  }
+
+  &.round {
+    border-radius: var(--radius-full);
+  }
+
+  &.bordered {
+    border: 2px solid var(--border-color);
+
+    &:hover {
+      border: 2px solid var(--action-hover);
+    }
+  }
 
   &:hover {
     stroke: var(--text-secondary);
   }
 
   &.isCollapsed {
-    transform: rotate(0deg);
+    transform: rotate(180deg);
+  }
+
+  &.close {
+    color: var(--text-secondary);
+
+    &:hover {
+      color: var(--text-error);
+
+      svg {
+        stroke: var(--text-error);
+      }
+    }
+  }
+
+  &.isDisabled,
+  &.isDisabled:hover {
+    opacity: 0.3;
+    pointer-events: none;
   }
 }

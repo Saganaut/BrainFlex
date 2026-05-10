@@ -5,6 +5,7 @@
  */
 import styles from "./RoundResult.module.css";
 import type { RoundResultPayload } from "../../../store/gameSlice";
+import { Btn } from "@/components/Common/Buttons/Btn";
 
 interface RoundResultProps {
   result: RoundResultPayload;
@@ -61,12 +62,9 @@ const RoundResult = ({
         </ol>
 
         {isHost && isTurnBased ? (
-          <button
-            type='button'
-            onClick={onNextRound}
-            className={styles.nextBtn}>
+          <Btn onClick={onNextRound} className={styles.nextBtn}>
             Next Round
-          </button>
+          </Btn>
         ) : (
           <p className={styles.autoAdvance}>Next round starting soon…</p>
         )}

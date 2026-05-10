@@ -7,11 +7,13 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   labelPosition?: "labelAbove" | "labelInFront";
   checked?: boolean;
+  ref?: React.RefObject<HTMLInputElement | null>;
 }
 
 /** We can optionally display some information below the input field, if an error message is relevant it will temporary replace the info **/
 const Input: React.FC<InputProps> = ({
   value,
+  ref,
   onChange,
   maxLength,
   id,
@@ -29,6 +31,7 @@ const Input: React.FC<InputProps> = ({
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.input}>
         <input
+          ref={ref}
           id={id}
           value={value}
           onChange={onChange}

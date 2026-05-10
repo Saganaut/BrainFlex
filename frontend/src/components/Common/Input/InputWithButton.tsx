@@ -2,6 +2,7 @@
 import React from "react";
 import type { ReactNode } from "react";
 import styles from "./Form.module.css";
+import { Btn } from "../Buttons/Btn";
 
 interface InputWithButtonProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -38,9 +39,9 @@ const InputWithButton: React.FC<InputWithButtonProps> = ({
           placeholder={placeholder}
           disabled={disabled}
         />
-        <button type='button' onClick={onButtonClick} disabled={disabled}>
+        <Btn type='button' onClick={onButtonClick} disabled={disabled}>
           {buttonLabel}
-        </button>
+        </Btn>
         {(errorMessage != null || infoMessage != null) && (
           <span
             className={[

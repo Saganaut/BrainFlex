@@ -3,6 +3,17 @@ import styles from "./DesignSystem.module.css";
 import { ThemePicker } from "./ThemePicker";
 import { FormsSection } from "./FormsSection";
 import { Btn } from "../../components/Common/Buttons/Btn";
+import { IconBtn } from "../../components/Common/Buttons/IconBtn";
+import {
+  BellIcon,
+  StarIcon,
+  TrashIcon,
+  PencilSquareIcon,
+  UserIcon,
+  Cog6ToothIcon,
+  MagnifyingGlassIcon,
+  HeartIcon,
+} from "@heroicons/react/24/outline";
 import { Card } from "../../components/Common/Cards/Card";
 import { Badge } from "../../components/Common/Badge";
 import {
@@ -224,6 +235,86 @@ const DesignSystemPage = () => {
               <Btn shape={"pill"} size={"sm"} children={<span>Pill sm</span>} />
               <Btn shape={"pill"} size={"lg"} children={<span>Pill lg</span>} />
               <Btn children={<span>Primary lg</span>} />
+            </div>
+          </Accordion>
+          <Accordion titleBar='Icon Buttons'>
+            <div className={styles.iconBtnSection}>
+              <div className={styles.iconBtnRow}>
+                <span className={styles.iconBtnRowLabel}>Type</span>
+                <div className={styles.iconBtnGroup}>
+                  <IconBtn type='close' />
+                  <IconBtn type='default' icon={<BellIcon />} />
+                  <IconBtn type='avatar' icon={<UserIcon />} />
+                </div>
+              </div>
+              <div className={styles.iconBtnRow}>
+                <span className={styles.iconBtnRowLabel}>Size</span>
+                <div className={styles.iconBtnGroup}>
+                  <IconBtn type='default' icon={<StarIcon />} size='xs' />
+                  <IconBtn type='default' icon={<StarIcon />} size='sm' />
+                  <IconBtn type='default' icon={<StarIcon />} size='md' />
+                  <IconBtn type='default' icon={<StarIcon />} size='lg' />
+                </div>
+              </div>
+              <div className={styles.iconBtnRow}>
+                <span className={styles.iconBtnRowLabel}>Shape</span>
+                <div className={styles.iconBtnGroup}>
+                  <IconBtn
+                    type='default'
+                    icon={<Cog6ToothIcon />}
+                    shape='default'
+                    backgroundColor
+                  />
+                  <IconBtn
+                    type='default'
+                    icon={<Cog6ToothIcon />}
+                    shape='round'
+                    backgroundColor
+                  />
+                </div>
+              </div>
+              <div className={styles.iconBtnRow}>
+                <span className={styles.iconBtnRowLabel}>Background</span>
+                <div className={styles.iconBtnGroup}>
+                  <IconBtn type='default' icon={<MagnifyingGlassIcon />} />
+                  <IconBtn
+                    type='default'
+                    icon={<MagnifyingGlassIcon />}
+                    backgroundColor
+                  />
+                  <IconBtn type='default' icon={<HeartIcon />} />
+                  <IconBtn
+                    type='default'
+                    icon={<HeartIcon />}
+                    backgroundColor
+                  />
+                  <IconBtn type='default' icon={<PencilSquareIcon />} />
+                  <IconBtn
+                    type='default'
+                    icon={<PencilSquareIcon />}
+                    backgroundColor
+                  />
+                  <IconBtn type='default' icon={<TrashIcon />} />
+                  <IconBtn
+                    type='default'
+                    icon={<TrashIcon />}
+                    backgroundColor
+                  />
+                </div>
+              </div>
+              <div className={styles.iconBtnRow}>
+                <span className={styles.iconBtnRowLabel}>Disabled</span>
+                <div className={styles.iconBtnGroup}>
+                  <IconBtn type='default' icon={<BellIcon />} disabled />
+                  <IconBtn
+                    type='default'
+                    icon={<TrashIcon />}
+                    disabled
+                    backgroundColor
+                  />
+                  <IconBtn type='close' disabled />
+                </div>
+              </div>
             </div>
           </Accordion>
         </div>

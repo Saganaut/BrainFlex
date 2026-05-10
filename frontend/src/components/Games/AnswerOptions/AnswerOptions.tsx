@@ -3,6 +3,7 @@
  * Highlights correct/incorrect choices after the round result arrives;
  * disabled once the local player has answered or time has expired.
  */
+import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./AnswerOptions.module.css";
 
 interface AnswerOptionsProps {
@@ -31,7 +32,7 @@ const AnswerOptions = ({
         const isWrong = correctOption !== undefined && isSelected && !isCorrect;
 
         return (
-          <button
+          <Btn
             key={text.substring(0, 20)}
             type='button'
             disabled={disabled}
@@ -48,7 +49,7 @@ const AnswerOptions = ({
               .join(" ")}>
             <span className={styles.label}>{LABELS[i]}</span>
             <span className={styles.text}>{text}</span>
-          </button>
+          </Btn>
         );
       })}
     </div>

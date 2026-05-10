@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { BrainMascot } from "./BrainMascot";
 import styles from "./ErrorPage.module.css";
+import type { Btn } from "@/components/Common/Buttons/Btn";
 
 interface ErrorPageProps {
   statusCode: number;
@@ -41,14 +42,13 @@ const ErrorPage = ({ statusCode, title, message, image }: ErrorPageProps) => {
         <Link to='/' className={styles.homeLink} viewTransition>
           Take me home
         </Link>
-        <button
-          type='button'
+        <Btn
           className={styles.backBtn}
           onClick={() => {
             history.back();
           }}>
           Go back
-        </button>
+        </Btn>
       </div>
     </main>
   );

@@ -1,0 +1,107 @@
+[
+  {
+    "name": "Frodo Baggins",
+    "userName": "RingBearer99",
+    "email": "frodo@shire.me",
+    "stats": { "gamesPlayed": 12, "highScore": 1500, "totalPoints": 4500, "currentStreak": 3 },
+    "createdAt": "2026-05-10T12:00:00"
+  },
+  {
+    "name": "Gandalf the Grey",
+    "userName": "Mithrandir",
+    "email": "gandalf@istari.com",
+    "stats": { "gamesPlayed": 50, "highScore": 5000, "totalPoints": 25000, "currentStreak": 15 },
+    "createdAt": "2026-04-30T12:00:00"
+  },
+  {
+    "name": "Aragorn II Elessar",
+    "userName": "Strider",
+    "email": "king@gondor.gov",
+    "stats": { "gamesPlayed": 30, "highScore": 3500, "totalPoints": 18000, "currentStreak": 8 },
+    "createdAt": "2026-05-05T12:00:00"
+  },
+  {
+    "name": "Legolas Greenleaf",
+    "userName": "PrinceOfMirkwood",
+    "email": "legolas@woodland.realm",
+    "stats": { "gamesPlayed": 45, "highScore": 4200, "totalPoints": 22000, "currentStreak": 12 },
+    "createdAt": "2026-05-03T12:00:00"
+  },
+  {
+    "name": "Gimli Son of Glóin",
+    "userName": "AxeMaster",
+    "email": "gimli@lonelymountain.com",
+    "stats": { "gamesPlayed": 44, "highScore": 4150, "totalPoints": 21500, "currentStreak": 11 },
+    "createdAt": "2026-05-03T12:00:00"
+  },
+  {
+    "name": "Samwise Gamgee",
+    "userName": "GardenerOfTheYear",
+    "email": "sam@theshire.me",
+    "stats": { "gamesPlayed": 25, "highScore": 2000, "totalPoints": 12000, "currentStreak": 20 },
+    "createdAt": "2026-05-09T12:00:00"
+  },
+  {
+    "name": "Boromir of Gondor",
+    "userName": "OneDoesNotSimply",
+    "email": "boromir@denethor.com",
+    "stats": { "gamesPlayed": 20, "highScore": 3100, "totalPoints": 9500, "currentStreak": 0 },
+    "createdAt": "2026-04-25T12:00:00"
+  },
+  {
+    "name": "Lady Galadriel",
+    "userName": "LightOfEarendel",
+    "email": "galadriel@lorien.org",
+    "stats": { "gamesPlayed": 60, "highScore": 5500, "totalPoints": 32000, "currentStreak": 30 },
+    "createdAt": "2025-05-10T12:00:00"
+  },
+  {
+    "name": "Sméagol",
+    "userName": "Precious_Slinker",
+    "email": "gollum@caves.me",
+    "stats": { "gamesPlayed": 100, "highScore": 1100, "totalPoints": 15000, "currentStreak": 1 },
+    "createdAt": "2021-05-10T12:00:00"
+  },
+  {
+    "name": "Saruman the White",
+    "userName": "Sharkey",
+    "email": "saruman@isengard.com",
+    "stats": { "gamesPlayed": 55, "highScore": 4800, "totalPoints": 28000, "currentStreak": 14 },
+    "createdAt": "2026-04-20T12:00:00"
+  },
+  {
+    "name": "Elrond Half-elven",
+    "userName": "CouncilChairman",
+    "email": "elrond@rivendell.me",
+    "stats": { "gamesPlayed": 48, "highScore": 4600, "totalPoints": 26000, "currentStreak": 10 },
+    "createdAt": "2026-04-10T12:00:00"
+  },
+  {
+    "name": "Éowyn of Rohan",
+    "userName": "IAmNoMan",
+    "email": "eowyn@shieldmaiden.ro",
+    "stats": { "gamesPlayed": 35, "highScore": 3800, "totalPoints": 19500, "currentStreak": 9 },
+    "createdAt": "2026-05-06T12:00:00"
+  },
+  {
+    "name": "Faramir",
+    "userName": "QualityCaptain",
+    "email": "faramir@osgiliath.gov",
+    "stats": { "gamesPlayed": 28, "highScore": 3200, "totalPoints": 16000, "currentStreak": 6 },
+    "createdAt": "2026-04-28T12:00:00"
+  },
+  {
+    "name": "Meriadoc Brandybuck",
+    "userName": "Merry_Buck",
+    "email": "merry@buckland.me",
+    "stats": { "gamesPlayed": 15, "highScore": 1800, "totalPoints": 5200, "currentStreak": 4 },
+    "createdAt": "2026-05-08T12:00:00"
+  },
+  {
+    "name": "Peregrin Took",
+    "userName": "FoolOfATook",
+    "email": "pippin@greatsmials.me",
+    "stats": { "gamesPlayed": 14, "highScore": 1750, "totalPoints": 5100, "currentStreak": 2 },
+    "createdAt": "2026-05-08T12:00:00"
+  }
+]

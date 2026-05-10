@@ -122,7 +122,8 @@ npx @rtk-query/codegen-openapi openapi-config.cts
 
 **Component design:**
 
-- Declare components as `const ComponentName = ({}: ComponentNameProps) => {}` and use named exports: `export { ComponentName }`. Never use default exports.
+- Declare components as `const ComponentName = ({ prop }: ComponentNameProps) => {}`. **Never use `function ComponentName()` declarations or `export function` for components** — arrow-function `const` form only.
+- Export components with a standalone named export at the bottom of the file: `export { ComponentName }`. Never use default exports or inline `export const`.
 - Route files are for routing only — they must delegate to a `RouteNamePage` component in `src/pages/`.
 - Place component-specific data (JSON, constants) in a `data.ts` file in the same directory as the component.
 - Never use `index.tsx` files — use explicit file names (e.g., `MyComponent.tsx`).

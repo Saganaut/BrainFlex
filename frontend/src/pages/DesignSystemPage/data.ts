@@ -309,6 +309,14 @@ export const playersData: ScoreBoardProps = {
   currentUserId: "user-001",
 };
 
+export const formSampleData = {
+  radioOptions: [
+    { label: "Classic", value: "classic" },
+    { label: "Timed", value: "timed" },
+    { label: "Survival", value: "survival" },
+  ],
+};
+
 export const RoundResultData = {
   round: 3,
   correctAnswer: 9,

@@ -1,0 +1,40 @@
+.accordion {
+  .accordionTitleSection {
+    display: flex;
+    cursor: pointer;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--p-sm);
+
+    &:hover {
+      color: var(--action-hover);
+    }
+
+    svg {
+      width: 20px; /* Ensure size is defined */
+      height: 20px;
+      transform: rotate(0deg);
+      transition: transform 300ms ease-in-out;
+    }
+
+    &.isCollapsed {
+      svg {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  .collapsableSection {
+    max-height: 9999px;
+    transition:
+      max-height 300ms ease-in-out,
+      opacity 300ms ease-in-out;
+    opacity: 1;
+
+    &.isCollapsed {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+    }
+  }
+}

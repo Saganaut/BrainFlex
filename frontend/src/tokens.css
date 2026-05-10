@@ -145,8 +145,7 @@
 
   /** Text Variants **/
 
-  /* text-primary shifts +30° from primary (blue→lavender at default) */
-  --text-primary:   oklch(39% 0.08 calc(var(--hue-primary) + 30deg));
+  --text-primary:   oklch(39% 0.2  var(--hue-accent));
   --text-secondary: oklch(22% 0.05 var(--hue-primary));
   --text-muted:     oklch(93% 0.2  var(--hue-accent));
   --text-on-brand:  oklch(77% 0.2  var(--hue-accent));
@@ -172,8 +171,8 @@
   --border-disabled: oklch(70% 0.001 271.152deg);
 
   /** Action States **/
-  --action-hover:    oklch(89% 0.2  var(--hue-accent));
-  --action-active:   oklch(93% 0.2  var(--hue-accent));
+  --action-hover:    oklch(60% 0.2  var(--hue-accent));
+  --action-active:   oklch(45% 0.2  var(--hue-accent));
 
   /* action-disabled shifts +30° from primary, matching text-primary hue */
   --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));

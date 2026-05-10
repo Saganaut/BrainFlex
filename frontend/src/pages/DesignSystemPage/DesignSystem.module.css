@@ -56,6 +56,19 @@
         display: flex;
         gap: var(--space-3);
       }
+
+      .formExampleRow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-4);
+        padding-bottom: var(--space-4);
+        max-width: 640px;
+      }
+
+      .formHueRow {
+        max-width: 400px;
+        padding-bottom: var(--space-4);
+      }
     }
   }
 }
@@ -148,105 +161,6 @@
   display: grid;
   gap: var(--space-4);
   margin-bottom: var(--space-6);
-}
-
-.hueRow {
-  display: grid;
-  grid-template-columns: 5rem 2.25rem 1fr 3.5rem 2rem;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.hueLabel {
-  font-weight: 600;
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-}
-
-.hueSwatch {
-  display: block;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--border-default);
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;
-  transition: border-color var(--duration-fast) var(--ease-out);
-
-  &:hover {
-    border-color: var(--action-hover);
-  }
-}
-
-.colorPickerInput {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  padding: 0;
-  border: none;
-}
-
-/* stylelint-disable selector-pseudo-element-no-unknown */
-.hueSlider {
-  appearance: none;
-  width: 100%;
-  height: 10px;
-  border-radius: var(--radius-full);
-  background: linear-gradient(
-    to right,
-    oklch(65% 0.2 0deg),
-    oklch(65% 0.2 60deg),
-    oklch(65% 0.2 120deg),
-    oklch(65% 0.2 180deg),
-    oklch(65% 0.2 240deg),
-    oklch(65% 0.2 300deg),
-    oklch(65% 0.2 360deg)
-  );
-  border: 1px solid var(--border-default);
-  outline: none;
-  cursor: pointer;
-}
-
-.hueSlider::-webkit-slider-thumb {
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-full);
-  background: var(--bg-canvas);
-  border: 2px solid var(--border-default);
-  box-shadow: var(--shadow-sm);
-  cursor: grab;
-}
-
-.hueSlider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-full);
-  background: var(--bg-canvas);
-  border: 2px solid var(--border-default);
-  box-shadow: var(--shadow-sm);
-  cursor: grab;
-}
-/* stylelint-enable selector-pseudo-element-no-unknown */
-
-.hueNumber {
-  width: 3.5rem;
-  padding: var(--p-xs);
-  text-align: center;
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-  border: 2px solid var(--border-default);
-  border-radius: var(--radius-md);
-  background: transparent;
-}
-
-.hueDegree {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
 }
 
 .presetsRow {

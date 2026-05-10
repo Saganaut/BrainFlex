@@ -7,15 +7,15 @@
 - [x] Button (`Common/Buttons/Btn.tsx`)
 - [x] Card (`Common/Cards/Card.tsx`)
 - [x] Modal / Dialog (`Common/Modal/index.tsx`)
-- [ ] Input / TextField
-- [ ] Textarea
+- [x] Input / TextField
+- [x] Textarea
 - [ ] Select / Dropdown
-- [ ] Checkbox
-- [ ] Radio
+- [x] Checkbox
+- [x] Radio
 - [ ] Toggle / Switch
 - [x] Toast / Snackbar (`Common/Toast/Toast.tsx`)
 - [ ] Tooltip
-- [ ] Badge / Tag / Chip
+- [x] Badge / Tag / Chip
 - [ ] Avatar
 - [ ] Spinner / Loader
 - [ ] Skeleton (loading placeholder)
@@ -31,4 +31,4 @@
 
 ## Backend
 
-*(nothing tracked yet)*
+_(nothing tracked yet)_

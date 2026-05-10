@@ -11,6 +11,7 @@ import { apiBaseUrl } from "../../store/emptyApi";
 import { ThemeSection } from "./ThemeSection";
 import { OrgSection } from "./OrgSection";
 import styles from "./AccountPage.module.css";
+import { Btn } from "../../components/Common/Btns/Btn";
 
 const MAX_FILE_SIZE = 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -32,7 +33,7 @@ const AccountPage = () => {
   const [pendingNewsletter, setPendingNewsletter] = useState<boolean | null>(
     null,
   );
-  const newsletter = pendingNewsletter ?? (registeredUser?.newsletter ?? false);
+  const newsletter = pendingNewsletter ?? registeredUser?.newsletter ?? false;
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
   const [closeConfirm, setCloseConfirm] = useState(false);
@@ -143,12 +144,12 @@ const AccountPage = () => {
           className={styles.fileInputHidden}
           aria-label='Upload profile picture'
         />
-        <button
-          type='button'
+        <Btn
+          type='Btn'
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}>
           {isUploading ? "Uploading..." : "Upload new photo"}
-        </button>
+        </Btn>
         <p className={styles.uploadHint}>
           JPEG, PNG, WebP or GIF · max 1 MB · resized to 500×500
         </p>
@@ -186,32 +187,32 @@ const AccountPage = () => {
           and you will be logged out.
         </p>
         {!closeConfirm ? (
-          <button
-            type='button'
-            className={styles.dangerButton}
+          <Btn
+            type='Btn'
+            className={styles.dangerBtn}
             onClick={() => {
               setCloseConfirm(true);
             }}>
             Close my account
-          </button>
+          </Btn>
         ) : (
           <div className={styles.confirmBox}>
             <p>Are you sure? This cannot be undone.</p>
             <div className={styles.confirmActions}>
-              <button
-                type='button'
-                className={styles.dangerButton}
+              <Btn
+                type='Btn'
+                className={styles.dangerBtn}
                 onClick={() => void handleCloseAccount()}
                 disabled={isClosing}>
                 {isClosing ? "Closing..." : "Yes, close my account"}
-              </button>
-              <button
-                type='button'
+              </Btn>
+              <Btn
+                type='Btn'
                 onClick={() => {
                   setCloseConfirm(false);
                 }}>
                 Cancel
-              </button>
+              </Btn>
             </div>
           </div>
         )}

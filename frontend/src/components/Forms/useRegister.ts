@@ -1,6 +1,6 @@
 /* eslint-disable react-x/set-state-in-effect */
 import { useState, useEffect } from "react";
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction, SubmitEvent } from "react";
 import {
   useLazyCheckUsernameQuery,
   useRegisterMutation,
@@ -58,7 +58,7 @@ export interface UseRegisterReturn {
   submitError: string | null;
   canSubmit: boolean;
   isLoading: boolean;
-  handleSubmit: (e: SubmitEvent) => Promise<void>;
+  handleSubmit: (e: SubmitEvent<HTMLFormElement>) => Promise<void>;
 }
 
 const useRegister = (
@@ -111,7 +111,7 @@ const useRegister = (
 
   const canSubmit = agreedToTerms && usernameStatus === "available";
 
-  const handleSubmit = async (e: SubmitEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!canSubmit) return;
 

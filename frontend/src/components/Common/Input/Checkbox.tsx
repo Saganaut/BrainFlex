@@ -3,7 +3,7 @@ import React from "react";
 import styles from "./Form.module.css";
 
 interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label?: React.ReactNode;
   labelPosition?: "labelBefore" | "labelAfter";
   errorMessage?: string;
   infoMessage?: string;

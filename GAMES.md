@@ -18,6 +18,65 @@ Status legend: ✅ shipped · 🚧 partial · ☐ todo
 
 ---
 
+## 0. Model evolution roadmap
+
+Captures the field gaps surfaced in the audit. These are the minimum schema additions needed before the listed checklist items below can ship cleanly.
+
+### Deck — fields to add
+
+- ✅ `position`-supporting ordering for elements (now on `Question`; runtime sorts by position)
+- ✅ `coverImageUrl` — thumbnail shown on template tiles and the My Decks list (Lorem Picsum placeholder when null)
+- ✅ `backgroundImageUrl` — deck-level background; cascade implemented at deck → Lorem Picsum, theme tier still pending
+- ☐ `themeId` — link to the host's `Theme` so deck inherits color scheme during play
+- ☐ `tags: List<String>` — multi-tag categorization (movies / science / icebreaker / etc.); replaces the single `category` long term
+- ☐ `recommendedPreset: GAME | PULSE | PRESENTATION` — advisory; sets defaults in the create flow
+- ☐ `defaultSettings: ShowcaseSettings` — author-suggested showcase settings auto-applied at create time
+- ☐ `organizationId` — org-scoped sharing (parallels `User.organizationId`)
+- ☐ `estimatedDurationMinutes` — "~10 min" hint for template browsing
+- ☐ `parentDeckId` + `version` — for fork-this-template + history
+- ☐ `updatedAt`
+- ☐ `visibility: PRIVATE | UNLISTED | ORG | PUBLIC` — replaces boolean `isPublic`
+
+### Question / Slide — fields to add
+
+- ✅ `position: double` — explicit element order; runtime sorts by position; new inserts auto-assign max+10; legacy docs backfilled on startup
+- ☐ `videoUrl: String` — YouTube embed (and later, direct video hosts)
+- ☐ `audioUrl: String` — audio clip URL
+- ☐ `backgroundImageUrl: String` — per-element background override
+- ☐ `mediaPosition: TOP | BOTTOM | BACKGROUND` — author chooses where media renders
+- ☐ `mediaCaption / altText: String` — accessibility + caption support
+- ☐ `slideKind: TITLE | SECTION | CALLOUT | CONTENT | END` — layout variant for slides
+- ☐ `bodyMarkdown: String` — richer slide formatting
+- ☐ `hostNotes: String` — speaker notes; sent only to the host
+- ☐ `explanation: String` — post-answer "Here's why" copy
+- ☐ `scoringEnabledOverride: Boolean` — per-element opt-out from scoring (icebreakers, Pulse-style elements in a Game showcase)
+- ☐ `bestAnswerMode: Boolean` + `bestAnswerBonus: int` — Best Answer two-phase round modifier (see §3a-bis)
+- ☐ `updatedAt`
+- ☐ **Type-specific fields** (see §3a) — `orderedItems`, `scaleStatements`/`scaleMin`/`scaleMax`/`correctRatings`, `numericAnswer`/`numericTolerance`/`numericUnit`, `gridRows`/`gridCols`/`correctCells`, `pinTargetImageUrl`/`correctX`/`correctY`/`pinTolerance`, `pinTargetLat`/`pinTargetLng`/`mapZoomDefault`. Wide-table approach: nullable fields scoped by `type`.
+
+### Existing enums to extend
+
+- ✅ `QuestionType` already extended with `SCALES`, `RANKING`, `Q_AND_A`, `NUMBER_INPUT`, `GRID`, `PLACE_ON_IMAGE` — none implemented yet, but the values are reserved so backend renderers can be wired in without another enum migration.
+- ☐ Consider a `SlideKind` enum for the new slide layout variants.
+
+### New collections needed
+
+- ☐ `AudienceSubmission` — for Q&A (Slido-style) and Best Answer mode. `{ id, showcaseId, questionId, userId, text, status (PENDING/PINNED/DISMISSED), upvotes, submittedAt }`. Lives in its own collection because submissions span all participants and the host moderates them live.
+- ☐ `BestAnswerVote` (or embed in `AudienceSubmission.votes`) — for the second phase of Best Answer rounds.
+- ☐ Polymorphic `responsePayload` on `PlayerAnswer` for pin coordinates / numeric guesses / grid selections / ordered submissions. Today `selectedOption` + `textAnswer` covers MCQ + TEXT_INPUT; future types need a structured payload.
+
+### Cross-cutting
+
+- ☐ **Background image cascade** documented and implemented: element → deck → theme → Lorem Picsum placeholder
+- ☐ **Theme integration into Showcases** — the host's active theme drives colors / fonts for every participant during a showcase
+- ☐ **Element pool sampling** when `totalRounds < deck.size` — currently first-N; future: always include title slide, optionally stratify by difficulty
+- ☐ **Real-time host preview** — host's QuestionCard shows the correct answer during play (it doesn't today)
+- ☐ **Element validation / "ready" flag** — draft elements with missing required fields can't be included in a playable showcase
+- ☐ **Question banks / cross-deck reuse** — `Question.deckId` is single-valued today; long term we may want a question pool
+- ☐ **Branching** (far future) — "skip Q2 if everyone got Q1 right". Out of scope; flagged to avoid baking incompatible assumptions
+
+---
+
 ## 1. Entry flow
 
 - ✅ **MainPage** prompts Create Game / Create Poll / Join — `frontend/src/pages/MainPage/MainPage.tsx`
@@ -41,35 +100,52 @@ A Deck contains an ordered list of elements. Today only **Question** is implemen
 
 | Element | Status | Notes |
 |---------|--------|-------|
-| Question | ✅ (see §3a) | the only element type currently authored |
-| Slide | ☐ | non-interactive content (title slide, section divider, callout). Authors add explicitly; no auto-transitions |
+| Question | ✅ (see §3a) | scoring + per-player submission cycle |
+| Slide | ✅ runtime | non-interactive content (title / section divider / callout). Backend model + gameplay rendering shipped. Authoring UI is being built by you separately. Seed slides included in both system decks so the flow is demo-able end-to-end. |
 | Section | ☐ | tree-organization in the editor (groups questions into chapters). No mid-run rendering unless an explicit transition slide is authored |
 
 ### 3a. Question types
 
-| Type | Backend model | Pack editor | Showcase gameplay | Notes |
-|------|---------------|-------------|-------------------|-------|
-| Multiple choice | ✅ `Question.options` + `correctAnswer` | ✅ `PackEditorPage.tsx` | ✅ `components/Games/AnswerOptions/` | original surface |
-| Type in (text or number) | ✅ `Question.correctAnswerText` | ✅ `PackEditorPage.tsx` (type selector) | ✅ `components/Games/TextAnswerInput/` | case-insensitive trim match |
-| Image choice | 🚧 enum exists (`QuestionType.IMAGE_CHOICE`) | ☐ | ☐ | model has `imageUrl`; need editor upload + render |
-| Re-order (oldest→newest, etc.) | ☐ | ☐ | ☐ | drag-to-reorder UI; scoring per-position |
-| Scales (Likert rating per statement) | ☐ | ☐ | ☐ | rate statements 1–5; for Pulse, distribution; for Game, "guess the mean" |
-| Ranking (sort items, lowest→highest) | ☐ | ☐ | ☐ | analogous to re-order but ranked, not chronological |
-| Q&A (Slido-style) | ☐ | ☐ | ☐ | audience submits questions; host promotes / dismisses |
-| Guess the number | ☐ | ☐ | ☐ | numeric input; results rendered as a histogram |
-| Grid (select cells) | ☐ | ☐ | ☐ | scope to be defined |
-| Pin on image | ☐ | ☐ | ☐ | place a marker on an uploaded image |
-| Pin on map | ☐ | ☐ | ☐ | place a marker on a geographic map |
-| "Dixit" anonymous-guess variant | ☐ | ☐ | ☐ | players submit, then vote on which submission is correct |
+Each new type needs the listed Question fields plus a renderer/editor on the frontend. Enum values live in `QuestionType.java`.
+
+| Type | Enum | Status | Required Question fields | Notes |
+|------|------|--------|--------------------------|-------|
+| Multiple choice | `MULTIPLE_CHOICE` | ✅ | `options`, `correctAnswer` | original surface |
+| Type in (free text) | `TEXT_INPUT` | ✅ | `correctAnswerText` | case-insensitive trim match |
+| Number input | `NUMBER_INPUT` | ☐ | `numericAnswer: Double`, `numericTolerance: Double`, `numericUnit: String` | numeric variant of TEXT_INPUT; tolerance-based scoring; results render as a histogram |
+| Image choice | `IMAGE_CHOICE` | 🚧 enum exists | `options` (text or image refs), `correctAnswer`, `imageUrl` per option (future) | choose-from-images variant of MCQ |
+| Ranking | `RANKING` | ☐ | `orderedItems: List<String>` (correct order) | covers both "re-order chronologically" and "rank low→high" — same payload, differs only in framing |
+| Scales (Likert) | `SCALES` | ☐ | `scaleStatements: List<String>`, `scaleMin: int`, `scaleMax: int`, optional `correctRatings: List<Integer>` | Pulse: shows distribution. Game variant: "guess the average rating". Not suitable for vanilla game mode without a correct answer. |
+| Q&A (Slido-style) | `Q_AND_A` | ☐ | (no answer fields) + new `AudienceSubmission` collection | audience submits questions; host moderates pinned/dismissed; upvote support optional. Not scored. |
+| Grid | `GRID` | ☐ | `gridRows: int`, `gridCols: int`, `correctCells: List<Integer>`, optional `gridLabels: List<String>` or `gridImageUrl` | choose-the-right-cells; can overlay an image |
+| Place on image / map | `PLACE_ON_IMAGE` | ☐ | `pinTargetImageUrl: String`, `correctX: double` (0–1), `correctY: double` (0–1), `pinTolerance: double` (0–1) | normalized coordinates so the question works at any image scale. Future: a separate `PLACE_ON_MAP` enum for lat/lng-driven variants. |
+
+### 3a-bis. "Best Answer" mode (modifier on any free-form question)
+
+A two-phase round modifier that adds social voting on top of any free-form question type — analogous to Dixit / Secret Hitler:
+
+1. **Submission phase** — every player submits an answer normally (text, drawing, pin, etc.).
+2. **Vote phase** — all submissions are shown anonymously; each player votes on which one they think is best.
+3. **Reveal** — submissions are de-anonymized; the player whose submission won the vote receives bonus points (`bestAnswerBonus`).
+
+Implementation:
+- Modifier flag `bestAnswerMode: boolean` on a Question; works with `TEXT_INPUT`, `Q_AND_A`, `PLACE_ON_IMAGE`, and future types that accept open-ended input.
+- `bestAnswerBonus: int` (per-question) for the points awarded to the top-voted submission. Tie-break: shared bonus.
+- Needs new collections: `AudienceSubmission { id, showcaseId, questionId, userId, text/payload, status }` + `BestAnswerVote { submissionId, voterUserId, votedAt }`.
+- WebSocket round protocol gains two new phases: `SUBMIT → VOTE → REVEAL`. Round result still feeds the post-showcase review surface.
 
 ### 3b. Question media + background
 
-All ☐. Apply to any question type.
+Backgrounds cascade: **element override → deck default → host's active theme → Lorem Picsum placeholder**.
 
-- ☐ Image attachment (existing `imageUrl` on `Question`; needs upload UI in editor)
-- ☐ YouTube video embed (paste a URL; render inline during the question)
-- ☐ Audio clip (small upload or remote URL; play during the question)
-- ☐ Per-question background image — falls back to the active Theme's background, with **Lorem Picsum** as placeholder when no theme is set
+- ☐ Image attachment per question — `imageUrl` exists; needs upload UI + `mediaPosition` (TOP / BOTTOM / BACKGROUND)
+- ☐ YouTube video embed — new `videoUrl` field; render inline during the question
+- ☐ Audio clip — new `audioUrl` field; play during the question
+- ☐ Per-element `backgroundImageUrl` override
+- ☐ Per-deck `backgroundImageUrl` default
+- ☐ Theme cascade — `Showcase` picks up the host's active theme (`User.activeThemeId`) and broadcasts it so all clients render with the same colors / background
+- ☐ Lorem Picsum placeholder when nothing else is set
+- ☐ `mediaCaption / altText` for accessibility
 
 ## 4. Per-showcase settings
 
@@ -78,17 +154,17 @@ Backend: `backend/.../model/ShowcaseSettings.java`. Frontend exposure: `CreateGa
 All settings live in `ShowcaseSettings.java` and are surfaced in the Custom-mode disclosure.
 
 - ✅ Total rounds — `totalRounds`
-- ✅ Time per question — `timePerQuestion`
-- ✅ Speed bonus — `speedBonus`
+- ✅ Time per question — `timePerQuestion` (0 = unlimited; replaces the old `noTimer` flag, which has been removed)
+- ✅ Speed bonus — `speedBonus` (disabled in the UI when `timePerQuestion === 0`)
 - ✅ Per-question point value — `Question.pointValue` (pack editor)
 - ✅ Per-question time limit — `Question.timeLimit` (pack editor)
 - ✅ Game mode (simultaneous / turn-based) — `gameMode`
 - ✅ Allow guests — `allowGuests`
 - ✅ Max players — `maxPlayers`
-- ✅ No timer — `noTimer` (round ends when all answered / host advances; QuestionCard renders "Unlimited")
 - ✅ Allow late join — `allowLateJoin`
 - ✅ Hide scores during play — `showScoresImmediately`
 - ✅ Scoring preset — `scoringEnabled` (plumbing only — Game preset sets true; Pulse will set false)
+- ✅ Shuffle MCQ answer order — `shuffleMcqOptions` (server picks a stable per-question shuffle at first broadcast; scoring + review use the same order)
 - ☐ Reveal correct answer privately as soon as a player submits
 - ☐ Bonus points for correct-guess in Dixit variant
 
@@ -143,11 +219,18 @@ Role-aware control panel + live player list.
 - ✅ Question-type selector + branching form (MCQ / Type-in) — `PackEditorPage.tsx`
 - ✅ List view shows owned + system decks — `MyPacksPage.tsx`
 - ✅ Immediate refresh after creating a deck (RTK `refetchOnMountOrArgChange`)
-- ☐ Add non-question elements (slides + section dividers)
-- ☐ Reorder elements within a deck (drag-to-reorder)
+- ☐ **Element ordering** — drag-to-reorder; requires `Question.position` field (see §0)
+- ☐ **Slide authoring** — slide form (title + body + media + optional `hostNotes`) and slide-kind picker
+- ☐ **Section element** — a non-rendering organizational marker in the editor tree; groups elements for the author's clarity. No mid-run rendering unless followed by an explicit transition slide.
+- ☐ **Element validation / draft state** — incomplete elements can't be included in a playable showcase; "ready" indicator in the editor
+- ☐ **Type selector for the 8 new question types** (re-order / ranking / scales / Q&A / guess-number / grid / pin-image / pin-map) — each opens its own field set
 - ☐ Image upload per question (for IMAGE_CHOICE + as decoration)
 - ☐ YouTube URL + audio-clip attachment per question
-- ☐ Per-deck background image (theme image or Lorem Picsum placeholder)
+- ☐ Per-deck `coverImageUrl` and `backgroundImageUrl`
+- ☐ Per-deck `themeId` picker + `defaultSettings` editor
+- ☐ Deck tags + multi-tag categorization
+- ☐ Deck visibility selector (PRIVATE / UNLISTED / ORG / PUBLIC)
+- ☐ "Fork this template" workflow (clones a deck for editing; sets `parentDeckId`)
 - ☐ Bulk import (CSV / JSON paste)
 - ☐ Deck sharing (org-scoped or invite-link)
 - ☐ **Presentation-style builder** (future) — full PPT-like layout authoring, multi-element slides, transitions
@@ -198,3 +281,12 @@ Spec: same authoring + runtime as a Game, but scoring off and focus on data trac
 - Quick-start beats configurability — defaults must be sensible enough that the user can ship a showcase in one click. Customization is discoverable, not mandatory.
 - Per-question settings live on the `Question` document. Per-showcase settings live on `Showcase.settings`.
 - Games and Polls share authoring, gameplay, and the review surface. Only scoring + leaderboard differ, and that difference is a single `scoringEnabled` flag on the showcase.
+
+### Specific architectural conventions
+
+- **Background image cascade**: element → deck → host's theme → Lorem Picsum placeholder. Every renderer respects this order so authors can override progressively without losing the fallback.
+- **Scoring opt-out is per-element**: a Game-preset showcase can still contain non-scored elements (Q&A, icebreakers). `Question.scoringEnabledOverride` always wins over `Showcase.settings.scoringEnabled`.
+- **Host-only payloads**: speaker notes (`hostNotes`) and the correct-answer preview are sent only to the host's principal queue, never on the public `/topic/showcase/{code}/round` broadcast. Mirror the per-user-error queue pattern.
+- **Coordinate spaces are normalized**: pin-on-image uses 0–1 normalized coordinates so the question works at any rendered scale. Pin-on-map uses lat/lng + km tolerance.
+- **Polymorphic answer payloads**: as new question types ship, prefer adding a structured `responsePayload` on `PlayerAnswer` over piling type-specific fields onto the base document. Keep `selectedOption` / `textAnswer` as the MCQ + TEXT_INPUT shorthand they already are.
+- **Slides participate in deck order but not in scoring or round-result aggregation**: the server already enforces this; new types should follow the same "element is in the timeline; not all elements are scored" pattern.

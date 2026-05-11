@@ -17,6 +17,7 @@ import { Input } from "@/components/Common/Input/Input";
 import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { RadioGroup } from "@/components/Common/Input/RadioGroup";
 import { extractErrorMessage } from "../../utils/utils";
+import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./Game.module.css";
 
 type Mode = "template" | "custom" | "auto";
@@ -28,9 +29,9 @@ const DEFAULT_SPEED_BONUS = true;
 const DEFAULT_GAME_MODE: GameMode = "SIMULTANEOUS";
 const DEFAULT_MAX_PLAYERS = 8;
 const DEFAULT_ALLOW_GUESTS = true;
-const DEFAULT_NO_TIMER = false;
 const DEFAULT_ALLOW_LATE_JOIN = false;
 const DEFAULT_SHOW_SCORES_IMMEDIATELY = true;
+const DEFAULT_SHUFFLE_MCQ_OPTIONS = true;
 
 // ─── Pack grid ────────────────────────────────────────────────────────────────
 
@@ -63,6 +64,12 @@ const PackGrid = ({
             if (pack.id) onSelect(pack.id);
           }}
           aria-pressed={selectedPackId === pack.id}>
+          <img
+            src={resolveDeckCover(pack.coverImageUrl, pack.id)}
+            alt=''
+            className={styles.packCover}
+            loading='lazy'
+          />
           <span className={styles.packName}>{pack.name}</span>
           <span className={styles.packMeta}>
             {pack.questionCount ?? 0} questions
@@ -121,14 +128,15 @@ const ModeTabs = ({ mode, onChange }: ModeTabsProps) => (
 
 interface SettingsState {
   totalRounds: number;
+  // 0 = unlimited (no countdown). Any positive value enables the timer.
   timePerQuestion: number;
   speedBonus: boolean;
   gameMode: GameMode;
   maxPlayers: number;
   allowGuests: boolean;
-  noTimer: boolean;
   allowLateJoin: boolean;
   showScoresImmediately: boolean;
+  shuffleMcqOptions: boolean;
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
@@ -138,9 +146,9 @@ const DEFAULT_SETTINGS: SettingsState = {
   gameMode: DEFAULT_GAME_MODE,
   maxPlayers: DEFAULT_MAX_PLAYERS,
   allowGuests: DEFAULT_ALLOW_GUESTS,
-  noTimer: DEFAULT_NO_TIMER,
   allowLateJoin: DEFAULT_ALLOW_LATE_JOIN,
   showScoresImmediately: DEFAULT_SHOW_SCORES_IMMEDIATELY,
+  shuffleMcqOptions: DEFAULT_SHUFFLE_MCQ_OPTIONS,
 };
 
 interface SettingsFormProps {
@@ -169,17 +177,19 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
         />
       </label>
       <label className={styles.setting}>
-        <span>Seconds per question</span>
+        <span>
+          Seconds per question
+          <span className={styles.settingHint}> — 0 = unlimited</span>
+        </span>
         <Input
           type='number'
-          min={5}
-          max={60}
+          min={0}
+          max={120}
           value={settings.timePerQuestion}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             patch({ timePerQuestion: Number(e.target.value) });
           }}
           className={styles.numberInput}
-          disabled={settings.noTimer}
         />
       </label>
       <label className={styles.setting}>
@@ -189,7 +199,7 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
             patch({ speedBonus: e.target.checked });
           }}
-          disabled={settings.noTimer}
+          disabled={settings.timePerQuestion === 0}
         />
       </label>
 
@@ -234,16 +244,6 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
           </label>
 
           <label className={styles.setting}>
-            <span>No timer — round ends when everyone has answered</span>
-            <Checkbox
-              checked={settings.noTimer}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                patch({ noTimer: e.target.checked });
-              }}
-            />
-          </label>
-
-          <label className={styles.setting}>
             <span>Allow players to join after the game starts</span>
             <Checkbox
               checked={settings.allowLateJoin}
@@ -259,6 +259,16 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
               checked={settings.showScoresImmediately}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 patch({ showScoresImmediately: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Shuffle multiple-choice answer order</span>
+            <Checkbox
+              checked={settings.shuffleMcqOptions}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ shuffleMcqOptions: e.target.checked });
               }}
             />
           </label>
@@ -317,9 +327,9 @@ const CreateGamePage = () => {
           gameMode: cfg.gameMode,
           maxPlayers: cfg.maxPlayers,
           allowGuests: cfg.allowGuests,
-          noTimer: cfg.noTimer,
           allowLateJoin: cfg.allowLateJoin,
           showScoresImmediately: cfg.showScoresImmediately,
+          shuffleMcqOptions: cfg.shuffleMcqOptions,
         },
       }).unwrap();
       if (session.roomCode) {

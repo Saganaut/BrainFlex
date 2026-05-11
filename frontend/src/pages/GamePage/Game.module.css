@@ -56,6 +56,12 @@
   text-align: center;
 }
 
+.settingHint {
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-left: var(--space-1);
+}
+
 .moreOptions {
   border-top: 1px solid var(--border-subtle);
   padding-top: var(--space-3);
@@ -108,6 +114,27 @@
   width: 100%;
 }
 
+/* Showcase backgrounds — applied via inline --showcase-bg from the PlayPage.
+   The pseudo-element keeps the image behind everything and dims it so the
+   foreground stays readable. */
+.play,
+.waiting {
+  position: relative;
+}
+
+.play::before,
+.waiting::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--showcase-bg, none);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
 .modeTabs {
   display: flex;
   gap: var(--space-4);
@@ -126,8 +153,8 @@
 .packBtn {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4);
+  gap: var(--space-2);
+  padding: var(--space-3);
   text-align: left;
   background: var(--bg-surface);
   border: 2px solid var(--border-default);
@@ -136,6 +163,15 @@
   cursor: pointer;
   font-family: inherit;
   transition: border-color var(--duration-fast) var(--ease-out);
+  overflow: hidden;
+}
+
+.packCover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
 }
 
 .packBtn:hover {

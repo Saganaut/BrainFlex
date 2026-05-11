@@ -7,6 +7,8 @@
     "system": true,
     "public": true,
     "questionCount": 12,
+    "coverImageUrl": "https://picsum.photos/seed/brainflex-general-knowledge/400/240",
+    "backgroundImageUrl": "https://picsum.photos/seed/brainflex-general-knowledge-bg/1600/1000",
     "createdAt": "2026-01-01T00:00:00"
   },
   {
@@ -17,6 +19,8 @@
     "system": true,
     "public": true,
     "questionCount": 12,
+    "coverImageUrl": "https://picsum.photos/seed/brainflex-science-nature/400/240",
+    "backgroundImageUrl": "https://picsum.photos/seed/brainflex-science-nature-bg/1600/1000",
     "createdAt": "2026-01-01T00:00:00"
   }
 ]

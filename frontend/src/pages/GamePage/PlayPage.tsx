@@ -5,12 +5,14 @@ import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
 import { TextAnswerInput } from "../../components/Games/TextAnswerInput/TextAnswerInput";
+import { SlideView } from "../../components/Games/SlideView/SlideView";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useGameSession } from "../../hooks/useGameSession";
 import { useGameWebSocket } from "../../hooks/useGameWebSocket";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useGetShowcaseQuery } from "../../store/BrainFlexApi";
+import { resolveShowcaseBackground } from "../../utils/deckImages";
 import {
   setSession,
   answerSelected,
@@ -39,7 +41,9 @@ const PlayPage = () => {
 
   const isHost = !!userId && session?.hostUserId === userId;
   const isTurnBased = session?.settings?.gameMode === "TURN_BASED";
-  const noTimer = session?.settings?.noTimer === true;
+  // The host disables the timer by setting timePerQuestion = 0; slides
+  // always have their own display timer regardless and are handled below.
+  const noTimer = (session?.settings?.timePerQuestion ?? 1) === 0;
   const hideScoresDuringPlay = session?.settings?.showScoresImmediately === false;
 
   useEffect(() => {
@@ -81,14 +85,12 @@ const PlayPage = () => {
   //       : timeRemaining;
 
   useEffect(() => {
-    if (
-      !game.currentQuestion ||
-      !game.roundStartedAt ||
-      game.roundResult ||
-      noTimer
-    ) {
-      return;
-    }
+    if (!game.currentQuestion || !game.roundStartedAt || game.roundResult) return;
+    // Slides always have a display timer — even when the host set noTimer on
+    // questions, the slide still auto-advances. Only skip the countdown for
+    // question rounds when noTimer is enabled.
+    const isSlideRound = game.currentQuestion.kind === "SLIDE";
+    if (!isSlideRound && noTimer) return;
     const timeLimit = game.currentQuestion.timeLimit;
     const start = new Date(game.roundStartedAt).getTime();
     const tick = () => {
@@ -116,9 +118,17 @@ const PlayPage = () => {
     sendAnswer(game.currentQuestion.id, { textAnswer: text });
   };
 
+  const backgroundUrl = resolveShowcaseBackground(
+    session?.deckBackgroundImageUrl,
+    session?.deckId,
+  );
+  const bgStyle: React.CSSProperties = {
+    "--showcase-bg": `url(${backgroundUrl})`,
+  } as React.CSSProperties;
+
   if (!game.currentQuestion) {
     return (
-      <div className={styles.waiting}>
+      <div className={styles.waiting} style={bgStyle}>
         <WsErrorBanner />
         <p className={styles.waitingMsg}>Waiting for the first question…</p>
         <ScoreBoard
@@ -133,42 +143,55 @@ const PlayPage = () => {
     );
   }
 
+  const isSlide = game.currentQuestion.kind === "SLIDE";
+
   return (
-    <div className={styles.play}>
+    <div className={styles.play} style={bgStyle}>
       <div className={styles.main}>
         <WsErrorBanner />
-        <QuestionCard
-          question={game.currentQuestion}
-          round={game.round}
-          totalRounds={game.totalRounds}
-          timeRemaining={timeRemaining}
-          noTimer={noTimer}
-        />
-        {game.currentQuestion.type === "TEXT_INPUT" ? (
-          <TextAnswerInput
-            key={game.currentQuestion.id}
-            questionId={game.currentQuestion.id}
-            submittedAnswer={game.myTextAnswer}
-            correctAnswerText={game.roundResult?.correctAnswerText}
-            wasCorrect={
-              game.roundResult?.playerResults.find((r) => r.userId === userId)
-                ?.wasCorrect
-            }
-            onSubmit={handleTextAnswer}
-            disabled={false}
+        {isSlide ? (
+          <SlideView
+            slide={game.currentQuestion}
+            round={game.round}
+            totalRounds={game.totalRounds}
+            timeRemaining={timeRemaining}
           />
         ) : (
-          <AnswerOptions
-            options={game.currentQuestion.options ?? []}
-            selectedOption={game.myAnswer}
-            correctOption={
-              game.roundResult && game.roundResult.correctAnswer >= 0
-                ? game.roundResult.correctAnswer
-                : undefined
-            }
-            onSelect={handleAnswer}
-            disabled={game.myAnswer !== null}
-          />
+          <>
+            <QuestionCard
+              question={game.currentQuestion}
+              round={game.round}
+              totalRounds={game.totalRounds}
+              timeRemaining={timeRemaining}
+              noTimer={noTimer}
+            />
+            {game.currentQuestion.type === "TEXT_INPUT" ? (
+              <TextAnswerInput
+                key={game.currentQuestion.id}
+                questionId={game.currentQuestion.id}
+                submittedAnswer={game.myTextAnswer}
+                correctAnswerText={game.roundResult?.correctAnswerText}
+                wasCorrect={
+                  game.roundResult?.playerResults.find((r) => r.userId === userId)
+                    ?.wasCorrect
+                }
+                onSubmit={handleTextAnswer}
+                disabled={false}
+              />
+            ) : (
+              <AnswerOptions
+                options={game.currentQuestion.options ?? []}
+                selectedOption={game.myAnswer}
+                correctOption={
+                  game.roundResult && game.roundResult.correctAnswer >= 0
+                    ? game.roundResult.correctAnswer
+                    : undefined
+                }
+                onSelect={handleAnswer}
+                disabled={game.myAnswer !== null}
+              />
+            )}
+          </>
         )}
       </div>
       <aside className={styles.sidebar}>
@@ -176,7 +199,8 @@ const PlayPage = () => {
           players={game.players}
           currentUserId={userId}
           hideScores={hideScoresDuringPlay}
-          answeredUserIds={game.answeredThisRound}
+          // Slides have no concept of "answered" — pass undefined so the indicator hides.
+          answeredUserIds={isSlide ? undefined : game.answeredThisRound}
           offlineUserIds={game.offlineUserIds}
           isHost={isHost}
           onBootPlayer={handleBoot}

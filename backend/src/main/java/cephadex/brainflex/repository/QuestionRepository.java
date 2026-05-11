@@ -1,7 +1,9 @@
 /**
  * MongoDB repository for Question documents.
- * Questions are queried by content pack so the game service can draw
- * and shuffle a set of questions when a session is created.
+ * Questions are queried by deck so the showcase service can draw a set of
+ * elements when a session is created. Results are ordered by `position` ASC so
+ * decks play in authored order; the `_id` tiebreaker keeps ordering stable for
+ * legacy documents that share a null/missing position.
  */
 package cephadex.brainflex.repository;
 
@@ -14,7 +16,13 @@ import cephadex.brainflex.model.enums.Difficulty;
 
 public interface QuestionRepository extends MongoRepository<Question, String> {
 
-    List<Question> findByDeckId(String deckId);
+    List<Question> findByDeckIdOrderByPositionAscIdAsc(String deckId);
+
+    /** @deprecated Prefer findByDeckIdOrderByPositionAscIdAsc for stable ordering. */
+    @Deprecated
+    default List<Question> findByDeckId(String deckId) {
+        return findByDeckIdOrderByPositionAscIdAsc(deckId);
+    }
 
     List<Question> findByDeckIdAndDifficulty(String deckId, Difficulty difficulty);
 

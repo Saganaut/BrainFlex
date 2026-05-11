@@ -20,7 +20,6 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +46,8 @@ import cephadex.brainflex.dto.QuestionDTO;
 import cephadex.brainflex.dto.RoundResultMessage;
 import cephadex.brainflex.dto.RoundStartMessage;
 import cephadex.brainflex.dto.ShowcaseReviewDTO;
+import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.McqShuffle;
 import cephadex.brainflex.model.ShowcaseResult;
 import cephadex.brainflex.model.Showcase;
 import cephadex.brainflex.model.ShowcaseSettings;
@@ -55,6 +56,7 @@ import cephadex.brainflex.model.PlayerPlacement;
 import cephadex.brainflex.model.Question;
 import cephadex.brainflex.model.ShowcasePlayer;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.GameMode;
 import cephadex.brainflex.model.enums.GameStatus;
 import cephadex.brainflex.model.enums.GameType;
@@ -117,7 +119,7 @@ public class ShowcaseService {
     // ---- Session CRUD (used by ShowcaseController REST endpoints) ----
 
     public Showcase createShowcase(User host, CreateShowcaseRequest request) {
-        deckRepository.findById(request.deckId())
+        Deck deck = deckRepository.findById(request.deckId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content pack not found"));
 
         int available = questionRepository.countByDeckId(request.deckId());
@@ -138,20 +140,22 @@ public class ShowcaseService {
             settings.setAllowGuests(request.allowGuests());
         if (request.maxPlayers() != null)
             settings.setMaxPlayers(request.maxPlayers());
-        if (request.noTimer() != null)
-            settings.setNoTimer(request.noTimer());
         if (request.allowLateJoin() != null)
             settings.setAllowLateJoin(request.allowLateJoin());
         if (request.showScoresImmediately() != null)
             settings.setShowScoresImmediately(request.showScoresImmediately());
         if (request.scoringEnabled() != null)
             settings.setScoringEnabled(request.scoringEnabled());
+        if (request.shuffleMcqOptions() != null)
+            settings.setShuffleMcqOptions(request.shuffleMcqOptions());
         settings.setTotalRounds(Math.min(settings.getTotalRounds(), available));
 
         Showcase session = new Showcase();
         session.setType(GameType.TRIVIA);
         session.setHostUserId(host.getId());
         session.setDeckId(request.deckId());
+        session.setDeckCoverImageUrl(deck.getCoverImageUrl());
+        session.setDeckBackgroundImageUrl(deck.getBackgroundImageUrl());
         session.setSettings(settings);
         session.setRoomCode(generateUniqueRoomCode());
         session.setInviteToken(UUID.randomUUID().toString());
@@ -254,6 +258,28 @@ public class ShowcaseService {
 
     /** Per-round aggregation: option counts (MCQ) or text-frequency (TEXT_INPUT), plus details. */
     private ShowcaseReviewDTO.RoundReview buildRoundReview(int roundIndex, Question q, Showcase session) {
+        ElementKind kind = q.getKind() == null ? ElementKind.QUESTION : q.getKind();
+
+        // Slides have nothing to aggregate — return a placeholder row so the review
+        // panel still reflects the deck order.
+        if (kind == ElementKind.SLIDE) {
+            return new ShowcaseReviewDTO.RoundReview(
+                    roundIndex,
+                    q.getId(),
+                    kind,
+                    q.getType(),
+                    q.getTitle(),
+                    q.getQuestionText(),
+                    q.getImageUrl(),
+                    -1,
+                    null,
+                    null,
+                    null,
+                    null,
+                    0,
+                    List.of());
+        }
+
         boolean isTextInput = q.getType() == QuestionType.TEXT_INPUT;
 
         List<ShowcaseReviewDTO.PlayerRoundDetail> details = new ArrayList<>();
@@ -304,21 +330,41 @@ public class ShowcaseService {
                     .toList();
         }
 
-        String correctText = isTextInput
-                ? q.getCorrectAnswerText()
-                : (q.getOptions() != null && q.getCorrectAnswer() < q.getOptions().size()
-                        ? q.getOptions().get(q.getCorrectAnswer())
-                        : null);
+        // Use the shuffled order if this MCQ was shuffled during play so the labels
+        // and correct-index in the review match exactly what players answered against.
+        McqShuffle reviewShuffle = session.getMcqShuffles() == null
+                ? null
+                : session.getMcqShuffles().get(q.getId());
+        List<String> reviewOptions;
+        int reviewCorrectIndex;
+        String correctText;
+        if (isTextInput) {
+            reviewOptions = null;
+            reviewCorrectIndex = -1;
+            correctText = q.getCorrectAnswerText();
+        } else if (reviewShuffle != null) {
+            reviewOptions = reviewShuffle.getShuffledOptions();
+            reviewCorrectIndex = reviewShuffle.getShuffledCorrectIndex();
+            correctText = reviewShuffle.getShuffledOptions().get(reviewShuffle.getShuffledCorrectIndex());
+        } else {
+            reviewOptions = q.getOptions();
+            reviewCorrectIndex = q.getCorrectAnswer();
+            correctText = q.getOptions() != null && q.getCorrectAnswer() < q.getOptions().size()
+                    ? q.getOptions().get(q.getCorrectAnswer())
+                    : null;
+        }
 
         return new ShowcaseReviewDTO.RoundReview(
                 roundIndex,
                 q.getId(),
+                kind,
                 q.getType(),
+                null,
                 q.getQuestionText(),
                 q.getImageUrl(),
-                isTextInput ? -1 : q.getCorrectAnswer(),
+                reviewCorrectIndex,
                 correctText,
-                isTextInput ? null : q.getOptions(),
+                reviewOptions,
                 mcqDistribution,
                 textSubmissions,
                 timedOut,
@@ -340,7 +386,10 @@ public class ShowcaseService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Game has already started");
 
             List<Question> all = questionRepository.findByDeckId(session.getDeckId());
-            Collections.shuffle(all);
+            // Decks can mix slides and questions, where authored order matters. We
+            // preserve insertion order here rather than shuffling so slides land where
+            // the deck author intended. Pure-question decks lose a bit of variety;
+            // a future per-deck "shuffleQuestions" setting could restore it.
             List<Question> drawn = all.stream().limit(session.getSettings().getTotalRounds()).toList();
 
             session.setQuestionIds(drawn.stream().map(Question::getId).toList());
@@ -352,7 +401,7 @@ public class ShowcaseService {
             showcaseCache.put(session);
 
             broadcastRoundStart(session, drawn.get(0));
-            scheduleRoundTimerIfEnabled(session, 0, drawn.get(0).getTimeLimit());
+            scheduleElementTimer(session, 0, drawn.get(0));
         }
     }
 
@@ -387,7 +436,13 @@ public class ShowcaseService {
             Question question = questionRepository.findById(currentQuestionId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
 
-            boolean isCorrect = isAnswerCorrect(question, request);
+            // Slides accept no answers; silently ignore stray submissions for them.
+            if (question.getKind() == ElementKind.SLIDE) return;
+
+            McqShuffle shuffle = session.getMcqShuffles() == null
+                    ? null
+                    : session.getMcqShuffles().get(currentQuestionId);
+            boolean isCorrect = isAnswerCorrect(question, request, shuffle);
             int points = isCorrect ? calculatePoints(question, session) : 0;
 
             PlayerAnswer answer = new PlayerAnswer();
@@ -497,8 +552,45 @@ public class ShowcaseService {
                 return;
             if (session.getCurrentRound() != timedRound)
                 return; // round already finished
+
+            // Slides never go through completeRound (no answers to aggregate) —
+            // their display timer just advances to the next element.
+            Question current = currentElementOrNull(session);
+            if (current != null && current.getKind() == ElementKind.SLIDE) {
+                advanceToNextRound(session);
+                return;
+            }
             completeRound(session);
         }
+    }
+
+    /** Helper: look up the element for the round currently in progress. */
+    private Question currentElementOrNull(Showcase session) {
+        if (session.getQuestionIds().isEmpty()) return null;
+        int idx = session.getCurrentRound();
+        if (idx < 0 || idx >= session.getQuestionIds().size()) return null;
+        return questionRepository.findById(session.getQuestionIds().get(idx)).orElse(null);
+    }
+
+    /**
+     * Advance to the next element without broadcasting a round result. Used after a
+     * slide times out — there's nothing to reveal, so we just kick off the next round
+     * (or end the showcase if this was the last element).
+     */
+    private void advanceToNextRound(Showcase session) {
+        boolean isLastRound = session.getCurrentRound() >= session.getQuestionIds().size() - 1;
+        if (isLastRound) {
+            showcaseRepository.save(session);
+            endGame(session);
+            return;
+        }
+        session.setCurrentRound(session.getCurrentRound() + 1);
+        session.setRoundStartedAt(null);
+        showcaseRepository.save(session);
+        showcaseCache.put(session);
+        // No between-rounds delay after a slide — the slide's display window already
+        // gave players time to process the content.
+        startNextRound(session.getRoomCode());
     }
 
     /**
@@ -544,11 +636,24 @@ public class ShowcaseService {
                 .toList();
 
         // For text-in rounds we don't have an option index; surface the canonical answer instead.
+        // For MCQ rounds with a shuffle, reveal the index/text in the order players saw,
+        // so the frontend's "highlight the correct bar" logic targets the right cell.
         boolean isTextInput = question.getType() == QuestionType.TEXT_INPUT;
-        int revealIndex = isTextInput ? -1 : question.getCorrectAnswer();
-        String revealText = isTextInput
-                ? question.getCorrectAnswerText()
-                : question.getOptions().get(question.getCorrectAnswer());
+        McqShuffle shuffle = session.getMcqShuffles() == null
+                ? null
+                : session.getMcqShuffles().get(questionId);
+        int revealIndex;
+        String revealText;
+        if (isTextInput) {
+            revealIndex = -1;
+            revealText = question.getCorrectAnswerText();
+        } else if (shuffle != null) {
+            revealIndex = shuffle.getShuffledCorrectIndex();
+            revealText = shuffle.getShuffledOptions().get(shuffle.getShuffledCorrectIndex());
+        } else {
+            revealIndex = question.getCorrectAnswer();
+            revealText = question.getOptions().get(question.getCorrectAnswer());
+        }
 
         messagingTemplate.convertAndSend(
                 "/topic/showcase/" + session.getRoomCode() + "/roundResult",
@@ -602,7 +707,7 @@ public class ShowcaseService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
 
             broadcastRoundStart(session, question);
-            scheduleRoundTimerIfEnabled(session, session.getCurrentRound(), question.getTimeLimit());
+            scheduleElementTimer(session, session.getCurrentRound(), question);
         }
     }
 
@@ -656,17 +761,20 @@ public class ShowcaseService {
 
     /**
      * Determines whether a submitted answer matches the question's expected answer.
-     * MCQ: exact index match against correctAnswer.
+     * MCQ: exact index match against correctAnswer — but when a per-round shuffle
+     * exists, the player's selectedOption is the index in shuffledOptions, so we
+     * compare against shuffledCorrectIndex instead.
      * TEXT_INPUT: case-insensitive trimmed equality against correctAnswerText.
      */
-    private boolean isAnswerCorrect(Question question, AnswerSubmitRequest request) {
+    private boolean isAnswerCorrect(Question question, AnswerSubmitRequest request, McqShuffle shuffle) {
         if (question.getType() == QuestionType.TEXT_INPUT) {
             String submitted = request.textAnswer();
             String expected = question.getCorrectAnswerText();
             if (submitted == null || expected == null) return false;
             return submitted.trim().equalsIgnoreCase(expected.trim());
         }
-        return request.selectedOption() == question.getCorrectAnswer();
+        int expected = shuffle != null ? shuffle.getShuffledCorrectIndex() : question.getCorrectAnswer();
+        return request.selectedOption() == expected;
     }
 
     /**
@@ -724,13 +832,67 @@ public class ShowcaseService {
     }
 
     private void broadcastRoundStart(Showcase session, Question question) {
+        QuestionDTO payload = buildBroadcastQuestion(session, question);
         messagingTemplate.convertAndSend(
                 "/topic/showcase/" + session.getRoomCode() + "/round",
                 new RoundStartMessage(
                         session.getCurrentRound(),
                         session.getSettings().getTotalRounds(),
-                        new QuestionDTO(question),
+                        payload,
                         session.getRoundStartedAt()));
+    }
+
+    /**
+     * Returns the QuestionDTO clients will render. For MCQ questions with the
+     * shuffle setting enabled, picks (or reuses) a per-question option order and
+     * stores it on the session so scoring + review see the same labels everyone
+     * answered against.
+     */
+    private QuestionDTO buildBroadcastQuestion(Showcase session, Question question) {
+        boolean shuffleable = question.getKind() != ElementKind.SLIDE
+                && question.getType() == QuestionType.MULTIPLE_CHOICE
+                && question.getOptions() != null
+                && question.getOptions().size() > 1;
+        if (!shuffleable || !session.getSettings().isShuffleMcqOptions()) {
+            return new QuestionDTO(question);
+        }
+        McqShuffle shuffle = ensureMcqShuffle(session, question);
+        return new QuestionDTO(question, shuffle.getShuffledOptions());
+    }
+
+    /** Looks up the persisted shuffle for this question; creates one on first use. */
+    private McqShuffle ensureMcqShuffle(Showcase session, Question question) {
+        Map<String, McqShuffle> shuffles = session.getMcqShuffles();
+        if (shuffles == null) {
+            shuffles = new HashMap<>();
+            session.setMcqShuffles(shuffles);
+        }
+        McqShuffle existing = shuffles.get(question.getId());
+        if (existing != null) return existing;
+
+        List<String> originalOptions = question.getOptions();
+        int n = originalOptions.size();
+        List<Integer> permutation = new ArrayList<>();
+        for (int i = 0; i < n; i++) permutation.add(i);
+        java.util.Collections.shuffle(permutation, secureRandom);
+
+        List<String> shuffledOptions = new ArrayList<>(n);
+        int shuffledCorrectIndex = -1;
+        for (int i = 0; i < n; i++) {
+            int originalIdx = permutation.get(i);
+            shuffledOptions.add(originalOptions.get(originalIdx));
+            if (originalIdx == question.getCorrectAnswer()) shuffledCorrectIndex = i;
+        }
+
+        McqShuffle snap = new McqShuffle();
+        snap.setQuestionId(question.getId());
+        snap.setShuffledOptions(shuffledOptions);
+        snap.setShuffledCorrectIndex(shuffledCorrectIndex);
+        shuffles.put(question.getId(), snap);
+        // Persist so a cache miss or restart can still resolve the shuffle.
+        showcaseRepository.save(session);
+        showcaseCache.put(session);
+        return snap;
     }
 
     private void scheduleRoundTimer(String roomCode, int round, int timeLimitSeconds) {
@@ -743,14 +905,30 @@ public class ShowcaseService {
     }
 
     /**
-     * Wrapper around scheduleRoundTimer that respects ShowcaseSettings.noTimer.
-     * When the host has disabled the timer, no timeout is scheduled and the
-     * round only ends when all players have answered (SIMULTANEOUS) or the
-     * host advances (TURN_BASED).
+     * Wrapper around scheduleRoundTimer that respects the host's timePerQuestion
+     * setting. timePerQuestion == 0 means "unlimited" — no timeout is scheduled
+     * and the question round only ends when all players have answered
+     * (SIMULTANEOUS) or the host advances (TURN_BASED). Per-element timeLimit
+     * is the actual countdown duration when the timer is on.
      */
     private void scheduleRoundTimerIfEnabled(Showcase session, int round, int timeLimitSeconds) {
-        if (session.getSettings().isNoTimer()) return;
+        if (session.getSettings().getTimePerQuestion() <= 0) return;
         scheduleRoundTimer(session.getRoomCode(), round, timeLimitSeconds);
+    }
+
+    /**
+     * Element-aware timer: slides always schedule a display timer (otherwise they'd
+     * hang forever — no player can advance them by answering), even when the host
+     * has timePerQuestion = 0 for questions. Questions defer to the timePerQuestion
+     * helper above.
+     */
+    private void scheduleElementTimer(Showcase session, int round, Question element) {
+        if (element.getKind() == ElementKind.SLIDE) {
+            int display = element.getTimeLimit() > 0 ? element.getTimeLimit() : 8;
+            scheduleRoundTimer(session.getRoomCode(), round, display);
+        } else {
+            scheduleRoundTimerIfEnabled(session, round, element.getTimeLimit());
+        }
     }
 
     // ---- Utility ----

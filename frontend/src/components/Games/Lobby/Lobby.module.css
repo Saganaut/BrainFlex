@@ -6,6 +6,21 @@
   padding: var(--space-8) var(--space-4);
   max-width: 600px;
   margin: 0 auto;
+  position: relative;
+}
+
+/* Background image, dimmed so foreground content stays readable. The --showcase-bg
+   variable is set inline by Lobby.tsx from the deck's resolved background URL. */
+.lobby::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: var(--showcase-bg, none);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.18;
+  pointer-events: none;
 }
 
 .header {

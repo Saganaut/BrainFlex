@@ -16,5 +16,9 @@ public class Organization {
 
     private String name;
     private String ownerId;
+
+    /** Subscription plan held by this organization (seat plan). */
+    private OrganizationPlan plan = new OrganizationPlan();
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }

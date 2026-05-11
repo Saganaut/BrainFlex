@@ -2,6 +2,7 @@ package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
 
+import cephadex.brainflex.model.Membership;
 import cephadex.brainflex.model.PlayerStats;
 import cephadex.brainflex.model.User;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,6 +46,7 @@ public sealed interface UserDTO {
             String googleId,
             String pictureUrl,
             PlayerStats stats,
+            Membership membership,
             Boolean newsletter,
             String organizationId,
             String activeThemeId,
@@ -61,6 +63,7 @@ public sealed interface UserDTO {
                     user.getGoogleId(),
                     user.getPictureUrl(),
                     user.getStats(),
+                    user.getMembership(),
                     user.getNewsletter(),
                     user.getOrganizationId(),
                     user.getActiveThemeId(),

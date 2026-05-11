@@ -49,6 +49,7 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
   }
 
   const round = rounds[Math.min(activeIndex, rounds.length - 1)];
+  const isSlide = round.kind === "SLIDE";
   const isMcq = round.questionType !== "TEXT_INPUT";
   const totalAnswered = (round.playerAnswers ?? []).length;
   const scoringEnabled = review.scoringEnabled !== false;
@@ -74,10 +75,18 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
 
       <div className={styles.questionHeader}>
         <span className={styles.roundLabel}>
-          Round {activeIndex + 1} / {rounds.length}
+          {isSlide ? "Slide" : "Round"} {activeIndex + 1} / {rounds.length}
         </span>
-        <h3 className={styles.questionText}>{round.questionText}</h3>
-        {round.correctAnswerText && (
+        {isSlide && round.title && (
+          <h3 className={styles.questionText}>{round.title}</h3>
+        )}
+        {!isSlide && (
+          <h3 className={styles.questionText}>{round.questionText}</h3>
+        )}
+        {isSlide && (
+          <p className={styles.correctAnswer}>{round.questionText}</p>
+        )}
+        {!isSlide && round.correctAnswerText && (
           <p className={styles.correctAnswer}>
             <span className={styles.correctLabel}>Correct answer:</span>{" "}
             <strong>{round.correctAnswerText}</strong>
@@ -85,37 +94,40 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
         )}
       </div>
 
-      {isMcq ? (
-        <BarChart
-          items={buildMcqBars(round)}
-          total={totalAnswered}
-          caption='Distribution'
-        />
-      ) : (
-        <FrequencyList
-          items={buildTextItems(round)}
-          total={totalAnswered}
-          caption='Submissions'
-          emptyMessage='No one submitted an answer.'
-        />
-      )}
+      {!isSlide &&
+        (isMcq ? (
+          <BarChart
+            items={buildMcqBars(round)}
+            total={totalAnswered}
+            caption='Distribution'
+          />
+        ) : (
+          <FrequencyList
+            items={buildTextItems(round)}
+            total={totalAnswered}
+            caption='Submissions'
+            emptyMessage='No one submitted an answer.'
+          />
+        ))}
 
-      {(round.timedOutCount ?? 0) > 0 && (
+      {!isSlide && (round.timedOutCount ?? 0) > 0 && (
         <p className={styles.timedOut}>
           {round.timedOutCount} player(s) didn&apos;t answer in time.
         </p>
       )}
 
-      <Btn
-        size='sm'
-        type='button'
-        onClick={() => {
-          setShowDetails((prev) => !prev);
-        }}>
-        {showDetails ? "Hide" : "Show"} per-player details
-      </Btn>
+      {!isSlide && (
+        <Btn
+          size='sm'
+          type='button'
+          onClick={() => {
+            setShowDetails((prev) => !prev);
+          }}>
+          {showDetails ? "Hide" : "Show"} per-player details
+        </Btn>
+      )}
 
-      {showDetails && (
+      {!isSlide && showDetails && (
         <table className={styles.details}>
           <thead>
             <tr>

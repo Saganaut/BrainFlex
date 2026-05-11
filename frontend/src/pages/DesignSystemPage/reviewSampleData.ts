@@ -39,7 +39,19 @@ export const reviewSampleData: ShowcaseReviewDto = {
   rounds: [
     {
       round: 0,
+      questionId: "s0",
+      kind: "SLIDE",
+      questionType: "MULTIPLE_CHOICE",
+      title: "Welcome to General Knowledge",
+      questionText: "A quick trip around the world. Buckle up.",
+      correctOptionIndex: -1,
+      timedOutCount: 0,
+      playerAnswers: [],
+    },
+    {
+      round: 1,
       questionId: "q1",
+      kind: "QUESTION",
       questionType: "MULTIPLE_CHOICE",
       questionText: "Which planet is known as the Red Planet?",
       correctOptionIndex: 2,
@@ -54,8 +66,9 @@ export const reviewSampleData: ShowcaseReviewDto = {
       ],
     },
     {
-      round: 1,
+      round: 2,
       questionId: "q2",
+      kind: "QUESTION",
       questionType: "TEXT_INPUT",
       questionText: "What is the capital of France?",
       correctOptionIndex: -1,

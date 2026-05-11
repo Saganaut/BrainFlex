@@ -13,11 +13,16 @@ import type {
 
 // Types for WebSocket broadcast payloads (not in the REST API client)
 export type QuestionKind = "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
+export type ElementKind = "QUESTION" | "SLIDE";
 
 export interface QuestionData {
   id: string;
+  // Element discriminator — most rounds are QUESTION; slides are non-interactive.
+  kind: ElementKind;
+  // Slides may carry an optional headline rendered prominently.
+  title?: string;
   questionText: string;
-  // MCQ only — server omits this field entirely for TEXT_INPUT rounds.
+  // MCQ only — server omits this field entirely for TEXT_INPUT rounds + slides.
   options?: string[];
   pointValue: number;
   timeLimit: number;

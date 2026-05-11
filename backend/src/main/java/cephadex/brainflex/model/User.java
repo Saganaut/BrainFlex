@@ -28,6 +28,9 @@ public class User {
 
     private PlayerStats stats = new PlayerStats();
 
+    /** Billing/subscription state for this user. Defaults to a FREE membership. */
+    private Membership membership = new Membership();
+
     private Boolean newsletter;
 
     private Boolean isClosed;

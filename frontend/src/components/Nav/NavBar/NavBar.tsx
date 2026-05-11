@@ -21,6 +21,9 @@ export function NavBar() {
         <Link to='/design-system' viewTransition>
           Design system
         </Link>
+        <Link to='/pricing' viewTransition>
+          Pricing
+        </Link>
         <Link to='/games/create' viewTransition>
           New Game
         </Link>

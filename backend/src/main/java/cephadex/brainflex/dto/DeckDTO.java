@@ -1,5 +1,5 @@
 /**
- * Public-facing representation of a Deck shown in the game creation UI.
+ * Public-facing representation of a Deck shown in the deck-browse / create UI.
  * Omits internal fields like generatorType and creatorUserId that are not
  * relevant to players browsing available packs.
  */
@@ -16,6 +16,8 @@ public record DeckDTO(
         String category,
         int questionCount,
         boolean isSystem,
+        String coverImageUrl,
+        String backgroundImageUrl,
         LocalDateTime createdAt) {
 
     public DeckDTO(Deck pack) {
@@ -26,6 +28,8 @@ public record DeckDTO(
                 pack.getCategory(),
                 pack.getQuestionCount(),
                 pack.isSystem(),
+                pack.getCoverImageUrl(),
+                pack.getBackgroundImageUrl(),
                 pack.getCreatedAt());
     }
 }

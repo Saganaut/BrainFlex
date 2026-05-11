@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw test *)",
+      "Bash(./mvnw compile *)",
+      "Bash(npx eslint *)",
+      "Bash(npx tsc *)",
+      "Bash(npx stylelint *)",
+      "Bash(npm run lint:all)",
+      "Bash(npm run lint)",
+      "Bash(npm run test:run)"
+    ]
+  }
+}

@@ -12,6 +12,7 @@ import { useGameSession } from "../../../hooks/useGameSession";
 import { useGameWebSocket } from "../../../hooks/useGameWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
+import { resolveShowcaseBackground } from "../../../utils/deckImages";
 import styles from "./Lobby.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 
@@ -60,8 +61,15 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     sendBoot(targetUserId);
   };
 
+  const backgroundUrl = resolveShowcaseBackground(
+    session?.deckBackgroundImageUrl,
+    session?.deckId,
+  );
+
   return (
-    <div className={styles.lobby}>
+    <div
+      className={styles.lobby}
+      style={{ "--showcase-bg": `url(${backgroundUrl})` } as React.CSSProperties}>
       <div className={styles.header}>
         <h1 className={styles.title}>Lobby</h1>
         <div className={styles.codeBox}>

@@ -8,6 +8,7 @@ import {
 } from "../../store/BrainFlexApi";
 import type { DeckDto } from "../../store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./MyPacksPage.module.css";
 
 const PackCard = ({
@@ -20,6 +21,12 @@ const PackCard = ({
   onDelete?: (id: string) => void;
 }) => (
   <div className={styles.card}>
+    <img
+      src={resolveDeckCover(pack.coverImageUrl, pack.id)}
+      alt=''
+      className={styles.cardCover}
+      loading='lazy'
+    />
     <span className={styles.cardName}>{pack.name}</span>
     {pack.isSystem && <span className={styles.systemBadge}>System</span>}
     <span className={styles.cardMeta}>

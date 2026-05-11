@@ -17,6 +17,7 @@ import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.Question;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.Difficulty;
+import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.QuestionType;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.QuestionRepository;
@@ -51,6 +52,8 @@ public class DeckService {
         pack.setName(request.name());
         pack.setDescription(request.description());
         pack.setCategory(request.category());
+        pack.setCoverImageUrl(request.coverImageUrl());
+        pack.setBackgroundImageUrl(request.backgroundImageUrl());
         pack.setSystem(false);
         pack.setPublic(true);
         pack.setCreatorUserId(creator.getId());
@@ -62,6 +65,13 @@ public class DeckService {
         if (request.name() != null) pack.setName(request.name());
         if (request.description() != null) pack.setDescription(request.description());
         if (request.category() != null) pack.setCategory(request.category());
+        // Empty string clears the image; null leaves it alone.
+        if (request.coverImageUrl() != null) {
+            pack.setCoverImageUrl(request.coverImageUrl().isEmpty() ? null : request.coverImageUrl());
+        }
+        if (request.backgroundImageUrl() != null) {
+            pack.setBackgroundImageUrl(request.backgroundImageUrl().isEmpty() ? null : request.backgroundImageUrl());
+        }
         return deckRepository.save(pack);
     }
 
@@ -73,16 +83,28 @@ public class DeckService {
 
     public List<Question> listQuestions(String packId, User caller) {
         requireOwned(packId, caller);
-        return questionRepository.findByDeckId(packId);
+        return questionRepository.findByDeckIdOrderByPositionAscIdAsc(packId);
     }
 
     public Question addQuestion(String packId, User caller, UpsertQuestionRequest request) {
         Deck pack = requireOwned(packId, caller);
         Question question = buildQuestion(packId, request);
+        // Auto-assign position at the end of the deck if the caller didn't supply one.
+        if (question.getPosition() == null) {
+            question.setPosition(nextPositionForDeck(packId));
+        }
         Question saved = questionRepository.save(question);
         pack.setQuestionCount(pack.getQuestionCount() + 1);
         deckRepository.save(pack);
         return saved;
+    }
+
+    /** Returns the next position slot for a deck — last position + 10 (or 10 for empty decks). */
+    private double nextPositionForDeck(String deckId) {
+        List<Question> existing = questionRepository.findByDeckIdOrderByPositionAscIdAsc(deckId);
+        if (existing.isEmpty()) return 10.0;
+        Question last = existing.get(existing.size() - 1);
+        return (last.getPosition() == null ? existing.size() * 10.0 : last.getPosition()) + 10.0;
     }
 
     public Question updateQuestion(String packId, String questionId, User caller,
@@ -127,14 +149,26 @@ public class DeckService {
     }
 
     private void applyQuestion(Question q, UpsertQuestionRequest request) {
+        ElementKind kind = request.resolvedKind();
         QuestionType type = request.resolvedType();
+        q.setKind(kind);
         q.setType(type);
+        q.setTitle(request.title());
         q.setQuestionText(request.questionText());
         q.setPointValue(request.pointValue());
         q.setTimeLimit(request.timeLimit());
         q.setDifficulty(request.difficulty() != null ? request.difficulty() : Difficulty.MEDIUM);
+        // Caller-provided position overrides; otherwise leave whatever's on the doc
+        // (preserves position on update; addQuestion auto-fills for inserts).
+        if (request.position() != null) q.setPosition(request.position());
 
-        if (type == QuestionType.TEXT_INPUT) {
+        if (kind == ElementKind.SLIDE) {
+            // Slides carry only display fields. Wipe any leftover answer state from a
+            // prior question state if the editor toggled an element between kinds.
+            q.setOptions(null);
+            q.setCorrectAnswer(0);
+            q.setCorrectAnswerText(null);
+        } else if (type == QuestionType.TEXT_INPUT) {
             q.setCorrectAnswerText(request.correctAnswerText().trim());
             q.setOptions(null);
             q.setCorrectAnswer(0);

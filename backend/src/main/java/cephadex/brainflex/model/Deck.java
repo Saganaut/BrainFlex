@@ -28,6 +28,15 @@ public class Deck {
     private boolean isPublic = true;
     private int questionCount = 0;
 
+    // Cover thumbnail shown on template tiles + the My Decks list. Null falls back
+    // to a Lorem Picsum placeholder keyed by deck id (client-side).
+    private String coverImageUrl;
+
+    // Deck-level background applied during a showcase. Cascade order:
+    //   element.backgroundImageUrl (future) → deck.backgroundImageUrl →
+    //   host's theme backgroundImageUrl → Lorem Picsum placeholder.
+    private String backgroundImageUrl;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     // Placeholder fields for future AI generation support

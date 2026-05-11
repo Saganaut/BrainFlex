@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import cephadex.brainflex.model.PlayerPlacement;
+import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.QuestionType;
 
 public record ShowcaseReviewDTO(
@@ -27,12 +28,15 @@ public record ShowcaseReviewDTO(
     public record RoundReview(
             int round,
             String questionId,
+            ElementKind kind,
             QuestionType questionType,
+            String title,           // SLIDE: optional headline; null for questions
             String questionText,
             String imageUrl,
-            // MCQ: 0-based index of the right option (-1 for TEXT_INPUT).
+            // MCQ: 0-based index of the right option (-1 for TEXT_INPUT / SLIDE).
             int correctOptionIndex,
             // MCQ: the right option's label. TEXT_INPUT: the canonical correct text.
+            // SLIDE: null.
             String correctAnswerText,
             // MCQ only: full list of options so the bar chart can label each bar.
             List<String> options,
@@ -40,7 +44,7 @@ public record ShowcaseReviewDTO(
             Map<Integer, Integer> mcqDistribution,
             // TEXT_INPUT only: each unique submission with its count, sorted desc.
             List<TextSubmission> textSubmissions,
-            // Number of players who didn't submit at all in time.
+            // Number of players who didn't submit at all in time. Always 0 for slides.
             int timedOutCount,
             List<PlayerRoundDetail> playerAnswers) {
     }

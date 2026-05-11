@@ -48,7 +48,7 @@ const QuestionForm = ({
   error,
 }: QuestionFormProps) => {
   const [type, setType] = useState<QuestionKind>(initial.type ?? "MULTIPLE_CHOICE");
-  const [questionText, setQuestionText] = useState(initial.questionText);
+  const [questionText, setQuestionText] = useState(initial.questionText ?? "");
   const [options, setOptions] = useState<string[]>(initial.options ?? ["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState(
     initial.correctAnswer ?? 0,

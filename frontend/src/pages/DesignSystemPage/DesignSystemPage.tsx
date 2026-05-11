@@ -33,6 +33,7 @@ import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { useEffect, useState } from "react";
 import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
 import { TextAnswerInput } from "../../components/Games/TextAnswerInput/TextAnswerInput";
+import { SlideView } from "../../components/Games/SlideView/SlideView";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { GameOver } from "../../components/Games/GameOver/GameOver";
 import { BarChart } from "../../components/Common/Charts/BarChart/BarChart";
@@ -445,6 +446,25 @@ const DesignSystemPage = () => {
                   console.log("text answer:", answer);
                 }}
                 disabled={false}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar=' Slide view (SLIDE element gameplay)'>
+            <div className={styles.cardComponentContainer}>
+              <SlideView
+                round={2}
+                totalRounds={10}
+                timeRemaining={4}
+                slide={{
+                  id: "design-system-slide",
+                  kind: "SLIDE",
+                  type: "MULTIPLE_CHOICE",
+                  title: "Section 2 — Arts & History",
+                  questionText:
+                    "Now we'll switch from geography to paintings, plays, and the past.",
+                  pointValue: 0,
+                  timeLimit: 5,
+                }}
               />
             </div>
           </Accordion>

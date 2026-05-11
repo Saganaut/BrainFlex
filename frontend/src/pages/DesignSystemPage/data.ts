@@ -22,6 +22,7 @@ export const questionCardData = {
   timeRemaining: 25,
   question: {
     id: "q-lotr-108",
+    kind: "QUESTION" as const,
     questionText: "In which fiery chasm was the One Ring finally destroyed?",
     options: [
       "The Mines of Maria",

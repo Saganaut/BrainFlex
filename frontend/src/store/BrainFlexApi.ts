@@ -433,28 +433,56 @@ export type DeckDto = {
   category?: string;
   questionCount?: number;
   isSystem?: boolean;
+  coverImageUrl?: string;
+  backgroundImageUrl?: string;
   createdAt?: string;
 };
 export type UpdateDeckRequest = {
   name?: string;
   description?: string;
   category?: string;
+  coverImageUrl?: string;
+  backgroundImageUrl?: string;
 };
 export type QuestionEditorDto = {
   id?: string;
+  kind?: "QUESTION" | "SLIDE";
+  type?:
+    | "MULTIPLE_CHOICE"
+    | "IMAGE_CHOICE"
+    | "TEXT_INPUT"
+    | "SCALES"
+    | "RANKING"
+    | "Q_AND_A"
+    | "NUMBER_INPUT"
+    | "GRID"
+    | "PLACE_ON_IMAGE";
+  position?: number;
+  title?: string;
   questionText?: string;
   options?: string[];
   correctAnswer?: number;
   correctAnswerText?: string;
   pointValue?: number;
   timeLimit?: number;
-  type?: "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
   difficulty?: "EASY" | "MEDIUM" | "HARD";
   imageUrl?: string;
 };
 export type UpsertQuestionRequest = {
-  type?: "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
-  questionText: string;
+  kind?: "QUESTION" | "SLIDE";
+  type?:
+    | "MULTIPLE_CHOICE"
+    | "IMAGE_CHOICE"
+    | "TEXT_INPUT"
+    | "SCALES"
+    | "RANKING"
+    | "Q_AND_A"
+    | "NUMBER_INPUT"
+    | "GRID"
+    | "PLACE_ON_IMAGE";
+  position?: number;
+  title?: string;
+  questionText?: string;
   options?: string[];
   correctAnswer?: number;
   correctAnswerText?: string;
@@ -468,6 +496,16 @@ export type PlayerStats = {
   totalPoints?: number;
   currentStreak?: number;
 };
+export type Membership = {
+  tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
+  status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
+  startedAt?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  sourceOrganizationId?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+};
 export type RegisteredUser = {
   id?: string;
   email?: string;
@@ -477,6 +515,7 @@ export type RegisteredUser = {
   googleId?: string;
   pictureUrl?: string;
   stats?: PlayerStats;
+  membership?: Membership;
   newsletter?: boolean;
   organizationId?: string;
   activeThemeId?: string;
@@ -497,10 +536,10 @@ export type ShowcaseSettings = {
   speedBonus?: boolean;
   allowGuests?: boolean;
   gameMode?: "SIMULTANEOUS" | "TURN_BASED";
-  noTimer?: boolean;
   allowLateJoin?: boolean;
   showScoresImmediately?: boolean;
   scoringEnabled?: boolean;
+  shuffleMcqOptions?: boolean;
 };
 export type ShowcasePlayerDto = {
   userId?: string;
@@ -517,6 +556,8 @@ export type ShowcaseDto = {
   status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
   hostUserId?: string;
   deckId?: string;
+  deckCoverImageUrl?: string;
+  deckBackgroundImageUrl?: string;
   settings?: ShowcaseSettings;
   players?: ShowcasePlayerDto[];
   currentRound?: number;
@@ -531,15 +572,26 @@ export type CreateShowcaseRequest = {
   speedBonus?: boolean;
   allowGuests?: boolean;
   maxPlayers?: number;
-  noTimer?: boolean;
   allowLateJoin?: boolean;
   showScoresImmediately?: boolean;
   scoringEnabled?: boolean;
+  shuffleMcqOptions?: boolean;
+};
+export type OrganizationPlan = {
+  tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
+  status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
+  seatLimit?: number;
+  startedAt?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
 };
 export type OrganizationResponse = {
   id?: string;
   name?: string;
   ownerId?: string;
+  plan?: OrganizationPlan;
   createdAt?: string;
 };
 export type CreateOrganizationRequest = {
@@ -552,6 +604,8 @@ export type CreateDeckRequest = {
   name: string;
   description?: string;
   category?: string;
+  coverImageUrl?: string;
+  backgroundImageUrl?: string;
 };
 export type RegisterRequest = {
   username: string;
@@ -598,7 +652,18 @@ export type PlayerRoundDetail = {
 export type RoundReview = {
   round?: number;
   questionId?: string;
-  questionType?: "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
+  kind?: "QUESTION" | "SLIDE";
+  questionType?:
+    | "MULTIPLE_CHOICE"
+    | "IMAGE_CHOICE"
+    | "TEXT_INPUT"
+    | "SCALES"
+    | "RANKING"
+    | "Q_AND_A"
+    | "NUMBER_INPUT"
+    | "GRID"
+    | "PLACE_ON_IMAGE";
+  title?: string;
   questionText?: string;
   imageUrl?: string;
   correctOptionIndex?: number;

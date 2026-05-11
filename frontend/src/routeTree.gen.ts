@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as AccountRouteImport } from './routes/account'
@@ -36,6 +37,11 @@ const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LandingPageRoute = LandingPageRouteImport.update({
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/design-system': typeof DesignSystemRoute
   '/landing-page': typeof LandingPageRoute
+  '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/games/create': typeof GamesCreateRoute
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/design-system': typeof DesignSystemRoute
   '/landing-page': typeof LandingPageRoute
+  '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/games/create': typeof GamesCreateRoute
@@ -166,6 +174,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/design-system': typeof DesignSystemRoute
   '/landing-page': typeof LandingPageRoute
+  '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/games/create': typeof GamesCreateRoute
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/design-system'
     | '/landing-page'
+    | '/pricing'
     | '/register'
     | '/terms-and-conditions'
     | '/games/create'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/design-system'
     | '/landing-page'
+    | '/pricing'
     | '/register'
     | '/terms-and-conditions'
     | '/games/create'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/design-system'
     | '/landing-page'
+    | '/pricing'
     | '/register'
     | '/terms-and-conditions'
     | '/games/create'
@@ -249,6 +261,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   DesignSystemRoute: typeof DesignSystemRoute
   LandingPageRoute: typeof LandingPageRoute
+  PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   GamesCreateRoute: typeof GamesCreateRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/landing-page': {
@@ -401,6 +421,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   DesignSystemRoute: DesignSystemRoute,
   LandingPageRoute: LandingPageRoute,
+  PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   GamesCreateRoute: GamesCreateRoute,

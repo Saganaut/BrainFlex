@@ -1,6 +1,13 @@
 [
   {
     "deckId": "6640000000000000000000a1",
+    "kind": "SLIDE",
+    "title": "General Knowledge",
+    "questionText": "A quick trip around the world. Capitals, history, pop culture, and a few brain-teasers — let's see who's been paying attention.",
+    "timeLimit": 6
+  },
+  {
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the capital city of Australia?",
     "options": ["Sydney", "Melbourne", "Canberra", "Brisbane"],
@@ -41,6 +48,13 @@
   },
   {
     "deckId": "6640000000000000000000a1",
+    "kind": "SLIDE",
+    "title": "Section 2 — Arts & History",
+    "questionText": "Now we'll switch from geography to paintings, plays, and the past.",
+    "timeLimit": 5
+  },
+  {
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Who painted the Mona Lisa?",
     "options": ["Michelangelo", "Raphael", "Leonardo da Vinci", "Donatello"],
@@ -55,6 +69,51 @@
     "questionText": "In what year did World War II end?",
     "options": ["1943", "1944", "1945", "1946"],
     "correctAnswer": 2,
+    "pointValue": 200,
+    "timeLimit": 20,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "deckId": "6640000000000000000000a1",
+    "type": "MULTIPLE_CHOICE",
+    "questionText": "Which country invented pizza?",
+    "options": ["Greece", "France", "Italy", "Spain"],
+    "correctAnswer": 2,
+    "pointValue": 100,
+    "timeLimit": 15,
+    "difficulty": "EASY"
+  },
+  {
+    "deckId": "6640000000000000000000a1",
+    "type": "MULTIPLE_CHOICE",
+    "questionText": "What is the smallest country in the world by area?",
+    "options": ["Monaco", "San Marino", "Liechtenstein", "Vatican City"],
+    "correctAnswer": 3,
+    "pointValue": 200,
+    "timeLimit": 20,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "deckId": "6640000000000000000000a1",
+    "kind": "SLIDE",
+    "title": "Type-in round",
+    "questionText": "Last two questions — no multiple choice this time. Type your answer directly.",
+    "timeLimit": 5
+  },
+  {
+    "deckId": "6640000000000000000000a1",
+    "type": "TEXT_INPUT",
+    "questionText": "What is the capital of France?",
+    "correctAnswerText": "Paris",
+    "pointValue": 150,
+    "timeLimit": 20,
+    "difficulty": "EASY"
+  },
+  {
+    "deckId": "6640000000000000000000a1",
+    "type": "TEXT_INPUT",
+    "questionText": "Who wrote the play 'Hamlet'?",
+    "correctAnswerText": "Shakespeare",
     "pointValue": 200,
     "timeLimit": 20,
     "difficulty": "MEDIUM"
@@ -82,16 +141,6 @@
   {
     "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
-    "questionText": "Which country invented pizza?",
-    "options": ["Greece", "France", "Italy", "Spain"],
-    "correctAnswer": 2,
-    "pointValue": 100,
-    "timeLimit": 15,
-    "difficulty": "EASY"
-  },
-  {
-    "deckId": "6640000000000000000000a1",
-    "type": "MULTIPLE_CHOICE",
     "questionText": "How many bones are in the adult human body?",
     "options": ["186", "196", "206", "216"],
     "correctAnswer": 2,
@@ -102,22 +151,20 @@
   {
     "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
-    "questionText": "What is the smallest country in the world by area?",
-    "options": ["Monaco", "San Marino", "Liechtenstein", "Vatican City"],
-    "correctAnswer": 3,
-    "pointValue": 200,
-    "timeLimit": 20,
-    "difficulty": "MEDIUM"
-  },
-  {
-    "deckId": "6640000000000000000000a1",
-    "type": "MULTIPLE_CHOICE",
     "questionText": "Which company created the iPhone?",
     "options": ["Google", "Samsung", "Apple", "Microsoft"],
     "correctAnswer": 2,
     "pointValue": 100,
     "timeLimit": 15,
     "difficulty": "EASY"
+  },
+
+  {
+    "deckId": "6640000000000000000000a2",
+    "kind": "SLIDE",
+    "title": "Science & Nature",
+    "questionText": "Physics, biology, chemistry, and a couple of cosmic surprises. Buckle up.",
+    "timeLimit": 6
   },
   {
     "deckId": "6640000000000000000000a2",
@@ -161,6 +208,13 @@
   },
   {
     "deckId": "6640000000000000000000a2",
+    "kind": "SLIDE",
+    "title": "Halfway there",
+    "questionText": "Stretch your legs. Next: the inner workings of cells and atoms.",
+    "timeLimit": 5
+  },
+  {
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the powerhouse of the cell?",
     "options": ["Nucleus", "Ribosome", "Mitochondria", "Golgi apparatus"],
@@ -201,6 +255,22 @@
   },
   {
     "deckId": "6640000000000000000000a2",
+    "kind": "SLIDE",
+    "title": "Final question — open answer",
+    "questionText": "One last one, and you'll type it in.",
+    "timeLimit": 5
+  },
+  {
+    "deckId": "6640000000000000000000a2",
+    "type": "TEXT_INPUT",
+    "questionText": "How many planets are in our solar system?",
+    "correctAnswerText": "8",
+    "pointValue": 150,
+    "timeLimit": 15,
+    "difficulty": "EASY"
+  },
+  {
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the hardest natural substance on Earth?",
     "options": ["Titanium", "Quartz", "Diamond", "Corundum"],
@@ -236,33 +306,6 @@
     "options": ["90", "95", "100", "105"],
     "correctAnswer": 2,
     "pointValue": 100,
-    "timeLimit": 15,
-    "difficulty": "EASY"
-  },
-  {
-    "deckId": "6640000000000000000000a1",
-    "type": "TEXT_INPUT",
-    "questionText": "What is the capital of France?",
-    "correctAnswerText": "Paris",
-    "pointValue": 150,
-    "timeLimit": 20,
-    "difficulty": "EASY"
-  },
-  {
-    "deckId": "6640000000000000000000a1",
-    "type": "TEXT_INPUT",
-    "questionText": "Who wrote the play 'Hamlet'?",
-    "correctAnswerText": "Shakespeare",
-    "pointValue": 200,
-    "timeLimit": 20,
-    "difficulty": "MEDIUM"
-  },
-  {
-    "deckId": "6640000000000000000000a2",
-    "type": "TEXT_INPUT",
-    "questionText": "How many planets are in our solar system?",
-    "correctAnswerText": "8",
-    "pointValue": 150,
     "timeLimit": 15,
     "difficulty": "EASY"
   }

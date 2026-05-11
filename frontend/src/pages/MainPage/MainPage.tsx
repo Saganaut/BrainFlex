@@ -8,6 +8,7 @@ import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
 import { ActionCard } from "@/components/Common/ActionCard/ActionCard";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input";
+import { extractErrorMessage } from "../../utils/utils";
 import styles from "./MainPage.module.css";
 
 const MainPage = () => {
@@ -97,8 +98,11 @@ const MainPage = () => {
           </Btn>
         </form>
         {joinError && (
-          <p className={styles.errorMsg}>
-            Could not join — check the code and try again.
+          <p className={styles.errorMsg} role='alert'>
+            {extractErrorMessage(
+              joinError,
+              "Could not join — check the code and try again.",
+            )}
           </p>
         )}
       </section>

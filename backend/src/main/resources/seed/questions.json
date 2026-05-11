@@ -1,6 +1,6 @@
 [
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the capital city of Australia?",
     "options": ["Sydney", "Melbourne", "Canberra", "Brisbane"],
@@ -10,7 +10,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "How many sides does a hexagon have?",
     "options": ["5", "6", "7", "8"],
@@ -20,7 +20,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Which planet is known as the Red Planet?",
     "options": ["Venus", "Jupiter", "Mars", "Saturn"],
@@ -30,7 +30,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What language has the most native speakers worldwide?",
     "options": ["English", "Spanish", "Hindi", "Mandarin Chinese"],
@@ -40,7 +40,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Who painted the Mona Lisa?",
     "options": ["Michelangelo", "Raphael", "Leonardo da Vinci", "Donatello"],
@@ -50,7 +50,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "In what year did World War II end?",
     "options": ["1943", "1944", "1945", "1946"],
@@ -60,7 +60,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Which element has the chemical symbol 'Au'?",
     "options": ["Silver", "Copper", "Aluminum", "Gold"],
@@ -70,7 +70,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the largest ocean on Earth?",
     "options": ["Atlantic", "Indian", "Arctic", "Pacific"],
@@ -80,7 +80,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Which country invented pizza?",
     "options": ["Greece", "France", "Italy", "Spain"],
@@ -90,7 +90,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "How many bones are in the adult human body?",
     "options": ["186", "196", "206", "216"],
@@ -100,7 +100,7 @@
     "difficulty": "HARD"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the smallest country in the world by area?",
     "options": ["Monaco", "San Marino", "Liechtenstein", "Vatican City"],
@@ -110,7 +110,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a1",
+    "deckId": "6640000000000000000000a1",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Which company created the iPhone?",
     "options": ["Google", "Samsung", "Apple", "Microsoft"],
@@ -120,7 +120,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the speed of light in a vacuum (approximately)?",
     "options": ["300,000 km/s", "150,000 km/s", "450,000 km/s", "30,000 km/s"],
@@ -130,7 +130,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What gas do plants absorb from the atmosphere during photosynthesis?",
     "options": ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"],
@@ -140,7 +140,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the most abundant gas in Earth's atmosphere?",
     "options": ["Oxygen", "Carbon Dioxide", "Argon", "Nitrogen"],
@@ -150,7 +150,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "How many chromosomes do humans typically have?",
     "options": ["23", "44", "46", "48"],
@@ -160,7 +160,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the powerhouse of the cell?",
     "options": ["Nucleus", "Ribosome", "Mitochondria", "Golgi apparatus"],
@@ -170,7 +170,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What force keeps planets in orbit around the Sun?",
     "options": ["Magnetism", "Gravity", "Friction", "Electrostatic force"],
@@ -180,7 +180,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the atomic number of carbon?",
     "options": ["4", "6", "8", "12"],
@@ -190,7 +190,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Which planet has the most moons in our solar system?",
     "options": ["Jupiter", "Saturn", "Uranus", "Neptune"],
@@ -200,7 +200,7 @@
     "difficulty": "HARD"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the hardest natural substance on Earth?",
     "options": ["Titanium", "Quartz", "Diamond", "Corundum"],
@@ -210,7 +210,7 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "Which organ produces insulin in the human body?",
     "options": ["Liver", "Kidney", "Pancreas", "Spleen"],
@@ -220,7 +220,7 @@
     "difficulty": "MEDIUM"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "What is the chemical formula for water?",
     "options": ["HO", "H2O", "H3O", "OH2"],
@@ -230,12 +230,39 @@
     "difficulty": "EASY"
   },
   {
-    "contentPackId": "6640000000000000000000a2",
+    "deckId": "6640000000000000000000a2",
     "type": "MULTIPLE_CHOICE",
     "questionText": "At what temperature (Celsius) does water boil at sea level?",
     "options": ["90", "95", "100", "105"],
     "correctAnswer": 2,
     "pointValue": 100,
+    "timeLimit": 15,
+    "difficulty": "EASY"
+  },
+  {
+    "deckId": "6640000000000000000000a1",
+    "type": "TEXT_INPUT",
+    "questionText": "What is the capital of France?",
+    "correctAnswerText": "Paris",
+    "pointValue": 150,
+    "timeLimit": 20,
+    "difficulty": "EASY"
+  },
+  {
+    "deckId": "6640000000000000000000a1",
+    "type": "TEXT_INPUT",
+    "questionText": "Who wrote the play 'Hamlet'?",
+    "correctAnswerText": "Shakespeare",
+    "pointValue": 200,
+    "timeLimit": 20,
+    "difficulty": "MEDIUM"
+  },
+  {
+    "deckId": "6640000000000000000000a2",
+    "type": "TEXT_INPUT",
+    "questionText": "How many planets are in our solar system?",
+    "correctAnswerText": "8",
+    "pointValue": 150,
     "timeLimit": 15,
     "difficulty": "EASY"
   }

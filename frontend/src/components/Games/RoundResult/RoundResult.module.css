@@ -53,10 +53,25 @@
 }
 
 .myResult {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
   text-align: center;
   padding: var(--space-3);
   border-radius: var(--radius-md);
   font-weight: 700;
+}
+
+.mySubmitted {
+  font-weight: 400;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.answerHint {
+  font-weight: 400;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
 }
 
 .myCorrect {

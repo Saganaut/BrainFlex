@@ -32,7 +32,15 @@ import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { useEffect, useState } from "react";
 import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
+import { TextAnswerInput } from "../../components/Games/TextAnswerInput/TextAnswerInput";
+import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { GameOver } from "../../components/Games/GameOver/GameOver";
+import { BarChart } from "../../components/Common/Charts/BarChart/BarChart";
+import { FrequencyList } from "../../components/Common/Charts/FrequencyList/FrequencyList";
+import { ReviewPanel } from "../../components/Games/ReviewPanel/ReviewPanel";
+import { reviewSampleData } from "./reviewSampleData";
+import { useAppDispatch } from "../../store/hooks";
+import { wsErrorReceived } from "../../store/gameSlice";
 import { ContentPackPicker } from "../../components/Games/ContentPackPicker/ContentPackPicker";
 import { Accordion } from "../../components/Containers/Accordion";
 
@@ -60,6 +68,30 @@ function TokenRow({ token }: { token: string }) {
         style={{ background: `var(${token})` }}>
         sample
       </div>
+    </div>
+  );
+}
+
+// Small demo wrapper: dispatches a fake wsError so the banner is visible in the
+// design system. In production the banner reads its state from real STOMP traffic.
+function WsErrorBannerDemo() {
+  const dispatch = useAppDispatch();
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+      <WsErrorBanner />
+      <Btn
+        onClick={() => {
+          dispatch(
+            wsErrorReceived({
+              operation: "start",
+              roomCode: "DEMO00",
+              status: 422,
+              message: "Content pack has no questions",
+            }),
+          );
+        }}>
+        Trigger sample error
+      </Btn>
     </div>
   );
 }
@@ -361,6 +393,22 @@ const DesignSystemPage = () => {
                 players={playersData.players}
                 currentUserId={playersData.currentUserId}
               />
+              <ScoreBoard
+                players={playersData.players}
+                currentUserId={playersData.currentUserId}
+                answeredUserIds={playersData.players
+                  .slice(0, Math.ceil(playersData.players.length / 2))
+                  .map((p) => p.userId ?? "")
+                  .filter(Boolean)}
+                offlineUserIds={playersData.players
+                  .slice(-1)
+                  .map((p) => p.userId ?? "")
+                  .filter(Boolean)}
+                isHost
+                onBootPlayer={(uid) => {
+                  console.log("boot demo:", uid);
+                }}
+              />
 
               <Btn
                 onClick={() => {
@@ -386,6 +434,55 @@ const DesignSystemPage = () => {
           <Accordion titleBar=' Question card'>
             <div className={styles.cardComponentContainer}>
               <QuestionCard {...questionCardData} />
+            </div>
+          </Accordion>
+          <Accordion titleBar=' Text answer input (TEXT_INPUT gameplay)'>
+            <div className={styles.cardComponentContainer}>
+              <TextAnswerInput
+                questionId='design-system-text'
+                submittedAnswer={null}
+                onSubmit={(answer) => {
+                  console.log("text answer:", answer);
+                }}
+                disabled={false}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar=' WebSocket error banner'>
+            <div className={styles.cardComponentContainer}>
+              <WsErrorBannerDemo />
+            </div>
+          </Accordion>
+          <Accordion titleBar=' Bar chart'>
+            <div className={styles.cardComponentContainer}>
+              <BarChart
+                caption='Sample MCQ distribution'
+                total={6}
+                items={[
+                  { label: "A — Venus", value: 1 },
+                  { label: "B — Jupiter", value: 0 },
+                  { label: "C — Mars", value: 4, highlight: true },
+                  { label: "D — Saturn", value: 1 },
+                ]}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar=' Frequency list'>
+            <div className={styles.cardComponentContainer}>
+              <FrequencyList
+                caption='Sample text-input submissions'
+                total={6}
+                items={[
+                  { text: "Paris", count: 4, correct: true },
+                  { text: "paris", count: 1, correct: true },
+                  { text: "Lyon", count: 1 },
+                ]}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar=' Review panel (post-showcase)'>
+            <div className={styles.cardComponentContainer}>
+              <ReviewPanel review={reviewSampleData} />
             </div>
           </Accordion>
           <Accordion titleBar=' Content Pack Picker'>

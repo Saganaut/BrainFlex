@@ -1,6 +1,7 @@
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
+import { extractErrorMessage } from "../../utils/utils";
 import styles from "./GameHub.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input";
@@ -52,8 +53,11 @@ const JoinGamePage = () => {
             {isLoading ? "Joining…" : "Join Game"}
           </Btn>
           {error && (
-            <p className={styles.errorMsg}>
-              Could not join — check the room code and try again.
+            <p className={styles.errorMsg} role='alert'>
+              {extractErrorMessage(
+                error,
+                "Could not join — check the room code and try again.",
+              )}
             </p>
           )}
         </form>

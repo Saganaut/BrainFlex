@@ -2,11 +2,11 @@
 import { Link } from "@tanstack/react-router";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import {
-  useListMyPacksQuery,
-  useListPacksQuery,
-  useDeletePackMutation,
+  useListMyDecksQuery,
+  useListDecksQuery,
+  useDeleteDeckMutation,
 } from "../../store/BrainFlexApi";
-import type { ContentPackDto } from "../../store/BrainFlexApi";
+import type { DeckDto } from "../../store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./MyPacksPage.module.css";
 
@@ -15,7 +15,7 @@ const PackCard = ({
   editable,
   onDelete,
 }: {
-  pack: ContentPackDto;
+  pack: DeckDto;
   editable: boolean;
   onDelete?: (id: string) => void;
 }) => (
@@ -55,17 +55,17 @@ const MyPacksPage = () => {
   const isRegistered = userState.state === "registered";
 
   const { data: systemPacks = [], isLoading: loadingSystem } =
-    useListPacksQuery(undefined, { refetchOnMountOrArgChange: true });
+    useListDecksQuery(undefined, { refetchOnMountOrArgChange: true });
   const {
     data: myPacks = [],
     isLoading: loadingMine,
     refetch,
-  } = useListMyPacksQuery(undefined, {
+  } = useListMyDecksQuery(undefined, {
     skip: !isRegistered,
     refetchOnMountOrArgChange: true,
   });
 
-  const [deletePack] = useDeletePackMutation();
+  const [deletePack] = useDeleteDeckMutation();
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this content pack and all its questions?")) return;

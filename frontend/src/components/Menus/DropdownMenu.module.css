@@ -40,6 +40,12 @@
   width: 100%;
   font-family: inherit;
   transition: background var(--duration-fast);
+
+  &.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .item:hover {

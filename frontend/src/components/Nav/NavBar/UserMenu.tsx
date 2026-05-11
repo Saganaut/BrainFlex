@@ -48,7 +48,7 @@ const UserMenu = () => {
           shape='round'
           bordered={true}
           backgroundColor={true}
-          size='lg'
+          size='md'
           aria-label='User menu'
           icon={avatarContent()}
           onClick={toggle}
@@ -57,7 +57,7 @@ const UserMenu = () => {
       align='right'>
       {userState.state === "registered" ? (
         <>
-          <DropdownMenuLabel>Signed in as {user?.userName}</DropdownMenuLabel>
+          <DropdownMenuLabel>{user?.userName}</DropdownMenuLabel>
           <DropdownMenuLink>
             <Link to='/account'>Account</Link>
           </DropdownMenuLink>
@@ -112,8 +112,25 @@ const UserMenu = () => {
         </>
       )}
       <DropdownMenuDivider />
-      <DropdownMenuItem onClick={toggleTheme}>
-        <img src={theme === "dark" ? lightModeIcon : darkModeIcon} />
+      <DropdownMenuItem onClick={toggleTheme} centered={true}>
+        <span className={styles.themeToggle} aria-hidden='true'>
+          <img
+            src={lightModeIcon}
+            alt=''
+            className={
+              theme === "dark" ? styles.themeIconActive : styles.themeIconHidden
+            }
+          />
+          <img
+            src={darkModeIcon}
+            alt=''
+            className={
+              theme === "light"
+                ? styles.themeIconActive
+                : styles.themeIconHidden
+            }
+          />
+        </span>
       </DropdownMenuItem>
     </DropdownMenu>
   );

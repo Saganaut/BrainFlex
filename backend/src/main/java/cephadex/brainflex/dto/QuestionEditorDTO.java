@@ -1,6 +1,6 @@
 /**
  * Full question representation returned to the pack owner in the editor.
- * Unlike QuestionDTO (which is used during gameplay), this includes correctAnswer
+ * Unlike QuestionDTO (which is used during gameplay), this includes correctAnswer/correctAnswerText
  * so the creator can view and edit the answer key.
  */
 package cephadex.brainflex.dto;
@@ -16,6 +16,7 @@ public record QuestionEditorDTO(
         String questionText,
         List<String> options,
         int correctAnswer,
+        String correctAnswerText,
         int pointValue,
         int timeLimit,
         QuestionType type,
@@ -28,6 +29,7 @@ public record QuestionEditorDTO(
                 q.getQuestionText(),
                 q.getOptions(),
                 q.getCorrectAnswer(),
+                q.getCorrectAnswerText(),
                 q.getPointValue(),
                 q.getTimeLimit(),
                 q.getType(),

@@ -40,6 +40,11 @@ const RoundResult = ({
         {myResult && (
           <div
             className={`${styles.myResult} ${myResult.wasCorrect ? styles.myCorrect : styles.myWrong}`}>
+            {myResult.textAnswer != null && (
+              <div className={styles.mySubmitted}>
+                Your answer: <strong>{myResult.textAnswer}</strong>
+              </div>
+            )}
             {myResult.wasCorrect
               ? `Correct! +${myResult.pointsAwarded} pts`
               : "Incorrect"}
@@ -51,7 +56,12 @@ const RoundResult = ({
             <li
               key={r.userId}
               className={`${styles.resultRow} ${r.userId === currentUserId ? styles.me : ""}`}>
-              <span className={styles.playerName}>{r.userName}</span>
+              <span className={styles.playerName}>
+                {r.userName}
+                {r.textAnswer != null && r.textAnswer.length > 0 && (
+                  <span className={styles.answerHint}> — “{r.textAnswer}”</span>
+                )}
+              </span>
               <span
                 className={`${styles.badge} ${r.wasCorrect ? styles.badgeCorrect : styles.badgeWrong}`}>
                 {r.wasCorrect ? `+${r.pointsAwarded}` : "x"}

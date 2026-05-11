@@ -1,7 +1,7 @@
 /**
- * A single question belonging to a ContentPack.
+ * A single question belonging to a Deck.
  * Stored in its own collection so questions can be queried, shuffled, and
- * drawn into a GameSession independently of the pack document.
+ * drawn into a Showcase independently of the pack document.
  */
 package cephadex.brainflex.model;
 
@@ -22,14 +22,18 @@ public class Question {
     private String id;
 
     @Indexed
-    private String contentPackId; // reference to ContentPack
+    private String deckId; // reference to Deck
 
     private QuestionType type = QuestionType.MULTIPLE_CHOICE;
     private String questionText;
     private String imageUrl; // null for text-only questions
 
-    private List<String> options; // 2–4 answer choices
-    private int correctAnswer;    // index into options (0-based)
+    // MULTIPLE_CHOICE only: 2–4 answer choices and the 0-based index of the right one.
+    private List<String> options;
+    private int correctAnswer;
+
+    // TEXT_INPUT only: free-text correct answer. Matched case-insensitively, trimmed.
+    private String correctAnswerText;
 
     private int pointValue = 100;
     private int timeLimit = 15; // seconds

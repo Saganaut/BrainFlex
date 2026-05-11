@@ -4,22 +4,23 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-  useGetPackQuery,
-  useCreatePackMutation,
-  useUpdatePackMutation,
+  useGetDeckQuery,
+  useCreateDeckMutation,
+  useUpdateDeckMutation,
   useListQuestionsQuery,
   useAddQuestionMutation,
   useUpdateQuestionMutation,
   useDeleteQuestionMutation,
 } from "../../store/BrainFlexApi";
 import type {
-  ContentPackDto,
+  DeckDto,
   QuestionEditorDto,
   UpsertQuestionRequest,
 } from "../../store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input";
 import { TextArea } from "@/components/Common/Input/TextArea";
+import { extractErrorMessage } from "../../utils/utils";
 import styles from "./PackEditorPage.module.css";
 
 interface PackEditorPageProps {
@@ -37,6 +38,8 @@ interface QuestionFormProps {
   error: string | null;
 }
 
+type QuestionKind = NonNullable<UpsertQuestionRequest["type"]>;
+
 const QuestionForm = ({
   initial,
   onSave,
@@ -44,10 +47,14 @@ const QuestionForm = ({
   saving,
   error,
 }: QuestionFormProps) => {
+  const [type, setType] = useState<QuestionKind>(initial.type ?? "MULTIPLE_CHOICE");
   const [questionText, setQuestionText] = useState(initial.questionText);
-  const [options, setOptions] = useState<string[]>(initial.options);
+  const [options, setOptions] = useState<string[]>(initial.options ?? ["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState(
     initial.correctAnswer ?? 0,
+  );
+  const [correctAnswerText, setCorrectAnswerText] = useState(
+    initial.correctAnswerText ?? "",
   );
   const [pointValue, setPointValue] = useState(initial.pointValue ?? 100);
   const [timeLimit, setTimeLimit] = useState(initial.timeLimit ?? 15);
@@ -71,20 +78,27 @@ const QuestionForm = ({
     if (correctAnswer >= next.length) setCorrectAnswer(next.length - 1);
   };
 
+  const isTextInput = type === "TEXT_INPUT";
   const valid =
     questionText.trim().length > 0 &&
-    options.every((o) => o.trim().length > 0) &&
-    correctAnswer < options.length;
+    (isTextInput
+      ? correctAnswerText.trim().length > 0
+      : options.every((o) => o.trim().length > 0) &&
+        correctAnswer < options.length);
 
   const handleSave = () => {
-    onSave({
+    const base = {
+      type,
       questionText,
-      options,
-      correctAnswer,
       pointValue,
       timeLimit,
       difficulty,
-    });
+    };
+    onSave(
+      isTextInput
+        ? { ...base, correctAnswerText: correctAnswerText.trim() }
+        : { ...base, options, correctAnswer },
+    );
   };
 
   return (
@@ -94,60 +108,92 @@ const QuestionForm = ({
       </h3>
 
       <div className={styles.fieldGroup}>
+        <label className={styles.label}>Question type</label>
+        <select
+          value={type}
+          onChange={(e) => {
+            setType(e.target.value as QuestionKind);
+          }}>
+          <option value='MULTIPLE_CHOICE'>Multiple choice</option>
+          <option value='TEXT_INPUT'>Type in</option>
+        </select>
+      </div>
+
+      <div className={styles.fieldGroup}>
         <label className={styles.label}>Question text</label>
         <TextArea
           value={questionText}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
             setQuestionText(e.target.value);
           }}
-          placeholder='What is the capital of Australia?'
+          placeholder={
+            isTextInput
+              ? "How many planets are in our solar system?"
+              : "What is the capital of Australia?"
+          }
           rows={2}
         />
       </div>
 
-      <div className={styles.fieldGroup}>
-        <label className={styles.label}>
-          Answer options — select the correct one
-        </label>
-        {options.map((opt, i) => (
-          // eslint-disable-next-line react-x/no-array-index-key -- answer options are positional; index is the identity
-          <div key={i} className={styles.optionRow}>
-            <input
-              type='radio'
-              name='correctAnswer'
-              checked={correctAnswer === i}
-              onChange={() => {
-                setCorrectAnswer(i);
-              }}
-              aria-label={`Mark option ${i + 1} as correct`}
-            />
-            <Input
-              value={opt}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setOption(i, e.target.value);
-              }}
-              placeholder={`Option ${i + 1}`}
-            />
-            {options.length > 2 && (
-              <Btn
-                size='sm'
-                variant='error'
-                type='button'
-                onClick={() => {
-                  removeOption(i);
+      {isTextInput ? (
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>
+            Correct answer — players' input is matched case-insensitively
+          </label>
+          <Input
+            value={correctAnswerText}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setCorrectAnswerText(e.target.value);
+            }}
+            placeholder='8'
+            maxLength={200}
+          />
+        </div>
+      ) : (
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>
+            Answer options — select the correct one
+          </label>
+          {options.map((opt, i) => (
+            // eslint-disable-next-line react-x/no-array-index-key -- answer options are positional; index is the identity
+            <div key={i} className={styles.optionRow}>
+              <input
+                type='radio'
+                name='correctAnswer'
+                checked={correctAnswer === i}
+                onChange={() => {
+                  setCorrectAnswer(i);
                 }}
-                aria-label={`Remove option ${i + 1}`}>
-                ✕
-              </Btn>
-            )}
-          </div>
-        ))}
-        {options.length < 4 && (
-          <Btn size='sm' type='button' onClick={addOption}>
-            + Add option
-          </Btn>
-        )}
-      </div>
+                aria-label={`Mark option ${i + 1} as correct`}
+              />
+              <Input
+                value={opt}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setOption(i, e.target.value);
+                }}
+                placeholder={`Option ${i + 1}`}
+              />
+              {options.length > 2 && (
+                <Btn
+                  size='sm'
+                  variant='error'
+                  type='button'
+                  onClick={() => {
+                    removeOption(i);
+                  }}
+                  aria-label={`Remove option ${i + 1}`}>
+                  ✕
+                </Btn>
+              )}
+            </div>
+          ))}
+          {options.length < 4 && (
+            <Btn size='sm' type='button' onClick={addOption}>
+              + Add option
+            </Btn>
+          )}
+        </div>
+      )}
 
       <div className={styles.settingsRow}>
         <div className={styles.settingField}>
@@ -208,7 +254,7 @@ const QuestionForm = ({
 // ─── Pack metadata form (rendered once pack data loads in edit mode) ──────────
 
 interface PackMetaFormProps {
-  pack: ContentPackDto | undefined;
+  pack: DeckDto | undefined;
   isEditMode: boolean;
   returnTo: string | undefined;
   onCreated: (id: string) => void;
@@ -227,8 +273,8 @@ const PackMetaForm = ({
   const [saved, setSaved] = useState(false);
 
   const navigate = useNavigate();
-  const [createPack, { isLoading: creating }] = useCreatePackMutation();
-  const [updatePack, { isLoading: updating }] = useUpdatePackMutation();
+  const [createPack, { isLoading: creating }] = useCreateDeckMutation();
+  const [updatePack, { isLoading: updating }] = useUpdateDeckMutation();
 
   const handleSave = async () => {
     setError(null);
@@ -237,12 +283,12 @@ const PackMetaForm = ({
       if (isEditMode && pack?.id) {
         await updatePack({
           id: pack.id,
-          updateContentPackRequest: { name, description, category },
+          updateDeckRequest: { name, description, category },
         }).unwrap();
         setSaved(true);
       } else {
         const created = await createPack({
-          createContentPackRequest: { name, description, category },
+          createDeckRequest: { name, description, category },
         }).unwrap();
         if (returnTo) {
           await navigate({ to: returnTo as "/" });
@@ -250,8 +296,8 @@ const PackMetaForm = ({
           onCreated(created.id);
         }
       }
-    } catch {
-      setError("Failed to save. Please try again.");
+    } catch (e) {
+      setError(extractErrorMessage(e, "Failed to save. Please try again."));
     }
   };
 
@@ -331,15 +377,18 @@ interface QuestionListProps {
 }
 
 const makeInitial = (q: QuestionEditorDto): UpsertQuestionRequest => ({
+  type: q.type ?? "MULTIPLE_CHOICE",
   questionText: q.questionText ?? "",
   options: q.options ?? ["", ""],
   correctAnswer: q.correctAnswer ?? 0,
+  correctAnswerText: q.correctAnswerText ?? "",
   pointValue: q.pointValue ?? 100,
   timeLimit: q.timeLimit ?? 15,
   difficulty: q.difficulty ?? "MEDIUM",
 });
 
 const BLANK_QUESTION: UpsertQuestionRequest = {
+  type: "MULTIPLE_CHOICE",
   questionText: "",
   options: ["", "", "", ""],
   correctAnswer: 0,
@@ -366,8 +415,8 @@ const QuestionList = ({ packId }: QuestionListProps) => {
       await addQuestion({ id: packId, upsertQuestionRequest: form }).unwrap();
       setAddingNew(false);
       void refetch();
-    } catch {
-      setQuestionError("Failed to save question.");
+    } catch (e) {
+      setQuestionError(extractErrorMessage(e, "Failed to save question."));
     }
   };
 
@@ -384,8 +433,8 @@ const QuestionList = ({ packId }: QuestionListProps) => {
       }).unwrap();
       setEditingId(null);
       void refetch();
-    } catch {
-      setQuestionError("Failed to save question.");
+    } catch (e) {
+      setQuestionError(extractErrorMessage(e, "Failed to save question."));
     }
   };
 
@@ -488,7 +537,7 @@ const PackEditorPage = ({ packId, returnTo }: PackEditorPageProps) => {
   const isEditMode = !!packId;
   const [activePack, setActivePack] = useState<string | undefined>(packId);
 
-  const { data: pack, isLoading: packLoading } = useGetPackQuery(
+  const { data: pack, isLoading: packLoading } = useGetDeckQuery(
     { id: activePack ?? "" },
     { skip: !activePack },
   );

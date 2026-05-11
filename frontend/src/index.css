@@ -37,7 +37,7 @@
 } */
 
 #root {
-  width: 1440px;
+  width: var(--max-screen-width);
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
@@ -56,7 +56,7 @@ body {
 }
 
 a {
-  color: var(--text-primary);
+  text-decoration: none;
 }
 
 h1,

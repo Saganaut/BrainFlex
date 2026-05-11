@@ -71,11 +71,13 @@ const DropdownMenu = ({
 
 interface DropdownMenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
+  centered?: boolean;
 }
 
 const DropdownMenuItem = ({
   children,
   className,
+  centered = false,
   onClick,
   ...rest
 }: DropdownMenuItemProps) => {
@@ -83,7 +85,9 @@ const DropdownMenuItem = ({
   return (
     <button
       type='button'
-      className={[styles.item, className].filter(Boolean).join(" ")}
+      className={[styles.item, centered && styles.center, className]
+        .filter(Boolean)
+        .join(" ")}
       onClick={(e) => {
         closeMenu();
         onClick?.(e);

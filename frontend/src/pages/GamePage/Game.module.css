@@ -56,6 +56,30 @@
   text-align: center;
 }
 
+.moreOptions {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-3);
+}
+
+.moreOptionsSummary {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: var(--space-2) 0;
+
+  &:hover {
+    color: var(--text-primary);
+  }
+}
+
+.moreOptionsBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+}
+
 .errorMsg {
   color: var(--text-error);
   font-size: var(--font-size-sm);
@@ -77,6 +101,11 @@
 .backLink {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
+}
+
+.endShowcaseBtn {
+  margin-top: var(--space-3);
+  width: 100%;
 }
 
 .modeTabs {

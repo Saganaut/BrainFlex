@@ -10,6 +10,8 @@ export interface QuestionCardProps {
   round: number;
   totalRounds: number;
   timeRemaining: number;
+  // When true the host disabled the round timer — render "Unlimited" instead of a countdown.
+  noTimer?: boolean;
 }
 
 const QuestionCard = ({
@@ -17,9 +19,10 @@ const QuestionCard = ({
   round,
   totalRounds,
   timeRemaining,
+  noTimer,
 }: QuestionCardProps) => {
   const pct = Math.max(0, (timeRemaining / question.timeLimit) * 100);
-  const urgent = timeRemaining <= 5;
+  const urgent = !noTimer && timeRemaining <= 5;
 
   return (
     <div className={styles.card}>
@@ -30,13 +33,19 @@ const QuestionCard = ({
         <span className={styles.points}>{question.pointValue} pts</span>
       </div>
 
-      <div className={`${styles.timerTrack} ${urgent ? styles.urgent : ""}`}>
-        <div className={styles.timerBar} style={{ width: `${pct}%` }} />
-      </div>
-      <span
-        className={`${styles.timerText} ${urgent ? styles.urgentText : ""}`}>
-        {timeRemaining}s
-      </span>
+      {noTimer ? (
+        <span className={styles.timerText}>Unlimited</span>
+      ) : (
+        <>
+          <div className={`${styles.timerTrack} ${urgent ? styles.urgent : ""}`}>
+            <div className={styles.timerBar} style={{ width: `${pct}%` }} />
+          </div>
+          <span
+            className={`${styles.timerText} ${urgent ? styles.urgentText : ""}`}>
+            {timeRemaining}s
+          </span>
+        </>
+      )}
 
       {question.imageUrl && (
         <img src={question.imageUrl} alt='' className={styles.image} />

@@ -296,7 +296,7 @@
   --duration-slow: 500ms;
 
   /* ---- MAX SIZES ---- */
-  --max-screen-width: 1440px;
+  --max-screen-width: 2440px;
 }
 
 /* stylelint-disable-next-line selector-class-pattern */

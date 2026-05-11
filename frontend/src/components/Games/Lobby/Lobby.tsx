@@ -1,16 +1,17 @@
 /**
  * Pre-game waiting room — shows joined players, the shareable room code,
  * and (for the host) the Start Game button. Real-time player-list updates
- * arrive via /topic/game/{roomCode}/lobby; the WebSocket is managed here.
+ * arrive via /topic/showcase/{roomCode}/lobby; the WebSocket is managed here.
  */
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAppDispatch } from "../../../store/hooks";
 import { setSession } from "../../../store/gameSlice";
-import { useGetSessionQuery } from "../../../store/BrainFlexApi";
+import { useGetShowcaseQuery } from "../../../store/BrainFlexApi";
 import { useGameSession } from "../../../hooks/useGameSession";
 import { useGameWebSocket } from "../../../hooks/useGameWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
 import styles from "./Lobby.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 
@@ -23,9 +24,9 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   const navigate = useNavigate();
   const userState = useCurrentUser();
   const game = useGameSession();
-  const { sendStart, sendLeave } = useGameWebSocket(roomCode);
+  const { sendStart, sendLeave, sendBoot } = useGameWebSocket(roomCode);
 
-  const { data: session } = useGetSessionQuery({ roomCode });
+  const { data: session } = useGetShowcaseQuery({ roomCode });
 
   useEffect(() => {
     if (session) dispatch(setSession(session));
@@ -44,6 +45,21 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   const isHost = !!userId && session?.hostUserId === userId;
   const players = game.players;
 
+  // If the host boots us (or anything else removes us from the player list),
+  // navigate home rather than stranding the user on an empty lobby.
+  useEffect(() => {
+    if (!userId || players.length === 0) return;
+    const stillInLobby = players.some((p) => p.userId === userId);
+    if (!stillInLobby) {
+      void navigate({ to: "/" });
+    }
+  }, [userId, players, navigate]);
+
+  const handleBoot = (targetUserId: string) => {
+    if (!confirm("Remove this player from the lobby?")) return;
+    sendBoot(targetUserId);
+  };
+
   return (
     <div className={styles.lobby}>
       <div className={styles.header}>
@@ -60,22 +76,46 @@ const Lobby = ({ roomCode }: LobbyProps) => {
           Players ({players.length} / {session?.settings?.maxPlayers ?? 8})
         </h2>
         <ul className={styles.playerList}>
-          {players.map((p) => (
-            <li key={p.userId} className={styles.player}>
-              {p.pictureUrl ? (
-                <img src={p.pictureUrl} alt='' className={styles.avatar} />
-              ) : (
-                <div className={styles.avatarFallback}>
-                  {(p.userName?.[0] ?? "?").toUpperCase()}
-                </div>
-              )}
-              <span className={styles.playerName}>{p.userName}</span>
-              {p.isGuest && <span className={styles.guestBadge}>guest</span>}
-              {session?.hostUserId === p.userId && (
-                <span className={styles.hostBadge}>host</span>
-              )}
-            </li>
-          ))}
+          {players.map((p) => {
+            const playerId = p.userId;
+            const isPlayerHost = session?.hostUserId === playerId;
+            const isOffline = !!playerId && game.offlineUserIds.includes(playerId);
+            return (
+              <li
+                key={playerId}
+                className={`${styles.player} ${isOffline ? styles.offline : ""}`}>
+                {p.pictureUrl ? (
+                  <img src={p.pictureUrl} alt='' className={styles.avatar} />
+                ) : (
+                  <div className={styles.avatarFallback}>
+                    {(p.userName?.[0] ?? "?").toUpperCase()}
+                  </div>
+                )}
+                <span className={styles.playerName}>{p.userName}</span>
+                {p.isGuest && <span className={styles.guestBadge}>guest</span>}
+                {isOffline && (
+                  <span className={styles.offlineBadge} title='Disconnected'>
+                    offline
+                  </span>
+                )}
+                {isPlayerHost && (
+                  <span className={styles.hostBadge}>host</span>
+                )}
+                {isHost && !isPlayerHost && playerId && (
+                  <Btn
+                    size='sm'
+                    variant='error'
+                    type='button'
+                    onClick={() => {
+                      handleBoot(playerId);
+                    }}
+                    aria-label={`Remove ${p.userName ?? "player"} from the lobby`}>
+                    Boot
+                  </Btn>
+                )}
+              </li>
+            );
+          })}
         </ul>
         {players.length === 0 && (
           <p className={styles.emptyState}>Waiting for players to join…</p>
@@ -83,6 +123,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
       </div>
 
       <div className={styles.actions}>
+        <WsErrorBanner />
         {isHost ? (
           <Btn
             type='button'

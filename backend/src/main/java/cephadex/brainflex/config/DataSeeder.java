@@ -14,10 +14,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import cephadex.brainflex.model.ContentPack;
+import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.Question;
 import cephadex.brainflex.model.User;
-import cephadex.brainflex.repository.ContentPackRepository;
+import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.QuestionRepository;
 import cephadex.brainflex.repository.UserRepository;
 
@@ -32,11 +32,11 @@ public class DataSeeder {
     @SuppressWarnings("unused")
     CommandLineRunner initDatabase(
             UserRepository userRepository,
-            ContentPackRepository contentPackRepository,
+            DeckRepository deckRepository,
             QuestionRepository questionRepository) {
         return args -> {
             seedCollection(userRepository, "seed/users.json", User.class);
-            seedCollection(contentPackRepository, "seed/content_packs.json", ContentPack.class);
+            seedCollection(deckRepository, "seed/decks.json", Deck.class);
             seedCollection(questionRepository, "seed/questions.json", Question.class);
         };
     }

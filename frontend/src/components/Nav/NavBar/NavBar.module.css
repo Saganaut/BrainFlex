@@ -1,19 +1,112 @@
 .navContainer {
+  /* ─── Foreground ─────────────────────────── */
+  --color: var(--text-primary);
+
+  /* ─── Surface ────────────────────────────── */
+  --background-color: transparent;
+
+  /* ─── Stroke ─────────────────────────────── */
+  --border-color: var(--border-default);
+  --border-width: 1px;
+
+  /* ─── Geometry ───────────────────────────── */
+  --padding: var(--p-md);
+  --gap: var(--space-2);
+  --radius: var(--radius-md);
+
+  /* ─── Hover overrides ────────────────────── */
+  --color-hover: var(--action-hover);
+  --color-muted: oklch(from var(--color) l c h / 40%);
+  --background-color-hover: var(--background-color);
+  --border-color-hover: var(--action-hover);
+
+  /* ── Apply ─────────────────────────────────────── */
+  color: var(--color);
+  background-color: var(--background-color);
+  flex-flow: row wrap;
+  border: none;
+  border-radius: var(--radius);
+  transition:
+    color 300ms ease-in-out,
+    background-color 300ms ease-in-out,
+    border-color 300ms ease-in-out;
+
+  a {
+    transition:
+      color 300ms ease-in-out,
+      background-color 300ms ease-in-out,
+      border-color 300ms ease-in-out;
+    text-decoration: none;
+  }
+
+  &:has(:hover) a:not(:hover) {
+    color: var(--color-muted);
+  }
+
+  &:hover {
+    color: var(--color-hover);
+    background-color: var(--background-color-hover);
+    border-color: var(--border-color-hover);
+  }
+
+  /* ── Variants: redefine vars only ──────────────── */
+  &.error {
+    --color: var(--text-error);
+    --background-color: var(--bg-error);
+    --border-color: var(--border-error);
+    --color-hover: var(--text-error);
+  }
+
+  &.success {
+    --color: var(--text-success);
+    --background-color: var(--bg-success);
+    --border-color: var(--border-success);
+    --color-hover: var(--text-success);
+  }
+
+  &.warning {
+    --color: var(--text-warning);
+    --background-color: var(--bg-warning);
+    --border-color: var(--border-warning);
+  }
+
+  &.info {
+    --color: var(--text-info);
+    --background-color: var(--bg-info);
+    --border-color: var(--border-info);
+  }
+
+  /* ── Sizes: redefine geometry vars only ────────── */
+  &.sm {
+    --padding: var(--p-sm);
+    --radius: var(--radius-sm);
+  }
+
+  &.lg {
+    --padding: var(--p-lg);
+    --radius: var(--radius-lg);
+  }
+
+  /* ── States: usually no var work ───────────────── */
+  &.isDisabled,
+  &.isDisabled:hover {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
   display: flex;
   gap: 1rem;
   padding: 1rem;
   align-items: center;
-  flex-wrap: wrap;
-  border-bottom: 1px solid #ddd;
-}
 
-.userMenuWrapper {
-  position: relative;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  margin-left: auto;
+  .userMenuWrapper {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
 }
 
 .avatarButton {
@@ -84,3 +177,31 @@
   color: var(--text-error);
 }
 
+/* ─── Theme Toggle Icon (animated crossfade) ──────────────────────────── */
+
+.themeToggle {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+
+.themeToggle img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition:
+    opacity 300ms var(--ease-out),
+    transform 300ms var(--ease-out);
+}
+
+.themeIconActive {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+.themeIconHidden {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.5);
+  pointer-events: none;
+}

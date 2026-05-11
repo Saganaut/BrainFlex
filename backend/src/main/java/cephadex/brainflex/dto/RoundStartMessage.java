@@ -1,5 +1,5 @@
 /**
- * Broadcast to /topic/game/{roomCode}/round when a new round begins.
+ * Broadcast to /topic/showcase/{roomCode}/round when a new round begins.
  * Clients use this to display the question, start the countdown timer,
  * and enable the answer buttons.
  */

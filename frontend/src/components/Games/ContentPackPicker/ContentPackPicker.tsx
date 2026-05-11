@@ -5,8 +5,8 @@
  */
 import { Link } from "@tanstack/react-router";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
-import { useListPacksQuery, useListMyPacksQuery } from "../../../store/BrainFlexApi";
-import type { ContentPackDto } from "../../../store/BrainFlexApi";
+import { useListDecksQuery, useListMyDecksQuery } from "../../../store/BrainFlexApi";
+import type { DeckDto } from "../../../store/BrainFlexApi";
 import styles from "./ContentPackPicker.module.css";
 
 interface ContentPackPickerProps {
@@ -19,7 +19,7 @@ const PackButton = ({
   selected,
   onSelect,
 }: {
-  pack: ContentPackDto;
+  pack: DeckDto;
   selected: boolean;
   onSelect: (id: string) => void;
 }) => (
@@ -42,8 +42,8 @@ const ContentPackPicker = ({ selectedPackId, onSelect }: ContentPackPickerProps)
   const userState = useCurrentUser();
   const isRegistered = userState.state === "registered";
 
-  const { data: publicPacks = [], isLoading: loadingPublic, isError } = useListPacksQuery();
-  const { data: myPacks = [], isLoading: loadingMine } = useListMyPacksQuery(
+  const { data: publicPacks = [], isLoading: loadingPublic, isError } = useListDecksQuery();
+  const { data: myPacks = [], isLoading: loadingMine } = useListMyDecksQuery(
     undefined,
     { skip: !isRegistered },
   );

@@ -1,6 +1,6 @@
 /**
- * Lifecycle states for a GameSession.
- * Drives the server-side state machine in GameService and is broadcast
+ * Lifecycle states for a Showcase.
+ * Drives the server-side state machine in ShowcaseService and is broadcast
  * to clients so the UI can transition between lobby, play, and results screens.
  */
 package cephadex.brainflex.model.enums;

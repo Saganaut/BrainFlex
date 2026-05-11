@@ -1,0 +1,55 @@
+.createDashboard {
+  --color: var(--text-primary);
+
+  /* ─── Surface ────────────────────────────── */
+  --background-color: transparent;
+
+  /* ─── Stroke ─────────────────────────────── */
+  --border-color: var(--border-default);
+  --border-width: 1px;
+
+  /* ─── Geometry ───────────────────────────── */
+  --padding: var(--p-md);
+  --gap: var(--space-2);
+  --radius: var(--radius-md);
+
+  /* ─── Hover overrides ────────────────────── */
+  --color-hover: var(--action-hover);
+  --color-muted: oklch(from var(--color) l c h / 40%);
+  --background-color-hover: var(--background-color);
+  --border-color-hover: var(--action-hover);
+
+  max-width: var(--max-screen-width);
+  display: flex;
+  flex-direction: column;
+
+  .navbar {
+    display: flex;
+    border: 2px dashed yellow;
+    padding: var(--p-md);
+  }
+
+  .mainCanvas {
+    display: grid;
+    grid-template-columns: 1fr 4fr 1fr;
+    min-height: 80dvh;
+    border: 2px dashed green;
+
+    .slides {
+      display: flex;
+      border: 2px dashed red;
+      background-color: white;
+      height: 100%;
+    }
+
+    .rightSidebar {
+      display: flex;
+      border: 2px dashed yellow;
+    }
+
+    .leftSidebar {
+      display: flex;
+      border: 2px dashed yellow;
+    }
+  }
+}

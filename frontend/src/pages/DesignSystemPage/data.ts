@@ -31,7 +31,7 @@ export const questionCardData = {
     ],
     pointValue: 500,
     timeLimit: 30,
-    type: "multiple-choice",
+    type: "MULTIPLE_CHOICE" as const,
     imageUrl: "https://example.com/images/mount-doom.jpg",
   },
 };

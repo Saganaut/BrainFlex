@@ -64,3 +64,36 @@
   font-weight: 700;
   color: var(--text-success);
 }
+
+.statusDot {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  min-width: 1.5ch;
+  text-align: center;
+}
+
+.answered {
+  color: var(--green-600);
+}
+
+.pending {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.bootBtn {
+  margin-left: var(--space-1);
+}
+
+.offline {
+  opacity: 0.55;
+}
+
+.offlineLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+  text-transform: lowercase;
+}

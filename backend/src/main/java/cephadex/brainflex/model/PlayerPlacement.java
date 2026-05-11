@@ -1,6 +1,6 @@
 /**
  * Final ranked result for one player at the end of a game.
- * Embedded in GameResult so the full leaderboard snapshot is stored
+ * Embedded in ShowcaseResult so the full leaderboard snapshot is stored
  * alongside the session reference without extra lookups.
  */
 package cephadex.brainflex.model;

@@ -14,19 +14,19 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
-    getPack: build.query<GetPackApiResponse, GetPackApiArg>({
-      query: (queryArg) => ({ url: `/api/content-packs/${queryArg.id}` }),
+    getDeck: build.query<GetDeckApiResponse, GetDeckApiArg>({
+      query: (queryArg) => ({ url: `/api/decks/${queryArg.id}` }),
     }),
-    updatePack: build.mutation<UpdatePackApiResponse, UpdatePackApiArg>({
+    updateDeck: build.mutation<UpdateDeckApiResponse, UpdateDeckApiArg>({
       query: (queryArg) => ({
-        url: `/api/content-packs/${queryArg.id}`,
+        url: `/api/decks/${queryArg.id}`,
         method: "PUT",
-        body: queryArg.updateContentPackRequest,
+        body: queryArg.updateDeckRequest,
       }),
     }),
-    deletePack: build.mutation<DeletePackApiResponse, DeletePackApiArg>({
+    deleteDeck: build.mutation<DeleteDeckApiResponse, DeleteDeckApiArg>({
       query: (queryArg) => ({
-        url: `/api/content-packs/${queryArg.id}`,
+        url: `/api/decks/${queryArg.id}`,
         method: "DELETE",
       }),
     }),
@@ -35,7 +35,7 @@ const injectedRtkApi = api.injectEndpoints({
       UpdateQuestionApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/content-packs/${queryArg.id}/questions/${queryArg.questionId}`,
+        url: `/api/decks/${queryArg.id}/questions/${queryArg.questionId}`,
         method: "PUT",
         body: queryArg.upsertQuestionRequest,
       }),
@@ -45,7 +45,7 @@ const injectedRtkApi = api.injectEndpoints({
       DeleteQuestionApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/content-packs/${queryArg.id}/questions/${queryArg.questionId}`,
+        url: `/api/decks/${queryArg.id}/questions/${queryArg.questionId}`,
         method: "DELETE",
       }),
     }),
@@ -89,6 +89,25 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    createShowcase: build.mutation<
+      CreateShowcaseApiResponse,
+      CreateShowcaseApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/showcases`,
+        method: "POST",
+        body: queryArg.createShowcaseRequest,
+      }),
+    }),
+    joinByRoomCode: build.mutation<
+      JoinByRoomCodeApiResponse,
+      JoinByRoomCodeApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/join`,
+        method: "POST",
+      }),
+    }),
     createOrg: build.mutation<CreateOrgApiResponse, CreateOrgApiArg>({
       query: (queryArg) => ({
         url: `/api/organizations`,
@@ -103,40 +122,22 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.joinOrganizationRequest,
       }),
     }),
-    createGame: build.mutation<CreateGameApiResponse, CreateGameApiArg>({
-      query: (queryArg) => ({
-        url: `/api/games`,
-        method: "POST",
-        body: queryArg.createGameRequest,
-      }),
+    listDecks: build.query<ListDecksApiResponse, ListDecksApiArg>({
+      query: () => ({ url: `/api/decks` }),
     }),
-    joinByRoomCode: build.mutation<
-      JoinByRoomCodeApiResponse,
-      JoinByRoomCodeApiArg
-    >({
+    createDeck: build.mutation<CreateDeckApiResponse, CreateDeckApiArg>({
       query: (queryArg) => ({
-        url: `/api/games/${queryArg.roomCode}/join`,
+        url: `/api/decks`,
         method: "POST",
-      }),
-    }),
-    listPacks: build.query<ListPacksApiResponse, ListPacksApiArg>({
-      query: () => ({ url: `/api/content-packs` }),
-    }),
-    createPack: build.mutation<CreatePackApiResponse, CreatePackApiArg>({
-      query: (queryArg) => ({
-        url: `/api/content-packs`,
-        method: "POST",
-        body: queryArg.createContentPackRequest,
+        body: queryArg.createDeckRequest,
       }),
     }),
     listQuestions: build.query<ListQuestionsApiResponse, ListQuestionsApiArg>({
-      query: (queryArg) => ({
-        url: `/api/content-packs/${queryArg.id}/questions`,
-      }),
+      query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/questions` }),
     }),
     addQuestion: build.mutation<AddQuestionApiResponse, AddQuestionApiArg>({
       query: (queryArg) => ({
-        url: `/api/content-packs/${queryArg.id}/questions`,
+        url: `/api/decks/${queryArg.id}/questions`,
         method: "POST",
         body: queryArg.upsertQuestionRequest,
       }),
@@ -191,32 +192,44 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    getShowcase: build.query<GetShowcaseApiResponse, GetShowcaseApiArg>({
+      query: (queryArg) => ({ url: `/api/showcases/${queryArg.roomCode}` }),
+    }),
+    cancelShowcase: build.mutation<
+      CancelShowcaseApiResponse,
+      CancelShowcaseApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}`,
+        method: "DELETE",
+      }),
+    }),
+    getReview: build.query<GetReviewApiResponse, GetReviewApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/review`,
+      }),
+    }),
+    getResults: build.query<GetResultsApiResponse, GetResultsApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/results`,
+      }),
+    }),
+    getByInviteToken: build.query<
+      GetByInviteTokenApiResponse,
+      GetByInviteTokenApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/showcases/join/${queryArg.inviteToken}`,
+      }),
+    }),
     getMyOrg: build.query<GetMyOrgApiResponse, GetMyOrgApiArg>({
       query: () => ({ url: `/api/organizations/me` }),
     }),
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
     }),
-    getSession: build.query<GetSessionApiResponse, GetSessionApiArg>({
-      query: (queryArg) => ({ url: `/api/games/${queryArg.roomCode}` }),
-    }),
-    cancelGame: build.mutation<CancelGameApiResponse, CancelGameApiArg>({
-      query: (queryArg) => ({
-        url: `/api/games/${queryArg.roomCode}`,
-        method: "DELETE",
-      }),
-    }),
-    getResults: build.query<GetResultsApiResponse, GetResultsApiArg>({
-      query: (queryArg) => ({ url: `/api/games/${queryArg.roomCode}/results` }),
-    }),
-    getByInviteToken: build.query<
-      GetByInviteTokenApiResponse,
-      GetByInviteTokenApiArg
-    >({
-      query: (queryArg) => ({ url: `/api/games/join/${queryArg.inviteToken}` }),
-    }),
-    listMyPacks: build.query<ListMyPacksApiResponse, ListMyPacksApiArg>({
-      query: () => ({ url: `/api/content-packs/mine` }),
+    listMyDecks: build.query<ListMyDecksApiResponse, ListMyDecksApiArg>({
+      query: () => ({ url: `/api/decks/mine` }),
     }),
     getCurrentUser: build.query<
       GetCurrentUserApiResponse,
@@ -249,17 +262,17 @@ export type DeleteThemeApiResponse = unknown;
 export type DeleteThemeApiArg = {
   id: string;
 };
-export type GetPackApiResponse = /** status 200 OK */ ContentPackDto;
-export type GetPackApiArg = {
+export type GetDeckApiResponse = /** status 200 OK */ DeckDto;
+export type GetDeckApiArg = {
   id: string;
 };
-export type UpdatePackApiResponse = /** status 200 OK */ ContentPackDto;
-export type UpdatePackApiArg = {
+export type UpdateDeckApiResponse = /** status 200 OK */ DeckDto;
+export type UpdateDeckApiArg = {
   id: string;
-  updateContentPackRequest: UpdateContentPackRequest;
+  updateDeckRequest: UpdateDeckRequest;
 };
-export type DeletePackApiResponse = unknown;
-export type DeletePackApiArg = {
+export type DeleteDeckApiResponse = unknown;
+export type DeleteDeckApiArg = {
   id: string;
 };
 export type UpdateQuestionApiResponse = /** status 200 OK */ QuestionEditorDto;
@@ -301,6 +314,14 @@ export type UploadBackgroundApiArg = {
     image: Blob;
   };
 };
+export type CreateShowcaseApiResponse = /** status 200 OK */ ShowcaseDto;
+export type CreateShowcaseApiArg = {
+  createShowcaseRequest: CreateShowcaseRequest;
+};
+export type JoinByRoomCodeApiResponse = /** status 200 OK */ ShowcaseDto;
+export type JoinByRoomCodeApiArg = {
+  roomCode: string;
+};
 export type CreateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type CreateOrgApiArg = {
   createOrganizationRequest: CreateOrganizationRequest;
@@ -309,19 +330,11 @@ export type JoinOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type JoinOrgApiArg = {
   joinOrganizationRequest: JoinOrganizationRequest;
 };
-export type CreateGameApiResponse = /** status 200 OK */ GameSessionDto;
-export type CreateGameApiArg = {
-  createGameRequest: CreateGameRequest;
-};
-export type JoinByRoomCodeApiResponse = /** status 200 OK */ GameSessionDto;
-export type JoinByRoomCodeApiArg = {
-  roomCode: string;
-};
-export type ListPacksApiResponse = /** status 200 OK */ ContentPackDto[];
-export type ListPacksApiArg = void;
-export type CreatePackApiResponse = /** status 200 OK */ ContentPackDto;
-export type CreatePackApiArg = {
-  createContentPackRequest: CreateContentPackRequest;
+export type ListDecksApiResponse = /** status 200 OK */ DeckDto[];
+export type ListDecksApiArg = void;
+export type CreateDeckApiResponse = /** status 200 OK */ DeckDto;
+export type CreateDeckApiArg = {
+  createDeckRequest: CreateDeckRequest;
 };
 export type ListQuestionsApiResponse = /** status 200 OK */ QuestionEditorDto[];
 export type ListQuestionsApiArg = {
@@ -359,28 +372,32 @@ export type CheckUsernameApiResponse = /** status 200 OK */ {
 export type CheckUsernameApiArg = {
   username: string;
 };
+export type GetShowcaseApiResponse = /** status 200 OK */ ShowcaseDto;
+export type GetShowcaseApiArg = {
+  roomCode: string;
+};
+export type CancelShowcaseApiResponse = unknown;
+export type CancelShowcaseApiArg = {
+  roomCode: string;
+};
+export type GetReviewApiResponse = /** status 200 OK */ ShowcaseReviewDto;
+export type GetReviewApiArg = {
+  roomCode: string;
+};
+export type GetResultsApiResponse = /** status 200 OK */ ShowcaseResult;
+export type GetResultsApiArg = {
+  roomCode: string;
+};
+export type GetByInviteTokenApiResponse = /** status 200 OK */ ShowcaseDto;
+export type GetByInviteTokenApiArg = {
+  inviteToken: string;
+};
 export type GetMyOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type GetMyOrgApiArg = void;
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
-export type GetSessionApiResponse = /** status 200 OK */ GameSessionDto;
-export type GetSessionApiArg = {
-  roomCode: string;
-};
-export type CancelGameApiResponse = unknown;
-export type CancelGameApiArg = {
-  roomCode: string;
-};
-export type GetResultsApiResponse = /** status 200 OK */ GameResult;
-export type GetResultsApiArg = {
-  roomCode: string;
-};
-export type GetByInviteTokenApiResponse = /** status 200 OK */ GameSessionDto;
-export type GetByInviteTokenApiArg = {
-  inviteToken: string;
-};
-export type ListMyPacksApiResponse = /** status 200 OK */ ContentPackDto[];
-export type ListMyPacksApiArg = void;
+export type ListMyDecksApiResponse = /** status 200 OK */ DeckDto[];
+export type ListMyDecksApiArg = void;
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -409,7 +426,7 @@ export type UpdateThemeRequest = {
   mode?: string;
   organizationId?: string;
 };
-export type ContentPackDto = {
+export type DeckDto = {
   id?: string;
   name?: string;
   description?: string;
@@ -418,7 +435,7 @@ export type ContentPackDto = {
   isSystem?: boolean;
   createdAt?: string;
 };
-export type UpdateContentPackRequest = {
+export type UpdateDeckRequest = {
   name?: string;
   description?: string;
   category?: string;
@@ -428,6 +445,7 @@ export type QuestionEditorDto = {
   questionText?: string;
   options?: string[];
   correctAnswer?: number;
+  correctAnswerText?: string;
   pointValue?: number;
   timeLimit?: number;
   type?: "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
@@ -435,9 +453,11 @@ export type QuestionEditorDto = {
   imageUrl?: string;
 };
 export type UpsertQuestionRequest = {
+  type?: "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
   questionText: string;
-  options: string[];
+  options?: string[];
   correctAnswer?: number;
+  correctAnswerText?: string;
   pointValue?: number;
   timeLimit?: number;
   difficulty?: "EASY" | "MEDIUM" | "HARD";
@@ -470,6 +490,52 @@ export type CreateThemeRequest = {
   mode?: string;
   organizationId?: string;
 };
+export type ShowcaseSettings = {
+  maxPlayers?: number;
+  totalRounds?: number;
+  timePerQuestion?: number;
+  speedBonus?: boolean;
+  allowGuests?: boolean;
+  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+  noTimer?: boolean;
+  allowLateJoin?: boolean;
+  showScoresImmediately?: boolean;
+  scoringEnabled?: boolean;
+};
+export type ShowcasePlayerDto = {
+  userId?: string;
+  userName?: string;
+  pictureUrl?: string;
+  isGuest?: boolean;
+  score?: number;
+};
+export type ShowcaseDto = {
+  id?: string;
+  roomCode?: string;
+  inviteToken?: string;
+  type?: "TRIVIA" | "IMAGE" | "WORD";
+  status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
+  hostUserId?: string;
+  deckId?: string;
+  settings?: ShowcaseSettings;
+  players?: ShowcasePlayerDto[];
+  currentRound?: number;
+  createdAt?: string;
+  startedAt?: string;
+};
+export type CreateShowcaseRequest = {
+  deckId: string;
+  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+  totalRounds?: number;
+  timePerQuestion?: number;
+  speedBonus?: boolean;
+  allowGuests?: boolean;
+  maxPlayers?: number;
+  noTimer?: boolean;
+  allowLateJoin?: boolean;
+  showScoresImmediately?: boolean;
+  scoringEnabled?: boolean;
+};
 export type OrganizationResponse = {
   id?: string;
   name?: string;
@@ -482,45 +548,7 @@ export type CreateOrganizationRequest = {
 export type JoinOrganizationRequest = {
   organizationId?: string;
 };
-export type GameSettings = {
-  maxPlayers?: number;
-  totalRounds?: number;
-  timePerQuestion?: number;
-  speedBonus?: boolean;
-  allowGuests?: boolean;
-  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
-};
-export type SessionPlayerDto = {
-  userId?: string;
-  userName?: string;
-  pictureUrl?: string;
-  isGuest?: boolean;
-  score?: number;
-};
-export type GameSessionDto = {
-  id?: string;
-  roomCode?: string;
-  inviteToken?: string;
-  type?: "TRIVIA" | "IMAGE" | "WORD";
-  status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
-  hostUserId?: string;
-  contentPackId?: string;
-  settings?: GameSettings;
-  players?: SessionPlayerDto[];
-  currentRound?: number;
-  createdAt?: string;
-  startedAt?: string;
-};
-export type CreateGameRequest = {
-  contentPackId: string;
-  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
-  totalRounds?: number;
-  timePerQuestion?: number;
-  speedBonus?: boolean;
-  allowGuests?: boolean;
-  maxPlayers?: number;
-};
-export type CreateContentPackRequest = {
+export type CreateDeckRequest = {
   name: string;
   description?: string;
   category?: string;
@@ -545,13 +573,6 @@ export type UpdateProfileRequest = {
   organizationId?: string;
   activeThemeId?: string;
 };
-export type HealthCheckResponse = {
-  status?: string;
-  message?: string;
-  timestamp?: string;
-  database?: string;
-  redis?: string;
-};
 export type PlayerPlacement = {
   userId?: string;
   userName?: string;
@@ -561,20 +582,64 @@ export type PlayerPlacement = {
   totalQuestions?: number;
   guest?: boolean;
 };
-export type GameResult = {
+export type TextSubmission = {
+  text?: string;
+  count?: number;
+  isCorrect?: boolean;
+};
+export type PlayerRoundDetail = {
+  userId?: string;
+  userName?: string;
+  selectedOption?: number;
+  textAnswer?: string;
+  wasCorrect?: boolean;
+  pointsAwarded?: number;
+};
+export type RoundReview = {
+  round?: number;
+  questionId?: string;
+  questionType?: "MULTIPLE_CHOICE" | "IMAGE_CHOICE" | "TEXT_INPUT";
+  questionText?: string;
+  imageUrl?: string;
+  correctOptionIndex?: number;
+  correctAnswerText?: string;
+  options?: string[];
+  mcqDistribution?: {
+    [key: string]: number;
+  };
+  textSubmissions?: TextSubmission[];
+  timedOutCount?: number;
+  playerAnswers?: PlayerRoundDetail[];
+};
+export type ShowcaseReviewDto = {
+  showcaseId?: string;
+  roomCode?: string;
+  endedAt?: string;
+  scoringEnabled?: boolean;
+  placements?: PlayerPlacement[];
+  rounds?: RoundReview[];
+};
+export type ShowcaseResult = {
   id?: string;
-  gameSessionId?: string;
+  showcaseId?: string;
   placements?: PlayerPlacement[];
   endedAt?: string;
+};
+export type HealthCheckResponse = {
+  status?: string;
+  message?: string;
+  timestamp?: string;
+  database?: string;
+  redis?: string;
 };
 export type UserDto = GuestUser | RegisteredUser;
 export const {
   useUpdateThemeMutation,
   useDeleteThemeMutation,
-  useGetPackQuery,
-  useLazyGetPackQuery,
-  useUpdatePackMutation,
-  useDeletePackMutation,
+  useGetDeckQuery,
+  useLazyGetDeckQuery,
+  useUpdateDeckMutation,
+  useDeleteDeckMutation,
   useUpdateQuestionMutation,
   useDeleteQuestionMutation,
   useUploadProfileImageMutation,
@@ -584,13 +649,13 @@ export const {
   useCreateThemeMutation,
   useUploadLogoMutation,
   useUploadBackgroundMutation,
+  useCreateShowcaseMutation,
+  useJoinByRoomCodeMutation,
   useCreateOrgMutation,
   useJoinOrgMutation,
-  useCreateGameMutation,
-  useJoinByRoomCodeMutation,
-  useListPacksQuery,
-  useLazyListPacksQuery,
-  useCreatePackMutation,
+  useListDecksQuery,
+  useLazyListDecksQuery,
+  useCreateDeckMutation,
   useListQuestionsQuery,
   useLazyListQuestionsQuery,
   useAddQuestionMutation,
@@ -603,19 +668,21 @@ export const {
   useLazyGetLeaderboardQuery,
   useCheckUsernameQuery,
   useLazyCheckUsernameQuery,
-  useGetMyOrgQuery,
-  useLazyGetMyOrgQuery,
-  useGetHealthQuery,
-  useLazyGetHealthQuery,
-  useGetSessionQuery,
-  useLazyGetSessionQuery,
-  useCancelGameMutation,
+  useGetShowcaseQuery,
+  useLazyGetShowcaseQuery,
+  useCancelShowcaseMutation,
+  useGetReviewQuery,
+  useLazyGetReviewQuery,
   useGetResultsQuery,
   useLazyGetResultsQuery,
   useGetByInviteTokenQuery,
   useLazyGetByInviteTokenQuery,
-  useListMyPacksQuery,
-  useLazyListMyPacksQuery,
+  useGetMyOrgQuery,
+  useLazyGetMyOrgQuery,
+  useGetHealthQuery,
+  useLazyGetHealthQuery,
+  useListMyDecksQuery,
+  useLazyListMyDecksQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

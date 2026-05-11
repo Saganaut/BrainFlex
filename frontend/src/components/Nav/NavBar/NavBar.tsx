@@ -1,8 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
-
 import styles from "./NavBar.module.css";
 import { UserMenu } from "./UserMenu";
+import { CephadexLogo } from "@/components/Graphic/CephadexLogo";
 
 export function NavBar() {
   const userState = useCurrentUser();
@@ -12,6 +12,11 @@ export function NavBar() {
   }
   return (
     <div className={styles.navContainer}>
+      <div className={styles.homeMenuWrapper}>
+        <Link to='/' viewTransition>
+          <CephadexLogo />
+        </Link>
+      </div>
       <div className={styles.userMenuWrapper}>
         <Link to='/design-system' viewTransition>
           Design system

@@ -28,8 +28,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureMessageBroker(MessageBrokerRegistry config) {
         // Client-to-server messages are routed to @MessageMapping methods
         config.setApplicationDestinationPrefixes("/app");
-        // Server-to-client broadcasts go through the in-memory broker on /topic
-        // Replace with a Redis-backed broker here when scaling horizontally
-        config.enableSimpleBroker("/topic");
+        // /topic is for broadcasts; /queue is for per-user error/info messages.
+        // Spring auto-prefixes per-user destinations with /user, so clients subscribe
+        // to /user/queue/errors and the server sends via convertAndSendToUser(...).
+        // Replace with a Redis-backed broker here when scaling horizontally.
+        config.enableSimpleBroker("/topic", "/queue");
     }
 }

@@ -14,11 +14,11 @@ import cephadex.brainflex.model.enums.Difficulty;
 
 public interface QuestionRepository extends MongoRepository<Question, String> {
 
-    List<Question> findByContentPackId(String contentPackId);
+    List<Question> findByDeckId(String deckId);
 
-    List<Question> findByContentPackIdAndDifficulty(String contentPackId, Difficulty difficulty);
+    List<Question> findByDeckIdAndDifficulty(String deckId, Difficulty difficulty);
 
-    int countByContentPackId(String contentPackId);
+    int countByDeckId(String deckId);
 
-    void deleteByContentPackId(String contentPackId);
+    void deleteByDeckId(String deckId);
 }

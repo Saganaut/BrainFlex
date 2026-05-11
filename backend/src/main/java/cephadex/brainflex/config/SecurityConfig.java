@@ -73,13 +73,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/me", "/api/auth/guest").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/games/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/content-packs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/showcases/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/decks/**").permitAll()
                         // Guests and registered users can join/leave/cancel
-                        .requestMatchers(HttpMethod.POST, "/api/games/*/join").hasAnyRole("GUEST", "USER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasAnyRole("GUEST", "USER")
+                        .requestMatchers(HttpMethod.POST, "/api/showcases/*/join").hasAnyRole("GUEST", "USER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/showcases/**").hasAnyRole("GUEST", "USER")
                         // Creating games is registered-only
-                        .requestMatchers(HttpMethod.POST, "/api/games").hasRole("USER")
+                        .requestMatchers(HttpMethod.POST, "/api/showcases").hasRole("USER")
                         // Themes, organizations, and profile management are registered-only
                         .requestMatchers("/api/themes/**").hasRole("USER")
                         .requestMatchers("/api/organizations/**").hasRole("USER")

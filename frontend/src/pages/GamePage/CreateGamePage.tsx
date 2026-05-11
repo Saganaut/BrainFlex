@@ -6,27 +6,36 @@ import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import {
-  useCreateGameMutation,
-  useListPacksQuery,
-  useListMyPacksQuery,
+  useCreateShowcaseMutation,
+  useListDecksQuery,
+  useListMyDecksQuery,
 } from "../../store/BrainFlexApi";
-import type { ContentPackDto } from "../../store/BrainFlexApi";
+import type { DeckDto } from "../../store/BrainFlexApi";
 import { ActionCard } from "@/components/Common/ActionCard/ActionCard";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input";
 import { Checkbox } from "@/components/Common/Input/Checkbox";
+import { RadioGroup } from "@/components/Common/Input/RadioGroup";
+import { extractErrorMessage } from "../../utils/utils";
 import styles from "./Game.module.css";
 
 type Mode = "template" | "custom" | "auto";
+type GameMode = "SIMULTANEOUS" | "TURN_BASED";
 
 const DEFAULT_ROUNDS = 10;
 const DEFAULT_TIME = 15;
 const DEFAULT_SPEED_BONUS = true;
+const DEFAULT_GAME_MODE: GameMode = "SIMULTANEOUS";
+const DEFAULT_MAX_PLAYERS = 8;
+const DEFAULT_ALLOW_GUESTS = true;
+const DEFAULT_NO_TIMER = false;
+const DEFAULT_ALLOW_LATE_JOIN = false;
+const DEFAULT_SHOW_SCORES_IMMEDIATELY = true;
 
 // ─── Pack grid ────────────────────────────────────────────────────────────────
 
 interface PackGridProps {
-  packs: ContentPackDto[];
+  packs: DeckDto[];
   selectedPackId: string | null;
   onSelect: (id: string) => void;
   emptyMessage: string;
@@ -114,55 +123,150 @@ interface SettingsState {
   totalRounds: number;
   timePerQuestion: number;
   speedBonus: boolean;
+  gameMode: GameMode;
+  maxPlayers: number;
+  allowGuests: boolean;
+  noTimer: boolean;
+  allowLateJoin: boolean;
+  showScoresImmediately: boolean;
 }
+
+const DEFAULT_SETTINGS: SettingsState = {
+  totalRounds: DEFAULT_ROUNDS,
+  timePerQuestion: DEFAULT_TIME,
+  speedBonus: DEFAULT_SPEED_BONUS,
+  gameMode: DEFAULT_GAME_MODE,
+  maxPlayers: DEFAULT_MAX_PLAYERS,
+  allowGuests: DEFAULT_ALLOW_GUESTS,
+  noTimer: DEFAULT_NO_TIMER,
+  allowLateJoin: DEFAULT_ALLOW_LATE_JOIN,
+  showScoresImmediately: DEFAULT_SHOW_SCORES_IMMEDIATELY,
+};
 
 interface SettingsFormProps {
   settings: SettingsState;
   onChange: (next: SettingsState) => void;
 }
 
-const SettingsForm = ({ settings, onChange }: SettingsFormProps) => (
-  <div className={styles.settings}>
-    <label className={styles.setting}>
-      <span>Rounds</span>
-      <Input
-        type='number'
-        min={3}
-        max={30}
-        value={settings.totalRounds}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onChange({ ...settings, totalRounds: e.target.valueAsNumber });
-        }}
-        className={styles.numberInput}
-      />
-    </label>
-    <label className={styles.setting}>
-      <span>Seconds per question</span>
-      <Input
-        type='number'
-        min={5}
-        max={60}
-        value={settings.timePerQuestion}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onChange({
-            ...settings,
-            timePerQuestion: Number(e.target.value),
-          });
-        }}
-        className={styles.numberInput}
-      />
-    </label>
-    <label className={styles.setting}>
-      <span>Speed bonus</span>
-      <Checkbox
-        checked={settings.speedBonus}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          onChange({ ...settings, speedBonus: e.target.checked });
-        }}
-      />
-    </label>
-  </div>
-);
+const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
+  const patch = (next: Partial<SettingsState>) => {
+    onChange({ ...settings, ...next });
+  };
+
+  return (
+    <div className={styles.settings}>
+      <label className={styles.setting}>
+        <span>Rounds</span>
+        <Input
+          type='number'
+          min={3}
+          max={30}
+          value={settings.totalRounds}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            patch({ totalRounds: e.target.valueAsNumber });
+          }}
+          className={styles.numberInput}
+        />
+      </label>
+      <label className={styles.setting}>
+        <span>Seconds per question</span>
+        <Input
+          type='number'
+          min={5}
+          max={60}
+          value={settings.timePerQuestion}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            patch({ timePerQuestion: Number(e.target.value) });
+          }}
+          className={styles.numberInput}
+          disabled={settings.noTimer}
+        />
+      </label>
+      <label className={styles.setting}>
+        <span>Speed bonus</span>
+        <Checkbox
+          checked={settings.speedBonus}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            patch({ speedBonus: e.target.checked });
+          }}
+          disabled={settings.noTimer}
+        />
+      </label>
+
+      <details className={styles.moreOptions}>
+        <summary className={styles.moreOptionsSummary}>More options</summary>
+        <div className={styles.moreOptionsBody}>
+          <RadioGroup
+            name='gameMode'
+            legend='Game mode'
+            options={[
+              { value: "SIMULTANEOUS", label: "Simultaneous — everyone answers at once" },
+              { value: "TURN_BASED", label: "Turn-based — host advances each round" },
+            ]}
+            value={settings.gameMode}
+            onChange={(value) => {
+              patch({ gameMode: value as GameMode });
+            }}
+          />
+
+          <label className={styles.setting}>
+            <span>Max players</span>
+            <Input
+              type='number'
+              min={2}
+              max={20}
+              value={settings.maxPlayers}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ maxPlayers: e.target.valueAsNumber });
+              }}
+              className={styles.numberInput}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Allow guests (no sign-in required)</span>
+            <Checkbox
+              checked={settings.allowGuests}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ allowGuests: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>No timer — round ends when everyone has answered</span>
+            <Checkbox
+              checked={settings.noTimer}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ noTimer: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Allow players to join after the game starts</span>
+            <Checkbox
+              checked={settings.allowLateJoin}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ allowLateJoin: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Show scores during the game</span>
+            <Checkbox
+              checked={settings.showScoresImmediately}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ showScoresImmediately: e.target.checked });
+              }}
+            />
+          </label>
+        </div>
+      </details>
+    </div>
+  );
+};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -173,21 +277,17 @@ const CreateGamePage = () => {
 
   const [mode, setMode] = useState<Mode>("template");
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
-  const [settings, setSettings] = useState<SettingsState>({
-    totalRounds: DEFAULT_ROUNDS,
-    timePerQuestion: DEFAULT_TIME,
-    speedBonus: DEFAULT_SPEED_BONUS,
-  });
+  const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
 
-  const { data: allPacks = [], isLoading: loadingPublic } = useListPacksQuery();
-  const { data: myPacks = [], isLoading: loadingMine } = useListMyPacksQuery(
+  const { data: allPacks = [], isLoading: loadingPublic } = useListDecksQuery();
+  const { data: myPacks = [], isLoading: loadingMine } = useListMyDecksQuery(
     undefined,
     { skip: !isRegistered },
   );
   const systemPacks = allPacks.filter((p) => p.isSystem);
 
   const [createGame, { isLoading: creating, error: createError }] =
-    useCreateGameMutation();
+    useCreateShowcaseMutation();
 
   if (userState.state !== "loading" && !isRegistered) {
     return (
@@ -209,12 +309,17 @@ const CreateGamePage = () => {
     const cfg = { ...settings, ...overrides };
     try {
       const session = await createGame({
-        createGameRequest: {
-          contentPackId: packId,
+        createShowcaseRequest: {
+          deckId: packId,
           totalRounds: cfg.totalRounds,
           timePerQuestion: cfg.timePerQuestion,
           speedBonus: cfg.speedBonus,
-          gameMode: "SIMULTANEOUS",
+          gameMode: cfg.gameMode,
+          maxPlayers: cfg.maxPlayers,
+          allowGuests: cfg.allowGuests,
+          noTimer: cfg.noTimer,
+          allowLateJoin: cfg.allowLateJoin,
+          showScoresImmediately: cfg.showScoresImmediately,
         },
       }).unwrap();
       if (session.roomCode) {
@@ -230,11 +335,7 @@ const CreateGamePage = () => {
 
   const handleTemplatePick = (packId: string) => {
     setSelectedPackId(packId);
-    void startGame(packId, {
-      totalRounds: DEFAULT_ROUNDS,
-      timePerQuestion: DEFAULT_TIME,
-      speedBonus: DEFAULT_SPEED_BONUS,
-    });
+    void startGame(packId, DEFAULT_SETTINGS);
   };
 
   const handleCustomSubmit = (e: React.SubmitEvent) => {
@@ -253,6 +354,11 @@ const CreateGamePage = () => {
       {mode === "template" && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Pick a template — one click to play</h2>
+          {createError && (
+            <p className={styles.errorMsg} role='alert'>
+              {extractErrorMessage(createError, "Failed to create game.")}
+            </p>
+          )}
           {loadingPublic ? (
             <p className={styles.authMsg}>Loading templates…</p>
           ) : (
@@ -264,11 +370,6 @@ const CreateGamePage = () => {
             />
           )}
           {creating && <p className={styles.authMsg}>Creating game…</p>}
-          {createError && (
-            <p className={styles.errorMsg}>
-              Failed to create game. Please try again.
-            </p>
-          )}
           <p className={styles.helperText}>
             Want different settings?{" "}
             <button
@@ -329,8 +430,8 @@ const CreateGamePage = () => {
           </section>
 
           {createError && (
-            <p className={styles.errorMsg}>
-              Failed to create game. Please try again.
+            <p className={styles.errorMsg} role='alert'>
+              {extractErrorMessage(createError, "Failed to create game.")}
             </p>
           )}
 

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -33,6 +34,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableMethodSecurity
+@Profile("!test")
 public class SecurityConfig {
 
     private final UserRepository userRepository;

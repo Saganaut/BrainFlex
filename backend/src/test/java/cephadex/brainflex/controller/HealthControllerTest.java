@@ -16,7 +16,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.mockito.Mockito.mock;
+
 import com.mongodb.MongoException;
+import com.mongodb.client.MongoDatabase;
+
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
+
+import cephadex.brainflex.repository.ContentPackRepository;
+import cephadex.brainflex.repository.GameResultRepository;
+import cephadex.brainflex.repository.GameSessionRepository;
+import cephadex.brainflex.repository.OrganizationRepository;
+import cephadex.brainflex.repository.QuestionRepository;
+import cephadex.brainflex.repository.ThemeRepository;
+import cephadex.brainflex.repository.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -27,6 +40,7 @@ class HealthControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    // HealthController's direct dependencies — mocked to simulate up/down scenarios
     @MockitoBean
     private MongoTemplate mongoTemplate;
 
@@ -36,9 +50,38 @@ class HealthControllerTest {
     @MockitoBean
     private RedisConnection redisConnection;
 
+    // Mocking MongoTemplate replaces the real bean, which would cause Spring Data
+    // repositories to NPE during initialization (getConverter() returns null on a
+    // Mockito mock). Mocking all repos here prevents that.
+    @MockitoBean
+    private UserRepository userRepository;
+
+    @MockitoBean
+    private ContentPackRepository contentPackRepository;
+
+    @MockitoBean
+    private GameSessionRepository gameSessionRepository;
+
+    @MockitoBean
+    private GameResultRepository gameResultRepository;
+
+    @MockitoBean
+    private OrganizationRepository organizationRepository;
+
+    @MockitoBean
+    private ThemeRepository themeRepository;
+
+    @MockitoBean
+    private QuestionRepository questionRepository;
+
+    // GridFsTemplate auto-configuration also reads MongoConverter from the
+    // mocked MongoTemplate (getConverter() → null), so mock it here too.
+    @MockitoBean
+    private GridFsTemplate gridFsTemplate;
+
     @Test
     void getHealth_WhenAllServicesUp_ReturnsUp() throws Exception {
-        when(mongoTemplate.getDb()).thenReturn(null); // Mock to avoid exception
+        when(mongoTemplate.getDb()).thenReturn(mock(MongoDatabase.class));
         when(redisConnectionFactory.getConnection()).thenReturn(redisConnection);
         when(redisConnection.ping()).thenReturn("PONG");
 
@@ -64,7 +107,7 @@ class HealthControllerTest {
 
     @Test
     void getHealth_WhenRedisDown_ReturnsDegraded() throws Exception {
-        when(mongoTemplate.getDb()).thenReturn(null);
+        when(mongoTemplate.getDb()).thenReturn(mock(MongoDatabase.class));
         when(redisConnectionFactory.getConnection()).thenThrow(new RuntimeException("Connection failed"));
 
         mockMvc.perform(get("/api/health"))

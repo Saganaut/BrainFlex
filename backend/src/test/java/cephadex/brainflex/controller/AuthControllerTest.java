@@ -3,7 +3,9 @@ package cephadex.brainflex.controller;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -94,7 +96,6 @@ class AuthControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "google123")
     void register_WhenAuthenticated_RegistersUser() throws Exception {
         User user = new User();
         user.setId("1");
@@ -105,9 +106,10 @@ class AuthControllerTest {
 
         RegisterRequest request = new RegisterRequest("testuser", true);
 
-        when(userService.register(null, request)).thenReturn(user); // Mock OAuth2User as null for simplicity
+        when(userService.register(any(), any())).thenReturn(user);
 
         mockMvc.perform(post("/api/auth/register")
+                .with(oauth2Login())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())

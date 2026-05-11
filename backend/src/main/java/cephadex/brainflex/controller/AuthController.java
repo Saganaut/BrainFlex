@@ -65,8 +65,9 @@ public class AuthController {
             }
         }
 
-        // Unauthenticated visitor — no session
-        return ResponseEntity.noContent().build();
+        // Unauthenticated visitor — return an anonymous guest stub so the frontend
+        // always receives a UserDTO shape from this endpoint.
+        return ResponseEntity.ok(new UserDTO.GuestUser("0", "Guest", true, null, null));
     }
 
     @PostMapping("/register")

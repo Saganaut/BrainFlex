@@ -312,12 +312,20 @@ Controller tests added:
 - `HealthControllerTest.java` - Tests `/api/health` endpoint with mocked MongoDB and Redis connections
 - `UserControllerTest.java` - Tests leaderboard, user profile, and username check endpoints
 - `AuthControllerTest.java` - Tests auth endpoints including guest login and registration
+- `GameControllerTest.java` - Tests game session create, join, cancel, and results endpoints
 
 Service tests added:
 
 - `UserServiceTest.java` - Tests user creation, registration, and username validation logic
+- `GameServiceTest.java` - Tests game session lifecycle logic
 
-When adding backend tests, use the test starters already present in `pom.xml` — no new dependencies needed for standard Spring test slices. Use `@MockitoBean` for mocking in Spring Boot 4 tests. Tests use the "test" profile with `TestSecurityConfig` that permits all requests to avoid authentication redirects.
+When adding backend tests, use the test starters already present in `pom.xml` — no new dependencies needed for standard Spring test slices. Use `@MockitoBean` for mocking in Spring Boot 4 tests. Tests use the "test" profile with `TestSecurityConfig` that permits all requests.
+
+**Test environment variables**: The app normally loads secrets from `dev.env` at runtime via `DotenvEnvironmentPostProcessor`, but that file is not present during test execution. All required values are instead provided in `src/test/resources/application-test.properties` with test-safe defaults (real local Docker credentials for Mongo/Redis, dummy values for Google OAuth and S3). **Do not add real OAuth or S3 credentials to that file** — dummy values are sufficient because tests do not perform real OAuth or S3 operations.
+
+**Security config in tests**: `SecurityConfig` is annotated `@Profile("!test")` so it is excluded during test runs. Only `TestSecurityConfig` is active, which permits all requests and provides the `SecurityContextRepository` bean that `AuthController` requires. If you add new beans to `SecurityConfig` that other components depend on, you must also provide them in `TestSecurityConfig`.
+
+**Mocking `MongoTemplate` in `@SpringBootTest`**: If a test uses `@MockitoBean MongoTemplate`, all Spring Data repositories and `GridFsTemplate` must also be mocked (`@MockitoBean`) — otherwise their initializers call `mongoTemplate.getConverter()` which returns null on a Mockito mock and causes NPE. See `HealthControllerTest` for the full list of required mocks. Additionally, `@MockitoBean RedisConnectionFactory` must be paired with `spring.autoconfigure.exclude=...DataRedisReactiveAutoConfiguration` in `application-test.properties`, because the mock only implements the non-reactive interface but Spring Boot's reactive auto-config expects the same bean to satisfy `ReactiveRedisConnectionFactory`.
 
 **Never change a test to make it pass without addressing the underlying issue. Always fix the code or the test to ensure correctness.**
 
@@ -386,7 +394,8 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 | `backend/.../controller/ThemeController.java`         | REST endpoints at `/api/themes`                                   |
 | `backend/.../controller/OrganizationController.java`  | REST endpoints at `/api/organizations`                            |
 | `compose.yaml`                                        | Docker services (MongoDB, Redis)                                  |
-| `.env`                                                | All secrets and connection strings                                |
+| `dev.env`                                             | Local dev secrets (not committed to git — copy from `example.env`) |
+| `backend/src/test/resources/application-test.properties` | Test-profile env var overrides (test-safe values, no real secrets) |
 
 ---
 
@@ -396,3 +405,5 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 - `spring.docker.compose.enabled=false` — Spring does **not** auto-start Docker; run `docker compose up -d` yourself.
 - The DataSeeder only runs when the `users` collection is empty. To reseed, drop the collection.
 - WebSocket support is included as a dependency but no WebSocket endpoints are implemented yet.
+- There is no `.env` file in the repo. For local development, copy `example.env` to `dev.env` and fill in real credentials. `DotenvEnvironmentPostProcessor` loads `dev.env` (or `.env`) at runtime but silently skips if neither exists — tests do not rely on it at all.
+- Backend tests require Docker to be running (`docker compose up -d`) because `@SpringBootTest` controller tests connect to the real local MongoDB and Redis.

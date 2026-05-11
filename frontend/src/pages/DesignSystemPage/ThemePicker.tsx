@@ -29,8 +29,12 @@ const ThemePicker = () => {
               key={preset.label}
               size='sm'
               onClick={() => {
-                setHuePrimary(preset.huePrimary);
-                setHueAccent(preset.hueAccent);
+                if (preset.label === "Brand") {
+                  resetHues();
+                } else {
+                  setHuePrimary(preset.huePrimary);
+                  setHueAccent(preset.hueAccent);
+                }
               }}>
               <span
                 className={styles.presetDot}

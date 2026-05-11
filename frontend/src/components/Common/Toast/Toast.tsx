@@ -25,14 +25,16 @@ const Toast = ({ id, message, variant, duration, onDismiss }: ToastProps) => {
       aria-live='polite'
       aria-atomic='true'>
       <span className={styles.message}>{message}</span>
-      <IconBtn
-        type='close'
-        size='xs'
-        className={styles.dismiss}
-        aria-label='Dismiss notification'
-        onClick={() => {
-          onDismiss(id);
-        }}></IconBtn>
+      <div className={styles.closeBtn}>
+        <IconBtn
+          type='close'
+          size='xs'
+          className={styles.dismiss}
+          aria-label='Dismiss notification'
+          onClick={() => {
+            onDismiss(id);
+          }}></IconBtn>
+      </div>
     </div>
   );
 };

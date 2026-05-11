@@ -1,5 +1,8 @@
-// Hook managing both light/dark mode and the two brand hue variables.
-// Persists all three values to localStorage so they survive page refreshes.
+// Hook managing light/dark mode, the two brand hue variables, and whether a
+// custom (hue-derived) theme is active. Default mode uses the named brand
+// palette in tokens.css; toggling customTheme adds .theme-custom to <html>,
+// which overrides semantic tokens with hue-derived oklch values. All state
+// persists to localStorage so it survives page refreshes.
 import { useEffect, useState } from "react";
 
 export type ThemeMode = "light" | "dark";
@@ -7,9 +10,11 @@ export type ThemeMode = "light" | "dark";
 const STORAGE_KEY = "brainflex-theme";
 const HUE_PRIMARY_KEY = "brainflex-hue-primary";
 const HUE_ACCENT_KEY = "brainflex-hue-accent";
+const CUSTOM_THEME_KEY = "brainflex-theme-custom";
 
-export const DEFAULT_HUE_PRIMARY = 260;
-export const DEFAULT_HUE_ACCENT = 25;
+// Hues of electric-violet and blaze-orange — the brand primary/accent.
+export const DEFAULT_HUE_PRIMARY = 290;
+export const DEFAULT_HUE_ACCENT = 50;
 
 const getSystemTheme = (): ThemeMode => {
   if (typeof window === "undefined") return "light";
@@ -32,6 +37,11 @@ const getStoredHue = (key: string, fallback: number): number => {
   return Number.isFinite(n) && n >= 0 && n <= 360 ? n : fallback;
 };
 
+const getStoredCustomTheme = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(CUSTOM_THEME_KEY) === "true";
+};
+
 const applyThemeClass = (theme: ThemeMode) => {
   const html = document.documentElement;
   if (theme === "dark") {
@@ -40,6 +50,15 @@ const applyThemeClass = (theme: ThemeMode) => {
   } else {
     html.classList.add("theme-light");
     html.classList.remove("theme-dark");
+  }
+};
+
+const applyCustomThemeClass = (custom: boolean) => {
+  const html = document.documentElement;
+  if (custom) {
+    html.classList.add("theme-custom");
+  } else {
+    html.classList.remove("theme-custom");
   }
 };
 
@@ -57,6 +76,10 @@ export function useTheme() {
 
   const [hueAccent, setHueAccent] = useState<number>(() =>
     getStoredHue(HUE_ACCENT_KEY, DEFAULT_HUE_ACCENT),
+  );
+
+  const [customTheme, setCustomTheme] = useState<boolean>(() =>
+    getStoredCustomTheme(),
   );
 
   useEffect(() => {
@@ -80,6 +103,11 @@ export function useTheme() {
     window.localStorage.setItem(HUE_ACCENT_KEY, String(hueAccent));
   }, [hueAccent]);
 
+  useEffect(() => {
+    applyCustomThemeClass(customTheme);
+    window.localStorage.setItem(CUSTOM_THEME_KEY, String(customTheme));
+  }, [customTheme]);
+
   const toggleTheme = () => {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
@@ -87,6 +115,7 @@ export function useTheme() {
   const resetHues = () => {
     setHuePrimary(DEFAULT_HUE_PRIMARY);
     setHueAccent(DEFAULT_HUE_ACCENT);
+    setCustomTheme(false);
   };
 
   return {
@@ -95,11 +124,15 @@ export function useTheme() {
     setTheme,
     huePrimary,
     hueAccent,
+    customTheme,
+    setCustomTheme,
     setHuePrimary: (hue: number) => {
       setHuePrimary(clampHue(hue));
+      setCustomTheme(true);
     },
     setHueAccent: (hue: number) => {
       setHueAccent(clampHue(hue));
+      setCustomTheme(true);
     },
     resetHues,
   };

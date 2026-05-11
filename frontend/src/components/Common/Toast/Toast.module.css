@@ -17,6 +17,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   gap: var(--space-4);
   padding: var(--p-sm);
   border-radius: var(--radius-lg);
@@ -54,6 +55,11 @@
     --border-color: var(--border-info);
     --color: var(--text-info);
     --background-color: var(--bg-info);
+  }
+
+  .closeBtn {
+    position: absolute;
+    right: 10px;
   }
 }
 

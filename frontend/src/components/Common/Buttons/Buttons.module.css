@@ -9,12 +9,16 @@
   width: fit-content;
   border-radius: var(--radius-lg);
   color: var(--color);
-  background-color: var(--background-color);
+  background-color: oklch(from var(--background-color) l c h / 20%);
   border-color: currentcolor;
   transition:
     background-color 300ms ease-in-out,
     color 300ms ease-in-out,
     border-color 300ms ease-in-out;
+
+  &:hover {
+    color: var(--action-hover);
+  }
 
   &.sm {
     padding: var(--p-sm);
@@ -103,6 +107,7 @@
   overflow: hidden;
   transition:
     background-color 300ms ease-in-out,
+    border-color 300ms ease-in-out,
     color 300ms ease-in-out;
 
   &.withBackground {
@@ -110,22 +115,25 @@
 
     &:hover {
       background-color: var(--action-hover);
+      color: var(--bg-surface);
     }
   }
 
+  /* SVG strokes follow currentcolor, so state changes on the button's    */
+
+  /* `color` automatically animate via the color transition above.        */
   svg,
   img {
     --max-height: 28px;
     --max-width: 28px;
 
     display: flex;
-    stroke: var(--color);
+    stroke: currentcolor;
+    fill: none;
     align-items: center;
     max-height: 100%;
     width: 100%;
-    transition:
-      transform 300ms ease-in-out,
-      stroke 300ms ease-in-out;
+    transition: transform 300ms ease-in-out;
   }
 
   &.xs {
@@ -152,20 +160,30 @@
     --width: 72px;
   }
 
-  &.round {
+  &.round,
+  &.avatar {
     border-radius: var(--radius-full);
+
+    img {
+      border-radius: var(--radius-full);
+    }
   }
 
   &.bordered {
     border: 2px solid var(--border-color);
 
     &:hover {
-      border: 2px solid var(--action-hover);
+      border-color: var(--action-hover);
     }
   }
 
+  &.avatar {
+    padding: 0;
+    border-width: 3px;
+  }
+
   &:hover {
-    stroke: var(--text-secondary);
+    color: var(--action-hover);
   }
 
   &.isCollapsed {
@@ -173,14 +191,10 @@
   }
 
   &.close {
-    color: var(--text-secondary);
+    color: var(--color);
 
     &:hover {
       color: var(--text-error);
-
-      svg {
-        stroke: var(--text-error);
-      }
     }
   }
 

@@ -7,7 +7,8 @@ export interface ThemePreset {
 }
 
 export const themePresets: ThemePreset[] = [
-  { label: "Default", huePrimary: 260, hueAccent: 25 },
+  { label: "Brand", huePrimary: 290, hueAccent: 50 },
+  { label: "Indigo", huePrimary: 260, hueAccent: 25 },
   { label: "Forest", huePrimary: 160, hueAccent: 35 },
   { label: "Sunset", huePrimary: 30, hueAccent: 280 },
   { label: "Ocean", huePrimary: 210, hueAccent: 60 },
@@ -113,6 +114,28 @@ export const gameOverData = {
   ],
 };
 export const colorPalette = [
+  {
+    label: "Brand",
+    tokens: [
+      "--electric-violet-200",
+      "--electric-violet-500",
+      "--electric-violet",
+      "--electric-violet-700",
+      "--electric-violet-900",
+      "--blaze-orange-100",
+      "--blaze-orange",
+      "--blaze-orange-900",
+      "--mariana-blue-100",
+      "--mariana-blue",
+      "--tolopea",
+      "--aquamarine-100",
+      "--aquamarine",
+      "--aquamarine-900",
+      "--shell",
+      "--black-white",
+      "--black-russian",
+    ],
+  },
   {
     label: "Red",
     tokens: [

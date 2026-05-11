@@ -88,6 +88,32 @@
   --grey-800: oklch(20% 0.001 271.152deg);
   --grey-900: oklch(0% 0.001 271.152deg);
 
+  /* ─── Brand Colors ─────────────────────────────────────────────────────── */
+
+  /* Named brand palette. These drive the default light/dark themes via the   */
+
+  /* semantic tokens below. The hex is preserved inline as documentation;     */
+
+  /* oklch(from #HEX l c h) converts at the browser level.                    */
+
+  --electric-violet: oklch(from #6019ff l c h);
+  --electric-violet-200: oklch(from #bc8bfb l c h);
+  --electric-violet-500: oklch(from #9f96ff l c h);
+  --electric-violet-700: oklch(from #9747ff l c h);
+  --electric-violet-900: oklch(from #4e26a5 l c h);
+  --blaze-orange: oklch(from #ff6e0b l c h);
+  --blaze-orange-100: oklch(from #ffbd66 l c h);
+  --blaze-orange-900: oklch(from #d45400 l c h);
+  --mariana-blue: oklch(from #260078 l c h);
+  --mariana-blue-100: oklch(from #3821aa l c h);
+  --tolopea: oklch(from #190042 l c h);
+  --aquamarine: oklch(from #54fff1 l c h);
+  --aquamarine-100: oklch(from #b0fff8 l c h);
+  --aquamarine-900: oklch(from #5ae6da l c h);
+  --shell: oklch(from #f2f2f2 l c h);
+  --black-white: oklch(from #fffffd l c h);
+  --black-russian: oklch(from #13002a l c h);
+
   /* --color-primary: oklch(21.839% 0.0612 249.645deg);
   --color-primary-light: oklch(from var(--color-primary) 75% c h);
   --color-primary-dark: oklch(from var(--color-primary) 35% c h);
@@ -122,20 +148,55 @@
 
   /* step so contrast ratios are preserved across light and dark modes.        */
 
-  --hue-primary: 260deg; /* default: blue   — controls surfaces & borders  */
-  --hue-accent: 25deg; /* default: coral  — controls actions & brand accents */
+  /* "electric-violet": {
+          DEFAULT: "#6019FF",
+          200: "#BC8BFB",
+          500: "#9F96FF",
+          700: "#9747FF",
+          900: "#4E26A5",
+        },
+        "blaze-orange": {
+          DEFAULT: "#FF6E0B",
+          100: "#FFBD66",
+          900: "#D45400",
+        },
+        "mariana-blue": {
+          DEFAULT: "#260078",
+          100: "#3821AA",
+        },
+        tolopea: {
+          DEFAULT: "#190042",
+        },
+        aquamarine: {
+          DEFAULT: "#54FFF1",
+          100: "#B0FFF8",
+          900: "#5AE6DA",
+        },
+        shell: {
+          DEFAULT: "#F2F2F2",
+        },
+        "black-white": {
+          DEFAULT: "#FFFFFD",
+        },
+        "black-russian": {
+          DEFAULT: "#13002A", */
 
-  /* ─── Light Mode Semantic Tokens ─────────────────────────────────────────── */
+  --hue-primary: 290deg; /* default: electric-violet — controls surfaces & borders  */
+  --hue-accent: 50deg; /* default: blaze-orange   — controls actions & brand accents */
+
+  /* ─── Light Mode Semantic Tokens (Brand Defaults) ───────────────────────── */
+
+  /* Tokens reference the named brand palette by default. When a user engages */
+
+  /* the picker, .theme-custom overrides these with hue-derived values.       */
 
   /** Background Variants **/
-  --bg-canvas: oklch(93% 0.04 var(--hue-primary));
-  --bg-surface: oklch(88% 0.06 var(--hue-primary));
-
-  /* surface-raised shifts -60° from primary (blue→turquoise at default) */
-  --bg-surface-raised: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
-  --bg-subtle: oklch(76% 0.13 var(--hue-primary));
-  --bg-brand: oklch(22% 0.05 var(--hue-primary));
-  --bg-disabled: oklch(80% 0.001 271.152deg);
+  --bg-canvas: var(--shell);
+  --bg-surface: var(--black-white);
+  --bg-surface-raised: var(--aquamarine-100);
+  --bg-subtle: var(--mariana-blue-100);
+  --bg-brand: var(--electric-violet);
+  --bg-disabled: var(--grey-200);
 
   /** Background States — fixed hues; semantic meaning must not shift with brand **/
   --bg-error: oklch(93% 0.2 25deg);
@@ -144,45 +205,42 @@
   --bg-warning: oklch(96% 0.06 95deg);
 
   /** Text Variants **/
-
-  --text-primary: oklch(39% 0.2 var(--hue-accent));
-  --text-secondary: oklch(22% 0.05 var(--hue-primary));
-  --text-muted: oklch(93% 0.2 var(--hue-accent));
-  --text-on-brand: oklch(77% 0.2 var(--hue-accent));
+  --text-primary: var(--tolopea);
+  --text-secondary: var(--mariana-blue);
+  --text-muted: var(--grey-500);
+  --text-on-brand: var(--shell);
 
   /** Text States — fixed **/
   --text-error: oklch(45% 0.2 25deg);
   --text-success: oklch(60% 0.13 170deg);
   --text-warning: oklch(82% 0.19 90deg);
   --text-info: oklch(62% 0.13 260deg);
-  --text-disabled: oklch(70% 0.001 271.152deg);
+  --text-disabled: var(--grey-300);
 
   /** Borders **/
-  --border-default: oklch(76% 0.13 var(--hue-primary));
-  --border-subtle: oklch(88% 0.06 var(--hue-primary));
-  --border-focus: oklch(76% 0.13 var(--hue-primary));
-  --border-brand: oklch(77% 0.2 var(--hue-accent));
+  --border-default: var(--electric-violet-200);
+  --border-subtle: var(--shell);
+  --border-focus: var(--electric-violet);
+  --border-brand: var(--blaze-orange);
 
   /** Border States — fixed **/
   --border-success: oklch(74% 0.13 170deg);
   --border-warning: oklch(90% 0.22 95deg);
   --border-error: oklch(77% 0.2 25deg);
   --border-info: oklch(76% 0.13 260deg);
-  --border-disabled: oklch(70% 0.001 271.152deg);
+  --border-disabled: var(--grey-300);
 
   /** Action States **/
-  --action-hover: oklch(60% 0.2 var(--hue-accent));
-  --action-active: oklch(45% 0.2 var(--hue-accent));
-
-  /* action-disabled shifts +30° from primary, matching text-primary hue */
-  --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
+  --action-hover: var(--blaze-orange-100);
+  --action-active: var(--blaze-orange-900);
+  --action-disabled: var(--grey-300);
 
   /* --- Shadow (Expanded Scale) --- */
   --shadow:
     rgb(0, 0, 0 / 10%) 0 10px 15px -3px, rgb(0, 0, 0 / 5%) 0 4px 6px -2px;
 
   /* --- Typography (Expanded Scale) --- */
-  --font-mono: "IBM Plex Mono", monospace;
+  --font-mono: "Poppins", "IBM Plex Mono", monospace;
   --font-heading: system-ui, "Segoe UI", "Roboto", sans-serif;
   --font-sans: ui-monospace, "Consolas", monospace;
   --font-size-xs: 0.75rem; /* 12px */
@@ -243,21 +301,19 @@
 
 /* stylelint-disable-next-line selector-class-pattern */
 :root.theme-dark {
-  /* ─── Dark Mode Semantic Tokens ───────────────────────────────────────────── */
+  /* ─── Dark Mode Semantic Tokens (Brand Defaults) ────────────────────────── */
 
-  /* Only color tokens change; --hue-primary and --hue-accent carry through,   */
+  /* Tokens reference the named brand palette by default. .theme-custom       */
 
-  /* so user-set brand hues apply automatically in dark mode too.              */
+  /* overrides these with hue-derived values when the user engages the picker. */
 
-  /** Background Variants — deep end of the primary scale **/
-  --bg-canvas: oklch(22% 0.05 var(--hue-primary));
-  --bg-surface: oklch(28% 0.06 var(--hue-primary));
-
-  /* dark surface-raised stays on primary hue (no turquoise shift in dark mode) */
-  --bg-surface-raised: oklch(38% 0.08 var(--hue-primary));
-  --bg-subtle: oklch(62% 0.13 var(--hue-primary));
-  --bg-brand: oklch(22% 0.05 var(--hue-primary));
-  --bg-disabled: oklch(80% 0.001 271.152deg);
+  /** Background Variants **/
+  --bg-canvas: var(--black-russian);
+  --bg-surface: var(--tolopea);
+  --bg-surface-raised: var(--mariana-blue);
+  --bg-subtle: var(--mariana-blue);
+  --bg-brand: var(--electric-violet);
+  --bg-disabled: var(--grey-700);
 
   /** Background States — same as light mode **/
   --bg-error: oklch(93% 0.2 25deg);
@@ -266,18 +322,99 @@
   --bg-warning: oklch(96% 0.06 95deg);
 
   /** Text Variants **/
-  --text-primary: oklch(77% 0.2 var(--hue-accent));
-
-  /* text-secondary shifts -60° from primary (blue→turquoise at default) */
-  --text-secondary: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
-  --text-muted: oklch(93% 0.2 var(--hue-accent));
-  --text-on-brand: oklch(77% 0.2 var(--hue-accent));
+  --text-primary: var(--shell);
+  --text-secondary: var(--aquamarine-100);
+  --text-muted: var(--grey-300);
+  --text-on-brand: var(--shell);
 
   /** Text States — fixed **/
   --text-error: oklch(52% 0.2 25deg);
   --text-success: oklch(49% 0.11 170deg);
   --text-warning: oklch(72% 0.16 85deg);
   --text-info: oklch(51% 0.11 260deg);
+  --text-disabled: var(--grey-500);
+
+  /** Borders **/
+  --border-default: var(--electric-violet-700);
+  --border-subtle: var(--mariana-blue);
+  --border-focus: var(--aquamarine);
+  --border-brand: var(--blaze-orange);
+
+  /** Border States — fixed **/
+  --border-success: oklch(74% 0.13 170deg);
+  --border-warning: oklch(90% 0.22 95deg);
+  --border-error: oklch(77% 0.2 25deg);
+  --border-info: oklch(76% 0.13 260deg);
+  --border-disabled: var(--grey-500);
+
+  /** Action States **/
+  --action-hover: var(--blaze-orange);
+  --action-active: var(--blaze-orange-900);
+  --action-disabled: var(--grey-700);
+
+  /** Shadows **/
+  --shadow: rgb(0 0 0 / 40%) 0 10px 15px -3px, rgb(0 0 0 / 25%) 0 4px 6px -2px;
+}
+
+/* ─── Custom Theme Overrides ────────────────────────────────────────────── */
+
+/* Active when the user engages the hue picker (or activates a saved theme). */
+
+/* Semantic tokens shift from brand-color references to hue-derived oklch    */
+
+/* values driven by --hue-primary / --hue-accent.                            */
+
+/* stylelint-disable-next-line selector-class-pattern */
+:root.theme-custom {
+  /** Background Variants **/
+  --bg-canvas: oklch(93% 0.04 var(--hue-primary));
+  --bg-surface: oklch(88% 0.06 var(--hue-primary));
+
+  /* surface-raised shifts -60° from primary */
+  --bg-surface-raised: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
+  --bg-subtle: oklch(76% 0.13 var(--hue-primary));
+  --bg-brand: oklch(22% 0.05 var(--hue-primary));
+  --bg-disabled: oklch(80% 0.001 271.152deg);
+
+  /** Text Variants **/
+  --text-primary: oklch(39% 0.2 var(--hue-accent));
+  --text-secondary: oklch(22% 0.05 var(--hue-primary));
+  --text-muted: oklch(93% 0.2 var(--hue-accent));
+  --text-on-brand: oklch(77% 0.2 var(--hue-accent));
+  --text-disabled: oklch(70% 0.001 271.152deg);
+
+  /** Borders **/
+  --border-default: oklch(76% 0.13 var(--hue-primary));
+  --border-subtle: oklch(88% 0.06 var(--hue-primary));
+  --border-focus: oklch(76% 0.13 var(--hue-primary));
+  --border-brand: oklch(77% 0.2 var(--hue-accent));
+  --border-disabled: oklch(70% 0.001 271.152deg);
+
+  /** Action States **/
+  --action-hover: oklch(60% 0.2 var(--hue-accent));
+  --action-active: oklch(45% 0.2 var(--hue-accent));
+
+  /* action-disabled shifts +30° from primary */
+  --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
+}
+
+/* stylelint-disable-next-line selector-class-pattern */
+:root.theme-custom.theme-dark {
+  /** Background Variants — deep end of the primary scale **/
+  --bg-canvas: oklch(22% 0.05 var(--hue-primary));
+  --bg-surface: oklch(28% 0.06 var(--hue-primary));
+  --bg-surface-raised: oklch(38% 0.08 var(--hue-primary));
+  --bg-subtle: oklch(62% 0.13 var(--hue-primary));
+  --bg-brand: oklch(22% 0.05 var(--hue-primary));
+  --bg-disabled: oklch(80% 0.001 271.152deg);
+
+  /** Text Variants **/
+  --text-primary: oklch(77% 0.2 var(--hue-accent));
+
+  /* text-secondary shifts -60° from primary */
+  --text-secondary: oklch(92% 0.04 calc(var(--hue-primary) - 60deg));
+  --text-muted: oklch(93% 0.2 var(--hue-accent));
+  --text-on-brand: oklch(77% 0.2 var(--hue-accent));
   --text-disabled: oklch(50% 0.001 271.152deg);
 
   /** Borders — light end of the primary scale **/
@@ -285,21 +422,12 @@
   --border-subtle: oklch(88% 0.06 var(--hue-primary));
   --border-focus: oklch(76% 0.13 var(--hue-primary));
   --border-brand: oklch(77% 0.2 var(--hue-accent));
-
-  /** Border States — fixed **/
-  --border-success: oklch(74% 0.13 170deg);
-  --border-warning: oklch(90% 0.22 95deg);
-  --border-error: oklch(77% 0.2 25deg);
-  --border-info: oklch(76% 0.13 260deg);
   --border-disabled: oklch(70% 0.001 271.152deg);
 
-  /** Action States — same as light mode **/
+  /** Action States **/
   --action-hover: oklch(89% 0.2 var(--hue-accent));
   --action-active: oklch(93% 0.2 var(--hue-accent));
   --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
-
-  /** Shadows **/
-  --shadow: rgb(0 0 0 / 40%) 0 10px 15px -3px, rgb(0 0 0 / 25%) 0 4px 6px -2px;
 }
 
 /* #social .button-icon {

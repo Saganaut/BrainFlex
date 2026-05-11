@@ -31,7 +31,13 @@ const ThemeSection = () => {
   const [updateProfile] = useUpdateProfileMutation();
   const [deleteTheme] = useDeleteThemeMutation();
 
-  const { setTheme: applyMode, setHuePrimary, setHueAccent } = useTheme();
+  const {
+    setTheme: applyMode,
+    setHuePrimary,
+    setHueAccent,
+    resetHues,
+    customTheme,
+  } = useTheme();
 
   const [editing, setEditing] = useState<ThemeResponse | null | "new">(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -40,12 +46,17 @@ const ThemeSection = () => {
   const userId = registeredUser?.id;
   const organizationId = registeredUser?.organizationId ?? undefined;
 
-  const handleActivatePreset = async (
-    huePrimary: number,
-    hueAccent: number,
-  ) => {
-    setHuePrimary(huePrimary);
-    setHueAccent(hueAccent);
+  const handleActivatePreset = async (preset: {
+    label: string;
+    huePrimary: number;
+    hueAccent: number;
+  }) => {
+    if (preset.label === "Brand") {
+      resetHues();
+    } else {
+      setHuePrimary(preset.huePrimary);
+      setHueAccent(preset.hueAccent);
+    }
     // Clear any custom active theme when switching to a preset
     await updateProfile({
       updateProfileRequest: { activeThemeId: "" },
@@ -71,11 +82,12 @@ const ThemeSection = () => {
     setDeleteError(null);
     try {
       await deleteTheme({ id: theme.id }).unwrap();
-      // If the deleted theme was active, clear it
+      // If the deleted theme was active, clear it and revert to brand defaults
       if (activeThemeId === theme.id) {
         await updateProfile({
           updateProfileRequest: { activeThemeId: "" },
         }).unwrap();
+        resetHues();
         await refetchUser();
       }
       await refetchThemes();
@@ -139,11 +151,13 @@ const ThemeSection = () => {
               <div className={styles.cardBody}>
                 <p className={styles.cardName}>{preset.label}</p>
                 <div className={styles.cardMeta}>
-                  {!activeThemeId && preset.label === "Default" && (
-                    <span className={`${styles.badge} ${styles.badgeActive}`}>
-                      Active
-                    </span>
-                  )}
+                  {!activeThemeId &&
+                    !customTheme &&
+                    preset.label === "Brand" && (
+                      <span className={`${styles.badge} ${styles.badgeActive}`}>
+                        Active
+                      </span>
+                    )}
                 </div>
               </div>
               <div className={styles.cardActions}>
@@ -151,10 +165,7 @@ const ThemeSection = () => {
                   type='button'
                   className={`${styles.cardActionBtn} ${styles.cardActionBtnPrimary}`}
                   onClick={() => {
-                    void handleActivatePreset(
-                      preset.huePrimary,
-                      preset.hueAccent,
-                    );
+                    void handleActivatePreset(preset);
                   }}>
                   Activate
                 </Btn>

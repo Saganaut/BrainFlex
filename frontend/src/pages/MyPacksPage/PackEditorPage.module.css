@@ -52,7 +52,7 @@
 
 .divider {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-brand);
   margin: var(--space-4) 0;
 }
 
@@ -68,8 +68,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-brand);
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
 }
@@ -103,8 +103,8 @@
 /* ─── Question form (inline) ────────────────────────────────────────────────── */
 
 .questionForm {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-brand);
   border-radius: var(--radius-md);
   padding: var(--space-4);
   display: flex;

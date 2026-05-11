@@ -55,12 +55,15 @@ const MyPacksPage = () => {
   const isRegistered = userState.state === "registered";
 
   const { data: systemPacks = [], isLoading: loadingSystem } =
-    useListPacksQuery();
+    useListPacksQuery(undefined, { refetchOnMountOrArgChange: true });
   const {
     data: myPacks = [],
     isLoading: loadingMine,
     refetch,
-  } = useListMyPacksQuery(undefined, { skip: !isRegistered });
+  } = useListMyPacksQuery(undefined, {
+    skip: !isRegistered,
+    refetchOnMountOrArgChange: true,
+  });
 
   const [deletePack] = useDeletePackMutation();
 

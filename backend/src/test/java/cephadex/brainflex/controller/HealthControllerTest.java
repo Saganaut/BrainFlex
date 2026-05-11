@@ -1,6 +1,7 @@
 package cephadex.brainflex.controller;
 
 import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,20 +17,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.mockito.Mockito.mock;
-
 import com.mongodb.MongoException;
 import com.mongodb.client.MongoDatabase;
-
-import org.springframework.data.mongodb.gridfs.GridFsTemplate;
-
-import cephadex.brainflex.repository.ContentPackRepository;
-import cephadex.brainflex.repository.GameResultRepository;
-import cephadex.brainflex.repository.GameSessionRepository;
-import cephadex.brainflex.repository.OrganizationRepository;
-import cephadex.brainflex.repository.QuestionRepository;
-import cephadex.brainflex.repository.ThemeRepository;
-import cephadex.brainflex.repository.UserRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -53,31 +42,31 @@ class HealthControllerTest {
     // Mocking MongoTemplate replaces the real bean, which would cause Spring Data
     // repositories to NPE during initialization (getConverter() returns null on a
     // Mockito mock). Mocking all repos here prevents that.
-    @MockitoBean
-    private UserRepository userRepository;
+    // @MockitoBean
+    // private UserRepository userRepository;
 
-    @MockitoBean
-    private ContentPackRepository contentPackRepository;
+    // @MockitoBean
+    // private ContentPackRepository contentPackRepository;
 
-    @MockitoBean
-    private GameSessionRepository gameSessionRepository;
+    // @MockitoBean
+    // private GameSessionRepository gameSessionRepository;
 
-    @MockitoBean
-    private GameResultRepository gameResultRepository;
+    // @MockitoBean
+    // private GameResultRepository gameResultRepository;
 
-    @MockitoBean
-    private OrganizationRepository organizationRepository;
+    // @MockitoBean
+    // private OrganizationRepository organizationRepository;
 
-    @MockitoBean
-    private ThemeRepository themeRepository;
+    // @MockitoBean
+    // private ThemeRepository themeRepository;
 
-    @MockitoBean
-    private QuestionRepository questionRepository;
+    // @MockitoBean
+    // private QuestionRepository questionRepository;
 
     // GridFsTemplate auto-configuration also reads MongoConverter from the
     // mocked MongoTemplate (getConverter() → null), so mock it here too.
-    @MockitoBean
-    private GridFsTemplate gridFsTemplate;
+    // @MockitoBean
+    // private GridFsTemplate gridFsTemplate;
 
     @Test
     void getHealth_WhenAllServicesUp_ReturnsUp() throws Exception {

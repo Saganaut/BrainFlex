@@ -1,11 +1,10 @@
-/**
- * Game hub route (/games).
- * Entry point for all game activity: browse packs, create a new session
- * as a registered user, or join an existing session via room code.
- */
-import { createFileRoute } from "@tanstack/react-router";
-import { GameHubPage } from "../../pages/GamePage/GameHubPage";
+// The dedicated /games hub has been retired; MainPage at / is the entry point.
+// Anything still linking to /games gets sent home.
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/games/")({
-  component: GameHubPage,
+  beforeLoad: () => {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- TanStack Router uses throw-redirect as its idiom
+    throw redirect({ to: "/" });
+  },
 });

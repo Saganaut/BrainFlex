@@ -15,6 +15,7 @@ import {
   HeartIcon,
 } from "@heroicons/react/24/outline";
 import { Card } from "../../components/Common/Cards/Card";
+import { ActionCard } from "../../components/Common/ActionCard/ActionCard";
 import { Badge } from "../../components/Common/Badge";
 import {
   colorPalette,
@@ -155,6 +156,37 @@ const DesignSystemPage = () => {
                 onClick={() => {
                   console.log("this is a footer");
                 }}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar='Action Cards'>
+            <div className={styles.cardComponentContainer}>
+              <ActionCard
+                onClick={() => {
+                  console.log("clicked template");
+                }}
+                icon='*'
+                title='Template'
+                description='One click to start. Pre-built question packs ready to play.'
+              />
+              <ActionCard
+                onClick={() => {
+                  console.log("clicked custom");
+                }}
+                icon='#'
+                title='Custom'
+                description='Use a pack you built yourself. Full control over settings.'
+                selected
+              />
+              <ActionCard
+                onClick={() => {
+                  console.log("clicked auto");
+                }}
+                icon='~'
+                title='Auto-Generate'
+                description='Type a topic or upload a document. We make the questions.'
+                badge='Soon'
+                disabled
               />
             </div>
           </Accordion>

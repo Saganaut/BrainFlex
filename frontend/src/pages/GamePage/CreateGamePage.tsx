@@ -1,48 +1,222 @@
+// CreateGamePage — three-mode fork for starting a game per GAMES.md.
+// Template: pick a system pack, defaults applied, one click to lobby.
+// Custom: pick one of the user's packs, edit settings, then create.
+// Auto: AI question generation (stubbed; backend not yet implemented).
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ContentPackPicker } from "../../components/Games/ContentPackPicker/ContentPackPicker";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-import { useCreateGameMutation } from "../../store/BrainFlexApi";
-import styles from "./Game.module.css";
+import {
+  useCreateGameMutation,
+  useListPacksQuery,
+  useListMyPacksQuery,
+} from "../../store/BrainFlexApi";
+import type { ContentPackDto } from "../../store/BrainFlexApi";
+import { ActionCard } from "@/components/Common/ActionCard/ActionCard";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input";
 import { Checkbox } from "@/components/Common/Input/Checkbox";
+import styles from "./Game.module.css";
+
+type Mode = "template" | "custom" | "auto";
+
+const DEFAULT_ROUNDS = 10;
+const DEFAULT_TIME = 15;
+const DEFAULT_SPEED_BONUS = true;
+
+// ─── Pack grid ────────────────────────────────────────────────────────────────
+
+interface PackGridProps {
+  packs: ContentPackDto[];
+  selectedPackId: string | null;
+  onSelect: (id: string) => void;
+  emptyMessage: string;
+}
+
+const PackGrid = ({
+  packs,
+  selectedPackId,
+  onSelect,
+  emptyMessage,
+}: PackGridProps) => {
+  if (packs.length === 0) {
+    return <p className={styles.authMsg}>{emptyMessage}</p>;
+  }
+  return (
+    <div className={styles.packGrid}>
+      {packs.map((pack) => (
+        <button
+          type='button'
+          key={pack.id}
+          className={`${styles.packBtn} ${
+            selectedPackId === pack.id ? styles.packBtnSelected : ""
+          }`}
+          onClick={() => {
+            if (pack.id) onSelect(pack.id);
+          }}
+          aria-pressed={selectedPackId === pack.id}>
+          <span className={styles.packName}>{pack.name}</span>
+          <span className={styles.packMeta}>
+            {pack.questionCount ?? 0} questions
+            {pack.category ? ` · ${pack.category}` : ""}
+          </span>
+          {pack.description && (
+            <span className={styles.packDesc}>{pack.description}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// ─── Mode tabs ────────────────────────────────────────────────────────────────
+
+interface ModeTabsProps {
+  mode: Mode;
+  onChange: (mode: Mode) => void;
+}
+
+const ModeTabs = ({ mode, onChange }: ModeTabsProps) => (
+  <div className={styles.modeTabs} role='tablist' aria-label='Create mode'>
+    <ActionCard
+      onClick={() => {
+        onChange("template");
+      }}
+      selected={mode === "template"}
+      icon='*'
+      title='Template'
+      description='One click to start. Pre-built question packs ready to play.'
+    />
+    <ActionCard
+      onClick={() => {
+        onChange("custom");
+      }}
+      selected={mode === "custom"}
+      icon='#'
+      title='Custom'
+      description='Use a pack you built yourself. Full control over settings.'
+    />
+    <ActionCard
+      onClick={() => {
+        onChange("auto");
+      }}
+      selected={mode === "auto"}
+      icon='~'
+      title='Auto-Generate'
+      description='Type a topic or upload a document. We make the questions.'
+      badge='Soon'
+    />
+  </div>
+);
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+
+interface SettingsState {
+  totalRounds: number;
+  timePerQuestion: number;
+  speedBonus: boolean;
+}
+
+interface SettingsFormProps {
+  settings: SettingsState;
+  onChange: (next: SettingsState) => void;
+}
+
+const SettingsForm = ({ settings, onChange }: SettingsFormProps) => (
+  <div className={styles.settings}>
+    <label className={styles.setting}>
+      <span>Rounds</span>
+      <Input
+        type='number'
+        min={3}
+        max={30}
+        value={settings.totalRounds}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onChange({ ...settings, totalRounds: e.target.valueAsNumber });
+        }}
+        className={styles.numberInput}
+      />
+    </label>
+    <label className={styles.setting}>
+      <span>Seconds per question</span>
+      <Input
+        type='number'
+        min={5}
+        max={60}
+        value={settings.timePerQuestion}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onChange({
+            ...settings,
+            timePerQuestion: Number(e.target.value),
+          });
+        }}
+        className={styles.numberInput}
+      />
+    </label>
+    <label className={styles.setting}>
+      <span>Speed bonus</span>
+      <Checkbox
+        checked={settings.speedBonus}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          onChange({ ...settings, speedBonus: e.target.checked });
+        }}
+      />
+    </label>
+  </div>
+);
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 const CreateGamePage = () => {
   const navigate = useNavigate();
   const userState = useCurrentUser();
-  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
-  const [totalRounds, setTotalRounds] = useState(10);
-  const [timePerQuestion, setTimePerQuestion] = useState(15);
-  const [speedBonus, setSpeedBonus] = useState(true);
-  const [createGame, { isLoading, error }] = useCreateGameMutation();
+  const isRegistered = userState.state === "registered";
 
-  if (userState.state !== "loading" && userState.state !== "registered") {
+  const [mode, setMode] = useState<Mode>("template");
+  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
+  const [settings, setSettings] = useState<SettingsState>({
+    totalRounds: DEFAULT_ROUNDS,
+    timePerQuestion: DEFAULT_TIME,
+    speedBonus: DEFAULT_SPEED_BONUS,
+  });
+
+  const { data: allPacks = [], isLoading: loadingPublic } = useListPacksQuery();
+  const { data: myPacks = [], isLoading: loadingMine } = useListMyPacksQuery(
+    undefined,
+    { skip: !isRegistered },
+  );
+  const systemPacks = allPacks.filter((p) => p.isSystem);
+
+  const [createGame, { isLoading: creating, error: createError }] =
+    useCreateGameMutation();
+
+  if (userState.state !== "loading" && !isRegistered) {
     return (
       <div className={styles.page}>
         <p className={styles.authMsg}>
           You must be signed in to create a game.
         </p>
-        <Link to='/games' className={styles.backLink} viewTransition>
-          Back to hub
+        <Link to='/' className={styles.backLink} viewTransition>
+          Back to home
         </Link>
       </div>
     );
   }
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
-    if (!selectedPackId) return;
+  const startGame = async (
+    packId: string,
+    overrides?: Partial<SettingsState>,
+  ) => {
+    const cfg = { ...settings, ...overrides };
     try {
       const session = await createGame({
         createGameRequest: {
-          contentPackId: selectedPackId,
-          totalRounds,
-          timePerQuestion,
-          speedBonus,
+          contentPackId: packId,
+          totalRounds: cfg.totalRounds,
+          timePerQuestion: cfg.timePerQuestion,
+          speedBonus: cfg.speedBonus,
           gameMode: "SIMULTANEOUS",
         },
       }).unwrap();
-      console.log("Session", session);
       if (session.roomCode) {
         await navigate({
           to: "/games/$roomCode/lobby",
@@ -50,81 +224,149 @@ const CreateGamePage = () => {
         });
       }
     } catch (e) {
-      // error shown via `error` state
-      console.error("error", e);
+      console.error("Failed to create game", e);
     }
+  };
+
+  const handleTemplatePick = (packId: string) => {
+    setSelectedPackId(packId);
+    void startGame(packId, {
+      totalRounds: DEFAULT_ROUNDS,
+      timePerQuestion: DEFAULT_TIME,
+      speedBonus: DEFAULT_SPEED_BONUS,
+    });
+  };
+
+  const handleCustomSubmit = (e: React.SubmitEvent) => {
+    e.preventDefault();
+    if (!selectedPackId) return;
+    void startGame(selectedPackId);
   };
 
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Create Game</h1>
+      <p className={styles.authMsg}>How do you want to start?</p>
 
-      <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
+      <ModeTabs mode={mode} onChange={setMode} />
+
+      {mode === "template" && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Choose a Content Pack</h2>
-          <ContentPackPicker
-            selectedPackId={selectedPackId}
-            onSelect={setSelectedPackId}
-          />
+          <h2 className={styles.sectionTitle}>Pick a template — one click to play</h2>
+          {loadingPublic ? (
+            <p className={styles.authMsg}>Loading templates…</p>
+          ) : (
+            <PackGrid
+              packs={systemPacks}
+              selectedPackId={selectedPackId}
+              onSelect={handleTemplatePick}
+              emptyMessage='No templates available yet.'
+            />
+          )}
+          {creating && <p className={styles.authMsg}>Creating game…</p>}
+          {createError && (
+            <p className={styles.errorMsg}>
+              Failed to create game. Please try again.
+            </p>
+          )}
+          <p className={styles.helperText}>
+            Want different settings?{" "}
+            <button
+              type='button'
+              className={styles.linkBtn}
+              onClick={() => {
+                setMode("custom");
+              }}>
+              Switch to Custom
+            </button>
+            .
+          </p>
         </section>
+      )}
 
+      {mode === "custom" && (
+        <form
+          className={styles.form}
+          onSubmit={handleCustomSubmit}>
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Choose Your Pack</h2>
+            {loadingMine ? (
+              <p className={styles.authMsg}>Loading your packs…</p>
+            ) : myPacks.length === 0 ? (
+              <div className={styles.emptyPacks}>
+                <p className={styles.authMsg}>
+                  You haven&apos;t created any packs yet.
+                </p>
+                <Link
+                  to='/my-packs/create'
+                  search={{ returnTo: "/games/create" }}
+                  viewTransition>
+                  <Btn type='button'>+ Create Your First Pack</Btn>
+                </Link>
+              </div>
+            ) : (
+              <>
+                <PackGrid
+                  packs={myPacks}
+                  selectedPackId={selectedPackId}
+                  onSelect={setSelectedPackId}
+                  emptyMessage='No packs yet.'
+                />
+                <Link
+                  to='/my-packs/create'
+                  search={{ returnTo: "/games/create" }}
+                  className={styles.helperText}
+                  viewTransition>
+                  + Create a new pack
+                </Link>
+              </>
+            )}
+          </section>
+
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Settings</h2>
+            <SettingsForm settings={settings} onChange={setSettings} />
+          </section>
+
+          {createError && (
+            <p className={styles.errorMsg}>
+              Failed to create game. Please try again.
+            </p>
+          )}
+
+          <Btn
+            type='submit'
+            className={styles.createBtn}
+            disabled={!selectedPackId || creating}>
+            {creating ? "Creating…" : "Create Game"}
+          </Btn>
+        </form>
+      )}
+
+      {mode === "auto" && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Settings</h2>
-          <div className={styles.settings}>
-            <label className={styles.setting}>
-              <span>Rounds</span>
-              <Input
-                type='number'
-                min={3}
-                max={30}
-                value={totalRounds}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setTotalRounds(e.target.valueAsNumber);
-                }}
-                className={styles.numberInput}
-              />
-            </label>
-            <label className={styles.setting}>
-              <span>Seconds per question</span>
-              <Input
-                type='number'
-                min={5}
-                max={60}
-                value={timePerQuestion}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setTimePerQuestion(Number(e.target.value));
-                }}
-                className={styles.numberInput}
-              />
-            </label>
-            <label className={styles.setting}>
-              <span>Speed bonus</span>
-              <Checkbox
-                checked={speedBonus}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setSpeedBonus(e.target.checked);
-                }}
-              />
-            </label>
+          <div className={styles.comingSoon}>
+            <span className={styles.comingIcon} aria-hidden='true'>
+              ~
+            </span>
+            <h2 className={styles.sectionTitle}>Auto-Generate — Coming Soon</h2>
+            <p className={styles.authMsg}>
+              Soon you&apos;ll be able to type a topic, paste a webpage, or upload
+              a PDF, and we&apos;ll build a question pack for you automatically.
+            </p>
+            <Btn
+              type='button'
+              onClick={() => {
+                setMode("template");
+              }}>
+              Use a Template Instead
+            </Btn>
           </div>
         </section>
+      )}
 
-        {error && (
-          <p className={styles.errorMsg}>
-            Failed to create game. Please try again.
-          </p>
-        )}
-
-        <Btn
-          type='submit'
-          className={styles.createBtn}
-          disabled={!selectedPackId || isLoading}>
-          {isLoading ? "Creating…" : "Create Game"}
-        </Btn>
-      </form>
-
-      <Link to='/games' className={styles.backLink} viewTransition>
-        Back to hub
+      <Link to='/' className={styles.backLink} viewTransition>
+        Back to home
       </Link>
     </div>
   );

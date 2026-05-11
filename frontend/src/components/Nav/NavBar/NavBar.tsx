@@ -16,8 +16,8 @@ export function NavBar() {
         <Link to='/design-system' viewTransition>
           Design system
         </Link>
-        <Link to='/games' viewTransition>
-          Games
+        <Link to='/games/create' viewTransition>
+          New Game
         </Link>
         {userState.state === "registered" && (
           <Link to='/my-packs' viewTransition>

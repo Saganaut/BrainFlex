@@ -1,16 +1,23 @@
 /**
- * Displays the current question text, round number, point value, and
- * a countdown timer bar. Receives all data as props from the Play route.
+ * Question chrome: shows the prompt, point value, and a countdown timer bar.
+ * Consumed by PlayPage with element-derived props so it works for any
+ * scored question kind without a switch on element.kind.
  */
 import styles from "./QuestionCard.module.css";
-import type { QuestionData } from "../../../store/gameSlice";
+
+export interface QuestionCardData {
+  questionText: string;
+  pointValue: number;
+  timeLimit: number;     // seconds; 0 = unlimited / no timer
+  imageUrl?: string;
+}
 
 export interface QuestionCardProps {
-  question: QuestionData;
+  question: QuestionCardData;
   round: number;
   totalRounds: number;
   timeRemaining: number;
-  // When true the host disabled the round timer — render "Unlimited" instead of a countdown.
+  /** When true the round has no countdown — render "Unlimited" instead of a bar. */
   noTimer?: boolean;
 }
 
@@ -21,14 +28,15 @@ const QuestionCard = ({
   timeRemaining,
   noTimer,
 }: QuestionCardProps) => {
-  const pct = Math.max(0, (timeRemaining / question.timeLimit) * 100);
+  const window = question.timeLimit > 0 ? question.timeLimit : 1;
+  const pct = Math.max(0, (timeRemaining / window) * 100);
   const urgent = !noTimer && timeRemaining <= 5;
 
   return (
     <div className={styles.card}>
       <div className={styles.meta}>
         <span className={styles.roundLabel}>
-          Round {round} / {totalRounds}
+          Round {round + 1} / {totalRounds}
         </span>
         <span className={styles.points}>{question.pointValue} pts</span>
       </div>

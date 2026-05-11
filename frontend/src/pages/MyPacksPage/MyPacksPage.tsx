@@ -30,8 +30,8 @@ const PackCard = ({
     <span className={styles.cardName}>{pack.name}</span>
     {pack.isSystem && <span className={styles.systemBadge}>System</span>}
     <span className={styles.cardMeta}>
-      {pack.questionCount ?? 0} questions
-      {pack.category ? ` · ${pack.category}` : ""}
+      {pack.elementCount ?? 0} elements
+      {pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""}
     </span>
     {pack.description && (
       <span className={styles.cardDesc}>{pack.description}</span>

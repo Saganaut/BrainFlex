@@ -1,17 +1,27 @@
 /**
  * Top-level discriminator for items in a Deck.
  *
- * QUESTION  — has options/answer + scoring + per-player submission cycle.
- * SLIDE     — non-interactive content; auto-advances on its display timer (host can
- *             also skip in TURN_BASED). Used for title screens, section dividers,
- *             callouts, etc. — analogous to a PowerPoint slide between questions.
+ * SLIDE — non-interactive content (title screen, section divider, callout).
+ * MCQ / TEXT / NUMBER / IMAGE_CHOICE — questions with a single concrete correct answer.
+ * RANKING — order an item list correctly (covers chronological + lowest-to-highest).
+ * SCALES — Likert-style rating of one or more statements (typically unscored).
+ * Q_AND_A — Slido-style audience submission; host moderates; never scored.
+ * GRID — select cells in an N×M grid (with optional backing image).
+ * PLACE_ON_IMAGE — drop a point at coordinates on an image.
  *
- * Both kinds share the Question document so the existing draw / shuffle / broadcast
- * pipeline stays uniform; the runtime branches on kind for behavior.
+ * The runtime branches on this value; clients render the appropriate component.
  */
 package cephadex.brainflex.model.enums;
 
 public enum ElementKind {
-    QUESTION,
-    SLIDE
+    SLIDE,
+    MCQ,
+    TEXT,
+    NUMBER,
+    IMAGE_CHOICE,
+    RANKING,
+    SCALES,
+    Q_AND_A,
+    GRID,
+    PLACE_ON_IMAGE
 }

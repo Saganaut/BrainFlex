@@ -1,11 +1,12 @@
+// Live showcase round screen. Drives polymorphic element rendering via
+// ElementRenderer, the host controls (boot / end showcase), the scoreboard,
+// the round-result overlay, and the post-round → next-round timer chrome.
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { AnswerOptions } from "../../components/Games/AnswerOptions/AnswerOptions";
+import { ElementRenderer } from "../../components/Games/ElementRenderer/ElementRenderer";
 import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
-import { TextAnswerInput } from "../../components/Games/TextAnswerInput/TextAnswerInput";
-import { SlideView } from "../../components/Games/SlideView/SlideView";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useGameSession } from "../../hooks/useGameSession";
@@ -15,10 +16,10 @@ import { useGetShowcaseQuery } from "../../store/BrainFlexApi";
 import { resolveShowcaseBackground } from "../../utils/deckImages";
 import {
   setSession,
-  answerSelected,
-  textAnswerSubmitted,
+  answerSubmittedLocally,
 } from "../../store/gameSlice";
 import { useAppDispatch } from "../../store/hooks";
+import type { AnswerPayload } from "../../types/elements";
 import styles from "./Game.module.css";
 
 const routeApi = getRouteApi("/games/$roomCode/play");
@@ -41,10 +42,12 @@ const PlayPage = () => {
 
   const isHost = !!userId && session?.hostUserId === userId;
   const isTurnBased = session?.settings?.gameMode === "TURN_BASED";
-  // The host disables the timer by setting timePerQuestion = 0; slides
-  // always have their own display timer regardless and are handled below.
-  const noTimer = (session?.settings?.timePerQuestion ?? 1) === 0;
-  const hideScoresDuringPlay = session?.settings?.showScoresImmediately === false;
+  // Host disables the question timer by setting timePerQuestion = 0.
+  // Per-element displaySeconds always overrides on the server; the frontend
+  // here just respects "is there any countdown?" for the QuestionCard chrome.
+  const showcaseUnlimited = (session?.settings?.timePerQuestion ?? 1) === 0;
+  const hideScoresDuringPlay =
+    session?.settings?.showScoresImmediately === false;
 
   useEffect(() => {
     if (session) dispatch(setSession(session));
@@ -59,8 +62,7 @@ const PlayPage = () => {
     }
   }, [game.status, navigate, roomCode]);
 
-  // If the host boots us, the lobby broadcast no longer includes our userId.
-  // Send the player home rather than leaving them on a now-unjoinable page.
+  // Self-boot detection — if the host removes us from the player list, go home.
   useEffect(() => {
     if (!userId || game.players.length === 0) return;
     if (game.status === "FINISHED" || game.status === "CANCELLED") return;
@@ -79,24 +81,24 @@ const PlayPage = () => {
     if (!confirm("End the showcase now? Scores so far will be final.")) return;
     sendEndShowcase();
   };
-  //   const displayTime =
-  //     !game.currentQuestion || !game.roundStartedAt || game.roundResult
-  //       ? 0
-  //       : timeRemaining;
 
+  // Per-element timer countdown. Slides always have a server-side timer;
+  // questions only when the element or showcase asks for one (i.e.
+  // displaySeconds > 0).
   useEffect(() => {
-    if (!game.currentQuestion || !game.roundStartedAt || game.roundResult) return;
-    // Slides always have a display timer — even when the host set noTimer on
-    // questions, the slide still auto-advances. Only skip the countdown for
-    // question rounds when noTimer is enabled.
-    const isSlideRound = game.currentQuestion.kind === "SLIDE";
-    if (!isSlideRound && noTimer) return;
-    const timeLimit = game.currentQuestion.timeLimit;
+    if (!game.currentElement || !game.roundStartedAt || game.roundResult) return;
+    const isSlide = game.currentElement.kind === "Slide";
+    const elementSeconds = game.currentElement.displaySeconds ?? 0;
+    const effective = elementSeconds > 0
+      ? elementSeconds
+      : showcaseUnlimited ? 0 : (session?.settings?.timePerQuestion ?? 0);
+    if (effective <= 0 && !isSlide) return;
+    const totalSeconds = effective > 0 ? effective : 8; // slide fallback
     const start = new Date(game.roundStartedAt).getTime();
     const tick = () => {
       // eslint-disable-next-line react-x/set-state-in-effect
       setTimeRemaining(
-        Math.max(0, Math.ceil(timeLimit - (Date.now() - start) / 1000)),
+        Math.max(0, Math.ceil(totalSeconds - (Date.now() - start) / 1000)),
       );
     };
     tick();
@@ -104,18 +106,12 @@ const PlayPage = () => {
     return () => {
       clearInterval(id);
     };
-  }, [game.currentQuestion, game.roundStartedAt, game.roundResult, noTimer]);
+  }, [game.currentElement, game.roundStartedAt, game.roundResult, showcaseUnlimited, session]);
 
-  const handleAnswer = (index: number) => {
-    if (game.myAnswer !== null || !game.currentQuestion) return;
-    dispatch(answerSelected(index));
-    sendAnswer(game.currentQuestion.id, { selectedOption: index });
-  };
-
-  const handleTextAnswer = (text: string) => {
-    if (game.myTextAnswer !== null || !game.currentQuestion) return;
-    dispatch(textAnswerSubmitted(text));
-    sendAnswer(game.currentQuestion.id, { textAnswer: text });
+  const handleAnswer = (payload: AnswerPayload) => {
+    if (game.myAnswer !== null || !game.currentElement) return;
+    dispatch(answerSubmittedLocally(payload));
+    sendAnswer(game.currentElement.id ?? "", payload);
   };
 
   const backgroundUrl = resolveShowcaseBackground(
@@ -126,11 +122,11 @@ const PlayPage = () => {
     "--showcase-bg": `url(${backgroundUrl})`,
   } as React.CSSProperties;
 
-  if (!game.currentQuestion) {
+  if (!game.currentElement) {
     return (
       <div className={styles.waiting} style={bgStyle}>
         <WsErrorBanner />
-        <p className={styles.waitingMsg}>Waiting for the first question…</p>
+        <p className={styles.waitingMsg}>Waiting for the first element…</p>
         <ScoreBoard
           players={game.players}
           currentUserId={userId}
@@ -143,63 +139,47 @@ const PlayPage = () => {
     );
   }
 
-  const isSlide = game.currentQuestion.kind === "SLIDE";
+  const element = game.currentElement;
+  const isSlide = element.kind === "Slide";
+  const elementSeconds = element.displaySeconds ?? 0;
+  const showCountdownChrome = !isSlide && (elementSeconds > 0 || !showcaseUnlimited);
 
   return (
     <div className={styles.play} style={bgStyle}>
       <div className={styles.main}>
         <WsErrorBanner />
-        {isSlide ? (
-          <SlideView
-            slide={game.currentQuestion}
+        {!isSlide && (
+          <QuestionCard
+            question={{
+              questionText: "prompt" in element ? (element.prompt ?? "") : "",
+              pointValue: "pointValue" in element ? (element.pointValue ?? 0) : 0,
+              timeLimit:
+                elementSeconds > 0
+                  ? elementSeconds
+                  : (session?.settings?.timePerQuestion ?? 0),
+              imageUrl: element.imageUrl,
+            }}
             round={game.round}
             totalRounds={game.totalRounds}
             timeRemaining={timeRemaining}
+            noTimer={!showCountdownChrome}
           />
-        ) : (
-          <>
-            <QuestionCard
-              question={game.currentQuestion}
-              round={game.round}
-              totalRounds={game.totalRounds}
-              timeRemaining={timeRemaining}
-              noTimer={noTimer}
-            />
-            {game.currentQuestion.type === "TEXT_INPUT" ? (
-              <TextAnswerInput
-                key={game.currentQuestion.id}
-                questionId={game.currentQuestion.id}
-                submittedAnswer={game.myTextAnswer}
-                correctAnswerText={game.roundResult?.correctAnswerText}
-                wasCorrect={
-                  game.roundResult?.playerResults.find((r) => r.userId === userId)
-                    ?.wasCorrect
-                }
-                onSubmit={handleTextAnswer}
-                disabled={false}
-              />
-            ) : (
-              <AnswerOptions
-                options={game.currentQuestion.options ?? []}
-                selectedOption={game.myAnswer}
-                correctOption={
-                  game.roundResult && game.roundResult.correctAnswer >= 0
-                    ? game.roundResult.correctAnswer
-                    : undefined
-                }
-                onSelect={handleAnswer}
-                disabled={game.myAnswer !== null}
-              />
-            )}
-          </>
         )}
+        <ElementRenderer
+          element={element}
+          round={game.round}
+          totalRounds={game.totalRounds}
+          timeRemaining={timeRemaining}
+          mySubmission={game.myAnswer}
+          roundResultElement={game.roundResult?.element ?? null}
+          onSubmit={handleAnswer}
+        />
       </div>
       <aside className={styles.sidebar}>
         <ScoreBoard
           players={game.players}
           currentUserId={userId}
           hideScores={hideScoresDuringPlay}
-          // Slides have no concept of "answered" — pass undefined so the indicator hides.
           answeredUserIds={isSlide ? undefined : game.answeredThisRound}
           offlineUserIds={game.offlineUserIds}
           isHost={isHost}

@@ -1,6 +1,11 @@
 /**
- * Configuration options chosen by the host when creating a Showcase.
- * Embedded directly in Showcase so all settings travel with the session document.
+ * Configuration knobs the host picks when starting a Showcase. Embedded inside
+ * the Showcase document so settings travel with the session for its lifetime.
+ *
+ * `timePerQuestion = 0` is the "unlimited" signal — questions wait for all
+ * players to answer (SIMULTANEOUS) or for the host to advance (TURN_BASED).
+ * Per-element `displaySeconds` overrides this value unconditionally; this is
+ * only the fallback when an element left `displaySeconds = 0`.
  */
 package cephadex.brainflex.model;
 
@@ -11,34 +16,11 @@ import lombok.Data;
 public class ShowcaseSettings {
     private int maxPlayers = 8;
     private int totalRounds = 10;
-    // Seconds-per-question for the showcase. Set to 0 to disable the timer entirely
-    // for questions — rounds only end when every player has answered (SIMULTANEOUS)
-    // or the host advances (TURN_BASED). Slides always have their own display timer
-    // regardless of this value.
-    private int timePerQuestion = 15;
-    private boolean speedBonus = true; // faster correct answers score higher in SIMULTANEOUS mode
+    private int timePerQuestion = 15;   // 0 = unlimited
+    private boolean speedBonus = true;
     private boolean allowGuests = true;
     private GameMode gameMode = GameMode.SIMULTANEOUS;
-
-    // If true, players who arrive after the game has started can still join — they
-    // wait in the session and pick up at the next round; their score starts at 0.
     private boolean allowLateJoin = false;
-
-    // If false, the live scoreboard hides point values during play; the final
-    // standings are only revealed on the game-over screen.
     private boolean showScoresImmediately = true;
-
-    // Preset that distinguishes a game-style Showcase (scoring on, leaderboards,
-    // GameOver
-    // screen) from a Pulse-style audience poll (scoring off, no leaderboard).
-    // Defaults to
-    // true; the Pulse creation flow will set it to false once that surface is
-    // built.
-    private boolean scoringEnabled = true;
-
-    // If true (default), each MCQ's options are presented in a randomized order per
-    // showcase. Stored once at first broadcast so all clients see the same order.
-    // Turn off when the deck author needs options to appear as authored (rare).
-    private boolean shuffleMcqOptions = true;
-
+    private boolean scoringEnabled = true;   // false = Pulse preset
 }

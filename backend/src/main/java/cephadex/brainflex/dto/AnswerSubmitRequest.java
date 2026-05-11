@@ -1,17 +1,15 @@
 /**
- * Payload sent by a client over STOMP when submitting an answer during a game round.
+ * Payload sent by a client over STOMP when submitting an answer during a round.
  *
- * For MULTIPLE_CHOICE rounds: selectedOption is the 0-based index into the question's options
- * (-1 reserved for timeout).
- * For TEXT_INPUT rounds: textAnswer holds the player's free-text answer; selectedOption is ignored.
- *
- * Both fields are accepted on every payload so the WebSocket schema stays uniform — the
- * server uses Question.type to decide which one to consume.
+ * `elementId` identifies which element this answer is for (stable across deck
+ * snapshots); `payload` is the polymorphic AnswerPayload — its `kind`
+ * discriminator on the wire picks the right subtype on deserialization.
  */
 package cephadex.brainflex.dto;
 
+import cephadex.brainflex.model.answer.AnswerPayload;
+
 public record AnswerSubmitRequest(
-        String questionId,
-        int selectedOption,
-        String textAnswer) {
+        String elementId,
+        AnswerPayload payload) {
 }

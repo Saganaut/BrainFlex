@@ -1,15 +1,20 @@
 /**
- * A named collection of questions that players can choose when creating a game.
- * System packs are seeded by the admin (isSystem=true); the model is designed
- * to support user-created and AI-generated packs in future phases.
+ * Authored collection of elements (slides + questions) that can be played as a
+ * Showcase. Elements are embedded directly in the document for atomic reads /
+ * writes; ordering is the natural list order.
  */
 package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.enums.DeckPreset;
+import cephadex.brainflex.model.enums.DeckVisibility;
 import lombok.Data;
 
 @Data
@@ -20,26 +25,35 @@ public class Deck {
 
     private String name;
     private String description;
-    private String category;
 
-    private boolean isSystem; // true = seeded by admin, not editable
-    private String creatorUserId; // null for system packs
+    // Multi-tag categorization (replaces the legacy `category` string).
+    private List<String> tags = new ArrayList<>();
 
-    private boolean isPublic = true;
-    private int questionCount = 0;
+    private String creatorUserId;       // null for system seeds
+    private String organizationId;      // optional org scoping
+    private boolean system;             // seeded by admin, not editable in the UI
 
-    // Cover thumbnail shown on template tiles + the My Decks list. Null falls back
-    // to a Lorem Picsum placeholder keyed by deck id (client-side).
-    private String coverImageUrl;
+    private DeckVisibility visibility = DeckVisibility.PRIVATE;
+    private DeckPreset recommendedPreset = DeckPreset.GAME;
 
-    // Deck-level background applied during a showcase. Cascade order:
-    //   element.backgroundImageUrl (future) → deck.backgroundImageUrl →
-    //   host's theme backgroundImageUrl → Lorem Picsum placeholder.
-    private String backgroundImageUrl;
+    // Presentation chrome
+    private String coverImageUrl;       // thumbnail tile
+    private String backgroundImageUrl;  // applied during play (cascades to elements)
+    private String themeId;             // optional link to a saved Theme
+
+    // Content — order matters; the runtime walks elements in this order.
+    private List<DeckElement> elements = new ArrayList<>();
+
+    // Author-suggested showcase defaults — copied into Showcase.settings at create time.
+    private ShowcaseSettings defaultSettings = new ShowcaseSettings();
+
+    // Hint for the create-showcase UI; not an enforced limit.
+    private Integer estimatedDurationMinutes;
+
+    // Lineage
+    private String parentDeckId;        // populated when this deck was forked
+    private int version = 1;            // increment on save
 
     private LocalDateTime createdAt = LocalDateTime.now();
-
-    // Placeholder fields for future AI generation support
-    private String generatorType; // e.g. "AI", "USER" — null for system packs
-    private String generationStatus; // PENDING | GENERATING | READY | FAILED — null for system packs
+    private LocalDateTime updatedAt = LocalDateTime.now();
 }

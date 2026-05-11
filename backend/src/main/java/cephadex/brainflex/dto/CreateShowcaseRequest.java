@@ -1,9 +1,8 @@
 /**
- * Request body for POST /api/showcases.
- * Registered users supply the content pack and optional overrides for game
- * settings; any omitted fields fall back to the defaults in ShowcaseSettings.
- *
- * `timePerQuestion = 0` disables the round timer (questions don't time out).
+ * Request body for POST /api/showcases. The host picks a deck; settings fall
+ * back to that deck's `defaultSettings` (which in turn fall back to platform
+ * defaults). `timePerQuestion = 0` disables the round timer for questions
+ * (slides always have their own display timer).
  */
 package cephadex.brainflex.dto;
 
@@ -14,15 +13,13 @@ import jakarta.validation.constraints.NotBlank;
 
 public record CreateShowcaseRequest(
         @NotBlank String deckId,
-        GameMode gameMode,       // null → SIMULTANEOUS
-        @Min(1) @Max(30) Integer totalRounds,        // null → 10
-        @Min(0) @Max(120) Integer timePerQuestion,   // null → 15 seconds; 0 = unlimited
-        Boolean speedBonus,      // null → true
-        Boolean allowGuests,     // null → true
-        @Min(2) @Max(20) Integer maxPlayers,         // null → 8
-        Boolean allowLateJoin,          // null → false
-        Boolean showScoresImmediately,  // null → true
-        Boolean scoringEnabled,         // null → true (Game preset); false for Pulse
-        Boolean shuffleMcqOptions       // null → true
-) {
+        GameMode gameMode,                              // null → deck default
+        @Min(1) @Max(60) Integer totalRounds,           // null → deck default
+        @Min(0) @Max(120) Integer timePerQuestion,      // null → deck default; 0 = unlimited
+        Boolean speedBonus,
+        Boolean allowGuests,
+        @Min(2) @Max(20) Integer maxPlayers,
+        Boolean allowLateJoin,
+        Boolean showScoresImmediately,
+        Boolean scoringEnabled) {
 }

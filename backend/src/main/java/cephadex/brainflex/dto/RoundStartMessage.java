@@ -1,15 +1,19 @@
 /**
- * Broadcast to /topic/showcase/{roomCode}/round when a new round begins.
- * Clients use this to display the question, start the countdown timer,
- * and enable the answer buttons.
+ * Broadcast on /topic/showcase/{roomCode}/round when a new round begins.
+ *
+ * The `element` is the redacted view — correct-answer fields are nulled out so
+ * a clever client can't read them off the wire before submitting. The full
+ * element (with answers) is sent in RoundResultMessage during REVEAL.
  */
 package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
 
+import cephadex.brainflex.model.element.DeckElement;
+
 public record RoundStartMessage(
-        int round,          // 0-based index
+        int round,
         int totalRounds,
-        QuestionDTO question,
+        DeckElement element,
         LocalDateTime startedAt) {
 }

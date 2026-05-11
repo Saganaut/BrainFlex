@@ -30,22 +30,22 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
-    updateQuestion: build.mutation<
-      UpdateQuestionApiResponse,
-      UpdateQuestionApiArg
+    updateElement: build.mutation<
+      UpdateElementApiResponse,
+      UpdateElementApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/decks/${queryArg.id}/questions/${queryArg.questionId}`,
+        url: `/api/decks/${queryArg.id}/elements/${queryArg.elementId}`,
         method: "PUT",
-        body: queryArg.upsertQuestionRequest,
+        body: queryArg.body,
       }),
     }),
-    deleteQuestion: build.mutation<
-      DeleteQuestionApiResponse,
-      DeleteQuestionApiArg
+    deleteElement: build.mutation<
+      DeleteElementApiResponse,
+      DeleteElementApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/decks/${queryArg.id}/questions/${queryArg.questionId}`,
+        url: `/api/decks/${queryArg.id}/elements/${queryArg.elementId}`,
         method: "DELETE",
       }),
     }),
@@ -132,14 +132,20 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.createDeckRequest,
       }),
     }),
-    listQuestions: build.query<ListQuestionsApiResponse, ListQuestionsApiArg>({
-      query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/questions` }),
-    }),
-    addQuestion: build.mutation<AddQuestionApiResponse, AddQuestionApiArg>({
+    addElement: build.mutation<AddElementApiResponse, AddElementApiArg>({
       query: (queryArg) => ({
-        url: `/api/decks/${queryArg.id}/questions`,
+        url: `/api/decks/${queryArg.id}/elements`,
         method: "POST",
-        body: queryArg.upsertQuestionRequest,
+        body: queryArg.body,
+      }),
+    }),
+    moveElement: build.mutation<MoveElementApiResponse, MoveElementApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/elements/${queryArg.elementId}/move`,
+        method: "POST",
+        params: {
+          to: queryArg.to,
+        },
       }),
     }),
     register: build.mutation<RegisterApiResponse, RegisterApiArg>({
@@ -275,16 +281,26 @@ export type DeleteDeckApiResponse = unknown;
 export type DeleteDeckApiArg = {
   id: string;
 };
-export type UpdateQuestionApiResponse = /** status 200 OK */ QuestionEditorDto;
-export type UpdateQuestionApiArg = {
+export type UpdateElementApiResponse = /** status 200 OK */ DeckDto;
+export type UpdateElementApiArg = {
   id: string;
-  questionId: string;
-  upsertQuestionRequest: UpsertQuestionRequest;
+  elementId: string;
+  body:
+    | GridQuestion
+    | ImageChoiceQuestion
+    | McqQuestion
+    | NumberQuestion
+    | PlaceOnImageQuestion
+    | QAndAQuestion
+    | RankingQuestion
+    | ScalesQuestion
+    | Slide
+    | TextQuestion;
 };
-export type DeleteQuestionApiResponse = unknown;
-export type DeleteQuestionApiArg = {
+export type DeleteElementApiResponse = /** status 200 OK */ DeckDto;
+export type DeleteElementApiArg = {
   id: string;
-  questionId: string;
+  elementId: string;
 };
 export type UploadProfileImageApiResponse = /** status 200 OK */ RegisteredUser;
 export type UploadProfileImageApiArg = {
@@ -336,14 +352,26 @@ export type CreateDeckApiResponse = /** status 200 OK */ DeckDto;
 export type CreateDeckApiArg = {
   createDeckRequest: CreateDeckRequest;
 };
-export type ListQuestionsApiResponse = /** status 200 OK */ QuestionEditorDto[];
-export type ListQuestionsApiArg = {
+export type AddElementApiResponse = /** status 200 OK */ DeckDto;
+export type AddElementApiArg = {
   id: string;
+  body:
+    | GridQuestion
+    | ImageChoiceQuestion
+    | McqQuestion
+    | NumberQuestion
+    | PlaceOnImageQuestion
+    | QAndAQuestion
+    | RankingQuestion
+    | ScalesQuestion
+    | Slide
+    | TextQuestion;
 };
-export type AddQuestionApiResponse = /** status 200 OK */ QuestionEditorDto;
-export type AddQuestionApiArg = {
+export type MoveElementApiResponse = /** status 200 OK */ DeckDto;
+export type MoveElementApiArg = {
   id: string;
-  upsertQuestionRequest: UpsertQuestionRequest;
+  elementId: string;
+  to: number;
 };
 export type RegisterApiResponse = /** status 200 OK */ RegisteredUser;
 export type RegisterApiArg = {
@@ -426,69 +454,276 @@ export type UpdateThemeRequest = {
   mode?: string;
   organizationId?: string;
 };
+export type DeckElementBase = {
+  kind: string;
+};
+export type GridCellsConfig = {
+  labels?: string[];
+  backingImageUrl?: string;
+};
+export type GridQuestion = {
+  kind: "GridQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    rows?: number;
+    cols?: number;
+    cells?: GridCellsConfig;
+    correctCellIndexes?: number[];
+    multipleCorrect?: boolean;
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type McqOption = {
+  id?: string;
+  text?: string;
+  imageUrl?: string;
+};
+export type ImageChoiceQuestion = {
+  kind: "ImageChoiceQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    options?: McqOption[];
+    correctOptionId?: string;
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type McqQuestion = {
+  kind: "McqQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    options?: McqOption[];
+    correctOptionId?: string;
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type NumberQuestion = {
+  kind: "NumberQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    correctValue?: number;
+    tolerance?: number;
+    unitLabel?: string;
+    decimalPlaces?: number;
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type PlaceOnImageQuestion = {
+  kind: "PlaceOnImageQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    targetImageUrl?: string;
+    correctX?: number;
+    correctY?: number;
+    tolerance?: number;
+    scoring?: "BINARY" | "LINEAR";
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type QAndAQuestion = {
+  kind: "QAndAQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    maxSubmissionsPerPlayer?: number;
+    allowVoting?: boolean;
+    autoApprove?: boolean;
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type RankingItem = {
+  id?: string;
+  label?: string;
+  imageUrl?: string;
+};
+export type RankingQuestion = {
+  kind: "RankingQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    items?: RankingItem[];
+    correctOrder?: string[];
+    scoring?: "EXACT" | "PARTIAL";
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type ScaleStatement = {
+  id?: string;
+  text?: string;
+};
+export type ScalesQuestion = {
+  kind: "ScalesQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    statements?: ScaleStatement[];
+    scaleMin?: number;
+    scaleMax?: number;
+    minLabel?: string;
+    maxLabel?: string;
+    scored?: boolean;
+    correctRatings?: number[];
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type Slide = {
+  kind: "Slide";
+} & DeckElementBase & {
+    id?: string;
+    slideKind?: "TITLE" | "SECTION" | "CALLOUT" | "CONTENT" | "END";
+    title?: string;
+    body?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type TextQuestion = {
+  kind: "TextQuestion";
+} & DeckElementBase & {
+    id?: string;
+    prompt?: string;
+    correctAnswer?: string;
+    acceptedVariants?: string[];
+    caseSensitive?: boolean;
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    bestAnswerMode?: boolean;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    hostNotes?: string;
+    backgroundImageUrl?: string;
+    imageUrl?: string;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
 export type DeckDto = {
   id?: string;
   name?: string;
   description?: string;
-  category?: string;
-  questionCount?: number;
+  tags?: string[];
   isSystem?: boolean;
+  visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
+  recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
   coverImageUrl?: string;
   backgroundImageUrl?: string;
+  themeId?: string;
+  estimatedDurationMinutes?: number;
+  elementCount?: number;
+  elements?: (
+    | GridQuestion
+    | ImageChoiceQuestion
+    | McqQuestion
+    | NumberQuestion
+    | PlaceOnImageQuestion
+    | QAndAQuestion
+    | RankingQuestion
+    | ScalesQuestion
+    | Slide
+    | TextQuestion
+  )[];
   createdAt?: string;
+  updatedAt?: string;
 };
 export type UpdateDeckRequest = {
   name?: string;
   description?: string;
-  category?: string;
+  tags?: string[];
+  visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
+  recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
   coverImageUrl?: string;
   backgroundImageUrl?: string;
-};
-export type QuestionEditorDto = {
-  id?: string;
-  kind?: "QUESTION" | "SLIDE";
-  type?:
-    | "MULTIPLE_CHOICE"
-    | "IMAGE_CHOICE"
-    | "TEXT_INPUT"
-    | "SCALES"
-    | "RANKING"
-    | "Q_AND_A"
-    | "NUMBER_INPUT"
-    | "GRID"
-    | "PLACE_ON_IMAGE";
-  position?: number;
-  title?: string;
-  questionText?: string;
-  options?: string[];
-  correctAnswer?: number;
-  correctAnswerText?: string;
-  pointValue?: number;
-  timeLimit?: number;
-  difficulty?: "EASY" | "MEDIUM" | "HARD";
-  imageUrl?: string;
-};
-export type UpsertQuestionRequest = {
-  kind?: "QUESTION" | "SLIDE";
-  type?:
-    | "MULTIPLE_CHOICE"
-    | "IMAGE_CHOICE"
-    | "TEXT_INPUT"
-    | "SCALES"
-    | "RANKING"
-    | "Q_AND_A"
-    | "NUMBER_INPUT"
-    | "GRID"
-    | "PLACE_ON_IMAGE";
-  position?: number;
-  title?: string;
-  questionText?: string;
-  options?: string[];
-  correctAnswer?: number;
-  correctAnswerText?: string;
-  pointValue?: number;
-  timeLimit?: number;
-  difficulty?: "EASY" | "MEDIUM" | "HARD";
+  themeId?: string;
+  estimatedDurationMinutes?: number;
 };
 export type PlayerStats = {
   gamesPlayed?: number;
@@ -539,7 +774,6 @@ export type ShowcaseSettings = {
   allowLateJoin?: boolean;
   showScoresImmediately?: boolean;
   scoringEnabled?: boolean;
-  shuffleMcqOptions?: boolean;
 };
 export type ShowcasePlayerDto = {
   userId?: string;
@@ -552,12 +786,25 @@ export type ShowcaseDto = {
   id?: string;
   roomCode?: string;
   inviteToken?: string;
-  type?: "TRIVIA" | "IMAGE" | "WORD";
   status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
+  phase?: "SUBMIT" | "VOTE" | "REVEAL";
   hostUserId?: string;
   deckId?: string;
   deckCoverImageUrl?: string;
   deckBackgroundImageUrl?: string;
+  themeId?: string;
+  deckSnapshot?: (
+    | GridQuestion
+    | ImageChoiceQuestion
+    | McqQuestion
+    | NumberQuestion
+    | PlaceOnImageQuestion
+    | QAndAQuestion
+    | RankingQuestion
+    | ScalesQuestion
+    | Slide
+    | TextQuestion
+  )[];
   settings?: ShowcaseSettings;
   players?: ShowcasePlayerDto[];
   currentRound?: number;
@@ -575,7 +822,6 @@ export type CreateShowcaseRequest = {
   allowLateJoin?: boolean;
   showScoresImmediately?: boolean;
   scoringEnabled?: boolean;
-  shuffleMcqOptions?: boolean;
 };
 export type OrganizationPlan = {
   tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
@@ -603,9 +849,13 @@ export type JoinOrganizationRequest = {
 export type CreateDeckRequest = {
   name: string;
   description?: string;
-  category?: string;
+  tags?: string[];
+  visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
+  recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
   coverImageUrl?: string;
   backgroundImageUrl?: string;
+  themeId?: string;
+  estimatedDurationMinutes?: number;
 };
 export type RegisterRequest = {
   username: string;
@@ -636,43 +886,84 @@ export type PlayerPlacement = {
   totalQuestions?: number;
   guest?: boolean;
 };
-export type TextSubmission = {
-  text?: string;
-  count?: number;
-  isCorrect?: boolean;
+export type AnswerPayloadBase = {
+  kind: string;
 };
+export type GridAnswer = {
+  kind: "GridAnswer";
+} & AnswerPayloadBase & {
+    selectedCellIndexes?: number[];
+  };
+export type ImageChoiceAnswer = {
+  kind: "ImageChoiceAnswer";
+} & AnswerPayloadBase & {
+    optionId?: string;
+  };
+export type McqAnswer = {
+  kind: "McqAnswer";
+} & AnswerPayloadBase & {
+    optionId?: string;
+  };
+export type NumberAnswer = {
+  kind: "NumberAnswer";
+} & AnswerPayloadBase & {
+    value?: number;
+  };
+export type PlaceOnImageAnswer = {
+  kind: "PlaceOnImageAnswer";
+} & AnswerPayloadBase & {
+    x?: number;
+    y?: number;
+  };
+export type RankingAnswer = {
+  kind: "RankingAnswer";
+} & AnswerPayloadBase & {
+    orderedItemIds?: string[];
+  };
+export type ScalesAnswer = {
+  kind: "ScalesAnswer";
+} & AnswerPayloadBase & {
+    ratings?: {
+      [key: string]: number;
+    };
+  };
+export type TextAnswer = {
+  kind: "TextAnswer";
+} & AnswerPayloadBase & {
+    text?: string;
+  };
+export type TimeoutAnswer = {
+  kind: "TimeoutAnswer";
+} & AnswerPayloadBase;
 export type PlayerRoundDetail = {
   userId?: string;
   userName?: string;
-  selectedOption?: number;
-  textAnswer?: string;
+  payload?:
+    | GridAnswer
+    | ImageChoiceAnswer
+    | McqAnswer
+    | NumberAnswer
+    | PlaceOnImageAnswer
+    | RankingAnswer
+    | ScalesAnswer
+    | TextAnswer
+    | TimeoutAnswer;
   wasCorrect?: boolean;
   pointsAwarded?: number;
 };
 export type RoundReview = {
   round?: number;
-  questionId?: string;
-  kind?: "QUESTION" | "SLIDE";
-  questionType?:
-    | "MULTIPLE_CHOICE"
-    | "IMAGE_CHOICE"
-    | "TEXT_INPUT"
-    | "SCALES"
-    | "RANKING"
-    | "Q_AND_A"
-    | "NUMBER_INPUT"
-    | "GRID"
-    | "PLACE_ON_IMAGE";
-  title?: string;
-  questionText?: string;
-  imageUrl?: string;
-  correctOptionIndex?: number;
-  correctAnswerText?: string;
-  options?: string[];
-  mcqDistribution?: {
-    [key: string]: number;
-  };
-  textSubmissions?: TextSubmission[];
+  element?:
+    | GridQuestion
+    | ImageChoiceQuestion
+    | McqQuestion
+    | NumberQuestion
+    | PlaceOnImageQuestion
+    | QAndAQuestion
+    | RankingQuestion
+    | ScalesQuestion
+    | Slide
+    | TextQuestion;
   timedOutCount?: number;
   playerAnswers?: PlayerRoundDetail[];
 };
@@ -705,8 +996,8 @@ export const {
   useLazyGetDeckQuery,
   useUpdateDeckMutation,
   useDeleteDeckMutation,
-  useUpdateQuestionMutation,
-  useDeleteQuestionMutation,
+  useUpdateElementMutation,
+  useDeleteElementMutation,
   useUploadProfileImageMutation,
   useCloseAccountMutation,
   useListThemesQuery,
@@ -721,9 +1012,8 @@ export const {
   useListDecksQuery,
   useLazyListDecksQuery,
   useCreateDeckMutation,
-  useListQuestionsQuery,
-  useLazyListQuestionsQuery,
-  useAddQuestionMutation,
+  useAddElementMutation,
+  useMoveElementMutation,
   useRegisterMutation,
   useGuestLoginMutation,
   useUpdateProfileMutation,

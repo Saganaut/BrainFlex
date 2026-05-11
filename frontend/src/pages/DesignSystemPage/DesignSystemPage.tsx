@@ -456,14 +456,13 @@ const DesignSystemPage = () => {
                 totalRounds={10}
                 timeRemaining={4}
                 slide={{
+                  kind: "Slide",
                   id: "design-system-slide",
-                  kind: "SLIDE",
-                  type: "MULTIPLE_CHOICE",
+                  slideKind: "SECTION",
                   title: "Section 2 — Arts & History",
-                  questionText:
-                    "Now we'll switch from geography to paintings, plays, and the past.",
-                  pointValue: 0,
-                  timeLimit: 5,
+                  body: "Now we'll switch from geography to paintings, plays, and the past.",
+                  displaySeconds: 5,
+                  mediaPosition: "NONE",
                 }}
               />
             </div>

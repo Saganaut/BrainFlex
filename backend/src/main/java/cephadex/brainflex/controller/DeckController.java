@@ -1,7 +1,11 @@
 /**
- * REST endpoints for content pack discovery and CRUD.
- * Read endpoints are public. Write endpoints require ROLE_USER and enforce ownership
- * in the service layer — callers that don't own the pack receive 403.
+ * REST endpoints for deck discovery + CRUD, plus element-CRUD nested under a deck.
+ *
+ * Read endpoints are public. Write endpoints require ROLE_USER and the service layer
+ * enforces ownership — callers that don't own the deck receive 403.
+ *
+ * Element CRUD takes the polymorphic `DeckElement` directly as the request body;
+ * Jackson uses the `kind` discriminator to instantiate the right subtype.
  */
 package cephadex.brainflex.controller;
 
@@ -18,15 +22,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.DeckDTO;
 import cephadex.brainflex.dto.CreateDeckRequest;
-import cephadex.brainflex.dto.QuestionEditorDTO;
+import cephadex.brainflex.dto.DeckDTO;
 import cephadex.brainflex.dto.UpdateDeckRequest;
-import cephadex.brainflex.dto.UpsertQuestionRequest;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.service.DeckService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
@@ -43,30 +47,25 @@ public class DeckController {
         this.userService = userService;
     }
 
-    /** All public packs. Used by the game creation picker. */
+    /** All public decks. Used by the create-showcase template picker. */
     @GetMapping
     public List<DeckDTO> listDecks() {
-        return deckService.listPublic().stream()
-                .map(DeckDTO::new)
-                .toList();
+        return deckService.listPublic().stream().map(DeckDTO::new).toList();
     }
 
-    /** Packs owned by the authenticated user. */
+    /** Decks owned by the authenticated user. */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/mine")
     public List<DeckDTO> listMyDecks(Authentication authentication) {
         User caller = resolveUser(authentication);
-        return deckService.listByOwner(caller.getId()).stream()
-                .map(DeckDTO::new)
-                .toList();
+        return deckService.listByOwner(caller.getId()).stream().map(DeckDTO::new).toList();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DeckDTO> getDeck(@PathVariable String id) {
-        return ResponseEntity.ok(new DeckDTO(deckService.getById(id)));
+    public DeckDTO getDeck(@PathVariable String id) {
+        return new DeckDTO(deckService.getById(id));
     }
 
-    /** Create a new user-owned pack. Registered users only. */
     @PreAuthorize("hasRole('USER')")
     @PostMapping
     public ResponseEntity<DeckDTO> createDeck(
@@ -77,7 +76,6 @@ public class DeckController {
                 .body(new DeckDTO(deckService.createDeck(caller, request)));
     }
 
-    /** Update pack metadata. Owner only. */
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}")
     public DeckDTO updateDeck(
@@ -88,7 +86,6 @@ public class DeckController {
         return new DeckDTO(deckService.updateDeck(id, caller, request));
     }
 
-    /** Delete pack and all its questions. Owner only. */
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDeck(
@@ -99,52 +96,52 @@ public class DeckController {
         return ResponseEntity.noContent().build();
     }
 
-    /** List all questions in a pack with correct answers visible. Owner only. */
-    @PreAuthorize("hasRole('USER')")
-    @GetMapping("/{id}/questions")
-    public List<QuestionEditorDTO> listQuestions(
-            @PathVariable String id,
-            Authentication authentication) {
-        User caller = resolveUser(authentication);
-        return deckService.listQuestions(id, caller).stream()
-                .map(QuestionEditorDTO::new)
-                .toList();
-    }
+    // ---- Element CRUD ----
 
-    /** Add a question to a pack. Owner only. */
+    /** Append a new element to the deck. The polymorphic body picks its subtype via `kind`. */
     @PreAuthorize("hasRole('USER')")
-    @PostMapping("/{id}/questions")
-    public ResponseEntity<QuestionEditorDTO> addQuestion(
+    @PostMapping("/{id}/elements")
+    public ResponseEntity<DeckDTO> addElement(
             @PathVariable String id,
-            @Valid @RequestBody UpsertQuestionRequest request,
+            @RequestBody DeckElement element,
             Authentication authentication) {
         User caller = resolveUser(authentication);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new QuestionEditorDTO(deckService.addQuestion(id, caller, request)));
+                .body(new DeckDTO(deckService.addElement(id, caller, element)));
     }
 
-    /** Replace a question in a pack. Owner only. */
+    /** Replace an element by id. */
     @PreAuthorize("hasRole('USER')")
-    @PutMapping("/{id}/questions/{questionId}")
-    public QuestionEditorDTO updateQuestion(
+    @PutMapping("/{id}/elements/{elementId}")
+    public DeckDTO updateElement(
             @PathVariable String id,
-            @PathVariable String questionId,
-            @Valid @RequestBody UpsertQuestionRequest request,
+            @PathVariable String elementId,
+            @RequestBody DeckElement element,
             Authentication authentication) {
         User caller = resolveUser(authentication);
-        return new QuestionEditorDTO(deckService.updateQuestion(id, questionId, caller, request));
+        return new DeckDTO(deckService.updateElement(id, elementId, caller, element));
     }
 
-    /** Remove a question from a pack. Owner only. */
     @PreAuthorize("hasRole('USER')")
-    @DeleteMapping("/{id}/questions/{questionId}")
-    public ResponseEntity<Void> deleteQuestion(
+    @DeleteMapping("/{id}/elements/{elementId}")
+    public DeckDTO deleteElement(
             @PathVariable String id,
-            @PathVariable String questionId,
+            @PathVariable String elementId,
             Authentication authentication) {
         User caller = resolveUser(authentication);
-        deckService.deleteQuestion(id, questionId, caller);
-        return ResponseEntity.noContent().build();
+        return new DeckDTO(deckService.deleteElement(id, elementId, caller));
+    }
+
+    /** Move an element to a new position within the deck. ?to=<index> */
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/elements/{elementId}/move")
+    public DeckDTO moveElement(
+            @PathVariable String id,
+            @PathVariable String elementId,
+            @RequestParam("to") int to,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        return new DeckDTO(deckService.moveElement(id, elementId, to, caller));
     }
 
     private User resolveUser(Authentication authentication) {

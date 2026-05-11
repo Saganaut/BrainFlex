@@ -28,6 +28,8 @@ import { Route as GamesRoomCodeResultsRouteImport } from './routes/games/$roomCo
 import { Route as GamesRoomCodePlayRouteImport } from './routes/games/$roomCode/play'
 import { Route as GamesRoomCodeLobbyRouteImport } from './routes/games/$roomCode/lobby'
 import { Route as DecksDeckIdViewRouteImport } from './routes/decks/$deckId/view'
+import { Route as DecksDeckIdPresentRouteImport } from './routes/decks/$deckId/present'
+import { Route as DecksDeckIdEditRouteImport } from './routes/decks/$deckId/edit'
 
 const TermsAndConditionsRoute = TermsAndConditionsRouteImport.update({
   id: '/terms-and-conditions',
@@ -124,6 +126,16 @@ const DecksDeckIdViewRoute = DecksDeckIdViewRouteImport.update({
   path: '/decks/$deckId/view',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DecksDeckIdPresentRoute = DecksDeckIdPresentRouteImport.update({
+  id: '/decks/$deckId/present',
+  path: '/decks/$deckId/present',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DecksDeckIdEditRoute = DecksDeckIdEditRouteImport.update({
+  id: '/decks/$deckId/edit',
+  path: '/decks/$deckId/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -140,6 +152,8 @@ export interface FileRoutesByFullPath {
   '/pulse/create': typeof PulseCreateRoute
   '/games/': typeof GamesIndexRoute
   '/my-packs/': typeof MyPacksIndexRoute
+  '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
+  '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
@@ -161,6 +175,8 @@ export interface FileRoutesByTo {
   '/pulse/create': typeof PulseCreateRoute
   '/games': typeof GamesIndexRoute
   '/my-packs': typeof MyPacksIndexRoute
+  '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
+  '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
@@ -183,6 +199,8 @@ export interface FileRoutesById {
   '/pulse/create': typeof PulseCreateRoute
   '/games/': typeof GamesIndexRoute
   '/my-packs/': typeof MyPacksIndexRoute
+  '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
+  '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
@@ -206,6 +224,8 @@ export interface FileRouteTypes {
     | '/pulse/create'
     | '/games/'
     | '/my-packs/'
+    | '/decks/$deckId/edit'
+    | '/decks/$deckId/present'
     | '/decks/$deckId/view'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
@@ -227,6 +247,8 @@ export interface FileRouteTypes {
     | '/pulse/create'
     | '/games'
     | '/my-packs'
+    | '/decks/$deckId/edit'
+    | '/decks/$deckId/present'
     | '/decks/$deckId/view'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
@@ -248,6 +270,8 @@ export interface FileRouteTypes {
     | '/pulse/create'
     | '/games/'
     | '/my-packs/'
+    | '/decks/$deckId/edit'
+    | '/decks/$deckId/present'
     | '/decks/$deckId/view'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
@@ -270,6 +294,8 @@ export interface RootRouteChildren {
   PulseCreateRoute: typeof PulseCreateRoute
   GamesIndexRoute: typeof GamesIndexRoute
   MyPacksIndexRoute: typeof MyPacksIndexRoute
+  DecksDeckIdEditRoute: typeof DecksDeckIdEditRoute
+  DecksDeckIdPresentRoute: typeof DecksDeckIdPresentRoute
   DecksDeckIdViewRoute: typeof DecksDeckIdViewRoute
   GamesRoomCodeLobbyRoute: typeof GamesRoomCodeLobbyRoute
   GamesRoomCodePlayRoute: typeof GamesRoomCodePlayRoute
@@ -412,6 +438,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DecksDeckIdViewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/decks/$deckId/present': {
+      id: '/decks/$deckId/present'
+      path: '/decks/$deckId/present'
+      fullPath: '/decks/$deckId/present'
+      preLoaderRoute: typeof DecksDeckIdPresentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/decks/$deckId/edit': {
+      id: '/decks/$deckId/edit'
+      path: '/decks/$deckId/edit'
+      fullPath: '/decks/$deckId/edit'
+      preLoaderRoute: typeof DecksDeckIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -430,6 +470,8 @@ const rootRouteChildren: RootRouteChildren = {
   PulseCreateRoute: PulseCreateRoute,
   GamesIndexRoute: GamesIndexRoute,
   MyPacksIndexRoute: MyPacksIndexRoute,
+  DecksDeckIdEditRoute: DecksDeckIdEditRoute,
+  DecksDeckIdPresentRoute: DecksDeckIdPresentRoute,
   DecksDeckIdViewRoute: DecksDeckIdViewRoute,
   GamesRoomCodeLobbyRoute: GamesRoomCodeLobbyRoute,
   GamesRoomCodePlayRoute: GamesRoomCodePlayRoute,

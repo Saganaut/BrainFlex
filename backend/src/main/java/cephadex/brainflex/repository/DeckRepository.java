@@ -1,7 +1,6 @@
 /**
- * MongoDB repository for Deck documents.
- * Exposes queries for public packs and system-seeded packs so the
- * game creation UI can display available content to users.
+ * MongoDB repository for Deck documents. Decks shared publicly are those whose
+ * visibility is PUBLIC; the create-showcase template picker uses that filter.
  */
 package cephadex.brainflex.repository;
 
@@ -10,12 +9,13 @@ import java.util.List;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.enums.DeckVisibility;
 
 public interface DeckRepository extends MongoRepository<Deck, String> {
 
-    List<Deck> findByIsPublicTrue();
+    List<Deck> findByVisibility(DeckVisibility visibility);
 
-    List<Deck> findByIsSystemTrue();
+    List<Deck> findBySystemTrue();
 
     List<Deck> findByCreatorUserId(String creatorUserId);
 }

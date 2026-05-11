@@ -1,5 +1,5 @@
 // Sample data for the design system's ReviewPanel demo.
-// Mirrors the shape the backend emits from GET /api/showcases/{code}/review.
+// Mirrors the shape returned by GET /api/showcases/{code}/review.
 import type { ShowcaseReviewDto } from "../../store/BrainFlexApi";
 
 export const reviewSampleData: ShowcaseReviewDto = {
@@ -11,7 +11,6 @@ export const reviewSampleData: ShowcaseReviewDto = {
     {
       userId: "u1",
       userName: "Aragorn",
-      guest: false,
       finalScore: 750,
       placement: 1,
       correctAnswers: 4,
@@ -20,7 +19,6 @@ export const reviewSampleData: ShowcaseReviewDto = {
     {
       userId: "u2",
       userName: "Legolas",
-      guest: false,
       finalScore: 500,
       placement: 2,
       correctAnswers: 3,
@@ -29,7 +27,6 @@ export const reviewSampleData: ShowcaseReviewDto = {
     {
       userId: "u3",
       userName: "Gimli",
-      guest: false,
       finalScore: 350,
       placement: 3,
       correctAnswers: 2,
@@ -39,49 +36,66 @@ export const reviewSampleData: ShowcaseReviewDto = {
   rounds: [
     {
       round: 0,
-      questionId: "s0",
-      kind: "SLIDE",
-      questionType: "MULTIPLE_CHOICE",
-      title: "Welcome to General Knowledge",
-      questionText: "A quick trip around the world. Buckle up.",
-      correctOptionIndex: -1,
+      element: {
+        kind: "Slide",
+        id: "slide-0",
+        slideKind: "TITLE",
+        title: "Welcome to BrainFlex",
+        body: "A quick tour. Buckle up.",
+        displaySeconds: 6,
+        mediaPosition: "NONE",
+      },
       timedOutCount: 0,
       playerAnswers: [],
     },
     {
       round: 1,
-      questionId: "q1",
-      kind: "QUESTION",
-      questionType: "MULTIPLE_CHOICE",
-      questionText: "Which planet is known as the Red Planet?",
-      correctOptionIndex: 2,
-      correctAnswerText: "Mars",
-      options: ["Venus", "Jupiter", "Mars", "Saturn"],
-      mcqDistribution: { "0": 1, "1": 0, "2": 2, "3": 0 },
+      element: {
+        kind: "McqQuestion",
+        id: "mcq-1",
+        prompt: "Which planet is known as the Red Planet?",
+        options: [
+          { id: "opt-1", text: "Venus" },
+          { id: "opt-2", text: "Jupiter" },
+          { id: "opt-3", text: "Mars" },
+          { id: "opt-4", text: "Saturn" },
+        ],
+        correctOptionId: "opt-3",
+        pointValue: 100,
+        difficulty: "EASY",
+        bestAnswerMode: false,
+        bestAnswerBonus: 0,
+        displaySeconds: 15,
+        mediaPosition: "NONE",
+      },
       timedOutCount: 0,
       playerAnswers: [
-        { userId: "u1", userName: "Aragorn", selectedOption: 2, wasCorrect: true, pointsAwarded: 150 },
-        { userId: "u2", userName: "Legolas", selectedOption: 2, wasCorrect: true, pointsAwarded: 100 },
-        { userId: "u3", userName: "Gimli", selectedOption: 0, wasCorrect: false, pointsAwarded: 0 },
+        { userId: "u1", userName: "Aragorn", payload: { kind: "McqAnswer", optionId: "opt-3" }, wasCorrect: true, pointsAwarded: 150 },
+        { userId: "u2", userName: "Legolas", payload: { kind: "McqAnswer", optionId: "opt-3" }, wasCorrect: true, pointsAwarded: 100 },
+        { userId: "u3", userName: "Gimli", payload: { kind: "McqAnswer", optionId: "opt-1" }, wasCorrect: false, pointsAwarded: 0 },
       ],
     },
     {
       round: 2,
-      questionId: "q2",
-      kind: "QUESTION",
-      questionType: "TEXT_INPUT",
-      questionText: "What is the capital of France?",
-      correctOptionIndex: -1,
-      correctAnswerText: "Paris",
-      textSubmissions: [
-        { text: "Paris", count: 2, isCorrect: true },
-        { text: "paris", count: 1, isCorrect: true },
-      ],
+      element: {
+        kind: "TextQuestion",
+        id: "text-1",
+        prompt: "What is the capital of France?",
+        correctAnswer: "Paris",
+        acceptedVariants: [],
+        caseSensitive: false,
+        pointValue: 150,
+        difficulty: "EASY",
+        bestAnswerMode: false,
+        bestAnswerBonus: 0,
+        displaySeconds: 15,
+        mediaPosition: "NONE",
+      },
       timedOutCount: 0,
       playerAnswers: [
-        { userId: "u1", userName: "Aragorn", selectedOption: -1, textAnswer: "Paris", wasCorrect: true, pointsAwarded: 150 },
-        { userId: "u2", userName: "Legolas", selectedOption: -1, textAnswer: "paris", wasCorrect: true, pointsAwarded: 100 },
-        { userId: "u3", userName: "Gimli", selectedOption: -1, textAnswer: "Lyon", wasCorrect: false, pointsAwarded: 0 },
+        { userId: "u1", userName: "Aragorn", payload: { kind: "TextAnswer", text: "Paris" }, wasCorrect: true, pointsAwarded: 150 },
+        { userId: "u2", userName: "Legolas", payload: { kind: "TextAnswer", text: "paris" }, wasCorrect: true, pointsAwarded: 100 },
+        { userId: "u3", userName: "Gimli", payload: { kind: "TextAnswer", text: "Lyon" }, wasCorrect: false, pointsAwarded: 0 },
       ],
     },
   ],

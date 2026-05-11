@@ -1,0 +1,46 @@
+/**
+ * Likert-style: rate each statement on a numeric scale. Default unscored
+ * (Pulse use case — show the distribution). When `scored=true` and
+ * `correctRatings` is provided, the question becomes "guess the average
+ * rating" — submitted rating compared against the correct one per statement.
+ */
+package cephadex.brainflex.model.element;
+
+import java.util.List;
+
+import cephadex.brainflex.model.enums.Difficulty;
+import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.enums.MediaPosition;
+
+public record ScalesQuestion(
+        String id,
+        String prompt,
+        List<ScaleStatement> statements,
+        int scaleMin,                  // typically 1
+        int scaleMax,                  // typically 5 or 7
+        String minLabel,               // anchor text, e.g. "Strongly disagree"
+        String maxLabel,               // anchor text, e.g. "Strongly agree"
+        boolean scored,                // false → Pulse-style; just collect data
+        List<Integer> correctRatings,  // when scored: one rating per statement, in order
+        // scoring
+        int pointValue,
+        Difficulty difficulty,
+        // best-answer modifier
+        boolean bestAnswerMode,
+        int bestAnswerBonus,
+        String explanation,
+        // shared chrome
+        int displaySeconds,
+        String hostNotes,
+        String backgroundImageUrl,
+        String imageUrl,
+        String videoUrl,
+        String audioUrl,
+        MediaPosition mediaPosition
+) implements DeckElement {
+
+    @Override
+    public ElementKind kind() {
+        return ElementKind.SCALES;
+    }
+}

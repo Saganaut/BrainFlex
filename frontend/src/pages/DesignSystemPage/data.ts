@@ -343,8 +343,23 @@ export const formSampleData = {
 
 export const RoundResultData = {
   round: 3,
-  correctAnswer: 9,
-  correctAnswerText: "The Nine Walkers",
+  element: {
+    kind: "McqQuestion" as const,
+    id: "lotr-fellowship",
+    prompt: "How many walkers were in the Fellowship of the Ring?",
+    options: [
+      { id: "opt-1", text: "Seven" },
+      { id: "opt-9", text: "Nine" },
+      { id: "opt-12", text: "Twelve" },
+    ],
+    correctOptionId: "opt-9",
+    pointValue: 100,
+    difficulty: "EASY" as const,
+    bestAnswerMode: false,
+    bestAnswerBonus: 0,
+    displaySeconds: 15,
+    mediaPosition: "NONE" as const,
+  },
   playerResults: [
     {
       userId: "user-003",

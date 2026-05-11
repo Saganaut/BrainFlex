@@ -31,7 +31,6 @@ const DEFAULT_MAX_PLAYERS = 8;
 const DEFAULT_ALLOW_GUESTS = true;
 const DEFAULT_ALLOW_LATE_JOIN = false;
 const DEFAULT_SHOW_SCORES_IMMEDIATELY = true;
-const DEFAULT_SHUFFLE_MCQ_OPTIONS = true;
 
 // ─── Pack grid ────────────────────────────────────────────────────────────────
 
@@ -72,8 +71,8 @@ const PackGrid = ({
           />
           <span className={styles.packName}>{pack.name}</span>
           <span className={styles.packMeta}>
-            {pack.questionCount ?? 0} questions
-            {pack.category ? ` · ${pack.category}` : ""}
+            {pack.elementCount ?? 0} elements
+            {pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""}
           </span>
           {pack.description && (
             <span className={styles.packDesc}>{pack.description}</span>
@@ -136,7 +135,6 @@ interface SettingsState {
   allowGuests: boolean;
   allowLateJoin: boolean;
   showScoresImmediately: boolean;
-  shuffleMcqOptions: boolean;
 }
 
 const DEFAULT_SETTINGS: SettingsState = {
@@ -148,7 +146,6 @@ const DEFAULT_SETTINGS: SettingsState = {
   allowGuests: DEFAULT_ALLOW_GUESTS,
   allowLateJoin: DEFAULT_ALLOW_LATE_JOIN,
   showScoresImmediately: DEFAULT_SHOW_SCORES_IMMEDIATELY,
-  shuffleMcqOptions: DEFAULT_SHUFFLE_MCQ_OPTIONS,
 };
 
 interface SettingsFormProps {
@@ -263,15 +260,6 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
             />
           </label>
 
-          <label className={styles.setting}>
-            <span>Shuffle multiple-choice answer order</span>
-            <Checkbox
-              checked={settings.shuffleMcqOptions}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                patch({ shuffleMcqOptions: e.target.checked });
-              }}
-            />
-          </label>
         </div>
       </details>
     </div>
@@ -329,7 +317,6 @@ const CreateGamePage = () => {
           allowGuests: cfg.allowGuests,
           allowLateJoin: cfg.allowLateJoin,
           showScoresImmediately: cfg.showScoresImmediately,
-          shuffleMcqOptions: cfg.shuffleMcqOptions,
         },
       }).unwrap();
       if (session.roomCode) {

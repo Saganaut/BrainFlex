@@ -29,8 +29,8 @@ const PackButton = ({
     onClick={() => { if (pack.id) onSelect(pack.id); }}>
     <span className={styles.packName}>{pack.name}</span>
     <span className={styles.packMeta}>
-      {pack.questionCount ?? 0} questions
-      {pack.category ? ` · ${pack.category}` : ""}
+      {pack.elementCount ?? 0} elements
+      {pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""}
     </span>
     {pack.description && (
       <span className={styles.packDesc}>{pack.description}</span>

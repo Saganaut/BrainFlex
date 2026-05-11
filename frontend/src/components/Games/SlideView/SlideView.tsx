@@ -1,20 +1,16 @@
 /**
- * Renders a non-interactive deck element (slide) during a showcase round.
- * Used for title cards, section dividers, intermissions, callouts, etc. — analogous
- * to a PowerPoint slide between questions.
- *
- * The server auto-advances slides on their display timer (always, even when noTimer
- * is on for questions), so there's nothing for the player to do here. We still show
- * a countdown so participants know how long the slide will stay up.
+ * Renders a non-interactive slide during a showcase round (title / section /
+ * callout / content / end card). The server auto-advances slides on their
+ * display timer, so there's nothing for the player to do here — we just show a
+ * countdown so the audience knows how long the slide will stay up.
  */
 import styles from "./SlideView.module.css";
-import type { QuestionData } from "../../../store/gameSlice";
+import type { Slide } from "../../../types/elements";
 
 export interface SlideViewProps {
-  slide: QuestionData;
+  slide: Slide;
   round: number;
   totalRounds: number;
-  // Seconds left on the display timer (-1 hides the countdown badge).
   timeRemaining?: number;
 }
 
@@ -26,9 +22,7 @@ const SlideView = ({ slide, round, totalRounds, timeRemaining }: SlideViewProps)
           Slide {round + 1} / {totalRounds}
         </span>
         {typeof timeRemaining === "number" && timeRemaining >= 0 && (
-          <span className={styles.timer}>
-            advancing in {timeRemaining}s
-          </span>
+          <span className={styles.timer}>advancing in {timeRemaining}s</span>
         )}
       </div>
 
@@ -37,7 +31,7 @@ const SlideView = ({ slide, round, totalRounds, timeRemaining }: SlideViewProps)
       )}
 
       {slide.title && <h2 className={styles.title}>{slide.title}</h2>}
-      <p className={styles.body}>{slide.questionText}</p>
+      {slide.body && <p className={styles.body}>{slide.body}</p>}
     </article>
   );
 };

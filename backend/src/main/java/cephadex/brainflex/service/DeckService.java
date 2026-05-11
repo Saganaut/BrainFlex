@@ -1,10 +1,20 @@
 /**
- * Business logic for browsing, creating, and editing content packs and their questions.
- * All mutation methods enforce ownership — callers that don't own the pack get 403.
+ * Business logic for browsing, creating, and editing decks + their embedded elements.
+ *
+ * Elements live inside the deck document, so every "question CRUD" operation is a
+ * targeted edit on Deck.elements followed by a single save. Element order is the
+ * natural list order — reordering is just moving an item to a new index.
+ *
+ * All mutation methods enforce ownership; system decks (`isSystem=true`) and decks
+ * owned by another user are off-limits.
  */
 package cephadex.brainflex.service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,30 +22,26 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.CreateDeckRequest;
 import cephadex.brainflex.dto.UpdateDeckRequest;
-import cephadex.brainflex.dto.UpsertQuestionRequest;
 import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.Question;
 import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.enums.Difficulty;
-import cephadex.brainflex.model.enums.ElementKind;
-import cephadex.brainflex.model.enums.QuestionType;
+import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.enums.DeckPreset;
+import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.repository.DeckRepository;
-import cephadex.brainflex.repository.QuestionRepository;
 
 @Service
 public class DeckService {
 
     private final DeckRepository deckRepository;
-    private final QuestionRepository questionRepository;
 
-    public DeckService(DeckRepository deckRepository,
-            QuestionRepository questionRepository) {
+    public DeckService(DeckRepository deckRepository) {
         this.deckRepository = deckRepository;
-        this.questionRepository = questionRepository;
     }
 
+    // ---- Read ----
+
     public List<Deck> listPublic() {
-        return deckRepository.findByIsPublicTrue();
+        return deckRepository.findByVisibility(DeckVisibility.PUBLIC);
     }
 
     public List<Deck> listByOwner(String userId) {
@@ -44,138 +50,132 @@ public class DeckService {
 
     public Deck getById(String id) {
         return deckRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Content pack not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found"));
     }
 
+    // ---- Deck CRUD ----
+
     public Deck createDeck(User creator, CreateDeckRequest request) {
-        Deck pack = new Deck();
-        pack.setName(request.name());
-        pack.setDescription(request.description());
-        pack.setCategory(request.category());
-        pack.setCoverImageUrl(request.coverImageUrl());
-        pack.setBackgroundImageUrl(request.backgroundImageUrl());
-        pack.setSystem(false);
-        pack.setPublic(true);
-        pack.setCreatorUserId(creator.getId());
-        return deckRepository.save(pack);
+        Deck deck = new Deck();
+        deck.setName(request.name());
+        deck.setDescription(request.description());
+        deck.setTags(request.tags() == null ? new ArrayList<>() : request.tags());
+        deck.setVisibility(request.visibility() == null ? DeckVisibility.PRIVATE : request.visibility());
+        deck.setRecommendedPreset(request.recommendedPreset() == null ? DeckPreset.GAME : request.recommendedPreset());
+        deck.setCoverImageUrl(request.coverImageUrl());
+        deck.setBackgroundImageUrl(request.backgroundImageUrl());
+        deck.setThemeId(request.themeId());
+        deck.setEstimatedDurationMinutes(request.estimatedDurationMinutes());
+        deck.setSystem(false);
+        
+        deck.setCreatorUserId(creator.getId());
+        deck.setCreatedAt(LocalDateTime.now());
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
     }
 
     public Deck updateDeck(String id, User caller, UpdateDeckRequest request) {
-        Deck pack = requireOwned(id, caller);
-        if (request.name() != null) pack.setName(request.name());
-        if (request.description() != null) pack.setDescription(request.description());
-        if (request.category() != null) pack.setCategory(request.category());
-        // Empty string clears the image; null leaves it alone.
+        Deck deck = requireOwned(id, caller);
+        if (request.name() != null) deck.setName(request.name());
+        if (request.description() != null) deck.setDescription(request.description());
+        if (request.tags() != null) deck.setTags(request.tags());
+        if (request.visibility() != null) deck.setVisibility(request.visibility());
+        if (request.recommendedPreset() != null) deck.setRecommendedPreset(request.recommendedPreset());
+        // empty string clears; null leaves alone
         if (request.coverImageUrl() != null) {
-            pack.setCoverImageUrl(request.coverImageUrl().isEmpty() ? null : request.coverImageUrl());
+            deck.setCoverImageUrl(request.coverImageUrl().isEmpty() ? null : request.coverImageUrl());
         }
         if (request.backgroundImageUrl() != null) {
-            pack.setBackgroundImageUrl(request.backgroundImageUrl().isEmpty() ? null : request.backgroundImageUrl());
+            deck.setBackgroundImageUrl(request.backgroundImageUrl().isEmpty() ? null : request.backgroundImageUrl());
         }
-        return deckRepository.save(pack);
+        if (request.themeId() != null) {
+            deck.setThemeId(request.themeId().isEmpty() ? null : request.themeId());
+        }
+        if (request.estimatedDurationMinutes() != null) {
+            deck.setEstimatedDurationMinutes(request.estimatedDurationMinutes());
+        }
+        deck.setUpdatedAt(LocalDateTime.now());
+        deck.setVersion(deck.getVersion() + 1);
+        return deckRepository.save(deck);
     }
 
     public void deleteDeck(String id, User caller) {
-        Deck pack = requireOwned(id, caller);
-        questionRepository.deleteByDeckId(pack.getId());
-        deckRepository.delete(pack);
+        Deck deck = requireOwned(id, caller);
+        deckRepository.delete(deck);
     }
 
-    public List<Question> listQuestions(String packId, User caller) {
-        requireOwned(packId, caller);
-        return questionRepository.findByDeckIdOrderByPositionAscIdAsc(packId);
+    // ---- Element CRUD (operates on Deck.elements directly) ----
+
+    /** Append an element to the end of the deck. Assigns a server-side id if missing. */
+    public Deck addElement(String deckId, User caller, DeckElement incoming) {
+        Deck deck = requireOwned(deckId, caller);
+        DeckElement withId = ensureElementId(incoming);
+        deck.getElements().add(withId);
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
     }
 
-    public Question addQuestion(String packId, User caller, UpsertQuestionRequest request) {
-        Deck pack = requireOwned(packId, caller);
-        Question question = buildQuestion(packId, request);
-        // Auto-assign position at the end of the deck if the caller didn't supply one.
-        if (question.getPosition() == null) {
-            question.setPosition(nextPositionForDeck(packId));
+    /** Replace the element with matching id; throws 404 if not found in the deck. */
+    public Deck updateElement(String deckId, String elementId, User caller, DeckElement incoming) {
+        Deck deck = requireOwned(deckId, caller);
+        int idx = indexOfElement(deck, elementId);
+        // Preserve the id even if the client omits it on update.
+        DeckElement withId = ensureElementId(incoming);
+        if (!elementId.equals(withId.id())) {
+            // Different ids — caller is trying to swap one element for another; treat as PUT semantics.
         }
-        Question saved = questionRepository.save(question);
-        pack.setQuestionCount(pack.getQuestionCount() + 1);
-        deckRepository.save(pack);
-        return saved;
+        deck.getElements().set(idx, withId);
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
     }
 
-    /** Returns the next position slot for a deck — last position + 10 (or 10 for empty decks). */
-    private double nextPositionForDeck(String deckId) {
-        List<Question> existing = questionRepository.findByDeckIdOrderByPositionAscIdAsc(deckId);
-        if (existing.isEmpty()) return 10.0;
-        Question last = existing.get(existing.size() - 1);
-        return (last.getPosition() == null ? existing.size() * 10.0 : last.getPosition()) + 10.0;
+    public Deck deleteElement(String deckId, String elementId, User caller) {
+        Deck deck = requireOwned(deckId, caller);
+        int idx = indexOfElement(deck, elementId);
+        deck.getElements().remove(idx);
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
     }
 
-    public Question updateQuestion(String packId, String questionId, User caller,
-            UpsertQuestionRequest request) {
-        requireOwned(packId, caller);
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
-        if (!packId.equals(question.getDeckId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found");
+    /** Move the element with `elementId` to position `targetIndex` (clamped to deck size). */
+    public Deck moveElement(String deckId, String elementId, int targetIndex, User caller) {
+        Deck deck = requireOwned(deckId, caller);
+        int currentIdx = indexOfElement(deck, elementId);
+        int clamped = Math.max(0, Math.min(targetIndex, deck.getElements().size() - 1));
+        if (currentIdx == clamped) return deck;
+        DeckElement element = deck.getElements().remove(currentIdx);
+        deck.getElements().add(clamped, element);
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
+    }
+
+    // ---- Helpers ----
+
+    private Deck requireOwned(String deckId, User caller) {
+        Deck deck = getById(deckId);
+        if (deck.isSystem() || !caller.getId().equals(deck.getCreatorUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this deck");
         }
-        applyQuestion(question, request);
-        return questionRepository.save(question);
+        return deck;
     }
 
-    public void deleteQuestion(String packId, String questionId, User caller) {
-        Deck pack = requireOwned(packId, caller);
-        Question question = questionRepository.findById(questionId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found"));
-        if (!packId.equals(question.getDeckId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Question not found");
+    private int indexOfElement(Deck deck, String elementId) {
+        Optional<Integer> idx = findIndex(deck.getElements(), elementId);
+        return idx.orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Element not in this deck"));
+    }
+
+    private static Optional<Integer> findIndex(List<DeckElement> elements, String elementId) {
+        for (int i = 0; i < elements.size(); i++) {
+            if (elementId.equals(elements.get(i).id())) return Optional.of(i);
         }
-        questionRepository.delete(question);
-        pack.setQuestionCount(Math.max(0, pack.getQuestionCount() - 1));
-        deckRepository.save(pack);
+        return Optional.empty();
     }
 
-    // --- helpers ---
-
-    private Deck requireOwned(String packId, User caller) {
-        Deck pack = getById(packId);
-        if (pack.isSystem() || !caller.getId().equals(pack.getCreatorUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this content pack");
-        }
-        return pack;
-    }
-
-    private Question buildQuestion(String packId, UpsertQuestionRequest request) {
-        Question q = new Question();
-        q.setDeckId(packId);
-        applyQuestion(q, request);
-        return q;
-    }
-
-    private void applyQuestion(Question q, UpsertQuestionRequest request) {
-        ElementKind kind = request.resolvedKind();
-        QuestionType type = request.resolvedType();
-        q.setKind(kind);
-        q.setType(type);
-        q.setTitle(request.title());
-        q.setQuestionText(request.questionText());
-        q.setPointValue(request.pointValue());
-        q.setTimeLimit(request.timeLimit());
-        q.setDifficulty(request.difficulty() != null ? request.difficulty() : Difficulty.MEDIUM);
-        // Caller-provided position overrides; otherwise leave whatever's on the doc
-        // (preserves position on update; addQuestion auto-fills for inserts).
-        if (request.position() != null) q.setPosition(request.position());
-
-        if (kind == ElementKind.SLIDE) {
-            // Slides carry only display fields. Wipe any leftover answer state from a
-            // prior question state if the editor toggled an element between kinds.
-            q.setOptions(null);
-            q.setCorrectAnswer(0);
-            q.setCorrectAnswerText(null);
-        } else if (type == QuestionType.TEXT_INPUT) {
-            q.setCorrectAnswerText(request.correctAnswerText().trim());
-            q.setOptions(null);
-            q.setCorrectAnswer(0);
-        } else {
-            q.setOptions(request.options());
-            q.setCorrectAnswer(request.correctAnswer() == null ? 0 : request.correctAnswer());
-            q.setCorrectAnswerText(null);
-        }
+    /** Ensures the element has a stable id — generates one if the client omitted it. */
+    private static DeckElement ensureElementId(DeckElement element) {
+        if (element.id() != null && !element.id().isBlank()) return element;
+        String newId = UUID.randomUUID().toString();
+        return DeckElementCloner.withId(element, newId);
     }
 }

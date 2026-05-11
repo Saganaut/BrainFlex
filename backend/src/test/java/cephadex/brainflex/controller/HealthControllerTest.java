@@ -15,11 +15,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import cephadex.brainflex.repository.AudienceSubmissionRepository;
+import cephadex.brainflex.repository.BestAnswerVoteRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.ShowcaseResultRepository;
 import cephadex.brainflex.repository.ShowcaseRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
-import cephadex.brainflex.repository.QuestionRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 import cephadex.brainflex.repository.UserRepository;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,7 +71,10 @@ class HealthControllerTest {
     private ThemeRepository themeRepository;
 
     @MockitoBean
-    private QuestionRepository questionRepository;
+    private AudienceSubmissionRepository audienceSubmissionRepository;
+
+    @MockitoBean
+    private BestAnswerVoteRepository bestAnswerVoteRepository;
 
     // GridFsTemplate auto-configuration also reads MongoConverter from the
     // mocked MongoTemplate (getConverter() → null), so mock it here too.

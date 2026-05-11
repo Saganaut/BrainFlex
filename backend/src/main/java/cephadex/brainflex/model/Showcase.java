@@ -1,22 +1,24 @@
 /**
- * The central document for an active or completed game session.
- * Tracks all runtime state: room code, players, current round, and embedded settings.
- * Unique indexes on roomCode and inviteToken support the two join flows (code + link).
+ * The central document for an active or completed showcase.
+ *
+ * Tracks all runtime state: room code, players, current round, and the
+ * frozen `deckSnapshot` of elements taken at create time so authoring the
+ * source deck mid-showcase can't desync clients. Unique indexes on roomCode
+ * and inviteToken support the two join flows (code + link).
  */
 package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.enums.GameStatus;
-import cephadex.brainflex.model.enums.GameType;
+import cephadex.brainflex.model.enums.ShowcasePhase;
 import lombok.Data;
 
 @Data
@@ -26,36 +28,37 @@ public class Showcase {
     private String id;
 
     @Indexed(unique = true)
-    private String roomCode; // 6-char uppercase alphanumeric, used for in-person join
+    private String roomCode;
 
     @Indexed(unique = true)
-    private String inviteToken; // UUID, used for link-based join
+    private String inviteToken;
 
-    private GameType type = GameType.TRIVIA;
     private GameStatus status = GameStatus.LOBBY;
 
-    private String hostUserId; // must be a registered user
+    // The active phase within the current round. Most question kinds live in
+    // SUBMIT only; Best-Answer-mode questions cycle SUBMIT → VOTE → REVEAL.
+    private ShowcasePhase phase = ShowcasePhase.SUBMIT;
 
-    private String deckId; // reference to Deck
+    private String hostUserId;
 
-    // Denormalized snapshot of the deck's presentation assets at the time the
-    // showcase was created. Decouples gameplay rendering from a live deck lookup
-    // and locks the look-and-feel even if the author edits the deck afterwards.
+    // Source deck reference + frozen snapshot of its elements at create time.
+    // All gameplay (broadcasting, scoring, review) reads from deckSnapshot —
+    // never re-fetches the live Deck — so mid-showcase deck edits don't desync.
+    private String deckId;
+    private List<DeckElement> deckSnapshot = new ArrayList<>();
+
+    // Denormalized presentation assets from the source deck for chrome rendering.
     private String deckCoverImageUrl;
     private String deckBackgroundImageUrl;
+    private String themeId;
 
     private ShowcaseSettings settings = new ShowcaseSettings();
     private List<ShowcasePlayer> players = new ArrayList<>();
 
-    private List<String> questionIds = new ArrayList<>(); // ordered draw from the content pack
-    private int currentRound = 0; // 0-indexed; increments as rounds complete
-
-    // Per-question option shuffles, populated lazily when an MCQ round is broadcast
-    // and reused thereafter so every client + the server agree on the order.
-    private Map<String, McqShuffle> mcqShuffles = new HashMap<>();
+    private int currentRound = 0;   // index into deckSnapshot
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
-    private LocalDateTime roundStartedAt; // timestamp when the current round began; used for speed bonus
+    private LocalDateTime roundStartedAt;   // timestamp current round began; speed-bonus reference
 }

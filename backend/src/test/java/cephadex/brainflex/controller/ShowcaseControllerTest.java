@@ -99,7 +99,7 @@ class ShowcaseControllerTest {
                 when(gameService.createShowcase(any(User.class), any(CreateShowcaseRequest.class)))
                                 .thenReturn(lobbySession);
 
-                CreateShowcaseRequest request = new CreateShowcaseRequest("pack1", null, null, null, null, null, null, null, null, null, null);
+                CreateShowcaseRequest request = new CreateShowcaseRequest("pack1", null, null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/showcases")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -112,7 +112,7 @@ class ShowcaseControllerTest {
         void createGame_AsUnauthenticated_ReturnsForbidden() throws Exception {
                 when(userRepository.findByGoogleId(anyString())).thenReturn(Optional.empty());
 
-                CreateShowcaseRequest request = new CreateShowcaseRequest("pack1", null, null, null, null, null, null, null, null, null, null);
+                CreateShowcaseRequest request = new CreateShowcaseRequest("pack1", null, null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/showcases")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -130,7 +130,7 @@ class ShowcaseControllerTest {
                                 })
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
-                                                new CreateShowcaseRequest("pack1", null, null, null, null, null, null, null, null, null, null))))
+                                                new CreateShowcaseRequest("pack1", null, null, null, null, null, null, null, null, null))))
                                 .andExpect(status().isForbidden());
         }
 

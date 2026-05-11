@@ -1,22 +1,24 @@
 /**
- * Records a single player's answer to one question during a game session.
- * Embedded inside ShowcasePlayer so all answers for a player are co-located
- * with their session data rather than in a separate collection.
+ * A single player's submission for one element. The polymorphic `payload`
+ * carries the type-specific response (option id, text, ranking, coordinates,
+ * etc.) — the scorer branches on the payload variant to compute correctness
+ * and point value.
+ *
+ * Embedded inside ShowcasePlayer so all answers for a player live with their
+ * session record.
  */
 package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
 
+import cephadex.brainflex.model.answer.AnswerPayload;
 import lombok.Data;
 
 @Data
 public class PlayerAnswer {
-    private String questionId;
-    // MCQ: index into Question.options; -1 means timed out. TEXT_INPUT: ignored (use textAnswer).
-    private int selectedOption;
-    // TEXT_INPUT: raw text the player submitted; null when timed out or for MCQ rounds.
-    private String textAnswer;
-    private boolean isCorrect;
+    private String elementId;
+    private AnswerPayload payload;       // see model.answer.* for variants
+    private boolean correct;
     private int pointsAwarded;
-    private LocalDateTime answeredAt; // used to calculate speed bonus in SIMULTANEOUS mode
+    private LocalDateTime answeredAt;
 }

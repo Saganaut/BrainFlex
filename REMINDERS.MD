@@ -13,3 +13,11 @@ Useful MongoDB commands:
 - Show collections: `show collections`
 - Find documents: `db.collection.find()`
 - Insert a document: `db.collection.insertOne({ key: 'value' })`
+
+## JAVA TESTS
+
+Less verbose tests
+./mvnw test -q
+
+With logs
+./mvn test > test-output.log

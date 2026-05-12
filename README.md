@@ -17,6 +17,11 @@
 - React Compiler
 - Vite
 - ESLint (ReactX, ReactDOM, CSS plugins)
+- TipTap (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/pm`) — rich text editor used in
+  the deck/slide authoring UI for any field that needs formatted text (slide body,
+  question explanations, host notes). When you need a multi-line editable text surface
+  with bold/italic/lists/etc., reach for TipTap (`useEditor` + `<EditorContent>`) rather
+  than a plain `<textarea>`.
 
 ### Garage (S3-compatible object storage)
 

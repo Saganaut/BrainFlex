@@ -28,7 +28,7 @@ public final class DeckElementCloner {
                     s.displaySeconds(), s.hostNotes(), s.backgroundImageUrl(),
                     s.imageUrl(), s.videoUrl(), s.audioUrl(), s.mediaPosition());
             case McqQuestion q -> new McqQuestion(
-                    id, q.prompt(), q.options(), q.correctOptionId(),
+                    id, q.prompt(), q.options(), q.correctOptionIds(),
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),

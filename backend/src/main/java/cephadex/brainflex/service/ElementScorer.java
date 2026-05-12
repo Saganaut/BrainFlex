@@ -69,7 +69,10 @@ public final class ElementScorer {
 
     private static Result scoreMcq(McqQuestion q, AnswerPayload payload) {
         if (!(payload instanceof McqAnswer a)) return Result.ZERO;
-        boolean correct = a.optionId() != null && a.optionId().equals(q.correctOptionId());
+        List<String> correctIds = q.correctOptionIds();
+        boolean correct = a.optionId() != null
+                && correctIds != null
+                && correctIds.contains(a.optionId());
         return new Result(correct, correct ? q.pointValue() : 0);
     }
 

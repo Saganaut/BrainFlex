@@ -8,7 +8,7 @@ interface AccordionProps {
 }
 
 const Accordion: React.FC<AccordionProps> = ({ titleBar, children }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   return (
     <div className={styles.accordion}>

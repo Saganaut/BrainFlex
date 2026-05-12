@@ -89,6 +89,7 @@ public class ShowcaseService {
     private final UserRepository userRepository;
     private final SimpMessagingTemplate messagingTemplate;
     private final ShowcaseCacheService showcaseCache;
+    private final AuthorizationService authorizationService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private final ConcurrentHashMap<String, Object> roundLocks = new ConcurrentHashMap<>();
@@ -100,12 +101,14 @@ public class ShowcaseService {
             ShowcaseResultRepository showcaseResultRepository,
             UserRepository userRepository,
             ShowcaseCacheService showcaseCache,
+            AuthorizationService authorizationService,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.showcaseRepository = showcaseRepository;
         this.deckRepository = deckRepository;
         this.showcaseResultRepository = showcaseResultRepository;
         this.userRepository = userRepository;
         this.showcaseCache = showcaseCache;
+        this.authorizationService = authorizationService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -198,9 +201,7 @@ public class ShowcaseService {
     }
 
     public void cancelShowcase(String roomCode, User requestingUser) {
-        Showcase session = getByRoomCode(roomCode);
-        if (!session.getHostUserId().equals(requestingUser.getId()))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the host can cancel");
+        Showcase session = authorizationService.requireShowcaseHost(roomCode, requestingUser);
         if (session.getStatus() == GameStatus.FINISHED || session.getStatus() == GameStatus.CANCELLED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Showcase is already ended");
 

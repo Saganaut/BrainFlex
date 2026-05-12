@@ -1,8 +1,26 @@
+/**
+ * Centre canvas of the deck editor. Renders the element-kind-specific authoring
+ * surface for whichever element the route's `questionId` is pointing at. The
+ * sidebar / header chrome (slide-kind icon, footer) is owned here; the actual
+ * field editors live in SlideContentTypes/.
+ */
 import { useGetDeckQuery } from "@/store/BrainFlexApi";
 import { getRouteApi } from "@tanstack/react-router";
-import styles from "./CreateDashboard.module.css";
+import styles from "./SlideDisplay.module.css";
 import { Loader } from "../Common/Loader/Loader";
-import { McqGraphic } from "../Common/Slides/SlideTypeGraphics/McqGraphic";
+import { CephadexLogo } from "../Graphic/CephadexLogo";
+import { slideTypeGraphics } from "../Common/Slides/SlideTypeGraphics/slideTypeGraphics";
+import { SlideContent } from "./SlideContentTypes/SlideContent";
+import { McqSlideContent } from "./SlideContentTypes/McqSlideContent/McqSlideContent";
+import { TextSlideContent } from "./SlideContentTypes/TextSlideContent";
+import { NumberSlideContent } from "./SlideContentTypes/NumberSlideContent";
+import { ImageChoiceSlideContent } from "./SlideContentTypes/ImageChoiceSlideContent";
+import { RankingSlideContent } from "./SlideContentTypes/RankingSlideContent";
+import { ScalesSlideContent } from "./SlideContentTypes/ScalesSlideContent";
+import { QAndASlideContent } from "./SlideContentTypes/QAndASlideContent";
+import { GridSlideContent } from "./SlideContentTypes/GridSlideContent";
+import { PlaceOnImageSlideContent } from "./SlideContentTypes/PlaceOnImageSlideContent";
+
 const routeApi = getRouteApi("/decks/$deckId/view");
 
 const SlideDisplay = () => {
@@ -18,11 +36,54 @@ const SlideDisplay = () => {
       }),
     },
   );
-  console.log("element", element);
+
+  const renderHeaderGraphic = () => {
+    if (!element?.kind) return null;
+    const Graphic = slideTypeGraphics[element.kind];
+    return <Graphic />;
+  };
+
+  const renderBody = () => {
+    if (isLoading) return <Loader />;
+    if (!element) {
+      return (
+        <p>No slide selected. Pick one from the left rail to start editing.</p>
+      );
+    }
+    switch (element.kind) {
+      case "Slide":
+        return <SlideContent />;
+      case "McqQuestion":
+        return <McqSlideContent />;
+      case "TextQuestion":
+        return <TextSlideContent />;
+      case "NumberQuestion":
+        return <NumberSlideContent />;
+      case "ImageChoiceQuestion":
+        return <ImageChoiceSlideContent />;
+      case "RankingQuestion":
+        return <RankingSlideContent />;
+      case "ScalesQuestion":
+        return <ScalesSlideContent />;
+      case "QAndAQuestion":
+        return <QAndASlideContent />;
+      case "GridQuestion":
+        return <GridSlideContent />;
+      case "PlaceOnImageQuestion":
+        return <PlaceOnImageSlideContent />;
+    }
+  };
+
   return (
     <div className={styles.slideDisplay}>
-      <Loader />
-      {isLoading ? <Loader /> : <McqGraphic />}
+      <div className={styles.slideHeader}>
+        <CephadexLogo size={"md"} /> {renderHeaderGraphic()}
+      </div>
+      <div className={styles.slideBody}>
+        {renderBody()}
+        {/* <McqSlideContent />; */}
+      </div>
+      <div className={styles.slideFooter} />
     </div>
   );
 };

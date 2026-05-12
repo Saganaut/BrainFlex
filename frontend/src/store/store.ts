@@ -1,6 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { emptySplitApi } from "./emptyApi";
 import gameReducer from "./gameSlice";
+// Side-effect import: layers cache-sync onQueryStarted handlers onto the
+// auto-generated BrainFlex mutations so mutation responses update getDeck.
+import "./apiEnhancements";
 
 export const store = configureStore({
   reducer: {

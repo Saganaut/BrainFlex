@@ -515,7 +515,7 @@ export type McqQuestion = {
     id?: string;
     prompt?: string;
     options?: McqOption[];
-    correctOptionId?: string;
+    correctOptionIds?: string[];
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
     bestAnswerMode?: boolean;

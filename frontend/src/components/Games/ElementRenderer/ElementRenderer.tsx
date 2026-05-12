@@ -57,8 +57,12 @@ const ElementRenderer = ({
     case "McqQuestion": {
       const options = liveElement.options ?? [];
       const selectedIdx = optionIndex(options, mySubmission);
+      // MCQs can now have multiple correct answers; AnswerOptions still
+      // highlights a single one, so show the first match for now.
+      // TODO: surface all correct answers once AnswerOptions supports it.
+      const correctIds = liveElement.correctOptionIds ?? [];
       const correctIdx = roundResultElement
-        ? options.findIndex((o) => o.id === liveElement.correctOptionId)
+        ? options.findIndex((o) => (o.id ? correctIds.includes(o.id) : false))
         : -1;
       return (
         <AnswerOptions

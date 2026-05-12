@@ -32,7 +32,7 @@ public final class ElementRedactor {
             case Slide s -> s; // nothing to redact
             case McqQuestion q -> new McqQuestion(
                     q.id(), q.prompt(), q.options(),
-                    null,        // correctOptionId
+                    null,        // correctOptionIds — redacted before reveal
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation

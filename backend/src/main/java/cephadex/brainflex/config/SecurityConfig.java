@@ -63,27 +63,23 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
+                // Per-endpoint role rules live with the controller methods as
+                // @PreAuthorize annotations. SecurityConfig only decides what
+                // is public vs. what requires *any* authentication.
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/health").permitAll()
-                        .requestMatchers("/api/public/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/**/api-docs").permitAll()
-                        .requestMatchers("/api/users/leaderboard/**").permitAll()
-                        .requestMatchers("/api/users/check-username").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/auth/me", "/api/auth/guest").permitAll()
-                        .requestMatchers("/oauth2/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/showcases/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/decks/**").permitAll()
-                        // Guests and registered users can join/leave/cancel
-                        .requestMatchers(HttpMethod.POST, "/api/showcases/*/join").hasAnyRole("GUEST", "USER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/showcases/**").hasAnyRole("GUEST", "USER")
-                        // Creating games is registered-only
-                        .requestMatchers(HttpMethod.POST, "/api/showcases").hasRole("USER")
-                        // Themes, organizations, and profile management are registered-only
-                        .requestMatchers("/api/themes/**").hasRole("USER")
-                        .requestMatchers("/api/organizations/**").hasRole("USER")
-                        .requestMatchers(HttpMethod.POST, "/api/users/me/profile-image").hasRole("USER")
+                        .requestMatchers("/api/health",
+                                "/api/public/**",
+                                "/swagger-ui/**", "/**/api-docs",
+                                "/oauth2/**", "/ws/**").permitAll()
+                        .requestMatchers("/api/auth/login",
+                                "/api/auth/me",
+                                "/api/auth/guest").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/users/leaderboard/**",
+                                "/api/users/check-username",
+                                "/api/showcases/**",
+                                "/api/decks/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {

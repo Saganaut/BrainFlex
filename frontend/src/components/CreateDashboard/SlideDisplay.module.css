@@ -1,0 +1,29 @@
+.slideDisplay {
+  display: flex;
+  flex-direction: column;
+  border: 2px solid white;
+  border-radius: var(--radius-md);
+  background-color: var(--black-white);
+  width: 100%;
+  height: 100%;
+
+  .slideHeader {
+    display: flex;
+    border: 2px dashed yellow;
+    justify-content: space-between;
+    align-items: center;
+    max-height: 20%;
+    width: 100%;
+    height: 80px;
+  }
+
+  .slideBody {
+    border: 2px dashed green;
+    flex: 1;
+  }
+
+  .slideFooter {
+    border: 2px dashed blue;
+    height: 80px;
+  }
+}

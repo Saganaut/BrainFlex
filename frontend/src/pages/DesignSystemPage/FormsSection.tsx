@@ -7,6 +7,7 @@ import { TextArea } from "../../components/Common/Input/TextArea";
 import { Checkbox } from "../../components/Common/Input/Checkbox";
 import { RadioGroup } from "../../components/Common/Input/RadioGroup";
 import { HuePicker } from "../../components/Common/Input/HuePicker";
+import { RichTextInput } from "../../components/Common/Input/RichTextInput";
 import { Accordion } from "../../components/Containers/Accordion";
 import styles from "./DesignSystem.module.css";
 
@@ -19,6 +20,9 @@ const GAME_MODE_OPTIONS: { value: string; label: string }[] = [
 const FormsSection = () => {
   const [hue, setHue] = useState(260);
   const [gameMode, setGameMode] = useState("solo");
+  const [richText, setRichText] = useState(
+    "<p>Click anywhere to <strong>edit</strong> — try the toolbar.</p>",
+  );
 
   return (
     <section>
@@ -84,6 +88,17 @@ const FormsSection = () => {
           <h4>Hue Picker</h4>
           <div className={styles.formHueRow}>
             <HuePicker label='Color' value={hue} onChange={setHue} />
+          </div>
+
+          <h4>Rich Text Input</h4>
+          <div className={styles.formExampleRow}>
+            <RichTextInput
+              label='Question'
+              id='ds-rich-text'
+              placeholder='Type your question…'
+              value={richText}
+              onChange={setRichText}
+            />
           </div>
         </Accordion>
       </div>

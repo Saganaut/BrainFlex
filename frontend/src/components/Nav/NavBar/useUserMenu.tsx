@@ -3,6 +3,7 @@ import { type JSX, useState } from "react";
 
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
+import { useRequireLogin } from "../../../hooks/useRequireLogin";
 import { useTheme, type ThemeMode } from "../../../hooks/useTheme";
 import { useGuestLoginMutation } from "../../../store/BrainFlexApi";
 import { apiBaseUrl } from "../../../store/emptyApi";
@@ -28,7 +29,6 @@ const useUserMenu = (): useUserMenuResponse => {
   const [guestError, setGuestError] = useState<string | null>(null);
   const [guestLogin, { isLoading: guestLoading }] = useGuestLoginMutation();
   const [showGuestInput, setShowGuestInput] = useState(false);
-  const currentUrl = window.location.href;
 
   const { theme, toggleTheme } = useTheme();
   const userState = useCurrentUser();
@@ -36,14 +36,10 @@ const useUserMenu = (): useUserMenuResponse => {
     userState.state === "registered" || userState.state === "guest"
       ? userState.user
       : undefined;
+  const { openLoginModal } = useRequireLogin();
 
   const handleLogin = () => {
-    const loginUrl = new URL(`${apiBaseUrl}/api/auth/login`);
-    loginUrl.searchParams.set("returnUrl", currentUrl);
-    if (userState.state === "guest" && userState.user.id) {
-      loginUrl.searchParams.set("guestId", userState.user.id);
-    }
-    window.location.href = loginUrl.toString();
+    openLoginModal();
   };
 
   const handleLogout = async () => {

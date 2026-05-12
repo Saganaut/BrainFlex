@@ -154,7 +154,7 @@ public class DataSeeder {
                 new McqOption("mars-opt-4", "Saturn", null));
         els.add(new McqQuestion("wt-mcq-1",
                 "Which planet is known as the Red Planet?",
-                mcqOpts, "mars-opt-3",
+                mcqOpts, List.of("mars-opt-3"),
                 100, Difficulty.EASY,
                 false, 0, "Mars looks red because of iron oxide (rust) on its surface.",
                 15, null, null, null, null, null, MediaPosition.NONE));
@@ -347,7 +347,7 @@ public class DataSeeder {
             opts.add(new McqOption(id + "-opt-" + i, options.get(i), null));
         }
         return new McqQuestion(id, prompt, opts,
-                opts.get(correctIndex).id(),
+                List.of(opts.get(correctIndex).id()),
                 pointValue, difficulty,
                 false, 0, null,
                 15, null, null, null, null, null, MediaPosition.NONE);

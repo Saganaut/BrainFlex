@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,11 +19,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.ThemeDTO;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.ThemeRepository;
+import cephadex.brainflex.service.AuthorizationService;
 import cephadex.brainflex.service.ImageProcessingService;
 import cephadex.brainflex.service.S3Service;
 import cephadex.brainflex.service.UserService;
@@ -35,17 +38,21 @@ public class ThemeController {
     private final UserService userService;
     private final S3Service s3Service;
     private final ImageProcessingService imageProcessingService;
+    private final AuthorizationService authorizationService;
 
     public ThemeController(ThemeRepository themeRepository, UserService userService,
-            S3Service s3Service, ImageProcessingService imageProcessingService) {
+            S3Service s3Service, ImageProcessingService imageProcessingService,
+            AuthorizationService authorizationService) {
         this.themeRepository = themeRepository;
         this.userService = userService;
         this.s3Service = s3Service;
         this.imageProcessingService = imageProcessingService;
+        this.authorizationService = authorizationService;
     }
 
     /** Returns all themes owned by the caller plus any shared with their org. */
     @GetMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ThemeDTO.ThemeResponse>> listThemes(Authentication authentication) {
         return userService.resolveRegisteredUser(authentication)
                 .map(user -> {
@@ -65,6 +72,7 @@ public class ThemeController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ThemeDTO.ThemeResponse> createTheme(
             @RequestBody ThemeDTO.CreateThemeRequest request,
             Authentication authentication) {
@@ -85,102 +93,80 @@ public class ThemeController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ThemeDTO.ThemeResponse> updateTheme(
             @PathVariable String id,
             @RequestBody ThemeDTO.UpdateThemeRequest request,
             Authentication authentication) {
-        return userService.resolveRegisteredUser(authentication)
-                .flatMap(user -> themeRepository.findById(id)
-                        .filter(t -> t.getOwnerId().equals(user.getId())))
-                .map(theme -> {
-                    if (request.name() != null && !request.name().isBlank()) {
-                        theme.setName(request.name());
-                    }
-                    if (request.huePrimary() != null) {
-                        theme.setHuePrimary(clampHue(request.huePrimary()));
-                    }
-                    if (request.hueAccent() != null) {
-                        theme.setHueAccent(clampHue(request.hueAccent()));
-                    }
-                    if (request.mode() != null) {
-                        theme.setMode(validateMode(request.mode()));
-                    }
-                    // Passing empty string clears org sharing; null leaves it unchanged
-                    if (request.organizationId() != null) {
-                        theme.setOrganizationId(
-                                request.organizationId().isBlank() ? null : request.organizationId());
-                    }
-                    return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
-                })
-                .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+        User user = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        Theme theme = authorizationService.requireThemeEditable(id, user);
+
+        if (request.name() != null && !request.name().isBlank()) {
+            theme.setName(request.name());
+        }
+        if (request.huePrimary() != null) {
+            theme.setHuePrimary(clampHue(request.huePrimary()));
+        }
+        if (request.hueAccent() != null) {
+            theme.setHueAccent(clampHue(request.hueAccent()));
+        }
+        if (request.mode() != null) {
+            theme.setMode(validateMode(request.mode()));
+        }
+        // Passing empty string clears org sharing; null leaves it unchanged
+        if (request.organizationId() != null) {
+            theme.setOrganizationId(
+                    request.organizationId().isBlank() ? null : request.organizationId());
+        }
+        return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteTheme(
             @PathVariable String id,
             Authentication authentication) {
-        java.util.Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-
-        java.util.Optional<Theme> themeOpt = themeRepository.findById(id)
-                .filter(t -> t.getOwnerId().equals(userOpt.get().getId()));
-        if (themeOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-
-        themeRepository.delete(themeOpt.get());
+        User user = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        Theme theme = authorizationService.requireThemeEditable(id, user);
+        themeRepository.delete(theme);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/{id}/background", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ThemeDTO.ThemeResponse> uploadBackground(
             @PathVariable String id,
             @RequestParam("image") MultipartFile file,
             Authentication authentication) throws IOException {
-        return resolveOwnedTheme(id, authentication)
-                .map(pair -> {
-                    try {
-                        byte[] processed = imageProcessingService.validateAndProcessBackground(file);
-                        String url = s3Service.uploadThemeBackground(pair.theme().getId(), processed);
-                        pair.theme().setBackgroundImageUrl(url);
-                        return ResponseEntity.ok(
-                                new ThemeDTO.ThemeResponse(themeRepository.save(pair.theme())));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+        User user = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        Theme theme = authorizationService.requireThemeEditable(id, user);
+
+        byte[] processed = imageProcessingService.validateAndProcessBackground(file);
+        String url = s3Service.uploadThemeBackground(theme.getId(), processed);
+        theme.setBackgroundImageUrl(url);
+        return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
     }
 
     @PostMapping(value = "/{id}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ThemeDTO.ThemeResponse> uploadLogo(
             @PathVariable String id,
             @RequestParam("image") MultipartFile file,
             Authentication authentication) throws IOException {
-        return resolveOwnedTheme(id, authentication)
-                .map(pair -> {
-                    try {
-                        byte[] processed = imageProcessingService.validateAndProcessLogo(file);
-                        String url = s3Service.uploadThemeLogo(pair.theme().getId(), processed);
-                        pair.theme().setLogoImageUrl(url);
-                        return ResponseEntity.ok(
-                                new ThemeDTO.ThemeResponse(themeRepository.save(pair.theme())));
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+        User user = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+        Theme theme = authorizationService.requireThemeEditable(id, user);
+
+        byte[] processed = imageProcessingService.validateAndProcessLogo(file);
+        String url = s3Service.uploadThemeLogo(theme.getId(), processed);
+        theme.setLogoImageUrl(url);
+        return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
-
-    private record UserThemePair(User user, Theme theme) {
-    }
-
-    private java.util.Optional<UserThemePair> resolveOwnedTheme(String themeId, Authentication auth) {
-        return userService.resolveRegisteredUser(auth)
-                .flatMap(user -> themeRepository.findById(themeId)
-                        .filter(t -> t.getOwnerId().equals(user.getId()))
-                        .map(t -> new UserThemePair(user, t)));
-    }
 
     private static int clampHue(int hue) {
         return Math.max(0, Math.min(360, hue));

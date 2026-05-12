@@ -352,7 +352,7 @@ export const RoundResultData = {
       { id: "opt-9", text: "Nine" },
       { id: "opt-12", text: "Twelve" },
     ],
-    correctOptionId: "opt-9",
+    correctOptionIds: ["opt-9"],
     pointValue: 100,
     difficulty: "EASY" as const,
     bestAnswerMode: false,

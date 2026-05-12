@@ -1,0 +1,207 @@
+/* RichTextInput — input-styled rich text surface with a floating toolbar that
+   appears on focus. Mirrors the visual language of the plain Input component
+   so it slots into existing forms without standing out. */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  max-width: 600px;
+}
+
+.label {
+  padding-left: var(--space-1);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.surface {
+  position: relative;
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  transition: border-color var(--duration-base, 300ms) ease-in-out;
+}
+
+.surface:hover {
+  border-color: var(--action-hover);
+}
+
+.surface:focus-within {
+  border-color: var(--border-focus);
+}
+
+.editor {
+  min-height: 2.5rem;
+  padding: var(--p-sm);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  outline: none;
+}
+
+.editor p {
+  margin: 0;
+}
+
+/* Placeholder is rendered by @tiptap/extensions/Placeholder, which tags the
+   empty paragraph with the `is-editor-empty` class — kebab-case is TipTap's
+   convention, not ours, so disable the camelCase + pseudo-class rules. */
+
+/* stylelint-disable selector-class-pattern, selector-pseudo-class-no-unknown */
+.editor :global(p.is-editor-empty:first-child)::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--text-muted);
+}
+
+/* stylelint-enable */
+
+/* ─── Toolbar ───────────────────────────────────────────────────────────── */
+
+.toolbar {
+  position: absolute;
+  bottom: calc(100% + var(--space-1));
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
+}
+
+.toolbarRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.linkEditor {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background-color: var(--bg-surface);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+}
+
+.linkInput {
+  flex: 1;
+  min-width: 200px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.linkInput:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.linkApply,
+.linkRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: background-color var(--duration-fast, 150ms) ease-out;
+}
+
+.linkApply {
+  background-color: var(--action-active);
+  border-color: var(--action-active);
+  color: white;
+}
+
+.linkApply:hover {
+  background-color: var(--action-hover);
+  border-color: var(--action-hover);
+}
+
+.linkRemove:hover {
+  background-color: var(--bg-subtle);
+}
+
+.toolbarBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 150ms) ease-out,
+    border-color var(--duration-fast, 150ms) ease-out;
+}
+
+.toolbarBtn:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--border-subtle);
+}
+
+.toolbarBtnActive {
+  background-color: var(--action-active);
+  color: white;
+  border-color: var(--action-active);
+}
+
+.toolbarDivider {
+  width: 1px;
+  align-self: stretch;
+  background-color: var(--border-subtle);
+  margin: 0 var(--space-1);
+}
+
+.toolbarGroupLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  padding: 0 var(--space-1);
+}
+
+.colorSwatch {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--duration-fast, 150ms) ease-out;
+}
+
+.colorSwatch:hover {
+  transform: scale(1.1);
+}

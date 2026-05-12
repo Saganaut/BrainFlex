@@ -1,11 +1,11 @@
 /**
- * Multiple-choice question with 2–6 options and a single correct answer.
+ * Multiple-choice question with 2–6 options and one OR MORE correct answers.
  *
- * Scoring uses option id rather than index so the editor can shuffle the option
- * list freely (and clients can render in any order) without recomputing a
- * "correct index". The runtime sends options in whatever order they're stored;
- * if the deck author runs the editor's Shuffle button before saving, that's
- * the order everyone sees.
+ * Scoring uses option ids rather than indexes so the editor can shuffle the
+ * option list freely (and clients can render in any order) without recomputing
+ * a "correct index". `correctOptionIds` is the set of option ids that count as
+ * correct — an MCQ may have any number (zero excludes it from scored game
+ * modes; one is the typical case; many means "any of these is acceptable").
  */
 package cephadex.brainflex.model.element;
 
@@ -19,7 +19,7 @@ public record McqQuestion(
         String id,
         String prompt,
         List<McqOption> options,
-        String correctOptionId,        // must match one of options[].id
+        List<String> correctOptionIds, // ids of every option that counts as correct
         // scoring
         int pointValue,
         Difficulty difficulty,

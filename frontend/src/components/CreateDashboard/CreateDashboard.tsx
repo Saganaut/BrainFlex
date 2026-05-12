@@ -1,42 +1,61 @@
+/**
+ * Top-level layout for the deck editor at /decks/$deckId/view.
+ *
+ * Owns the three-column canvas (slide rail | active slide | inspector) and the
+ * editor navbar. The navbar's title is an inline-editable input that patches the
+ * deck name through `PUT /api/decks/{id}` on blur/Enter — no save button.
+ */
+import { useNavigate } from "@tanstack/react-router";
+
 import { Btn } from "../Common/Buttons/Btn";
-
-import styles from "./CreateDashboard.module.css";
-
-import { getRouteApi } from "@tanstack/react-router";
 import { DeckSettingsMenu } from "./DeckSettingsMenu";
 import { LeftSidebar } from "./LeftSidebar";
 import { SlideDisplay } from "./SlideDisplay";
-
-const routeApi = getRouteApi("/decks/$deckId/view");
+import styles from "./CreateDashboard.module.css";
+import { useCreateDashboard } from "./useCreateDashboard";
 
 const CreateDashboard = () => {
-  const { deckId } = routeApi.useParams();
-  // const { questionId } = routeApi.useSearch();
+  const navigate = useNavigate();
+
+  const { titleDraft, setTitleDraft, commitTitle, serverName } =
+    useCreateDashboard();
 
   return (
     <div className={styles.createDashboard}>
-      {/* Dashboard nav and control bar 
-        Deck
-        
-      */}
-
       <div className={styles.navbar}>
-        <Btn>Back</Btn>
+        <Btn
+          onClick={() => {
+            void navigate({ to: "/my-packs" });
+          }}>
+          Back
+        </Btn>
 
-        <h2>Navbar Deck Id {deckId}</h2>
+        <input
+          aria-label='Deck title'
+          value={titleDraft}
+          placeholder='Untitled Deck'
+          maxLength={100}
+          onChange={(e) => {
+            setTitleDraft(e.target.value);
+          }}
+          onBlur={commitTitle}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+            if (e.key === "Escape") {
+              setTitleDraft(serverName);
+              e.currentTarget.blur();
+            }
+          }}
+        />
         <DeckSettingsMenu />
       </div>
-      {/* Canvas */}
 
       <div className={styles.mainCanvas}>
-        {/* Sidebar Left - displays all questions/slides*/}
         <LeftSidebar />
-        {/* Editable slide/*/}
 
         <div className={styles.slideCanvas}>
           <SlideDisplay />
         </div>
-        {/* Sidebar Right */}
 
         <div className={styles.rightSidebar}>Right sidebar</div>
       </div>

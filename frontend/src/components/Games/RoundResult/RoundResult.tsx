@@ -160,7 +160,15 @@ const BestAnswerReveal = ({ outcome, element }: BestAnswerRevealProps) => {
 /** Resolves the canonical correct answer for display per element kind. */
 const correctAnswerText = (element: DeckElement): string | null => {
   switch (element.kind) {
-    case "McqQuestion":
+    case "McqQuestion": {
+      // Multiple correct answers possible — join their option texts.
+      const correctIds = new Set(element.correctOptionIds ?? []);
+      const correctTexts = (element.options ?? [])
+        .filter((o) => o.id && correctIds.has(o.id))
+        .map((o) => o.text ?? "")
+        .filter(Boolean);
+      return correctTexts.length > 0 ? correctTexts.join(", ") : null;
+    }
     case "ImageChoiceQuestion": {
       const correct = element.options?.find(
         (o) => o.id === element.correctOptionId,

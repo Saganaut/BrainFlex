@@ -64,6 +64,7 @@ class ShowcaseServiceTest {
     @Mock private ShowcaseResultRepository showcaseResultRepository;
     @Mock private UserRepository userRepository;
     @Mock private ShowcaseCacheService showcaseCache;
+    @Mock private AuthorizationService authorizationService;
     @Mock private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
@@ -101,7 +102,7 @@ class ShowcaseServiceTest {
             McqOption a = new McqOption(id + "-a", "A", null);
             McqOption b = new McqOption(id + "-b", "B", null);
             els.add(new McqQuestion(
-                    id, "Prompt " + i, List.of(a, b), a.id(),
+                    id, "Prompt " + i, List.of(a, b), List.of(a.id()),
                     100, Difficulty.EASY,
                     false, 0, null,
                     15, null, null, null, null, null, MediaPosition.NONE));
@@ -282,7 +283,7 @@ class ShowcaseServiceTest {
 
     @Test
     void cancelShowcase_AsHost_SetsStatusToCancelled() {
-        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        when(authorizationService.requireShowcaseHost("ABCD12", host)).thenReturn(lobbySession);
         when(showcaseRepository.save(any(Showcase.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
@@ -294,10 +295,10 @@ class ShowcaseServiceTest {
 
     @Test
     void cancelShowcase_AsNonHost_ThrowsForbidden() {
-        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
-
         User nonHost = new User();
         nonHost.setId("other");
+        when(authorizationService.requireShowcaseHost("ABCD12", nonHost))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the host can perform this action"));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> showcaseService.cancelShowcase("ABCD12", nonHost));
@@ -308,7 +309,7 @@ class ShowcaseServiceTest {
     @Test
     void cancelShowcase_WhenAlreadyFinished_ThrowsConflict() {
         lobbySession.setStatus(GameStatus.FINISHED);
-        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        when(authorizationService.requireShowcaseHost("ABCD12", host)).thenReturn(lobbySession);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> showcaseService.cancelShowcase("ABCD12", host));
@@ -492,7 +493,7 @@ class ShowcaseServiceTest {
         McqOption a = new McqOption(id + "-a", "A", null);
         McqOption b = new McqOption(id + "-b", "B", null);
         return new McqQuestion(
-                id, "Prompt", List.of(a, b), a.id(),
+                id, "Prompt", List.of(a, b), List.of(a.id()),
                 100, Difficulty.EASY,
                 true, bonus, null,
                 15, null, null, null, null, null, MediaPosition.NONE);

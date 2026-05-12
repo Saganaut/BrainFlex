@@ -1,0 +1,117 @@
+/* McqSlideContent — author UI for MCQ slides. Options sit in a horizontal
+   row that wraps when the canvas gets tight; each option is a small card. */
+
+.warning {
+  margin: var(--space-3) 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--text-warning, oklch(72% 0.16 70deg));
+  background-color: var(--bg-subtle);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+}
+
+.optionsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+
+.optionsLabel {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.optionsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.optionCard {
+  flex: 1 1 160px;
+  min-width: 160px;
+  max-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+  transition: border-color var(--duration-fast, 150ms) ease-out;
+}
+
+.optionCardCorrect {
+  border-color: var(--action-active);
+  background-color: var(--bg-subtle);
+}
+
+.optionTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.optionIndex {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.optionRemove {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast, 150ms) ease-out,
+    border-color var(--duration-fast, 150ms) ease-out;
+}
+
+.optionRemove:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.optionRemove:hover:not(:disabled) {
+  background-color: var(--bg-subtle);
+  border-color: var(--text-error, oklch(60% 0.18 25deg));
+  color: var(--text-error, oklch(60% 0.18 25deg));
+}
+
+.optionInput {
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.optionInput:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}
+
+.optionCorrectLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+}

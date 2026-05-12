@@ -166,10 +166,15 @@ const renderAggregate = (round: RoundReview, element: DeckElement) => {
           counts.set(p.optionId, (counts.get(p.optionId) ?? 0) + 1);
         }
       }
+      // MCQs have a list of correct ids; ImageChoice still has a single one.
+      const correctIds =
+        element.kind === "McqQuestion"
+          ? new Set(element.correctOptionIds ?? [])
+          : new Set(element.correctOptionId ? [element.correctOptionId] : []);
       const bars: BarChartItem[] = options.map((o) => ({
         label: o.text ?? "",
         value: counts.get(o.id ?? "") ?? 0,
-        highlight: o.id === element.correctOptionId,
+        highlight: o.id ? correctIds.has(o.id) : false,
       }));
       return <BarChart items={bars} total={answers.length} caption='Distribution' />;
     }

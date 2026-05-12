@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,6 +38,7 @@ public class OrganizationController {
 
     /** Returns the caller's current organization, or 404 if they have none. */
     @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrganizationDTO.OrganizationResponse> getMyOrg(Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
         if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -54,6 +56,7 @@ public class OrganizationController {
      * A user who already belongs to an org must leave it first.
      */
     @PostMapping
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrganizationDTO.OrganizationResponse> createOrg(
             @RequestBody OrganizationDTO.CreateOrganizationRequest request,
             Authentication authentication) {
@@ -86,6 +89,7 @@ public class OrganizationController {
      * A user who already belongs to an org must leave it first.
      */
     @PostMapping("/join")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrganizationDTO.OrganizationResponse> joinOrg(
             @RequestBody OrganizationDTO.JoinOrganizationRequest request,
             Authentication authentication) {
@@ -110,6 +114,7 @@ public class OrganizationController {
 
     /** Removes the caller from their current organization. */
     @DeleteMapping("/me/leave")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> leaveOrg(Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
         if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

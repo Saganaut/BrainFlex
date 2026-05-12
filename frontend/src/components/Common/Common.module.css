@@ -1,32 +1,15 @@
+/* Shared visual primitives used in multiple places.                          */
+
+/* Badge — manifest via var-fallback. Variants come from global              */
+
+/* [data-variant="..."]; the default is the info pair (preserved from        */
+
+/* historical default). See frontend/STYLES.md.                              */
 .badge {
-  padding: var(--p-xs);
-  border-radius: 9999px;
-  color: var(--text-on-brand);
-  font-size: var(--font-size-xs);
+  padding: var(--padding, var(--p-xs));
+  border-radius: var(--radius, 9999px);
+  background-color: var(--background-color, var(--bg-info));
+  color: var(--color, var(--text-info));
+  font-size: var(--font-size, var(--font-size-xs));
   font-weight: 500;
-
-  &.success {
-    background: var(--bg-success);
-    color: var(--text-success);
-  }
-
-  &.warning {
-    background: var(--bg-warning);
-    color: var(--text-warning);
-  }
-
-  &.error {
-    background: var(--bg-error);
-    color: var(--text-error);
-  }
-
-  &.info {
-    background: var(--bg-info);
-    color: var(--text-info);
-  }
-
-  &.lg {
-    padding: var(--p-sm);
-    font-size: var(--font-size-md);
-  }
 }

@@ -33,9 +33,11 @@ import cephadex.brainflex.repository.DeckRepository;
 public class DeckService {
 
     private final DeckRepository deckRepository;
+    private final AuthorizationService authorizationService;
 
-    public DeckService(DeckRepository deckRepository) {
+    public DeckService(DeckRepository deckRepository, AuthorizationService authorizationService) {
         this.deckRepository = deckRepository;
+        this.authorizationService = authorizationService;
     }
 
     // ---- Read ----
@@ -162,11 +164,7 @@ public class DeckService {
     // ---- Helpers ----
 
     private Deck requireOwned(String deckId, User caller) {
-        Deck deck = getById(deckId);
-        if (deck.isSystem() || !caller.getId().equals(deck.getCreatorUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this deck");
-        }
-        return deck;
+        return authorizationService.requireDeckEditable(deckId, caller);
     }
 
     private int indexOfElement(Deck deck, String elementId) {

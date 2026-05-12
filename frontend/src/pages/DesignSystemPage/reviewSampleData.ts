@@ -60,7 +60,7 @@ export const reviewSampleData: ShowcaseReviewDto = {
           { id: "opt-3", text: "Mars" },
           { id: "opt-4", text: "Saturn" },
         ],
-        correctOptionId: "opt-3",
+        correctOptionIds: ["opt-3"],
         pointValue: 100,
         difficulty: "EASY",
         bestAnswerMode: false,

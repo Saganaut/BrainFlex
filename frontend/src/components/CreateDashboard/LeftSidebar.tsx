@@ -1,66 +1,74 @@
-import type { DragEndEvent } from "@dnd-kit/dom";
-import { isSortable } from "@dnd-kit/dom/sortable";
+/**
+ * Slide list for the deck editor — drives the dashboard's left rail.
+ *
+ * Pulls the live deck via RTK Query so we always render the server's source of
+ * truth. The "New Slide" button opens a modal asking the user to pick which
+ * element kind to add; clicking a tile closes the modal and appends a freshly
+ * uuid'd element. The @dnd-kit drag handler persists reorders by calling the
+ * moveElement mutation (with an optimistic local reorder so the drop feels
+ * instant).
+ */
+
 import { DragDropProvider } from "@dnd-kit/react";
-import { getRouteApi } from "@tanstack/react-router";
-import { useState } from "react";
 import { Btn } from "../Common/Buttons/Btn";
 import { SlideThumbnail } from "./SlideThumbnail";
 import styles from "./CreateDashboard.module.css";
+import { useCreateDashboard } from "./useCreateDashboard";
+import { NewElementPicker } from "./NewElementPicker";
+import { useModal } from "@/context/useModal";
+import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
+import type { DeckDto } from "@/store/BrainFlexApi";
 
-const routeApi = getRouteApi("/decks/$deckId/view");
+export type DeckElement = NonNullable<DeckDto["elements"]>[number];
+
+/** Friendly label for the thumbnail — slides have titles, questions have prompts. */
+const elementDisplayName = (element: DeckElement): string => {
+  if (element.kind === "Slide") {
+    const trimmed = element.title?.trim() ?? "";
+    return trimmed === "" ? "Untitled slide" : trimmed;
+  }
+  if ("prompt" in element && element.prompt) return element.prompt;
+  return "Untitled";
+};
 
 const LeftSidebar = () => {
-  const { deckId } = routeApi.useParams();
-  console.log(
-    `DeckId ${deckId} Will be necessary here to send re-organization requests to backend`,
-  );
-  const { questionId } = routeApi.useSearch();
+  const { handleAddElement, handleDragEnd, elements, deckId, questionId } =
+    useCreateDashboard();
+  const { openModal, closeModal } = useModal();
 
-  const SLIDES_DATA = [
-    { name: "slide 1", id: "u98afnafu", type: "section" },
-    { name: "slide 2", id: "u98afnafaf3535efeafefau", type: "MCQ" },
-    { name: "slide 5", id: "u98afnafa2343535fefau", type: "MCQ" },
-    { name: "slide 36", id: "u98afnaf5353a234fefau", type: "MCQ" },
-    { name: "slide 37", id: "u98a6a234fefau", type: "MCQ" },
-
-    { name: "slide 4", id: "u98afna4ddfeafeaafau", type: "MCQ" },
-    { name: "slide 4", id: "u98afnaf4afefau", type: "MCQ" },
-  ];
-  const [slidesData, setSlidesData] = useState(SLIDES_DATA);
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { source } = event.operation;
-    if (!isSortable(source)) return;
-    const { initialIndex, index } = source;
-    if (initialIndex === index) return;
-
-    setSlidesData((prev) => {
-      const newSlides = [...prev];
-      const [movedItem] = newSlides.splice(source.initialIndex, 1);
-      newSlides.splice(source.index, 0, movedItem);
-      return newSlides;
+  const handleNewSlideClick = () => {
+    openModal({
+      title: "Add a new element",
+      content: (
+        <NewElementPicker
+          onPick={(kind: ElementKind) => {
+            closeModal();
+            handleAddElement(kind);
+          }}
+        />
+      ),
     });
   };
-  //TODO: New slide btn
-  // When clicked sends signal to server, modal pops up, choose what to include
-  // Once done issue a uuid, send a post request to server putting it in deck
-  // Use uuid so it can be instant
+
   return (
     <div className={styles.leftSidebar}>
       <div>
-        <Btn>New Slide</Btn>
+        <Btn onClick={handleNewSlideClick}>New Slide</Btn>
       </div>
       <div className={styles.slideContainer}>
         <DragDropProvider
           onDragEnd={(event) => {
             handleDragEnd(event);
           }}>
-          {slidesData.map((slide, index) => (
+          {elements.map((element, index) => (
             <SlideThumbnail
-              key={slide.id}
+              key={element.id}
               index={index}
+              id={element.id ?? ""}
+              name={elementDisplayName(element)}
+              type={element.kind}
               currentQuestionId={questionId}
-              {...slide}
+              deckId={deckId}
             />
           ))}
         </DragDropProvider>

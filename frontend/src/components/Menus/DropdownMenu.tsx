@@ -12,17 +12,30 @@ import styles from "./DropdownMenu.module.css";
 
 const DropdownMenuContext = createContext<() => void>(() => undefined);
 
+type DropdownPosition =
+  | "bottom-right"
+  | "bottom-left"
+  | "top-right"
+  | "top-left";
+
 interface DropdownMenuProps {
   trigger: (toggle: () => void) => ReactElement;
   children: ReactNode;
-  align?: "left" | "right";
+  position?: DropdownPosition;
   className?: string;
 }
+
+const positionClassMap: Record<DropdownPosition, string> = {
+  "bottom-right": styles.bottomRight,
+  "bottom-left": styles.bottomLeft,
+  "top-right": styles.topRight,
+  "top-left": styles.topLeft,
+};
 
 const DropdownMenu = ({
   trigger,
   children,
-  align = "right",
+  position = "top-right",
   className,
 }: DropdownMenuProps) => {
   const [open, setOpen] = useState(false);
@@ -57,10 +70,7 @@ const DropdownMenu = ({
       {open && (
         <DropdownMenuContext value={closeMenu}>
           <div
-            className={[
-              styles.panel,
-              align === "left" ? styles.alignLeft : styles.alignRight,
-            ].join(" ")}>
+            className={[styles.panel, positionClassMap[position]].join(" ")}>
             {children}
           </div>
         </DropdownMenuContext>

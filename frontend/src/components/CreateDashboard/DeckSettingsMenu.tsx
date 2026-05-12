@@ -35,7 +35,7 @@ const DeckSettingsMenu = () => {
           onClick={toggle}
         />
       )}
-      align='right'>
+      position='top-right'>
       <>
         <DropdownMenuLabel>hi</DropdownMenuLabel>
         <DropdownMenuLink>

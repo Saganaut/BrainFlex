@@ -54,7 +54,7 @@ const UserMenu = () => {
           onClick={toggle}
         />
       )}
-      align='right'>
+      position='top-right'>
       {userState.state === "registered" ? (
         <>
           <DropdownMenuLabel>{user?.userName}</DropdownMenuLabel>

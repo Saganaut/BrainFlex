@@ -100,3 +100,14 @@
   align-items: center;
   justify-content: center;
 }
+
+.slideThumbnailWrapper {
+  position: relative;
+
+  .slideIndex {
+    position: absolute;
+    top: 0;
+    left: -20px;
+    font-size: var(--font-size-sm);
+  }
+}

@@ -7,7 +7,6 @@
 
 .panel {
   position: absolute;
-  top: calc(100% + 0.5rem);
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -19,11 +18,27 @@
   overflow: hidden;
 }
 
-.panel.alignRight {
+/* Position names the corner of the panel anchored to the trigger.
+   top-* anchors the panel's top edge to the trigger's bottom → appears below.
+   bottom-* anchors the panel's bottom edge to the trigger's top → appears above. */
+
+.panel.topRight {
+  top: calc(100% + 0.5rem);
   right: 0;
 }
 
-.panel.alignLeft {
+.panel.topLeft {
+  top: calc(100% + 0.5rem);
+  left: 0;
+}
+
+.panel.bottomRight {
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+}
+
+.panel.bottomLeft {
+  bottom: calc(100% + 0.5rem);
   left: 0;
 }
 

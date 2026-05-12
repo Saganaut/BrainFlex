@@ -1,16 +1,21 @@
-.btn {
-  --border-color: var(--lavender-600);
-  --color: var(--text-primary);
-  --background-color: var(--lavender-200);
+/* Btn — consumes the canonical component manifest via var(--name, fallback). */
 
+/* Variants and sizes come from data-variant / data-size on the element (see  */
+
+/* tokens.css). Component-specific shape (pill) stays as a module class.      */
+.btn {
   display: flex;
   align-items: center;
   height: fit-content;
   width: fit-content;
-  border-radius: var(--radius-lg);
-  color: var(--color);
-  background-color: oklch(from var(--background-color) l c h / 20%);
-  border-color: currentcolor;
+  padding: var(--padding, var(--p-md));
+  border-radius: var(--radius, var(--radius-lg));
+  font-size: var(--font-size, var(--font-size-md));
+  color: var(--color, var(--text-primary));
+  background-color: oklch(
+    from var(--background-color, var(--lavender-200)) l c h / 20%
+  );
+  border-color: var(--border-color, currentcolor);
   transition:
     background-color 300ms ease-in-out,
     color 300ms ease-in-out,
@@ -20,89 +25,49 @@
     color: var(--action-hover);
   }
 
-  &.sm {
-    padding: var(--p-sm);
-    font-size: var(--font-size-xs);
-    border-radius: var(--radius-md);
-  }
-
-  &.md {
-    padding: var(--p-md);
-    font-size: var(--font-size-md);
-  }
-
-  &.lg {
-    padding: var(--p-lg);
-    font-size: var(--font-size-lg);
-    border-radius: var(--radius-lg);
+  /* Status variants derive hover via oklch from whatever the modifier set. */
+  &[data-variant="error"]:hover,
+  &[data-variant="success"]:hover,
+  &[data-variant="warning"]:hover,
+  &[data-variant="info"]:hover {
+    color: oklch(from var(--color) calc(l - 0.1) calc(c + 0.01) h);
+    background-color: oklch(
+      from var(--background-color) calc(l + 0.8) calc(c + 0.02) h
+    );
+    border-color: oklch(
+      from var(--border-color) calc(l - 0.1) calc(c + 0.02) h
+    );
   }
 
   &.pill {
     border-radius: var(--radius-full);
   }
 
-  &.error {
-    --border-color: var(--text-error);
-    --color: var(--text-error);
-    --background-color: var(--bg-error);
-  }
-
-  &.success {
-    --border-color: var(--text-success);
-    --color: var(--text-success);
-    --background-color: var(--bg-success);
-  }
-
-  &.warning {
-    --border-color: var(--text-warning);
-    --color: var(--text-warning);
-    --background-color: var(--bg-warning);
-  }
-
-  &.info {
-    --border-color: var(--text-info);
-    --color: var(--text-info);
-    --background-color: var(--bg-info);
-  }
-
-  &.error,
-  &.info,
-  &.success,
-  &.warning {
-    &:hover {
-      border-color: oklch(
-        from var(--border-color) calc(l - 0.1) calc(c + 0.02) h
-      );
-      color: oklch(from var(--color) calc(l - 0.1) calc(c + 0.01) h);
-      background-color: oklch(
-        from var(--background-color) calc(l + 0.8) calc(c + 0.02) h
-      );
-    }
-  }
-
+  &:disabled,
   &.isDisabled,
-  &.isDisabled:hover {
+  &.isDisabled:hover,
+  &:disabled:hover {
     opacity: 0.3;
     pointer-events: none;
   }
 }
 
-.iconBtn {
-  --padding: var(--p-md);
-  --height: 80px;
-  --width: 80px;
-  --border-color: var(--border-default);
-  --color: var(--border-default);
+/* IconBtn — same var-fallback manifest as .btn, with IconBtn-tuned dimensions */
 
-  height: var(--height);
-  width: var(--width);
+/* per data-size. Component-specific concepts (close / avatar / bordered /     */
+
+/* withBackground / round / pill / isCollapsed) stay as module classes.        */
+.iconBtn {
+  height: var(--height, 56px);
+  width: var(--width, 56px);
+  padding: var(--padding, var(--p-xs));
+  border-radius: var(--radius, var(--radius-md));
+  color: var(--color, var(--border-default));
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
-  border-radius: var(--radius-md);
-  color: var(--color);
   background: transparent;
   overflow: hidden;
   transition:
@@ -111,7 +76,7 @@
     color 300ms ease-in-out;
 
   &.withBackground {
-    background-color: var(--bg-surface);
+    background-color: var(--background-color, var(--bg-surface));
 
     &:hover {
       background-color: var(--action-hover);
@@ -136,28 +101,33 @@
     transition: transform 300ms ease-in-out;
   }
 
-  &.xs {
-    --padding: 0px;
+  /* IconBtn-tuned size overrides. Higher specificity than the global        */
+
+  /* [data-size=...] rule, so IconBtn's height/width/padding always win for  */
+
+  /* this component while still sharing the same data-size vocabulary.      */
+  &[data-size="xs"] {
     --height: 28px;
     --width: 28px;
+    --padding: 0;
   }
 
-  &.sm {
-    --padding: var(--p-xs);
+  &[data-size="sm"] {
     --height: 36px;
     --width: 36px;
+    --padding: var(--p-xs);
   }
 
-  &.md {
-    --padding: var(--p-xs);
+  &[data-size="md"] {
     --height: 56px;
     --width: 56px;
+    --padding: var(--p-xs);
   }
 
-  &.lg {
-    --padding: var(--p-md);
+  &[data-size="lg"] {
     --height: 72px;
     --width: 72px;
+    --padding: var(--p-md);
   }
 
   &.round,
@@ -170,7 +140,8 @@
   }
 
   &.bordered {
-    border: 2px solid var(--border-color);
+    border: 2px solid
+      var(--border-color, var(--color, var(--border-default)));
 
     &:hover {
       border-color: var(--action-hover);
@@ -190,16 +161,14 @@
     transform: rotate(180deg);
   }
 
-  &.close {
-    color: var(--color);
-
-    &:hover {
-      color: var(--text-error);
-    }
+  &.close:hover {
+    color: var(--text-error);
   }
 
+  &:disabled,
   &.isDisabled,
-  &.isDisabled:hover {
+  &.isDisabled:hover,
+  &:disabled:hover {
     opacity: 0.3;
     pointer-events: none;
   }

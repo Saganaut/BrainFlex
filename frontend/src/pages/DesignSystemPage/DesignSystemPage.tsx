@@ -33,6 +33,7 @@ import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { useEffect, useState } from "react";
 import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
 import { TextAnswerInput } from "../../components/Games/TextAnswerInput/TextAnswerInput";
+import { VotePanel } from "../../components/Games/VotePanel/VotePanel";
 import { SlideView } from "../../components/Games/SlideView/SlideView";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { GameOver } from "../../components/Games/GameOver/GameOver";
@@ -44,6 +45,13 @@ import { useAppDispatch } from "../../store/hooks";
 import { wsErrorReceived } from "../../store/gameSlice";
 import { ContentPackPicker } from "../../components/Games/ContentPackPicker/ContentPackPicker";
 import { Accordion } from "../../components/Containers/Accordion";
+import { slideTypeGraphics } from "../../components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
+import { Loader } from "../../components/Common/Loader/Loader";
+import {
+  NotFoundPage,
+  ServerErrorPage,
+  ServiceUnavailablePage,
+} from "../ErrorPage/ErrorPage";
 
 function ColorSwatch({ token }: { token: string }) {
   return (
@@ -302,6 +310,121 @@ const DesignSystemPage = () => {
               <Btn children={<span>Primary lg</span>} />
             </div>
           </Accordion>
+          <Accordion titleBar='Loader'>
+            <div className={styles.buttonGroup}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                  minWidth: "160px",
+                }}>
+                <Loader />
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Default
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                  minWidth: "160px",
+                }}>
+                <Loader message='Summoning ents…' />
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Custom message
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                  minWidth: "160px",
+                }}>
+                <Loader withMessage={false} />
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Spinner only
+                </span>
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Error pages'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-6)",
+              }}>
+              <div
+                style={{
+                  height: "600px",
+                  overflow: "auto",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                }}>
+                <NotFoundPage />
+              </div>
+              <div
+                style={{
+                  height: "600px",
+                  overflow: "auto",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                }}>
+                <ServerErrorPage />
+              </div>
+              <div
+                style={{
+                  height: "600px",
+                  overflow: "auto",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                }}>
+                <ServiceUnavailablePage />
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Slide type graphics'>
+            <div className={styles.buttonGroup}>
+              {Object.entries(slideTypeGraphics).map(([kind, Graphic]) => (
+                <div
+                  key={kind}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "var(--space-2)",
+                    minWidth: "96px",
+                  }}>
+                  <Graphic />
+                  <span
+                    style={{
+                      fontSize: "var(--font-size-sm)",
+                      color: "var(--text-secondary)",
+                    }}>
+                    {kind}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Accordion>
           <Accordion titleBar='Icon Buttons'>
             <div className={styles.iconBtnSection}>
               <div className={styles.iconBtnRow}>
@@ -446,6 +569,46 @@ const DesignSystemPage = () => {
                   console.log("text answer:", answer);
                 }}
                 disabled={false}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar=' Vote panel (Best Answer VOTE phase)'>
+            <div className={styles.cardComponentContainer}>
+              <VotePanel
+                element={{
+                  kind: "TextQuestion",
+                  id: "design-system-ba",
+                  prompt: "Coin a new name for our Mars colony.",
+                  pointValue: 0,
+                  difficulty: "EASY",
+                  bestAnswerMode: true,
+                  bestAnswerBonus: 100,
+                  caseSensitive: false,
+                  displaySeconds: 30,
+                  mediaPosition: "NONE",
+                }}
+                submissions={[
+                  {
+                    submissionId: "s1",
+                    payload: { kind: "TextAnswer", text: "New Phobos" },
+                  },
+                  {
+                    submissionId: "s2",
+                    payload: { kind: "TextAnswer", text: "Olympus Prime" },
+                  },
+                  {
+                    submissionId: "s3",
+                    payload: { kind: "TextAnswer", text: "Red Haven" },
+                  },
+                ]}
+                myVote={null}
+                totalPlayers={4}
+                votedCount={2}
+                timeRemaining={18}
+                unlimited={false}
+                onVote={(id) => {
+                  console.log("vote demo:", id);
+                }}
               />
             </div>
           </Accordion>

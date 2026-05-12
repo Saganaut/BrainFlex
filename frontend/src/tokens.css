@@ -430,6 +430,103 @@
   --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
 }
 
-/* #social .button-icon {
-    filter: invert(1) brightness(2);
-  } */
+/* ─── Component Modifiers ───────────────────────────────────────── */
+
+/* Portable modifier rules applied via data-* attributes on the         */
+
+/* component element. Each modifier flips a subset of the canonical     */
+
+/* component vars (--color, --background-color, --border-color,         */
+
+/* --padding, --gap, --radius, --font-size, etc.). Components consume   */
+
+/* these via the var(--name, fallback) pattern — see frontend/STYLES.md */
+
+/* for the full convention. Theme classes (.theme-dark / .theme-custom) */
+
+/* are unaffected: they redefine the semantic tokens these modifiers    */
+
+/* reference, so variants automatically re-theme in every mode.        */
+
+/* ─── Variants — color triplet (fg / bg / border) ────────────────── */
+[data-variant="default"] {
+  --color: var(--text-primary);
+  --background-color: var(--bg-surface);
+  --border-color: var(--border-default);
+}
+
+[data-variant="error"] {
+  --color: var(--text-error);
+  --background-color: var(--bg-error);
+  --border-color: var(--border-error);
+}
+
+[data-variant="success"] {
+  --color: var(--text-success);
+  --background-color: var(--bg-success);
+  --border-color: var(--border-success);
+}
+
+[data-variant="warning"] {
+  --color: var(--text-warning);
+  --background-color: var(--bg-warning);
+  --border-color: var(--border-warning);
+}
+
+[data-variant="info"] {
+  --color: var(--text-info);
+  --background-color: var(--bg-info);
+  --border-color: var(--border-info);
+}
+
+[data-variant="brand"] {
+  --color: var(--text-on-brand);
+  --background-color: var(--bg-brand);
+  --border-color: var(--border-brand);
+}
+
+/* ─── Sizes — layout + typography ────────────────────────────────── */
+[data-size="xs"] {
+  --padding: var(--p-xxs);
+  --font-size: var(--font-size-xs);
+  --radius: var(--radius-sm);
+  --gap: var(--space-1);
+}
+
+[data-size="sm"] {
+  --padding: var(--p-sm);
+  --font-size: var(--font-size-xs);
+  --radius: var(--radius-md);
+  --gap: var(--space-2);
+}
+
+[data-size="md"] {
+  --padding: var(--p-md);
+  --font-size: var(--font-size-base);
+  --radius: var(--radius-md);
+  --gap: var(--space-3);
+}
+
+[data-size="lg"] {
+  --padding: var(--p-lg);
+  --font-size: var(--font-size-lg);
+  --radius: var(--radius-lg);
+  --gap: var(--space-4);
+}
+
+/* ─── Style modes — compose with any variant ─────────────────────── */
+
+/* Outline reads the current --color (set by variant or fallback) to    */
+
+/* paint the border, so <Btn variant="error" data-mode="outline"> gets  */
+
+/* red text + red border + transparent fill automatically.              */
+[data-mode="outline"] {
+  --background-color: transparent;
+  --border-color: var(--color, currentcolor);
+}
+
+[data-mode="ghost"] {
+  --background-color: transparent;
+  --border-color: transparent;
+}

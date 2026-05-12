@@ -6,6 +6,7 @@ interface SlideThumbnailProps {
   type: string;
   onClick: () => void;
   index: number;
+  currentQuestionId?: string;
 }
 import { useSortable } from "@dnd-kit/react/sortable";
 
@@ -14,16 +15,20 @@ const SlideThumbnail: React.FC<SlideThumbnailProps> = ({
   id,
   type,
   index,
+  currentQuestionId,
   onClick,
 }) => {
   const { ref } = useSortable({ id, index });
   console.log("index", index);
   return (
-    <button ref={ref} onClick={onClick} className={styles.slideThumbnail}>
+    <div
+      ref={ref}
+      onClick={onClick}
+      className={`${styles.slideThumbnail} ${currentQuestionId == id && styles.active}`}>
       <div>
         {index} {name} {id} {type}
       </div>
-    </button>
+    </div>
   );
 };
 

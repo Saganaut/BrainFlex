@@ -16,6 +16,12 @@ import type {
   ShowcasePlayerDto,
 } from "./BrainFlexApi";
 import type { AnswerPayload, DeckElement } from "../types/elements";
+import type {
+  AnonymizedSubmission,
+  BestAnswerOutcome,
+  VotePhaseStartPayload,
+  VoteProgressPayload,
+} from "../types/bestAnswer";
 
 export interface RoundStartPayload {
   round: number;
@@ -37,6 +43,9 @@ export interface RoundResultPayload {
   round: number;
   element: DeckElement;       // un-redacted; reveals correct answer
   playerResults: PlayerRoundResult[];
+  // Populated when the round was a Best Answer round (SUBMIT → VOTE → REVEAL).
+  // Carries the de-anonymized vote tallies + winner ids + bonus awarded.
+  bestAnswer?: BestAnswerOutcome | null;
 }
 
 export interface GameOverPayload {
@@ -76,6 +85,20 @@ interface GameState {
   wsError: WsErrorPayload | null;
   answeredThisRound: string[];
   offlineUserIds: string[];
+
+  // ---- Best Answer phase ----
+  // "SUBMIT" while players are submitting normally; "VOTE" once the server
+  // broadcasts the anonymized submissions. REVEAL is implicit — when
+  // roundResult arrives with bestAnswer set, render the tally on top of the
+  // existing RoundResult overlay and reset phase to SUBMIT for the next round.
+  phase: "SUBMIT" | "VOTE";
+  voteSubmissions: AnonymizedSubmission[];
+  votePhaseStartedAt: string | null;
+  votePhaseSeconds: number;     // 0 = unlimited
+  // The local player's voted-for submissionId during VOTE phase; null until they vote.
+  myVote: string | null;
+  // userIds who have already voted this round (for the "n of m voted" indicator).
+  votedThisRound: string[];
 }
 
 const initialState: GameState = {
@@ -92,6 +115,12 @@ const initialState: GameState = {
   wsError: null,
   answeredThisRound: [],
   offlineUserIds: [],
+  phase: "SUBMIT",
+  voteSubmissions: [],
+  votePhaseStartedAt: null,
+  votePhaseSeconds: 0,
+  myVote: null,
+  votedThisRound: [],
 };
 
 export const gameSlice = createSlice({
@@ -116,6 +145,35 @@ export const gameSlice = createSlice({
       state.myAnswer = null;
       state.roundResult = null;
       state.answeredThisRound = [];
+      // Reset vote-phase state at the top of every round; the server will tell
+      // us to enter VOTE phase if this round is a Best Answer round.
+      state.phase = "SUBMIT";
+      state.voteSubmissions = [];
+      state.votePhaseStartedAt = null;
+      state.votePhaseSeconds = 0;
+      state.myVote = null;
+      state.votedThisRound = [];
+    },
+
+    votePhaseStarted(state, action: PayloadAction<VotePhaseStartPayload>) {
+      // Stale broadcasts (e.g. server retried after round advance) are dropped.
+      if (action.payload.round !== state.round) return;
+      state.phase = "VOTE";
+      state.voteSubmissions = action.payload.submissions;
+      state.votePhaseStartedAt = action.payload.phaseStartedAt;
+      state.votePhaseSeconds = action.payload.timePerVote;
+      state.myVote = null;
+      state.votedThisRound = [];
+    },
+
+    /** Local-only: record what the player voted for so we can disable input. */
+    voteSubmittedLocally(state, action: PayloadAction<string>) {
+      state.myVote = action.payload;
+    },
+
+    voteProgressReceived(state, action: PayloadAction<VoteProgressPayload>) {
+      if (action.payload.round !== state.round) return;
+      state.votedThisRound = action.payload.votedUserIds;
     },
 
     /** Local-only: record what the player submitted so we can disable inputs etc. */
@@ -143,6 +201,11 @@ export const gameSlice = createSlice({
         const player = state.players.find((p) => p.userId === pr.userId);
         if (player) player.score = pr.totalScore;
       }
+      // Best Answer round just revealed → drop the VOTE-phase scaffolding so
+      // the picker UI unmounts. The reveal lives on roundResult.bestAnswer.
+      state.phase = "SUBMIT";
+      state.voteSubmissions = [];
+      state.votePhaseStartedAt = null;
     },
 
     gameOver(state, action: PayloadAction<GameOverPayload>) {
@@ -176,6 +239,9 @@ export const {
   wsErrorReceived,
   clearWsError,
   resetGame,
+  votePhaseStarted,
+  voteSubmittedLocally,
+  voteProgressReceived,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

@@ -1,22 +1,15 @@
+/* CreateDashboard — uses the sextet extension of the canonical manifest. Base */
+
+/* triplet (color/background-color/border-color) is variantizable via global   */
+
+/* [data-variant=...]; the per-state hover triplet is component-local. See     */
+
+/* STYLES.md for the full convention.                                          */
 .createDashboard {
-  --color: var(--text-primary);
-
-  /* ─── Surface ────────────────────────────── */
-  --background-color: transparent;
-
-  /* ─── Stroke ─────────────────────────────── */
-  --border-color: var(--border-default);
-  --border-width: 1px;
-
-  /* ─── Geometry ───────────────────────────── */
-  --padding: var(--p-md);
-  --gap: var(--space-2);
-  --radius: var(--radius-md);
-
-  /* ─── Hover overrides ────────────────────── */
+  /* Component-local hover sextet — base manifest comes through fallbacks.   */
   --color-hover: var(--action-hover);
-  --color-muted: oklch(from var(--color) l c h / 40%);
-  --background-color-hover: var(--background-color);
+  --color-muted: oklch(from var(--color, var(--text-primary)) l c h / 40%);
+  --background-color-hover: var(--background-color, transparent);
   --border-color-hover: var(--action-hover);
 
   max-width: var(--max-screen-width);
@@ -25,10 +18,10 @@
 
   .navbar {
     display: flex;
-    padding: var(--p-md);
+    padding: var(--padding, var(--p-md));
     justify-content: space-between;
     align-items: center;
-    border-top: 2px solid var(--color);
+    border-top: 2px solid var(--color, var(--text-primary));
   }
 
   .mainCanvas {
@@ -41,39 +34,69 @@
     .slideCanvas {
       display: flex;
       border: 2px dashed red;
-      height: 100%;
+      padding: var(--p-lg);
     }
 
     .rightSidebar {
       display: flex;
-      border: 2px dashed yellow;
       padding: var(--p-md);
     }
 
     .leftSidebar {
       display: flex;
-      border: 2px dashed yellow;
       padding: var(--p-md);
       flex-direction: column;
       gap: var(--space-2);
 
       .slideContainer {
         background-color: var(--electric-violet-500);
-        height: fit-content;
+        max-height: 70dvh;
+        overflow-y: scroll;
         display: flex;
-        gap: var(--space-1);
+        gap: var(--space-3);
         flex-direction: column;
-        padding: var(--p-lg);
+        align-items: center;
+        padding: var(--p-md);
         border-radius: var(--radius-md);
+
+        .slideThumbnail {
+          display: flex;
+          border-radius: var(--radius-md);
+          padding: var(--p-md);
+          background-color: var(--bg-canvas);
+          align-items: center;
+          justify-content: center;
+          min-width: 200px;
+          min-height: 160px;
+          max-height: 160px;
+          max-width: 160px;
+          transition:
+            opacity 300ms ease-in-out,
+            outline 300ms ease-in-out;
+          cursor: pointer;
+          outline-color: var(--blaze-orange);
+          overflow: hidden;
+
+          &.active {
+            outline: 2px solid var(--blaze-orange);
+            outline-offset: 4px;
+          }
+        }
+
+        &:has(.active) .slideThumbnail:not(.active) {
+          opacity: 0.8;
+        }
       }
     }
   }
 }
 
-.slideThumbnail {
+.slideDisplay {
   display: flex;
-  border: 2px solid var(--blaze-orange);
   border-radius: var(--radius-md);
-  padding: var(--p-md);
-  background-color: var(--bg-canvas);
+  background-color: var(--electric-violet-200);
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
 }

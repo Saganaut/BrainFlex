@@ -1,13 +1,14 @@
-// Icon-only button: "close" renders an XMarkIcon, "avatar"/"default" renders the passed icon
+// Icon-only button. Variant + size flow through data-* attributes (shared with
+// other components per frontend/STYLES.md); component-specific concepts —
+// close/avatar/round/pill/bordered/withBackground — stay as module classes.
+// "close" renders an XMarkIcon; "avatar" and "default" render the passed icon.
 import React, { type ReactNode } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { BtnShape, BtnSize, BtnVariant } from "./BtnTypes";
 import styles from "./Buttons.module.css";
 
-interface IconBtnProps extends Omit<
-  React.ButtonHTMLAttributes<HTMLButtonElement>,
-  "type"
-> {
+interface IconBtnProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   type: "close" | "default" | "avatar";
   icon?: ReactNode;
   size?: BtnSize;
@@ -17,37 +18,37 @@ interface IconBtnProps extends Omit<
   backgroundColor?: boolean;
 }
 
-const IconBtn: React.FC<IconBtnProps> = ({
+const IconBtn = ({
   type,
   icon,
   size = "md",
+  variant = "default",
+  shape = "default",
+  bordered = false,
+  backgroundColor = false,
   disabled = false,
   onClick,
-  bordered = false,
-  shape = "default",
-  variant = "primary",
-  backgroundColor = false,
   className,
   ...rest
-}) => {
-  const isDisabled = disabled ? "isDisabled" : "";
+}: IconBtnProps) => {
   return (
     <button
       type='button'
       disabled={disabled}
       onClick={onClick}
+      data-variant={variant}
+      data-size={size}
       {...rest}
       className={[
         styles.iconBtn,
-        styles[type],
-        styles[size],
+        type !== "default" && styles[type],
+        shape !== "default" && styles[shape],
         bordered && styles.bordered,
         backgroundColor && styles.withBackground,
-        styles[shape],
-        styles[variant],
-        styles[isDisabled],
         className,
-      ].join(" ")}>
+      ]
+        .filter(Boolean)
+        .join(" ")}>
       {type === "close" ? <XMarkIcon /> : icon}
     </button>
   );

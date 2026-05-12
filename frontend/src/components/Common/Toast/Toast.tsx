@@ -20,7 +20,8 @@ const Toast = ({ id, message, variant, duration, onDismiss }: ToastProps) => {
 
   return (
     <div
-      className={`${styles.toast} ${styles[variant]}`}
+      className={styles.toast}
+      data-variant={variant}
       role='alert'
       aria-live='polite'
       aria-atomic='true'>

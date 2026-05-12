@@ -13,6 +13,10 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CreateDeckRequest(
+        // Optional client-generated id (UUID). When present, the frontend has
+        // already created the deck optimistically and the POST is idempotent.
+        // When null, the server assigns a fresh UUID.
+        @Size(max = 64) String id,
         @NotBlank @Size(max = 100) String name,
         @Size(max = 500) String description,
         List<@Size(max = 50) String> tags,

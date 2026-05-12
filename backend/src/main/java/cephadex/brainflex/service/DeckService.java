@@ -57,6 +57,16 @@ public class DeckService {
 
     public Deck createDeck(User creator, CreateDeckRequest request) {
         Deck deck = new Deck();
+        // Accept the caller-provided id (frontend pre-generates a UUID so the
+        // optimistic editor can reference the deck before the roundtrip).
+        // Fall back to a server-generated UUID otherwise.
+        String id = (request.id() != null && !request.id().isBlank())
+                ? request.id()
+                : UUID.randomUUID().toString();
+        if (deckRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Deck id already exists");
+        }
+        deck.setId(id);
         deck.setName(request.name());
         deck.setDescription(request.description());
         deck.setTags(request.tags() == null ? new ArrayList<>() : request.tags());

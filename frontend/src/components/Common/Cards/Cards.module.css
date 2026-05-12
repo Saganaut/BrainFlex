@@ -4,28 +4,27 @@
   gap: 1.5rem;
 }
 
-.card {
-  --color: var(--text-primary);
-  --background-color: var(--bg-surface);
-  --border-color: var(--border-default);
+/* Card — manifest via var-fallback. data-variant / data-size set externally   */
 
-  background-color: var(--background-color);
-  color: var(--color);
+/* (see frontend/STYLES.md). Component-local concepts: .isClickable.            */
+.card {
+  background-color: var(--background-color, var(--bg-surface));
+  color: var(--color, var(--text-primary));
   border-width: 2px;
   border-style: solid;
-  border-radius: var(--radius-lg);
-  border-color: var(--border-color);
+  border-radius: var(--radius, var(--radius-lg));
+  border-color: var(--border-color, var(--border-default));
   display: flex;
-  padding: var(--space-2);
+  padding: var(--padding, var(--space-2));
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--gap, var(--space-2));
   transition: border-color 300ms ease-in-out;
 
   &.isClickable {
     cursor: pointer;
 
     &:hover {
-      --border-color: var(--action-hover);
+      border-color: var(--action-hover);
     }
   }
 

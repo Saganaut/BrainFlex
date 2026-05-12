@@ -10,6 +10,7 @@
 import styles from "./RoundResult.module.css";
 import type { RoundResultPayload } from "../../../store/gameSlice";
 import type { AnswerPayload, DeckElement } from "../../../types/elements";
+import type { BestAnswerOutcome } from "../../../types/bestAnswer";
 import { Btn } from "@/components/Common/Buttons/Btn";
 
 interface RoundResultProps {
@@ -46,6 +47,13 @@ const RoundResult = ({
             <span className={styles.answerLabel}>Correct answer</span>
             <span className={styles.answerText}>{correctText}</span>
           </div>
+        )}
+
+        {result.bestAnswer && (
+          <BestAnswerReveal
+            outcome={result.bestAnswer}
+            element={result.element}
+          />
         )}
 
         {myResult && (
@@ -94,6 +102,57 @@ const RoundResult = ({
           <p className={styles.autoAdvance}>Next round starting soon…</p>
         )}
       </div>
+    </div>
+  );
+};
+
+/**
+ * Best Answer REVEAL block. Ranks submissions by vote count, crowns the
+ * winner(s) (multiple on a tie — all listed), and renders each de-anonymized
+ * submission so the room can see who said what.
+ */
+interface BestAnswerRevealProps {
+  outcome: BestAnswerOutcome;
+  element: DeckElement;
+}
+
+const BestAnswerReveal = ({ outcome, element }: BestAnswerRevealProps) => {
+  const ranked = [...outcome.tallies].sort((a, b) => b.voteCount - a.voteCount);
+  const winnerSet = new Set(outcome.winnerUserIds);
+
+  return (
+    <div className={styles.bestAnswer}>
+      <div className={styles.bestAnswerHeader}>
+        <span className={styles.bestAnswerLabel}>Best Answer</span>
+        {outcome.winnerUserIds.length > 0 ? (
+          <span className={styles.bestAnswerBonus}>
+            +{outcome.bonusAwarded} bonus
+          </span>
+        ) : (
+          <span className={styles.bestAnswerNoVotes}>No votes cast</span>
+        )}
+      </div>
+      <ol className={styles.tallyList}>
+        {ranked.map((t) => {
+          const isWinner = winnerSet.has(t.userId);
+          return (
+            <li
+              key={t.submissionId}
+              className={`${styles.tallyRow} ${isWinner ? styles.tallyWinner : ""}`}>
+              <span className={styles.tallyAuthor}>
+                {isWinner && <span className={styles.crown}>★ </span>}
+                {t.userName}
+              </span>
+              <span className={styles.tallyText}>
+                {humanReadableAnswer(element, t.payload) ?? "(no submission)"}
+              </span>
+              <span className={styles.tallyCount}>
+                {t.voteCount} {t.voteCount === 1 ? "vote" : "votes"}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 };

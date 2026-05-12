@@ -1,31 +1,28 @@
+/* NavBar — uses the sextet extension of the canonical manifest. The base       */
+
+/* triplet (color/background-color/border-color) comes from global              */
+
+/* [data-variant=...] when present; the per-state hover triplet is              */
+
+/* component-local. Sizes come from global [data-size=...]. See STYLES.md.      */
 .navContainer {
-  /* ─── Foreground ─────────────────────────── */
-  --color: var(--text-primary);
+  /* Base manifest — only the hover sextet needs declaring; the rest pulls    */
 
-  /* ─── Surface ────────────────────────────── */
-  --background-color: transparent;
-
-  /* ─── Stroke ─────────────────────────────── */
-  --border-color: var(--border-default);
-  --border-width: 1px;
-
-  /* ─── Geometry ───────────────────────────── */
-  --padding: var(--p-md);
-  --gap: var(--space-2);
-  --radius: var(--radius-md);
-
-  /* ─── Hover overrides ────────────────────── */
+  /* through var(--name, fallback) so global modifiers can override.          */
   --color-hover: var(--action-hover);
-  --color-muted: oklch(from var(--color) l c h / 40%);
-  --background-color-hover: var(--background-color);
+  --color-muted: oklch(from var(--color, var(--text-primary)) l c h / 40%);
+  --background-color-hover: var(--background-color, transparent);
   --border-color-hover: var(--action-hover);
 
-  /* ── Apply ─────────────────────────────────────── */
-  color: var(--color);
-  background-color: var(--background-color);
+  color: var(--color, var(--text-primary));
+  background-color: var(--background-color, transparent);
+  display: flex;
   flex-flow: row wrap;
+  gap: 1rem;
+  padding: var(--padding, 1rem);
+  align-items: center;
   border: none;
-  border-radius: var(--radius);
+  border-radius: var(--radius, var(--radius-md));
   transition:
     color 300ms ease-in-out,
     background-color 300ms ease-in-out,
@@ -49,55 +46,24 @@
     border-color: var(--border-color-hover);
   }
 
-  /* ── Variants: redefine vars only ──────────────── */
-  &.error {
-    --color: var(--text-error);
-    --background-color: var(--bg-error);
-    --border-color: var(--border-error);
+  /* Hover-color overrides for status variants — base color/bg/border come    */
+
+  /* from global [data-variant=...] rules in tokens.css.                      */
+  &[data-variant="error"] {
     --color-hover: var(--text-error);
   }
 
-  &.success {
-    --color: var(--text-success);
-    --background-color: var(--bg-success);
-    --border-color: var(--border-success);
+  &[data-variant="success"] {
     --color-hover: var(--text-success);
   }
 
-  &.warning {
-    --color: var(--text-warning);
-    --background-color: var(--bg-warning);
-    --border-color: var(--border-warning);
-  }
-
-  &.info {
-    --color: var(--text-info);
-    --background-color: var(--bg-info);
-    --border-color: var(--border-info);
-  }
-
-  /* ── Sizes: redefine geometry vars only ────────── */
-  &.sm {
-    --padding: var(--p-sm);
-    --radius: var(--radius-sm);
-  }
-
-  &.lg {
-    --padding: var(--p-lg);
-    --radius: var(--radius-lg);
-  }
-
-  /* ── States: usually no var work ───────────────── */
+  &:disabled,
   &.isDisabled,
-  &.isDisabled:hover {
+  &.isDisabled:hover,
+  &:disabled:hover {
     opacity: 0.3;
     pointer-events: none;
   }
-
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  align-items: center;
 
   .userMenuWrapper {
     position: relative;

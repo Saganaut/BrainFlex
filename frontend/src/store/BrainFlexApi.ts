@@ -847,6 +847,7 @@ export type JoinOrganizationRequest = {
   organizationId?: string;
 };
 export type CreateDeckRequest = {
+  id?: string;
   name: string;
   description?: string;
   tags?: string[];

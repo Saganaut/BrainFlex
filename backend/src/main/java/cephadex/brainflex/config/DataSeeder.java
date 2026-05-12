@@ -114,7 +114,7 @@ public class DataSeeder {
 
     private static Deck buildWelcomeTourDeck() {
         Deck deck = new Deck();
-        deck.setId("6650000000000000000001");
+        deck.setId("00000000-0000-4000-8000-000000000001");
         deck.setName("BrainFlex Welcome Tour");
         deck.setDescription("A quick tour through every kind of element you can put in a deck. Every type, one round each.");
         deck.setTags(List.of("welcome", "tour", "every-type"));
@@ -288,7 +288,7 @@ public class DataSeeder {
 
     private static Deck buildGeneralKnowledgeDeck() {
         Deck deck = new Deck();
-        deck.setId("6650000000000000000002");
+        deck.setId("00000000-0000-4000-8000-000000000002");
         deck.setName("General Knowledge");
         deck.setDescription("A mix of geography, history, science, and pop culture. MCQ + text-input only.");
         deck.setTags(List.of("general", "trivia"));

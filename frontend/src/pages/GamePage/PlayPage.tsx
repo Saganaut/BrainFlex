@@ -7,6 +7,7 @@ import { ElementRenderer } from "../../components/Games/ElementRenderer/ElementR
 import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
+import { VotePanel } from "../../components/Games/VotePanel/VotePanel";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useGameSession } from "../../hooks/useGameSession";
@@ -17,6 +18,7 @@ import { resolveShowcaseBackground } from "../../utils/deckImages";
 import {
   setSession,
   answerSubmittedLocally,
+  voteSubmittedLocally,
 } from "../../store/gameSlice";
 import { useAppDispatch } from "../../store/hooks";
 import type { AnswerPayload } from "../../types/elements";
@@ -30,7 +32,7 @@ const PlayPage = () => {
   const dispatch = useAppDispatch();
   const userState = useCurrentUser();
   const game = useGameSession();
-  const { sendAnswer, sendNextRound, sendBoot, sendEndShowcase } =
+  const { sendAnswer, sendVote, sendNextRound, sendBoot, sendEndShowcase } =
     useGameWebSocket(roomCode);
   const { data: session } = useGetShowcaseQuery({ roomCode });
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -82,19 +84,32 @@ const PlayPage = () => {
     sendEndShowcase();
   };
 
-  // Per-element timer countdown. Slides always have a server-side timer;
-  // questions only when the element or showcase asks for one (i.e.
-  // displaySeconds > 0).
+  // Per-phase timer countdown.
+  //   SUBMIT phase — count down from roundStartedAt using the effective
+  //                  per-element / per-showcase question duration.
+  //   VOTE phase   — count down from votePhaseStartedAt using votePhaseSeconds.
+  //   roundResult set — pause; the overlay handles the post-round timing.
   useEffect(() => {
-    if (!game.currentElement || !game.roundStartedAt || game.roundResult) return;
-    const isSlide = game.currentElement.kind === "Slide";
-    const elementSeconds = game.currentElement.displaySeconds ?? 0;
-    const effective = elementSeconds > 0
-      ? elementSeconds
-      : showcaseUnlimited ? 0 : (session?.settings?.timePerQuestion ?? 0);
-    if (effective <= 0 && !isSlide) return;
-    const totalSeconds = effective > 0 ? effective : 8; // slide fallback
-    const start = new Date(game.roundStartedAt).getTime();
+    if (!game.currentElement || game.roundResult) return;
+
+    let totalSeconds: number;
+    let start: number;
+    if (game.phase === "VOTE" && game.votePhaseStartedAt) {
+      if (game.votePhaseSeconds <= 0) return; // unlimited vote phase
+      totalSeconds = game.votePhaseSeconds;
+      start = new Date(game.votePhaseStartedAt).getTime();
+    } else {
+      if (!game.roundStartedAt) return;
+      const isSlide = game.currentElement.kind === "Slide";
+      const elementSeconds = game.currentElement.displaySeconds ?? 0;
+      const effective = elementSeconds > 0
+        ? elementSeconds
+        : showcaseUnlimited ? 0 : (session?.settings?.timePerQuestion ?? 0);
+      if (effective <= 0 && !isSlide) return;
+      totalSeconds = effective > 0 ? effective : 8; // slide fallback
+      start = new Date(game.roundStartedAt).getTime();
+    }
+
     const tick = () => {
       // eslint-disable-next-line react-x/set-state-in-effect
       setTimeRemaining(
@@ -106,12 +121,27 @@ const PlayPage = () => {
     return () => {
       clearInterval(id);
     };
-  }, [game.currentElement, game.roundStartedAt, game.roundResult, showcaseUnlimited, session]);
+  }, [
+    game.currentElement,
+    game.roundStartedAt,
+    game.roundResult,
+    game.phase,
+    game.votePhaseStartedAt,
+    game.votePhaseSeconds,
+    showcaseUnlimited,
+    session,
+  ]);
 
   const handleAnswer = (payload: AnswerPayload) => {
     if (game.myAnswer !== null || !game.currentElement) return;
     dispatch(answerSubmittedLocally(payload));
     sendAnswer(game.currentElement.id ?? "", payload);
+  };
+
+  const handleVote = (submissionId: string) => {
+    if (game.myVote !== null || !game.currentElement) return;
+    dispatch(voteSubmittedLocally(submissionId));
+    sendVote(game.currentElement.id ?? "", submissionId);
   };
 
   const backgroundUrl = resolveShowcaseBackground(
@@ -141,8 +171,18 @@ const PlayPage = () => {
 
   const element = game.currentElement;
   const isSlide = element.kind === "Slide";
+  const isVotePhase = game.phase === "VOTE";
   const elementSeconds = element.displaySeconds ?? 0;
-  const showCountdownChrome = !isSlide && (elementSeconds > 0 || !showcaseUnlimited);
+  const showCountdownChrome = !isSlide && (
+    isVotePhase
+      ? game.votePhaseSeconds > 0
+      : (elementSeconds > 0 || !showcaseUnlimited)
+  );
+  const questionCardTimeLimit = isVotePhase
+    ? game.votePhaseSeconds
+    : elementSeconds > 0
+      ? elementSeconds
+      : (session?.settings?.timePerQuestion ?? 0);
 
   return (
     <div className={styles.play} style={bgStyle}>
@@ -153,10 +193,7 @@ const PlayPage = () => {
             question={{
               questionText: "prompt" in element ? (element.prompt ?? "") : "",
               pointValue: "pointValue" in element ? (element.pointValue ?? 0) : 0,
-              timeLimit:
-                elementSeconds > 0
-                  ? elementSeconds
-                  : (session?.settings?.timePerQuestion ?? 0),
+              timeLimit: questionCardTimeLimit,
               imageUrl: element.imageUrl,
             }}
             round={game.round}
@@ -165,22 +202,41 @@ const PlayPage = () => {
             noTimer={!showCountdownChrome}
           />
         )}
-        <ElementRenderer
-          element={element}
-          round={game.round}
-          totalRounds={game.totalRounds}
-          timeRemaining={timeRemaining}
-          mySubmission={game.myAnswer}
-          roundResultElement={game.roundResult?.element ?? null}
-          onSubmit={handleAnswer}
-        />
+        {isVotePhase ? (
+          <VotePanel
+            element={element}
+            submissions={game.voteSubmissions}
+            myVote={game.myVote}
+            totalPlayers={game.players.length}
+            votedCount={game.votedThisRound.length}
+            timeRemaining={timeRemaining}
+            unlimited={game.votePhaseSeconds <= 0}
+            onVote={handleVote}
+          />
+        ) : (
+          <ElementRenderer
+            element={element}
+            round={game.round}
+            totalRounds={game.totalRounds}
+            timeRemaining={timeRemaining}
+            mySubmission={game.myAnswer}
+            roundResultElement={game.roundResult?.element ?? null}
+            onSubmit={handleAnswer}
+          />
+        )}
       </div>
       <aside className={styles.sidebar}>
         <ScoreBoard
           players={game.players}
           currentUserId={userId}
           hideScores={hideScoresDuringPlay}
-          answeredUserIds={isSlide ? undefined : game.answeredThisRound}
+          answeredUserIds={
+            isSlide
+              ? undefined
+              : isVotePhase
+                ? game.votedThisRound
+                : game.answeredThisRound
+          }
           offlineUserIds={game.offlineUserIds}
           isHost={isHost}
           onBootPlayer={handleBoot}

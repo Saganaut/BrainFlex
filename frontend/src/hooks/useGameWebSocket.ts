@@ -16,6 +16,8 @@ import {
   wsErrorReceived,
   answerProgressReceived,
   presenceUpdated,
+  votePhaseStarted,
+  voteProgressReceived,
   type RoundStartPayload,
   type RoundResultPayload,
   type GameOverPayload,
@@ -25,6 +27,10 @@ import {
 } from "../store/gameSlice";
 import type { ShowcaseDto } from "../store/BrainFlexApi";
 import type { AnswerPayload } from "../types/elements";
+import type {
+  VotePhaseStartPayload,
+  VoteProgressPayload,
+} from "../types/bestAnswer";
 
 export function useGameWebSocket(roomCode: string | null) {
   const dispatch = useAppDispatch();
@@ -56,6 +62,16 @@ export function useGameWebSocket(roomCode: string | null) {
             answerProgressReceived(
               JSON.parse(msg.body) as AnswerProgressPayload,
             ),
+          );
+        });
+        client.subscribe(`/topic/showcase/${roomCode}/votePhase`, (msg) => {
+          dispatch(
+            votePhaseStarted(JSON.parse(msg.body) as VotePhaseStartPayload),
+          );
+        });
+        client.subscribe(`/topic/showcase/${roomCode}/voted`, (msg) => {
+          dispatch(
+            voteProgressReceived(JSON.parse(msg.body) as VoteProgressPayload),
           );
         });
         client.subscribe(`/topic/presence`, (msg) => {
@@ -98,6 +114,14 @@ export function useGameWebSocket(roomCode: string | null) {
     sendAnswer: useCallback(
       (elementId: string, payload: AnswerPayload) => {
         send(`/app/showcase/${roomCode}/answer`, { elementId, payload });
+      },
+      [roomCode, send],
+    ),
+
+    /** Cast a vote during the VOTE phase of a Best Answer round. */
+    sendVote: useCallback(
+      (elementId: string, submissionId: string) => {
+        send(`/app/showcase/${roomCode}/vote`, { elementId, submissionId });
       },
       [roomCode, send],
     ),

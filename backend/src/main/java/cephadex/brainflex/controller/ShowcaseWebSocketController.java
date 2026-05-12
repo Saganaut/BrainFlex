@@ -6,13 +6,17 @@
  * Client subscriptions (server → client):
  *   /topic/showcase/{roomCode}/lobby       — lobby state (player list, status)
  *   /topic/showcase/{roomCode}/round       — RoundStartMessage (question + timer)
- *   /topic/showcase/{roomCode}/roundResult — RoundResultMessage (correct answer + scores)
+ *   /topic/showcase/{roomCode}/answered    — AnswerProgressMessage (who has submitted)
+ *   /topic/showcase/{roomCode}/votePhase   — VotePhaseStartMessage (Best Answer mode)
+ *   /topic/showcase/{roomCode}/voted       — VoteProgressMessage (who has voted)
+ *   /topic/showcase/{roomCode}/roundResult — RoundResultMessage (reveal; optional BestAnswerOutcome)
  *   /topic/showcase/{roomCode}/gameOver    — ShowcaseEndedMessage (final placements)
  *   /user/queue/errors                     — ShowcaseErrorMessage, principal-specific
  *
  * Client sends (client → server via /app prefix):
  *   /app/showcase/{roomCode}/start
  *   /app/showcase/{roomCode}/answer
+ *   /app/showcase/{roomCode}/vote
  *   /app/showcase/{roomCode}/nextRound
  *   /app/showcase/{roomCode}/leave
  */
@@ -35,6 +39,7 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.dto.AnswerSubmitRequest;
 import cephadex.brainflex.dto.BootPlayerRequest;
 import cephadex.brainflex.dto.ShowcaseErrorMessage;
+import cephadex.brainflex.dto.VoteSubmitRequest;
 import cephadex.brainflex.service.ShowcaseService;
 
 @Controller
@@ -67,6 +72,15 @@ public class ShowcaseWebSocketController {
             @Payload AnswerSubmitRequest request,
             Principal principal) {
         showcaseService.submitAnswer(roomCode, request, principal.getName());
+    }
+
+    /** Player votes for an anonymous submission during VOTE phase (Best Answer mode). */
+    @MessageMapping("/showcase/{roomCode}/vote")
+    public void submitVote(
+            @DestinationVariable String roomCode,
+            @Payload VoteSubmitRequest request,
+            Principal principal) {
+        showcaseService.submitVote(roomCode, request, principal.getName());
     }
 
     /**

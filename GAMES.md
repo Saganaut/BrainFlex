@@ -21,6 +21,8 @@ Status legend: ✅ shipped · 🚧 partial · ☐ todo
 ## 0. Model evolution roadmap
 
 > **Update (2026-05-11):** The polymorphic element rework has shipped. `Question` was retired; `Deck.elements` is now an embedded ordered list of sealed `DeckElement` records (`Slide`, `McqQuestion`, `TextQuestion`, `NumberQuestion`, `ImageChoiceQuestion`, `RankingQuestion`, `ScalesQuestion`, `QAndAQuestion`, `GridQuestion`, `PlaceOnImageQuestion`). Answers are likewise a sealed `AnswerPayload` family. Sample data was wiped and reseeded (Welcome Tour + General Knowledge). Most of the field gaps below are now satisfied at the model layer; runtime renderers / authoring UI catch up element-by-element (§3a, §7).
+>
+> **Ids are client-generatable UUIDs.** `Deck.id` and `DeckElement.id` are both `String` UUIDs. The frontend calls `crypto.randomUUID()` and passes the id on POST so optimistic UI can reference the entity before the roundtrip; the server falls back to a fresh UUID when the caller omits the field. POST is idempotent on the id.
 
 ### Deck — fields
 
@@ -138,11 +140,18 @@ A two-phase round modifier that adds social voting on top of any free-form quest
 3. **Reveal** — submissions are de-anonymized; the player whose submission won the vote receives bonus points (`bestAnswerBonus`).
 
 Status:
-- ✅ Modifier flag `bestAnswerMode: boolean` + `bestAnswerBonus: int` modeled on `McqQuestion`, `TextQuestion`, `QAndAQuestion`, `PlaceOnImageQuestion`
-- ✅ `AudienceSubmission` + `BestAnswerVote` collections + repositories shipped
+- ✅ Modifier flag `bestAnswerMode: boolean` + `bestAnswerBonus: int` modeled on every non-Slide element kind (default `false` / `0` on the `DeckElement` interface; concrete kinds override via their record components)
+- ✅ `AudienceSubmission` + `BestAnswerVote` collections + repositories shipped (reserved for the Q&A moderation flow; the Best Answer round currently keeps submissions on `PlayerAnswer.submissionId` and votes on `ShowcasePlayer.votes` so the round's state travels with the showcase document)
 - ✅ `ShowcasePhase` enum (`SUBMIT | VOTE | REVEAL`) modeled on the showcase
-- ☐ Phase machine runtime — `ShowcaseService` currently pins phase to `SUBMIT`; advancing to `VOTE` / `REVEAL` and broadcasting the anonymized submission set + tallying votes is still TODO
-- ☐ Frontend voting UI
+- ✅ **Phase machine runtime** — `ShowcaseService.completeRound` dispatches on `element.bestAnswerMode()`. Best-answer rounds:
+  - SUBMIT — every submitted `PlayerAnswer` gets a server-generated `submissionId`; timed-out players have none and are not vote-eligible
+  - VOTE — `startVotePhase` broadcasts anonymized `{submissionId, payload}` list on `/topic/showcase/{code}/votePhase`; vote timer mirrors the SUBMIT duration
+  - REVEAL — `completeVotePhase` tallies, awards `bestAnswerBonus` to winner(s) (ties → all tied players get the bonus), broadcasts the standard `RoundResultMessage` with an attached `BestAnswerOutcome { tallies, winnerUserIds, bonusAwarded }`
+  - Edge cases: zero vote-eligible submissions skips VOTE; zero votes cast → empty `winnerUserIds`, no bonus
+- ✅ Wire protocol: client sends `/app/showcase/{code}/vote { elementId, submissionId }`; server broadcasts on `/topic/showcase/{code}/voted` (progress) and `/votePhase` (anonymized submissions); REVEAL rides the existing `/roundResult` channel
+- ✅ Tests cover SUBMIT → VOTE transition, vote tally + bonus award, and stale-vote rejection
+- ✅ Frontend voting UI — `VotePanel` renders during VOTE phase (anonymized picker with locked-in indicator + voter progress + timer); `RoundResult` extended with `BestAnswerReveal` that ranks tallies, crowns the winner(s), and surfaces the bonus. State lives in `gameSlice` (`phase`, `voteSubmissions`, `myVote`, `votedThisRound`, `votePhaseStartedAt`). PlayPage swaps `ElementRenderer` for `VotePanel` when `phase === "VOTE"` and routes ScoreBoard's progress indicator to the right channel.
+- ☐ Q&A moderation flow (Slido-style host pinning) — separate from Best Answer; reuses `AudienceSubmission` collection
 
 ### 3b. Question media + background
 

@@ -1,11 +1,11 @@
-.modal {
-  --background-color: var(--bg-surface);
-  --border-color: var(--border-default);
+/* Modal — manifest via var-fallback. data-variant on <dialog> tints the body   */
 
-  background-color: var(--background-color);
-  color: var(--text-primary);
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-lg);
+/* surface and border; inner header/content keep canvas/secondary tokens.       */
+.modal {
+  background-color: var(--background-color, var(--bg-surface));
+  color: var(--color, var(--text-primary));
+  border: 2px solid var(--border-color, var(--border-default));
+  border-radius: var(--radius, var(--radius-lg));
   padding: 0;
   max-width: 500px;
   width: 90%;

@@ -148,3 +148,84 @@
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
 }
+
+.bestAnswer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-subtle);
+}
+
+.bestAnswerHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.bestAnswerLabel {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.bestAnswerBonus {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-success);
+}
+
+.bestAnswerNoVotes {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.tallyList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tallyRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.tallyWinner {
+  background: var(--bg-success);
+  color: var(--text-success);
+  font-weight: 700;
+}
+
+.tallyAuthor {
+  text-align: left;
+}
+
+.crown {
+  color: var(--text-warning);
+}
+
+.tallyText {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tallyCount {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}

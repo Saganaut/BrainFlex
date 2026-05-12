@@ -30,19 +30,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.dto.AnswerSubmitRequest;
 import cephadex.brainflex.dto.CreateShowcaseRequest;
+import cephadex.brainflex.dto.RoundResultMessage;
+import cephadex.brainflex.dto.VotePhaseStartMessage;
+import cephadex.brainflex.dto.VoteSubmitRequest;
 import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.PlayerAnswer;
 import cephadex.brainflex.model.Showcase;
 import cephadex.brainflex.model.ShowcasePlayer;
 import cephadex.brainflex.model.ShowcaseResult;
 import cephadex.brainflex.model.ShowcaseSettings;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.answer.McqAnswer;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.enums.Difficulty;
+import cephadex.brainflex.model.enums.GameMode;
 import cephadex.brainflex.model.enums.GameStatus;
 import cephadex.brainflex.model.enums.MediaPosition;
+import cephadex.brainflex.model.enums.ShowcasePhase;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.ShowcaseRepository;
 import cephadex.brainflex.repository.ShowcaseResultRepository;
@@ -331,5 +339,162 @@ class ShowcaseServiceTest {
 
         Optional<ShowcaseResult> found = showcaseService.getResults("ABCD12");
         assertFalse(found.isPresent());
+    }
+
+    // ---- Best Answer phase machine ----
+
+    /** Two players, one Best-Answer MCQ at index 0, both submit → expect VOTE phase. */
+    @Test
+    void submitAnswer_OnBestAnswerRound_WhenAllAnswered_TransitionsToVotePhase() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(showcaseRepository.save(any(Showcase.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        AnswerSubmitRequest req = new AnswerSubmitRequest(el.id(), new McqAnswer(el.id() + "-a"));
+
+        showcaseService.submitAnswer("ABCD12", req, "guest:p1");
+        showcaseService.submitAnswer("ABCD12", req, "guest:p2");
+
+        assertEquals(ShowcasePhase.VOTE, session.getPhase());
+
+        // Each submitter has a submissionId; no timeouts means two anonymized
+        // submissions go out on the votePhase channel.
+        long submissionsWithId = session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> a.getSubmissionId() != null).count();
+        assertEquals(2, submissionsWithId);
+
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/votePhase"),
+                any(VotePhaseStartMessage.class));
+    }
+
+    /**
+     * Vote tally: p1 submission gets two votes, p2 gets one → p1 wins, gets the
+     * bonus on top of their answer points.
+     */
+    @Test
+    void submitVote_WhenAllVoted_AwardsBonusToWinnerAndAdvances() {
+        Showcase session = bestAnswerSessionWithThreePlayers();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(showcaseRepository.save(any(Showcase.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        AnswerSubmitRequest answerReq = new AnswerSubmitRequest(el.id(), new McqAnswer(el.id() + "-a"));
+        showcaseService.submitAnswer("ABCD12", answerReq, "guest:p1");
+        showcaseService.submitAnswer("ABCD12", answerReq, "guest:p2");
+        showcaseService.submitAnswer("ABCD12", answerReq, "guest:p3");
+
+        // After SUBMIT phase completes we're now in VOTE; grab the players'
+        // submissionIds so the votes reference real submissions.
+        String p1Sub = answerOf(session, "p1", el.id()).getSubmissionId();
+        String p2Sub = answerOf(session, "p2", el.id()).getSubmissionId();
+
+        // p1 and p3 both vote for p1's submission; p2 votes for p2 (themselves).
+        showcaseService.submitVote("ABCD12", new VoteSubmitRequest(el.id(), p1Sub), "guest:p1");
+        showcaseService.submitVote("ABCD12", new VoteSubmitRequest(el.id(), p2Sub), "guest:p2");
+        showcaseService.submitVote("ABCD12", new VoteSubmitRequest(el.id(), p1Sub), "guest:p3");
+
+        // p1's submission won → bestAnswerWinner flag + bonus applied to their score.
+        PlayerAnswer p1Answer = answerOf(session, "p1", el.id());
+        assertTrue(p1Answer.isBestAnswerWinner());
+        ShowcasePlayer p1 = session.getPlayers().stream()
+                .filter(p -> p.getUserId().equals("p1")).findFirst().orElseThrow();
+        // 100 base (correct answer) + 50 best-answer bonus = 150
+        assertEquals(150, p1.getScore());
+
+        // Loser p2 keeps just their base score (incorrect answer chose option-a; we
+        // verify they did not receive the winner bonus).
+        ShowcasePlayer p2 = session.getPlayers().stream()
+                .filter(p -> p.getUserId().equals("p2")).findFirst().orElseThrow();
+        assertFalse(answerOf(session, "p2", el.id()).isBestAnswerWinner());
+        assertEquals(100, p2.getScore());
+
+        // Reveal broadcast carries BestAnswerOutcome with winner ids + bonus.
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/roundResult"),
+                argThat((Object msg) -> {
+                    if (!(msg instanceof RoundResultMessage rr)) return false;
+                    if (rr.bestAnswer() == null) return false;
+                    return rr.bestAnswer().winnerUserIds().contains("p1")
+                            && !rr.bestAnswer().winnerUserIds().contains("p2")
+                            && rr.bestAnswer().bonusAwarded() == 50;
+                }));
+    }
+
+    /** A stale vote arriving in SUBMIT phase is silently dropped. */
+    @Test
+    void submitVote_WhenNotInVotePhase_IsIgnored() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        // Stays in SUBMIT — no answers submitted yet.
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        showcaseService.submitVote("ABCD12",
+                new VoteSubmitRequest(el.id(), "any-sub-id"),
+                "guest:p1");
+
+        // No vote recorded; no broadcast emitted.
+        assertTrue(session.getPlayers().stream().allMatch(p -> p.getVotes().isEmpty()));
+        verify(messagingTemplate, never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/voted"),
+                any(Object.class));
+    }
+
+    // ---- Helpers ----
+
+    private static PlayerAnswer answerOf(Showcase session, String userId, String elementId) {
+        return session.getPlayers().stream()
+                .filter(p -> p.getUserId().equals(userId))
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> a.getElementId().equals(elementId))
+                .findFirst().orElseThrow();
+    }
+
+    private static Showcase bestAnswerSessionWithTwoPlayers() {
+        Showcase s = new Showcase();
+        s.setId("session1");
+        s.setRoomCode("ABCD12");
+        s.setHostUserId("p1");
+        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setPhase(ShowcasePhase.SUBMIT);
+        ShowcaseSettings settings = new ShowcaseSettings();
+        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setTotalRounds(1);
+        settings.setSpeedBonus(false);
+        s.setSettings(settings);
+        s.setCurrentRound(0);
+        s.setDeckSnapshot(List.of(bestAnswerMcq("ba-0", 50)));
+
+        s.setPlayers(new ArrayList<>(List.of(player("p1"), player("p2"))));
+        return s;
+    }
+
+    private static Showcase bestAnswerSessionWithThreePlayers() {
+        Showcase s = bestAnswerSessionWithTwoPlayers();
+        s.getPlayers().add(player("p3"));
+        return s;
+    }
+
+    private static ShowcasePlayer player(String userId) {
+        ShowcasePlayer p = new ShowcasePlayer();
+        p.setUserId(userId);
+        p.setUserName(userId);
+        p.setGuest(true);
+        return p;
+    }
+
+    /** A best-answer-mode MCQ whose correct option is {id}-a. */
+    private static McqQuestion bestAnswerMcq(String id, int bonus) {
+        McqOption a = new McqOption(id + "-a", "A", null);
+        McqOption b = new McqOption(id + "-b", "B", null);
+        return new McqQuestion(
+                id, "Prompt", List.of(a, b), a.id(),
+                100, Difficulty.EASY,
+                true, bonus, null,
+                15, null, null, null, null, null, MediaPosition.NONE);
     }
 }

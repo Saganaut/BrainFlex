@@ -1,4 +1,6 @@
-// Unit tests for the Btn component — covers rendering, interaction, and prop-driven class/attribute behavior.
+// Unit tests for the Btn component — covers rendering, interaction, and prop-driven
+// data-attribute + className behavior. Variants/sizes are asserted on data-* attrs
+// because that's the contract that drives styling (see frontend/STYLES.md).
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -67,61 +69,74 @@ describe("Btn", () => {
       render(<Btn>No Icon</Btn>);
       expect(screen.getByRole("button").querySelector("span")).toBeNull();
     });
-  });
 
-  describe("CSS classes", () => {
-    it("applies the default variant class (primary)", () => {
-      render(<Btn>Primary</Btn>);
-      expect(screen.getByRole("button").className).toContain("primary");
-    });
-
-    it("applies the given variant class", () => {
-      render(<Btn variant='error'>Error</Btn>);
-      expect(screen.getByRole("button").className).toContain("error");
-    });
-
-    it("applies the default size class (md)", () => {
-      render(<Btn>Default size</Btn>);
-      expect(screen.getByRole("button").className).toContain("md");
-    });
-
-    it("applies the given size class", () => {
-      render(<Btn size='lg'>Large</Btn>);
-      expect(screen.getByRole("button").className).toContain("lg");
-    });
-
-    it("applies the given shape class", () => {
-      render(<Btn shape='pill'>Pill</Btn>);
-      expect(screen.getByRole("button").className).toContain("pill");
-    });
-
-    it("applies the given iconPosition class", () => {
+    it("sets data-icon-position when an icon is provided", () => {
       render(
         <Btn icon={<svg />} iconPosition='right'>
           Right icon
         </Btn>,
       );
-      expect(screen.getByRole("button").className).toContain("right");
+      expect(screen.getByRole("button")).toHaveAttribute(
+        "data-icon-position",
+        "right",
+      );
     });
 
-    it("applies isDisabled class when disabled", () => {
-      render(<Btn disabled>Disabled</Btn>);
-      expect(screen.getByRole("button").className).toContain("isDisabled");
-    });
-
-    it("does not apply isDisabled class when enabled", () => {
-      render(<Btn>Enabled</Btn>);
-      expect(screen.getByRole("button").className).not.toContain("isDisabled");
-    });
-
-    it("applies withIcon class when an icon is provided", () => {
-      render(<Btn icon={<svg />}>With Icon</Btn>);
-      expect(screen.getByRole("button").className).toContain("withIcon");
-    });
-
-    it("does not apply withIcon class when no icon is provided", () => {
+    it("does not set data-icon-position without an icon", () => {
       render(<Btn>No Icon</Btn>);
-      expect(screen.getByRole("button").className).not.toContain("withIcon");
+      expect(screen.getByRole("button")).not.toHaveAttribute(
+        "data-icon-position",
+      );
+    });
+  });
+
+  describe("data-attribute modifiers", () => {
+    it("defaults to data-variant=default", () => {
+      render(<Btn>Default</Btn>);
+      expect(screen.getByRole("button")).toHaveAttribute(
+        "data-variant",
+        "default",
+      );
+    });
+
+    it("applies the given variant", () => {
+      render(<Btn variant='error'>Error</Btn>);
+      expect(screen.getByRole("button")).toHaveAttribute(
+        "data-variant",
+        "error",
+      );
+    });
+
+    it("defaults to data-size=md", () => {
+      render(<Btn>Default size</Btn>);
+      expect(screen.getByRole("button")).toHaveAttribute("data-size", "md");
+    });
+
+    it("applies the given size", () => {
+      render(<Btn size='lg'>Large</Btn>);
+      expect(screen.getByRole("button")).toHaveAttribute("data-size", "lg");
+    });
+
+    it("applies the given mode", () => {
+      render(<Btn mode='outline'>Outline</Btn>);
+      expect(screen.getByRole("button")).toHaveAttribute("data-mode", "outline");
+    });
+
+    it("does not set data-mode by default", () => {
+      render(<Btn>Default</Btn>);
+      expect(screen.getByRole("button")).not.toHaveAttribute("data-mode");
+    });
+  });
+
+  describe("shape", () => {
+    it("applies the given shape class", () => {
+      render(<Btn shape='pill'>Pill</Btn>);
+      expect(screen.getByRole("button").className).toContain("pill");
+    });
+
+    it("does not apply a shape class for default shape", () => {
+      render(<Btn>Default shape</Btn>);
+      expect(screen.getByRole("button").className).not.toContain("pill");
     });
   });
 });

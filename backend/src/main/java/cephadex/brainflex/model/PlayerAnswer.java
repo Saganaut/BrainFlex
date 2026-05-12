@@ -21,4 +21,14 @@ public class PlayerAnswer {
     private boolean correct;
     private int pointsAwarded;
     private LocalDateTime answeredAt;
+
+    // Best Answer mode: server-generated id used to anonymously identify this
+    // submission during the VOTE phase. Null on non-best-answer rounds and on
+    // TimeoutAnswers (timed-out submissions are not eligible to be voted on).
+    private String submissionId;
+
+    // Best Answer mode: set to true on REVEAL for the player(s) whose
+    // submission received the most votes. Drives the "winner" indicator in
+    // round result + review UIs.
+    private boolean bestAnswerWinner;
 }

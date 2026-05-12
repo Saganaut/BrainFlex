@@ -426,4 +426,33 @@ export const RoundResultData = {
       totalScore: 120,
     },
   ],
+  // Demo Best Answer REVEAL block; harmless on non-best-answer rounds since
+  // RoundResult only renders BestAnswerReveal when this field is set.
+  bestAnswer: {
+    tallies: [
+      {
+        submissionId: "sub-aragorn",
+        userId: "user-004",
+        userName: "Aragorn",
+        payload: { kind: "TextAnswer" as const, text: "Strider of the North" },
+        voteCount: 3,
+      },
+      {
+        submissionId: "sub-frodo",
+        userId: "user-001",
+        userName: "Frodo Baggins",
+        payload: { kind: "TextAnswer" as const, text: "Ring-bearer at Mount Doom" },
+        voteCount: 2,
+      },
+      {
+        submissionId: "sub-gimli",
+        userId: "user-006",
+        userName: "Gimli",
+        payload: { kind: "TextAnswer" as const, text: "And my axe!" },
+        voteCount: 1,
+      },
+    ],
+    winnerUserIds: ["user-004"],
+    bonusAwarded: 50,
+  },
 };

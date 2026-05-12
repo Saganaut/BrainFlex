@@ -54,4 +54,13 @@ public sealed interface DeckElement
     String videoUrl();        // YouTube link (v1)
     String audioUrl();
     MediaPosition mediaPosition();
+
+    /**
+     * Best Answer mode is a two-phase round modifier (SUBMIT → VOTE → REVEAL).
+     * Element kinds that declare these as record components automatically
+     * override these defaults via their generated accessors; Slide (and any
+     * future non-scored kind) inherits the default `false / 0` here.
+     */
+    default boolean bestAnswerMode() { return false; }
+    default int bestAnswerBonus() { return 0; }
 }

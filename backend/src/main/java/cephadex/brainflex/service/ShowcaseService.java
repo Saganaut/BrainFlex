@@ -8,9 +8,16 @@
  *   completeRound()  → broadcasts ROUND_RESULT; advances or ends
  *   endShowcase()    → ranks players, writes ShowcaseResult, updates stats
  *
- * Best-Answer-mode questions add SUBMIT → VOTE → REVEAL phases — the phase
- * machinery is modeled but not yet wired into the runtime; v1 keeps phase
- * pinned to SUBMIT and skips the VOTE pass.
+ * Best Answer mode elements (any element with bestAnswerMode=true) run a
+ * three-phase cycle:
+ *   SUBMIT → players submit answers as on a normal round
+ *   VOTE   → anonymized submissions are broadcast; each player votes for the
+ *            submission they think is best (skipping their own is honor-system
+ *            on the client; the server doesn't reject self-votes)
+ *   REVEAL → server tallies, awards bestAnswerBonus to the player(s) with the
+ *            most votes (tie → all tied players get the bonus), broadcasts the
+ *            same RoundResultMessage as a normal round with a BestAnswerOutcome
+ *            attached for the de-anonymized submissions + crown
  */
 package cephadex.brainflex.service;
 
@@ -18,7 +25,9 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,9 +49,13 @@ import cephadex.brainflex.dto.RoundStartMessage;
 import cephadex.brainflex.dto.ShowcaseDTO;
 import cephadex.brainflex.dto.ShowcaseEndedMessage;
 import cephadex.brainflex.dto.ShowcaseReviewDTO;
+import cephadex.brainflex.dto.VotePhaseStartMessage;
+import cephadex.brainflex.dto.VoteProgressMessage;
+import cephadex.brainflex.dto.VoteSubmitRequest;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.PlayerAnswer;
 import cephadex.brainflex.model.PlayerPlacement;
+import cephadex.brainflex.model.RoundVote;
 import cephadex.brainflex.model.Showcase;
 import cephadex.brainflex.model.ShowcasePlayer;
 import cephadex.brainflex.model.ShowcaseResult;
@@ -296,6 +309,11 @@ public class ShowcaseService {
             answer.setCorrect(result.correct());
             answer.setPointsAwarded(points);
             answer.setAnsweredAt(LocalDateTime.now());
+            // For Best Answer rounds: assign a server-side submissionId so the
+            // VOTE-phase broadcast can reference this submission anonymously.
+            if (current.bestAnswerMode()) {
+                answer.setSubmissionId(UUID.randomUUID().toString());
+            }
 
             player.getAnswers().add(answer);
             player.setScore(player.getScore() + points);
@@ -397,22 +415,49 @@ public class ShowcaseService {
 
     private void completeRound(Showcase session) {
         DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
+        stampTimeoutAnswers(session, element);
 
-        // Stamp a TimeoutAnswer for players who didn't submit.
+        // Best Answer mode hijacks the normal complete-round flow: instead of
+        // revealing immediately we transition to VOTE phase and broadcast the
+        // anonymized submissions. The reveal happens in completeVotePhase.
+        if (element.bestAnswerMode() && hasVoteEligibleSubmission(session, element)) {
+            startVotePhase(session, element);
+            return;
+        }
+
+        broadcastRoundResult(session, element, null);
+        advanceRound(session);
+    }
+
+    /** Drops a TimeoutAnswer onto any player who didn't submit for this element. */
+    private void stampTimeoutAnswers(Showcase session, DeckElement element) {
         for (ShowcasePlayer player : session.getPlayers()) {
             boolean answered = player.getAnswers().stream()
                     .anyMatch(a -> a.getElementId().equals(element.id()));
-            if (!answered) {
-                PlayerAnswer timeout = new PlayerAnswer();
-                timeout.setElementId(element.id());
-                timeout.setPayload(new TimeoutAnswer());
-                timeout.setCorrect(false);
-                timeout.setPointsAwarded(0);
-                timeout.setAnsweredAt(LocalDateTime.now());
-                player.getAnswers().add(timeout);
-            }
+            if (answered) continue;
+            PlayerAnswer timeout = new PlayerAnswer();
+            timeout.setElementId(element.id());
+            timeout.setPayload(new TimeoutAnswer());
+            timeout.setCorrect(false);
+            timeout.setPointsAwarded(0);
+            timeout.setAnsweredAt(LocalDateTime.now());
+            // Deliberately no submissionId — timed-out players are not vote-eligible.
+            player.getAnswers().add(timeout);
         }
+    }
 
+    /** True if at least one player submitted a real answer (i.e. has a submissionId) for the element. */
+    private static boolean hasVoteEligibleSubmission(Showcase session, DeckElement element) {
+        return session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .anyMatch(a -> element.id().equals(a.getElementId()) && a.getSubmissionId() != null);
+    }
+
+    /** Broadcast the standard round-result message (best-answer outcome may be null). */
+    private void broadcastRoundResult(
+            Showcase session,
+            DeckElement element,
+            RoundResultMessage.BestAnswerOutcome bestAnswer) {
         List<RoundResultMessage.PlayerRoundResult> results = session.getPlayers().stream()
                 .map(player -> {
                     PlayerAnswer ans = player.getAnswers().stream()
@@ -427,24 +472,191 @@ public class ShowcaseService {
 
         messagingTemplate.convertAndSend(
                 "/topic/showcase/" + session.getRoomCode() + "/roundResult",
-                new RoundResultMessage(session.getCurrentRound(), element, results));
+                new RoundResultMessage(session.getCurrentRound(), element, results, bestAnswer));
+    }
 
+    /** Advance to the next round (or end the showcase if this was the last). */
+    private void advanceRound(Showcase session) {
         boolean isLast = session.getCurrentRound() >= session.getDeckSnapshot().size() - 1;
         if (isLast) {
             showcaseRepository.save(session);
             endGame(session);
-        } else {
-            session.setCurrentRound(session.getCurrentRound() + 1);
-            session.setRoundStartedAt(null);
-            showcaseRepository.save(session);
+            return;
+        }
+        session.setCurrentRound(session.getCurrentRound() + 1);
+        session.setRoundStartedAt(null);
+        session.setPhase(ShowcasePhase.SUBMIT);
+        showcaseRepository.save(session);
+        showcaseCache.put(session);
+
+        if (session.getSettings().getGameMode() == GameMode.SIMULTANEOUS) {
+            String roomCode = session.getRoomCode();
+            scheduler.schedule(() -> {
+                try { startNextRound(roomCode); } catch (Exception ignored) {}
+            }, BETWEEN_ROUNDS_DELAY_SECONDS, TimeUnit.SECONDS);
+        }
+    }
+
+    // ---- Best Answer phase machine ----
+
+    /**
+     * Transition from SUBMIT to VOTE phase: collect vote-eligible submissions,
+     * broadcast them anonymously, and schedule the vote-phase timer.
+     */
+    private void startVotePhase(Showcase session, DeckElement element) {
+        session.setPhase(ShowcasePhase.VOTE);
+        session.setRoundStartedAt(LocalDateTime.now());
+
+        List<VotePhaseStartMessage.AnonymizedSubmission> submissions = session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> element.id().equals(a.getElementId()) && a.getSubmissionId() != null)
+                .map(a -> new VotePhaseStartMessage.AnonymizedSubmission(a.getSubmissionId(), a.getPayload()))
+                .toList();
+
+        int timePerVote = effectiveDisplaySeconds(element, session.getSettings());
+
+        showcaseRepository.save(session);
+        showcaseCache.put(session);
+
+        messagingTemplate.convertAndSend(
+                "/topic/showcase/" + session.getRoomCode() + "/votePhase",
+                new VotePhaseStartMessage(
+                        session.getCurrentRound(),
+                        ElementRedactor.redact(element),
+                        submissions,
+                        timePerVote,
+                        session.getRoundStartedAt()));
+
+        if (timePerVote > 0) {
+            scheduleVoteTimer(session.getRoomCode(), session.getCurrentRound(), timePerVote);
+        }
+    }
+
+    /** Client → server vote handler (called from ShowcaseWebSocketController). */
+    public void submitVote(String roomCode, VoteSubmitRequest request, String principalName) {
+        synchronized (getLock(roomCode)) {
+            Showcase session = loadActiveSession(roomCode);
+            if (session.getStatus() != GameStatus.IN_PROGRESS) return;
+            if (session.getPhase() != ShowcasePhase.VOTE) return;
+
+            DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
+            if (!current.id().equals(request.elementId())) return; // stale vote
+
+            // Validate the voted submission exists for this round.
+            boolean validSubmission = session.getPlayers().stream()
+                    .flatMap(p -> p.getAnswers().stream())
+                    .anyMatch(a -> request.submissionId().equals(a.getSubmissionId())
+                            && current.id().equals(a.getElementId()));
+            if (!validSubmission) return;
+
+            String userId = resolveUserId(principalName);
+            ShowcasePlayer voter = session.getPlayers().stream()
+                    .filter(p -> p.getUserId().equals(userId))
+                    .findFirst().orElse(null);
+            if (voter == null) return;
+
+            boolean alreadyVoted = voter.getVotes().stream()
+                    .anyMatch(v -> current.id().equals(v.getElementId()));
+            if (alreadyVoted) return;
+
+            RoundVote vote = new RoundVote();
+            vote.setElementId(current.id());
+            vote.setVotedSubmissionId(request.submissionId());
+            vote.setVotedAt(LocalDateTime.now());
+            voter.getVotes().add(vote);
             showcaseCache.put(session);
 
-            if (session.getSettings().getGameMode() == GameMode.SIMULTANEOUS) {
-                String roomCode = session.getRoomCode();
-                scheduler.schedule(() -> {
-                    try { startNextRound(roomCode); } catch (Exception ignored) {}
-                }, BETWEEN_ROUNDS_DELAY_SECONDS, TimeUnit.SECONDS);
+            broadcastVoteProgress(session, current.id());
+
+            boolean allVoted = session.getPlayers().stream()
+                    .allMatch(p -> p.getVotes().stream()
+                            .anyMatch(v -> current.id().equals(v.getElementId())));
+            if (allVoted) completeVotePhase(session);
+        }
+    }
+
+    /**
+     * Tally votes, award the bonus to the winner(s), and broadcast the
+     * de-anonymized REVEAL on the standard /roundResult channel with a
+     * BestAnswerOutcome attached.
+     */
+    private void completeVotePhase(Showcase session) {
+        DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
+        int bonus = Math.max(0, element.bestAnswerBonus());
+
+        // Tally votes per submissionId. Submissions with zero votes still
+        // appear in the tally so the REVEAL UI can show "no one voted for X".
+        Map<String, Integer> voteCounts = new HashMap<>();
+        session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> element.id().equals(a.getElementId()) && a.getSubmissionId() != null)
+                .forEach(a -> voteCounts.put(a.getSubmissionId(), 0));
+
+        for (ShowcasePlayer p : session.getPlayers()) {
+            p.getVotes().stream()
+                    .filter(v -> element.id().equals(v.getElementId()))
+                    .findFirst()
+                    .ifPresent(v -> voteCounts.computeIfPresent(
+                            v.getVotedSubmissionId(), (k, c) -> c + 1));
+        }
+
+        int maxVotes = voteCounts.values().stream().max(Integer::compareTo).orElse(0);
+
+        // Build the tally + identify winners. Winner-detection only triggers
+        // when at least one vote was cast — an all-skipped round awards no bonus.
+        List<RoundResultMessage.SubmissionTally> tallies = new ArrayList<>();
+        List<String> winnerUserIds = new ArrayList<>();
+        for (ShowcasePlayer p : session.getPlayers()) {
+            for (PlayerAnswer a : p.getAnswers()) {
+                if (!element.id().equals(a.getElementId())) continue;
+                if (a.getSubmissionId() == null) continue;
+                int count = voteCounts.getOrDefault(a.getSubmissionId(), 0);
+                tallies.add(new RoundResultMessage.SubmissionTally(
+                        a.getSubmissionId(),
+                        p.getUserId(),
+                        p.getUserName(),
+                        a.getPayload(),
+                        count));
+                if (maxVotes > 0 && count == maxVotes) {
+                    winnerUserIds.add(p.getUserId());
+                    a.setBestAnswerWinner(true);
+                    a.setPointsAwarded(a.getPointsAwarded() + bonus);
+                    p.setScore(p.getScore() + bonus);
+                }
             }
+        }
+
+        broadcastRoundResult(session, element,
+                new RoundResultMessage.BestAnswerOutcome(tallies, winnerUserIds, bonus));
+        advanceRound(session);
+    }
+
+    private void broadcastVoteProgress(Showcase session, String elementId) {
+        List<String> votedUserIds = session.getPlayers().stream()
+                .filter(p -> p.getVotes().stream().anyMatch(v -> elementId.equals(v.getElementId())))
+                .map(ShowcasePlayer::getUserId)
+                .toList();
+        messagingTemplate.convertAndSend(
+                "/topic/showcase/" + session.getRoomCode() + "/voted",
+                new VoteProgressMessage(
+                        session.getCurrentRound(), votedUserIds, session.getPlayers().size()));
+    }
+
+    private void scheduleVoteTimer(String roomCode, int round, int timeLimitSeconds) {
+        scheduler.schedule(() -> {
+            try { handleVoteTimeout(roomCode, round); } catch (Exception ignored) {}
+        }, timeLimitSeconds, TimeUnit.SECONDS);
+    }
+
+    private void handleVoteTimeout(String roomCode, int timedRound) {
+        synchronized (getLock(roomCode)) {
+            Showcase session = showcaseCache.get(roomCode)
+                    .orElseGet(() -> showcaseRepository.findByRoomCode(roomCode).orElse(null));
+            if (session == null) return;
+            if (session.getStatus() != GameStatus.IN_PROGRESS) return;
+            if (session.getCurrentRound() != timedRound) return;
+            if (session.getPhase() != ShowcasePhase.VOTE) return;
+            completeVotePhase(session);
         }
     }
 

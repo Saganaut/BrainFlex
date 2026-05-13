@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import styles from "./DesignSystem.module.css";
+import "../../tokens.css";
 import { ThemePicker } from "./ThemePicker";
 import { FormsSection } from "./FormsSection";
 import { Btn } from "../../components/Common/Buttons/Btn";
 import { IconBtn } from "../../components/Common/Buttons/IconBtn";
+import { CollapseBtn } from "../../components/Common/Buttons/CollapseBtn";
 import {
   BellIcon,
   StarIcon,
@@ -13,8 +15,39 @@ import {
   Cog6ToothIcon,
   MagnifyingGlassIcon,
   HeartIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  ArrowRightStartOnRectangleIcon,
+  InboxIcon,
+  PhotoIcon,
+  PuzzlePieceIcon,
+  RocketLaunchIcon,
 } from "@heroicons/react/24/outline";
+import { Divider } from "../../components/Common/Divider/Divider";
+import { Tag } from "../../components/Common/Tag/Tag";
+import { Avatar } from "../../components/Common/Avatar/Avatar";
+import { EmptyState } from "../../components/Common/EmptyState/EmptyState";
+import { ProgressBar } from "../../components/Common/ProgressBar/ProgressBar";
+import { Skeleton } from "../../components/Common/Skeleton/Skeleton";
+import { Tooltip } from "../../components/Common/Tooltip/Tooltip";
+import { Tabs } from "../../components/Common/Tabs/Tabs";
+import { useConfirm } from "../../components/Common/ConfirmDialog/useConfirm";
+import { SelectableTile } from "../../components/Common/SelectableTile/SelectableTile";
 import { Card } from "../../components/Common/Cards/Card";
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+  DropdownMenuDivider,
+  DropdownMenuLabel,
+} from "../../components/Menus/DropdownMenu";
+import { PlayerInfo } from "../../components/PlayerInfo/PlayerInfo";
+import { CephadexLogo } from "../../components/Graphic/CephadexLogo";
+import { PricingCard } from "../../components/Pricing/PricingCard/PricingCard";
+import { PricingGrid } from "../../components/Pricing/PricingGrid/PricingGrid";
+import { BillingToggle } from "../../components/Pricing/BillingToggle/BillingToggle";
+import type { BillingCycle } from "../../components/Pricing/BillingToggle/BillingToggle";
+import { FeatureList } from "../../components/Pricing/FeatureList/FeatureList";
+import { PRICING_TIERS } from "../PricingPage/data";
 import { ActionCard } from "../../components/Common/ActionCard/ActionCard";
 import { Badge } from "../../components/Common/Badge";
 import {
@@ -65,6 +98,54 @@ function ColorSwatch({ token }: { token: string }) {
   );
 }
 
+const experimentPalettes: { label: string; varBase: string }[] = [
+  { label: "Violet", varBase: "--violet" },
+  { label: "Orange", varBase: "--orange" },
+  { label: "Tolopea", varBase: "--tolopea" },
+  { label: "cyan", varBase: "--cyan" },
+  { label: "Concrete", varBase: "--concrete" },
+  { label: "White", varBase: "--white" },
+  { label: "Black Russian", varBase: "--black-russian" },
+  { label: "Ultraviolet", varBase: "--ultraviolet" },
+];
+
+const experimentShades = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+
+const ExperimentPaletteSection = () => {
+  return (
+    <section>
+      <div className={styles.sectionTitle}> Brand color scales</div>
+
+      <div className={styles.experimentPalettes}>
+        {experimentPalettes.map(({ label, varBase }) => (
+          <div key={varBase} className={styles.experimentPaletteRow}>
+            <div className={styles.experimentPaletteLabel}>
+              <div className={styles.experimentPaletteName}>{label}</div>
+              <div className={styles.experimentPaletteVar}>
+                {`var(${varBase})`}
+              </div>
+            </div>
+            <div className={styles.experimentScale}>
+              {experimentShades.map((shade) => {
+                const token = `${varBase}-${shade}`;
+                return (
+                  <div key={token} className={styles.experimentShade}>
+                    <div
+                      className={styles.experimentShadeBox}
+                      style={{ background: `var(${token})` }}
+                    />
+                    <div className={styles.experimentShadeNumber}>{shade}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
 function TokenRow({ token }: { token: string }) {
   return (
     <div className={styles.tokenRow}>
@@ -86,7 +167,12 @@ function TokenRow({ token }: { token: string }) {
 function WsErrorBannerDemo() {
   const dispatch = useAppDispatch();
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-3)",
+      }}>
       <WsErrorBanner />
       <Btn
         onClick={() => {
@@ -107,7 +193,14 @@ function WsErrorBannerDemo() {
 
 const DesignSystemPage = () => {
   const { openModal } = useModal();
+  const confirm = useConfirm();
   const [roundResultIsOpen, setRoundResultIsOpen] = useState(false);
+  const [demoCollapsed, setDemoCollapsed] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
+  const [activeTab, setActiveTab] = useState("overview");
+  const [progressValue, setProgressValue] = useState(40);
+  const [confirmResult, setConfirmResult] = useState<string | null>(null);
+  const [tileChoice, setTileChoice] = useState<string | null>("alpha");
   const openDesignModal = () => {
     const modalConfig = {
       title: "Design Modal",
@@ -142,6 +235,7 @@ const DesignSystemPage = () => {
           Back to home
         </Link>
       </div>
+      <ExperimentPaletteSection />
       <section>
         <div className={styles.examplesContainer}>
           <Accordion titleBar='Theme Picker'>
@@ -505,6 +599,131 @@ const DesignSystemPage = () => {
               </div>
             </div>
           </Accordion>
+          <Accordion titleBar='Collapse Button'>
+            <div className={styles.iconBtnSection}>
+              <div className={styles.iconBtnRow}>
+                <span className={styles.iconBtnRowLabel}>State</span>
+                <div className={styles.iconBtnGroup}>
+                  <CollapseBtn
+                    isCollapsed={demoCollapsed}
+                    collapse={setDemoCollapsed}
+                  />
+                  <span
+                    style={{
+                      fontSize: "var(--font-size-sm)",
+                      color: "var(--text-secondary)",
+                    }}>
+                    {demoCollapsed ? "Collapsed" : "Expanded"} — click to toggle
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Dropdown Menu'>
+            <div className={styles.buttonGroup}>
+              <DropdownMenu
+                position='bottom-left'
+                trigger={(toggle) => (
+                  <IconBtn
+                    type='default'
+                    icon={<EllipsisVerticalIcon />}
+                    onClick={toggle}
+                    aria-label='Open menu'
+                  />
+                )}>
+                <DropdownMenuLabel>Account</DropdownMenuLabel>
+                <DropdownMenuItem
+                  onClick={() => {
+                    console.log("view profile");
+                  }}>
+                  <UserIcon width={16} height={16} /> View profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    console.log("edit");
+                  }}>
+                  <PencilIcon width={16} height={16} /> Edit settings
+                </DropdownMenuItem>
+                <DropdownMenuDivider />
+                <DropdownMenuItem
+                  onClick={() => {
+                    console.log("delete");
+                  }}>
+                  <TrashIcon width={16} height={16} /> Delete account
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    console.log("logout");
+                  }}>
+                  <ArrowRightStartOnRectangleIcon width={16} height={16} /> Log
+                  out
+                </DropdownMenuItem>
+              </DropdownMenu>
+              <DropdownMenu
+                position='bottom-right'
+                trigger={(toggle) => (
+                  <Btn onClick={toggle} size='sm'>
+                    Open menu ▾
+                  </Btn>
+                )}>
+                <DropdownMenuItem centered>One</DropdownMenuItem>
+                <DropdownMenuItem centered>Two</DropdownMenuItem>
+                <DropdownMenuItem centered>Three</DropdownMenuItem>
+              </DropdownMenu>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Cephadex Logo'>
+            <div className={styles.buttonGroup}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                }}>
+                <CephadexLogo size='sm' />
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  sm
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                }}>
+                <CephadexLogo size='md' />
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  md
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "var(--space-2)",
+                }}>
+                <CephadexLogo size='lg' />
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  lg
+                </span>
+              </div>
+            </div>
+          </Accordion>
         </div>
       </section>
       <section>
@@ -677,6 +896,395 @@ const DesignSystemPage = () => {
                 }}
               />
             </div>
+          </Accordion>
+          <Accordion titleBar='Player Info'>
+            <div className={styles.cardComponentContainer}>
+              <PlayerInfo />
+            </div>
+          </Accordion>
+        </div>
+      </section>
+      <section>
+        <div className={styles.sectionTitle}>New primitives</div>
+        <div className={styles.examplesContainer}>
+          <Accordion titleBar='Divider'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-3)",
+                maxWidth: "480px",
+              }}>
+              <span style={{ color: "var(--text-secondary)" }}>Above</span>
+              <Divider />
+              <span style={{ color: "var(--text-secondary)" }}>Below</span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-3)",
+                marginTop: "var(--space-4)",
+                height: "40px",
+              }}>
+              <span style={{ color: "var(--text-secondary)" }}>Left</span>
+              <Divider orientation='vertical' />
+              <span style={{ color: "var(--text-secondary)" }}>Right</span>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Tag'>
+            <div className={styles.buttonGroup}>
+              <Tag>Geography</Tag>
+              <Tag>Trivia</Tag>
+              <Tag size='sm'>sm</Tag>
+              <Tag size='md'>md</Tag>
+              <Tag
+                onRemove={() => {
+                  console.log("removed");
+                }}>
+                Removable
+              </Tag>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Avatar'>
+            <div className={styles.buttonGroup}>
+              <Avatar size='xs' name='Frodo Baggins' />
+              <Avatar size='sm' name='Samwise Gamgee' />
+              <Avatar size='md' name='Aragorn' />
+              <Avatar size='lg' name='Legolas' />
+              <Avatar size='xl' name='Gimli' />
+              <Avatar size='lg' src='https://i.pravatar.cc/96?img=12' />
+              <Avatar size='lg' />
+            </div>
+          </Accordion>
+          <Accordion titleBar='Empty state'>
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-4)",
+                flexWrap: "wrap",
+              }}>
+              <div
+                style={{
+                  flex: "1 1 280px",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                }}>
+                <EmptyState
+                  icon={<InboxIcon />}
+                  title='No packs yet'
+                  message='Create your first content pack to get started.'
+                  action={<Btn size='sm'>+ New pack</Btn>}
+                />
+              </div>
+              <div
+                style={{
+                  flex: "1 1 280px",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                }}>
+                <EmptyState
+                  size='sm'
+                  icon={<RocketLaunchIcon />}
+                  title='Nothing here'
+                />
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Progress bar'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-4)",
+                maxWidth: "480px",
+              }}>
+              <ProgressBar value={progressValue} showLabel label='Loading' />
+              <ProgressBar value={progressValue} variant='brand' size='sm' />
+              <ProgressBar value={progressValue} variant='success' size='lg' />
+              <ProgressBar value={70} variant='warning' />
+              <ProgressBar value={90} variant='error' />
+              <ProgressBar value={0} indeterminate />
+              <div style={{ display: "flex", gap: "var(--space-2)" }}>
+                <Btn
+                  size='sm'
+                  onClick={() => {
+                    setProgressValue((v) => Math.max(0, v - 10));
+                  }}>
+                  −10
+                </Btn>
+                <Btn
+                  size='sm'
+                  onClick={() => {
+                    setProgressValue((v) => Math.min(100, v + 10));
+                  }}>
+                  +10
+                </Btn>
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Skeleton'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-3)",
+                maxWidth: "320px",
+              }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "var(--space-3)",
+                }}>
+                <Skeleton variant='circle' />
+                <Skeleton variant='text' count={2} />
+              </div>
+              <Skeleton variant='rect' height={120} />
+              <Skeleton variant='text' count={3} />
+            </div>
+          </Accordion>
+          <Accordion titleBar='Tooltip'>
+            <div className={styles.buttonGroup}>
+              <Tooltip label='Tooltip above'>
+                <Btn size='sm'>Hover me (top)</Btn>
+              </Tooltip>
+              <Tooltip label='Tooltip below' position='bottom'>
+                <Btn size='sm'>Hover me (bottom)</Btn>
+              </Tooltip>
+              <Tooltip label='Tooltip right' position='right'>
+                <Btn size='sm'>Hover me (right)</Btn>
+              </Tooltip>
+              <Tooltip label='Delete forever'>
+                <IconBtn
+                  type='default'
+                  icon={<TrashIcon />}
+                  aria-label='Delete'
+                />
+              </Tooltip>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Tabs'>
+            <Tabs
+              ariaLabel='Design-system demo'
+              value={activeTab}
+              onChange={setActiveTab}
+              items={[
+                {
+                  id: "overview",
+                  label: "Overview",
+                  panel: (
+                    <p style={{ color: "var(--text-secondary)" }}>
+                      The overview tab. Use ← / → on the tab strip to move focus
+                      + selection.
+                    </p>
+                  ),
+                },
+                {
+                  id: "details",
+                  label: "Details",
+                  panel: (
+                    <p style={{ color: "var(--text-secondary)" }}>
+                      Detail body. Each panel is mounted but only the active one
+                      is visible, so internal state survives a switch.
+                    </p>
+                  ),
+                },
+                {
+                  id: "history",
+                  label: "History",
+                  panel: (
+                    <p style={{ color: "var(--text-secondary)" }}>
+                      A history panel.
+                    </p>
+                  ),
+                },
+                {
+                  id: "disabled",
+                  label: "Disabled",
+                  panel: null,
+                  disabled: true,
+                },
+              ]}
+            />
+            <div style={{ marginTop: "var(--space-6)" }}>
+              <span
+                style={{
+                  fontSize: "var(--font-size-sm)",
+                  color: "var(--text-secondary)",
+                }}>
+                Pill variant:
+              </span>
+              <div style={{ marginTop: "var(--space-2)" }}>
+                <Tabs
+                  variant='pill'
+                  ariaLabel='Pill variant'
+                  value={activeTab}
+                  onChange={setActiveTab}
+                  items={[
+                    {
+                      id: "overview",
+                      label: "Overview",
+                      panel: <span />,
+                    },
+                    { id: "details", label: "Details", panel: <span /> },
+                    { id: "history", label: "History", panel: <span /> },
+                  ]}
+                />
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Confirm dialog'>
+            <div className={styles.buttonGroup}>
+              <Btn
+                onClick={() => {
+                  void confirm({
+                    title: "Save changes?",
+                    message: "Your edits will be saved to the deck.",
+                    confirmLabel: "Save",
+                  }).then((ok) => {
+                    setConfirmResult(ok ? "Confirmed (save)" : "Cancelled");
+                  });
+                }}>
+                Open default
+              </Btn>
+              <Btn
+                variant='error'
+                onClick={() => {
+                  void confirm({
+                    title: "Delete this pack?",
+                    message:
+                      "This will permanently remove the pack and its questions.",
+                    confirmLabel: "Delete",
+                    cancelLabel: "Keep it",
+                    variant: "danger",
+                  }).then((ok) => {
+                    setConfirmResult(ok ? "Confirmed (delete)" : "Cancelled");
+                  });
+                }}>
+                Open danger
+              </Btn>
+              {confirmResult && (
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Last result: {confirmResult}
+                </span>
+              )}
+            </div>
+          </Accordion>
+          <Accordion titleBar='Selectable tile'>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                gap: "var(--space-3)",
+                maxWidth: "720px",
+              }}>
+              <SelectableTile
+                media={<PuzzlePieceIcon />}
+                title='Alpha'
+                meta='12 elements'
+                description='A tile with media, title, meta, and description.'
+                selected={tileChoice === "alpha"}
+                onClick={() => {
+                  setTileChoice("alpha");
+                }}
+              />
+              <SelectableTile
+                media={<PhotoIcon />}
+                title='Beta'
+                meta='8 elements · Geography'
+                description='Another tile in the same grid.'
+                selected={tileChoice === "beta"}
+                onClick={() => {
+                  setTileChoice("beta");
+                }}
+              />
+              <SelectableTile
+                media={<RocketLaunchIcon />}
+                title='Gamma'
+                badge='New'
+                meta='3 elements'
+                selected={tileChoice === "gamma"}
+                onClick={() => {
+                  setTileChoice("gamma");
+                }}
+              />
+              <SelectableTile
+                media={<InboxIcon />}
+                title='Disabled'
+                meta='—'
+                disabled
+                onClick={() => {
+                  /* no-op */
+                }}
+              />
+            </div>
+          </Accordion>
+        </div>
+      </section>
+      <section>
+        <div className={styles.sectionTitle}>Pricing components</div>
+        <div className={styles.examplesContainer}>
+          <Accordion titleBar='Billing toggle'>
+            <div className={styles.buttonGroup}>
+              <BillingToggle
+                value={billingCycle}
+                onChange={setBillingCycle}
+                options={[
+                  { value: "monthly", label: "Monthly" },
+                  {
+                    value: "annual",
+                    label: "Annual",
+                    savingsLabel: "Save 20%",
+                  },
+                ]}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar='Feature list'>
+            <div
+              style={{
+                maxWidth: "320px",
+                padding: "var(--space-4)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-md)",
+              }}>
+              <FeatureList
+                items={[
+                  { label: "Unlimited public games" },
+                  { label: "Stats and streaks" },
+                  { label: "Custom decks" },
+                  { label: "Private matches", included: false },
+                  { label: "Org-wide branding", included: false },
+                ]}
+              />
+            </div>
+          </Accordion>
+          <Accordion titleBar='Pricing grid'>
+            <PricingGrid columns={3}>
+              {PRICING_TIERS.map((tier) => {
+                const cycle = tier.prices[billingCycle];
+                return (
+                  <PricingCard
+                    key={tier.key}
+                    name={tier.name}
+                    tagline={tier.tagline}
+                    price={cycle.amount}
+                    priceUnit={cycle.unit}
+                    features={tier.features}
+                    ctaLabel={tier.ctaLabel}
+                    ctaTo={tier.ctaTo}
+                    featured={tier.featured}
+                    badge={tier.badge}
+                    footnote={tier.footnote}
+                  />
+                );
+              })}
+            </PricingGrid>
           </Accordion>
         </div>
       </section>

@@ -1,7 +1,8 @@
-// Icon-only button. Variant + size flow through data-* attributes (shared with
-// other components per frontend/STYLES.md); component-specific concepts —
-// close/avatar/round/pill/bordered/withBackground — stay as module classes.
-// "close" renders an XMarkIcon; "avatar" and "default" render the passed icon.
+// Icon-only button. Variant + size flow through className composition (see
+// Buttons.module.css for the modifier classes). Component-specific concepts —
+// close / avatar / round / pill / bordered / withBackground — stay as module
+// classes too. "close" renders an XMarkIcon; "avatar" and "default" render the
+// passed icon.
 import React, { type ReactNode } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { BtnShape, BtnSize, BtnVariant } from "./BtnTypes";
@@ -36,11 +37,11 @@ const IconBtn = ({
       type='button'
       disabled={disabled}
       onClick={onClick}
-      data-variant={variant}
-      data-size={size}
       {...rest}
       className={[
         styles.iconBtn,
+        variant !== "default" && styles[variant],
+        styles[size],
         type !== "default" && styles[type],
         shape !== "default" && styles[shape],
         bordered && styles.bordered,

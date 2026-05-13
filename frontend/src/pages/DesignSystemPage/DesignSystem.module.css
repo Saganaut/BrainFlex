@@ -8,13 +8,12 @@
   section {
     border-radius: var(--radius-lg);
     padding: var(--p-sm);
-    margin-bottom: 24px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border-default);
+    margin-bottom: var(--space-6);
+    background: var(--bg-display-only);
     color: var(--text-primary);
 
     .sectionTitle {
-      margin-bottom: 12px;
+      margin-bottom: var(--space-3);
       padding: var(--p-md);
       font-size: var(--font-size-2xl);
       color: var(--text-primary);
@@ -102,43 +101,43 @@
 
 .paletteContainer {
   display: grid;
-  gap: 16px;
+  gap: var(--gap-lg);
 }
 
 .paletteGroup {
   display: grid;
-  gap: 12px;
+  gap: var(--gap-md);
 }
 
 .paletteGroupTitle {
-  margin-bottom: 12px;
+  margin-bottom: var(--space-3);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .colorGrid {
   display: grid;
-  gap: 12px;
+  gap: var(--gap-md);
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 }
 
 .colorSwatch {
   display: grid;
-  gap: 6px;
-  padding: 12px;
-  border-radius: 14px;
+  gap: var(--gap-sm);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
   border: 1px solid rgb(0 0 0 / 8%);
   background: var(--bg-canvas);
 }
 
 .colorBox {
   height: 72px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   border: 1px solid rgb(0 0 0 / 8%);
 }
 
 .colorToken {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
   word-break: break-all;
 }
@@ -146,15 +145,15 @@
 .tokensContainer {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
+  gap: var(--gap-md);
 }
 
 .tokenRow {
   display: grid;
-  gap: 8px;
+  gap: var(--gap-sm);
   grid-template-columns: 1fr auto;
-  padding: 12px;
-  border-radius: 12px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
   background: var(--bg-surface-raised);
   border: 1px solid var(--border-subtle);
   align-items: center;
@@ -166,20 +165,82 @@
 }
 
 .tokenVar {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--text-secondary);
 }
 
 .tokenSample {
   width: 96px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-on-brand);
   border: 1px solid var(--border-subtle);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+}
+
+/* ─── Experiment palettes ─────────────────────────────────────────────────── */
+
+.experimentPalettes {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+
+.experimentPaletteRow {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.experimentPaletteLabel {
+  display: grid;
+  gap: var(--gap-xs);
+}
+
+.experimentPaletteName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.experimentPaletteVar {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.experimentScale {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: var(--gap-sm);
+}
+
+.experimentShade {
+  display: grid;
+  gap: var(--gap-sm);
+  justify-items: center;
+}
+
+.experimentShadeBox {
+  width: 100%;
+  height: 56px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgb(0 0 0 / 8%);
+}
+
+.experimentShadeNumber {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (width <= 768px) {
+  .experimentPaletteRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ─── ThemePicker ─────────────────────────────────────────────────────────── */

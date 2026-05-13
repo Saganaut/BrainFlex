@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { useListDecksQuery, useListMyDecksQuery } from "../../../store/BrainFlexApi";
 import type { DeckDto } from "../../../store/BrainFlexApi";
+import { SelectableTile } from "../../Common/SelectableTile/SelectableTile";
 import styles from "./ContentPackPicker.module.css";
 
 interface ContentPackPickerProps {
@@ -23,19 +24,18 @@ const PackButton = ({
   selected: boolean;
   onSelect: (id: string) => void;
 }) => (
-  <button
-    type='button'
-    className={`${styles.pack} ${selected ? styles.selected : ""}`}
-    onClick={() => { if (pack.id) onSelect(pack.id); }}>
-    <span className={styles.packName}>{pack.name}</span>
-    <span className={styles.packMeta}>
-      {pack.elementCount ?? 0} elements
-      {pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""}
-    </span>
-    {pack.description && (
-      <span className={styles.packDesc}>{pack.description}</span>
-    )}
-  </button>
+  <SelectableTile
+    size='sm'
+    title={pack.name ?? ""}
+    meta={`${(pack.elementCount ?? 0).toString()} elements${
+      pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""
+    }`}
+    description={pack.description}
+    selected={selected}
+    onClick={() => {
+      if (pack.id) onSelect(pack.id);
+    }}
+  />
 );
 
 const ContentPackPicker = ({ selectedPackId, onSelect }: ContentPackPickerProps) => {

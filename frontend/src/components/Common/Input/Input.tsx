@@ -1,9 +1,10 @@
-// Text input wrapped with label + helper/error message slot.
-// `errorMessage` (when set) forces data-variant="error" on the <input> so border
-// styling and helper text tint together. See frontend/STYLES.md.
+// Text input wrapped with label + helper/error message slot. Variant maps to a
+// className on the <input>; `errorMessage` (when set) forces variant="error" so
+// the input border tint and helper text tint together.
 import React from "react";
 import type { BtnVariant } from "../Buttons/BtnTypes";
 import styles from "./Input.module.css";
+
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   variant?: BtnVariant;
   infoMessage?: string;
@@ -41,7 +42,11 @@ const Input: React.FC<InputProps> = ({
           onChange={onChange}
           maxLength={maxLength}
           placeholder={placeholder}
-          data-variant={inputVariant}
+          className={
+            inputVariant !== "default" && inputVariant !== "brand"
+              ? styles[inputVariant]
+              : undefined
+          }
         />
 
         {(errorMessage != null || infoMessage != null) && (

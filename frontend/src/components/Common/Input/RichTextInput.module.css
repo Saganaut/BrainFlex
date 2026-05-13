@@ -137,7 +137,7 @@
 .linkApply {
   background-color: var(--action-active);
   border-color: var(--action-active);
-  color: white;
+  color: var(--white-100);
 }
 
 .linkApply:hover {
@@ -175,7 +175,7 @@
 
 .toolbarBtnActive {
   background-color: var(--action-active);
-  color: white;
+  color: var(--white-100);
   border-color: var(--action-active);
 }
 

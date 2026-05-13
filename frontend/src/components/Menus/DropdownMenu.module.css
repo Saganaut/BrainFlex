@@ -43,7 +43,7 @@
 }
 
 .item {
-  padding: 0.625rem 1rem;
+  padding: var(--space-3) var(--space-4);
   text-align: left;
   background: none;
   border: none;
@@ -79,7 +79,7 @@
 }
 
 .label {
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   font-size: var(--font-size-sm);
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-subtle);
@@ -88,5 +88,5 @@
 .divider {
   height: 1px;
   background: var(--border-subtle);
-  margin: 0.25rem 0;
+  margin: var(--space-1) 0;
 }

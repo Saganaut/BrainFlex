@@ -14,7 +14,6 @@
 }
 
 .section {
-  border: 2px solid var(--border-default);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
   background-color: var(--bg-surface);

@@ -13,7 +13,7 @@
     padding: var(--p-sm);
     display: flex;
     flex-direction: row;
-    gap: 20px;
+    gap: var(--gap-xl);
     font-size: var(--font-size-md);
     text-align: start;
 
@@ -35,7 +35,7 @@
 
   div {
     img {
-      border-radius: 9999px;
+      border-radius: var(--radius-full);
       border: 2px solid var(--border-default);
     }
   }
@@ -45,7 +45,7 @@
     flex-direction: column;
     padding: var(--p-sm);
     max-height: 1000px;
-    gap: 5px;
+    gap: var(--gap-xs);
     transition:
       max-height 300ms ease-in-out,
       padding 300ms ease-in-out;
@@ -60,7 +60,7 @@
     .statRow {
       display: flex;
       justify-content: space-between;
-      padding: 4px 8px;
+      padding: var(--space-1) var(--space-2);
       border-radius: var(--radius-md);
       background-color: var(--bg-surface);
     }

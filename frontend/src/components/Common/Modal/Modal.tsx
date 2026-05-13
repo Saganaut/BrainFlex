@@ -1,10 +1,11 @@
-// Dialog-element-based modal. Accepts an optional variant that tints the dialog
-// surface via data-variant (see frontend/STYLES.md). Inner header / content
-// keep their own surface tokens, so changing variant retints frame + edges only.
+// Dialog-element-based modal. Optional variant maps to a className modifier
+// in Modal.module.css that tints the dialog frame. Inner header / content keep
+// their own surface tokens, so changing variant retints frame + edges only.
 import { useEffect, useRef, type ReactNode } from "react";
 import style from "./Modal.module.css";
 import { IconBtn } from "../Buttons/IconBtn";
 import type { BtnVariant } from "../Buttons/BtnTypes";
+
 interface ModalProps {
   children: ReactNode;
   title?: string;
@@ -40,8 +41,9 @@ const Modal = ({
       onClick={handleClick}
       aria-labelledby={title ? "modal-title" : undefined}
       aria-modal='true'
-      data-variant={variant}
-      className={style.modal}>
+      className={[style.modal, variant !== "default" && style[variant]]
+        .filter(Boolean)
+        .join(" ")}>
       <div className={style.header}>
         {title && (
           <h2 id='modal-title' className={style.title}>

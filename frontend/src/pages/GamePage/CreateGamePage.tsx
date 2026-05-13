@@ -16,6 +16,7 @@ import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input";
 import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { RadioGroup } from "@/components/Common/Input/RadioGroup";
+import { SelectableTile } from "@/components/Common/SelectableTile/SelectableTile";
 import { extractErrorMessage } from "../../utils/utils";
 import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./Game.module.css";
@@ -53,31 +54,25 @@ const PackGrid = ({
   return (
     <div className={styles.packGrid}>
       {packs.map((pack) => (
-        <button
-          type='button'
+        <SelectableTile
           key={pack.id}
-          className={`${styles.packBtn} ${
-            selectedPackId === pack.id ? styles.packBtnSelected : ""
+          media={
+            <img
+              src={resolveDeckCover(pack.coverImageUrl, pack.id)}
+              alt=''
+              loading='lazy'
+            />
+          }
+          title={pack.name ?? ""}
+          meta={`${(pack.elementCount ?? 0).toString()} elements${
+            pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""
           }`}
+          description={pack.description}
+          selected={selectedPackId === pack.id}
           onClick={() => {
             if (pack.id) onSelect(pack.id);
           }}
-          aria-pressed={selectedPackId === pack.id}>
-          <img
-            src={resolveDeckCover(pack.coverImageUrl, pack.id)}
-            alt=''
-            className={styles.packCover}
-            loading='lazy'
-          />
-          <span className={styles.packName}>{pack.name}</span>
-          <span className={styles.packMeta}>
-            {pack.elementCount ?? 0} elements
-            {pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""}
-          </span>
-          {pack.description && (
-            <span className={styles.packDesc}>{pack.description}</span>
-          )}
-        </button>
+        />
       ))}
     </div>
   );

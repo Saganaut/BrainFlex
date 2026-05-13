@@ -1,20 +1,57 @@
-/* Modal — manifest via var-fallback. data-variant on <dialog> tints the body   */
+/* Modal — variant maps to a className on <dialog>. The base .modal declares    */
 
-/* surface and border; inner header/content keep canvas/secondary tokens.       */
+/* the canonical component vars; nested variant classes override only the      */
+
+/* color triplet. Inner header / content keep canvas/secondary tokens.         */
 .modal {
-  background-color: var(--background-color, var(--bg-surface));
-  color: var(--color, var(--text-primary));
-  border: 2px solid var(--border-color, var(--border-default));
-  border-radius: var(--radius, var(--radius-lg));
+  --radius: var(--radius-lg);
+  --color: var(--text-primary);
+  --background-color: var(--bg-secondary);
+  --border-color: var(--border-default);
+
+  background-color: var(--background-color);
+  color: var(--color);
+  border-radius: var(--radius);
   padding: 0;
   max-width: 500px;
   width: 90%;
   max-height: 90vh;
   margin: auto;
-  box-shadow: var(--shadow-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  border: none;
+
+  /* ─── Variants ─────────────────────────────────────────────── */
+  &.error {
+    --color: var(--text-error);
+    --background-color: var(--bg-error);
+    --border-color: var(--border-error);
+  }
+
+  &.success {
+    --color: var(--text-success);
+    --background-color: var(--bg-success);
+    --border-color: var(--border-success);
+  }
+
+  &.warning {
+    --color: var(--text-warning);
+    --background-color: var(--bg-warning);
+    --border-color: var(--border-warning);
+  }
+
+  &.info {
+    --color: var(--text-info);
+    --background-color: var(--bg-info);
+    --border-color: var(--border-info);
+  }
+
+  &.brand {
+    --color: var(--text-on-brand);
+    --background-color: var(--bg-brand);
+    --border-color: var(--border-brand);
+  }
 
   &::backdrop {
     background-color: rgb(0 0 0 / 50%);
@@ -27,8 +64,6 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-4) var(--space-6);
-  background-color: var(--bg-canvas);
-  border-bottom: 2px solid var(--border-default);
 }
 
 .title {
@@ -40,7 +75,6 @@
 
 .closeButton {
   background: none;
-  border: none;
   color: var(--text-secondary);
   cursor: pointer;
   padding: var(--space-1);
@@ -67,7 +101,6 @@
   padding: var(--space-6);
   color: var(--text-secondary);
   font-size: var(--font-size-base);
-  background-color: var(--bg-surface);
   overflow-y: auto;
   flex-grow: 1;
 }

@@ -14,5 +14,5 @@
 
 .spinner {
   animation: 2s linear infinite spin;
-  fill: var(--action-active);
+  fill: var(--action-hover);
 }

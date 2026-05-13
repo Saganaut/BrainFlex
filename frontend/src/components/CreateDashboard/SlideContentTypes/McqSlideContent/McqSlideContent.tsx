@@ -15,6 +15,7 @@
  */
 import { useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
+import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "../SlideContentWrapper";
 import {
   useGetDeckQuery,
@@ -24,6 +25,7 @@ import {
 } from "@/store/BrainFlexApi";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 import styles from "./McqSlideContent.module.css";
 
@@ -188,16 +190,17 @@ const McqSlideContent = () => {
                 className={`${styles.optionCard} ${isCorrect ? styles.optionCardCorrect : ""}`}>
                 <div className={styles.optionTopRow}>
                   <span className={styles.optionIndex}>{idx + 1}</span>
-                  <button
-                    type='button'
-                    className={styles.optionRemove}
+                  <IconBtn
+                    type='default'
+                    size='xs'
+                    bordered
+                    icon={<MinusIcon />}
                     aria-label={`Remove option ${(idx + 1).toString()}`}
                     disabled={options.length <= MIN_OPTIONS}
                     onClick={() => {
                       if (option.id) handleRemoveOption(option.id);
-                    }}>
-                    −
-                  </button>
+                    }}
+                  />
                 </div>
                 <input
                   type='text'

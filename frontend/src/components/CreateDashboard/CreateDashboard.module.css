@@ -1,10 +1,10 @@
-/* CreateDashboard — uses the sextet extension of the canonical manifest. Base */
+/* CreateDashboard — top-level layout chrome for the deck editor. The base     */
 
-/* triplet (color/background-color/border-color) is variantizable via global   */
+/* color triplet (color / background-color / border-color) and the hover       */
 
-/* [data-variant=...]; the per-state hover triplet is component-local. See     */
+/* triplet are component-local CSS vars; child components own their own         */
 
-/* STYLES.md for the full convention.                                          */
+/* variant/size className modifiers (see Buttons.module.css for the pattern).  */
 .createDashboard {
   /* Component-local hover sextet — base manifest comes through fallbacks.   */
   --color-hover: var(--action-hover);
@@ -28,7 +28,7 @@
     display: grid;
     grid-template-columns: 1fr 4fr 1fr;
     min-height: 80dvh;
-    background-color: var(--background-color);
+    background-color: var(--bg-canvas);
 
     .slideCanvas {
       display: flex;
@@ -47,7 +47,7 @@
       gap: var(--space-2);
 
       .slideContainer {
-        background-color: var(--electric-violet-500);
+        background-color: var(--violet-500);
         min-height: 30dvh;
         max-height: 70dvh;
         overflow-y: auto;
@@ -73,11 +73,11 @@
             opacity 300ms ease-in-out,
             outline 300ms ease-in-out;
           cursor: pointer;
-          outline-color: var(--blaze-orange);
+          outline-color: var(--orange-500);
           overflow: hidden;
 
           &.active {
-            outline: 2px solid var(--blaze-orange);
+            outline: 2px solid var(--orange-200);
             outline-offset: 4px;
           }
         }
@@ -102,7 +102,7 @@
 
   &.isDragging {
     .slideDisplay {
-      background-color: var(--electric-violet-500);
+      background-color: var(--violet-500);
     }
 
     .slideIndex {

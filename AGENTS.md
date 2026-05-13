@@ -325,7 +325,7 @@ S3 keys follow deterministic patterns so re-uploading overwrites the same object
    - **Guest user who signs in with Google** → convert the guest record to a registered account and redirect back to the original page
 3. The `/register` route in the frontend handles new-user form submission and redirects to `returnUrl` after registration.
 4. Guests can also start a session via `POST /api/auth/guest` with a username. This creates a guest account and allows play without Google auth.
-5. Sessions are cookie-based (Spring Security default).
+5. Sessions are cookie-based. The cookie is named `BRAINFLEX_SESSION` and backed by Spring Session Data Redis (`SessionConfig.java`): session attributes (including the `SecurityContext`) are persisted to the Redis container declared in `compose.yaml`, so a backend restart no longer logs everyone out and the app can scale horizontally. Sessions idle for 14 days before expiring. The cookie is HttpOnly, SameSite=Lax (so OAuth redirects from accounts.google.com still carry it), and Secure is auto-detected from the request — http://localhost dev gets Secure=false, HTTPS deploys get Secure=true. `SessionConfig` is gated to `@Profile("!test")` so the test profile keeps using the servlet container's in-memory session map.
 
 ---
 

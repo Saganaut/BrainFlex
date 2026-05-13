@@ -1,28 +1,28 @@
-/* NavBar — uses the sextet extension of the canonical manifest. The base       */
+/* NavBar — base layout chrome. Variant/size hooks live as className modifiers  */
 
-/* triplet (color/background-color/border-color) comes from global              */
+/* (e.g. <div className={[styles.navContainer, styles.error].join(' ')}>) if    */
 
-/* [data-variant=...] when present; the per-state hover triplet is              */
-
-/* component-local. Sizes come from global [data-size=...]. See STYLES.md.      */
+/* the component ever needs to express them. Today the bar is single-variant.   */
 .navContainer {
-  /* Base manifest — only the hover sextet needs declaring; the rest pulls    */
-
-  /* through var(--name, fallback) so global modifiers can override.          */
+  --color: var(--text-primary);
+  --background-color: transparent;
+  --border-color: transparent;
   --color-hover: var(--action-hover);
-  --color-muted: oklch(from var(--color, var(--text-primary)) l c h / 40%);
-  --background-color-hover: var(--background-color, transparent);
+  --color-muted: oklch(from var(--color) l c h / 40%);
+  --background-color-hover: var(--background-color);
   --border-color-hover: var(--action-hover);
+  --padding: var(--space-4);
+  --radius: var(--radius-md);
 
-  color: var(--color, var(--text-primary));
-  background-color: var(--background-color, transparent);
+  color: var(--color);
+  background-color: var(--background-color);
   display: flex;
   flex-flow: row wrap;
-  gap: 1rem;
-  padding: var(--padding, 1rem);
+  gap: var(--gap-lg);
+  padding: var(--padding);
   align-items: center;
   border: none;
-  border-radius: var(--radius, var(--radius-md));
+  border-radius: var(--radius);
   transition:
     color 300ms ease-in-out,
     background-color 300ms ease-in-out,
@@ -46,17 +46,6 @@
     border-color: var(--border-color-hover);
   }
 
-  /* Hover-color overrides for status variants — base color/bg/border come    */
-
-  /* from global [data-variant=...] rules in tokens.css.                      */
-  &[data-variant="error"] {
-    --color-hover: var(--text-error);
-  }
-
-  &[data-variant="success"] {
-    --color-hover: var(--text-success);
-  }
-
   &:disabled,
   &.isDisabled,
   &.isDisabled:hover,
@@ -70,7 +59,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 10px;
+    gap: var(--gap-sm);
     margin-left: auto;
   }
 }
@@ -121,15 +110,15 @@
 }
 
 .guestInputWrapper {
-  padding: 0.5rem 1rem;
+  padding: var(--space-2) var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--gap-sm);
   border-top: 1px solid var(--border-subtle);
 }
 
 .guestInput {
-  padding: 0.375rem 0.5rem;
+  padding: var(--space-2) var(--space-2);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);

@@ -7,10 +7,12 @@
  * the on-screen order as the correct order — drag-to-reorder is a later pass.
  */
 import { useState } from "react";
+import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import type { RankingItem, RankingQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
 
@@ -120,16 +122,17 @@ const RankingSlideContent = () => {
               }}
               onBlur={flush}
             />
-            <button
-              type='button'
-              className={styles.iconBtn}
+            <IconBtn
+              type='default'
+              size='xs'
+              bordered
+              icon={<MinusIcon />}
               aria-label={`Remove item ${(idx + 1).toString()}`}
               disabled={items.length <= MIN_ITEMS}
               onClick={() => {
                 if (item.id) handleRemoveItem(item.id);
-              }}>
-              −
-            </button>
+              }}
+            />
           </div>
         ))}
       </div>

@@ -8,7 +8,6 @@
   min-width: 220px;
   max-width: 280px;
   flex: 1 1 220px;
-  border: 2px solid var(--border-default);
   border-radius: var(--radius-lg);
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -16,7 +15,8 @@
   text-align: center;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color var(--duration-fast) var(--ease-out),
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
     transform var(--duration-fast) var(--ease-out);
 }
 
@@ -63,13 +63,12 @@
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
-  padding: 2px var(--space-2);
+  padding: var(--space-half) var(--space-2);
   font-size: var(--font-size-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
   background: var(--bg-canvas);
-  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
 }

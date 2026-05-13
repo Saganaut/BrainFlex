@@ -30,7 +30,7 @@
   position: absolute;
   inset: 0;
   border-radius: var(--radius-lg);
-  padding: 2px;
+  padding: var(--space-half);
   background: linear-gradient(
     135deg,
     var(--border-brand),

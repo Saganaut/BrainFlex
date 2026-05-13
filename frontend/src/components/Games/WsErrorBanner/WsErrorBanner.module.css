@@ -19,18 +19,3 @@
 .operation {
   font-weight: 700;
 }
-
-.dismiss {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font-size: var(--font-size-md);
-  font-weight: 700;
-  cursor: pointer;
-  padding: 0 var(--space-1);
-  line-height: 1;
-
-  &:hover {
-    opacity: 0.75;
-  }
-}

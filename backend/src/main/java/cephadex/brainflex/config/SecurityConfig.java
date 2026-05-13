@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,6 +21,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -29,6 +32,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.AuthoritiesService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -38,9 +42,11 @@ import jakarta.servlet.http.HttpServletResponse;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
+    private final AuthoritiesService authoritiesService;
 
-    public SecurityConfig(UserRepository userRepository) {
+    public SecurityConfig(UserRepository userRepository, AuthoritiesService authoritiesService) {
         this.userRepository = userRepository;
+        this.authoritiesService = authoritiesService;
     }
 
     @Bean
@@ -48,11 +54,49 @@ public class SecurityConfig {
         return new HttpSessionSecurityContextRepository();
     }
 
+    /**
+     * Role implications applied to both web and method security. Picked up
+     * automatically by @EnableMethodSecurity in Spring Security 6.3+, so
+     * @PreAuthorize("hasRole('USER')") accepts any USER_* role and
+     * @PreAuthorize("hasRole('ORG_MEMBER')") also accepts ORG_OWNER.
+     */
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.fromHierarchy("""
+                ROLE_USER_PREMIUM > ROLE_USER_BASIC
+                ROLE_USER_BASIC > ROLE_USER_FREE
+                ROLE_USER_FREE > ROLE_USER
+                ROLE_ORG_OWNER > ROLE_ORG_MEMBER
+                """);
+    }
+
+    /**
+     * Maps the raw OAuth2 authorities into the full BrainFlex authority set by
+     * delegating to AuthoritiesService when the user is already registered.
+     * For brand-new users the User record does not exist yet (registration
+     * happens after the OAuth redirect), so we fall back to a plain ROLE_USER
+     * and the tier/org roles are filled in on the next login.
+     */
     @Bean
     public GrantedAuthoritiesMapper oauthUserAuthoritiesMapper() {
         return (authorities) -> {
             Set<GrantedAuthority> mapped = new HashSet<>(authorities);
-            mapped.add(new SimpleGrantedAuthority("ROLE_USER"));
+            String googleId = null;
+            for (GrantedAuthority authority : authorities) {
+                if (authority instanceof OAuth2UserAuthority oauthAuth) {
+                    Object sub = oauthAuth.getAttributes().get("sub");
+                    if (sub != null) {
+                        googleId = sub.toString();
+                        break;
+                    }
+                }
+            }
+            if (googleId != null) {
+                userRepository.findByGoogleId(googleId)
+                        .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()))
+                        .ifPresent(u -> mapped.addAll(authoritiesService.authoritiesFor(u)));
+            }
+            mapped.add(new SimpleGrantedAuthority(AuthoritiesService.ROLE_USER));
             return mapped;
         };
     }

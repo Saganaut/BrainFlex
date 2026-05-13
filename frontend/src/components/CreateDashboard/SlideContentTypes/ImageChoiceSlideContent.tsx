@@ -9,10 +9,12 @@
  * paste a custom one if they have it.
  */
 import { useState } from "react";
+import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import type {
   ImageChoiceQuestion,
   McqOption,
@@ -182,16 +184,17 @@ const ImageChoiceSlideContent = () => {
                   Correct
                 </label>
               </div>
-              <button
-                type='button'
-                className={styles.iconBtn}
+              <IconBtn
+                type='default'
+                size='xs'
+                bordered
+                icon={<MinusIcon />}
                 aria-label={`Remove option ${(idx + 1).toString()}`}
                 disabled={options.length <= MIN_OPTIONS}
                 onClick={() => {
                   if (option.id) handleRemoveOption(option.id);
-                }}>
-                −
-              </button>
+                }}
+              />
             </div>
           );
         })}

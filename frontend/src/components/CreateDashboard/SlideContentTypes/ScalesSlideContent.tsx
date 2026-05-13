@@ -10,10 +10,12 @@
  * correct ratings are a TODO once we have the spec for scored mode.
  */
 import { useState } from "react";
+import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import type { ScaleStatement, ScalesQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
 
@@ -204,16 +206,17 @@ const ScalesSlideContent = () => {
               }}
               onBlur={flush}
             />
-            <button
-              type='button'
-              className={styles.iconBtn}
+            <IconBtn
+              type='default'
+              size='xs'
+              bordered
+              icon={<MinusIcon />}
               aria-label={`Remove statement ${(idx + 1).toString()}`}
               disabled={statements.length <= MIN_STATEMENTS}
               onClick={() => {
                 if (s.id) handleRemoveStatement(s.id);
-              }}>
-              −
-            </button>
+              }}
+            />
           </div>
         ))}
       </div>

@@ -1,6 +1,6 @@
-// Primary button component. Variants and sizes are wired through data-* attributes
-// (data-variant / data-size / data-mode) so they compose with any element that
-// follows the canonical CSS-var manifest. See frontend/STYLES.md for the convention.
+// Primary button. Variant / size / mode flow through className composition,
+// not data-* attributes — each modifier class lives in Buttons.module.css and
+// overrides a subset of the component's CSS vars (--padding, --color, etc.).
 import type { ReactNode } from "react";
 import type { BtnVariant, BtnSize, BtnShape, BtnMode } from "./BtnTypes";
 import styles from "./Buttons.module.css";
@@ -25,19 +25,25 @@ const Btn = ({
   type = "button",
   icon,
   iconPosition = "left",
-  onClick,
+  isLoading,
+  className,
   children,
+  ...rest
 }: BtnProps) => {
   return (
     <button
       type={type}
-      disabled={disabled}
-      onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      data-mode={mode}
+      disabled={disabled || isLoading}
       data-icon-position={icon ? iconPosition : undefined}
-      className={[styles.btn, shape !== "default" && styles[shape]]
+      {...rest}
+      className={[
+        styles.btn,
+        variant !== "default" && styles[variant],
+        styles[size],
+        mode && styles[mode],
+        shape !== "default" && styles[shape],
+        className,
+      ]
         .filter(Boolean)
         .join(" ")}>
       {icon != null && <span>{icon}</span>}

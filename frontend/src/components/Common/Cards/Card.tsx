@@ -1,6 +1,5 @@
-// Generic card with header/body/footer slots. Variant and size flow through
-// data-* attributes (see frontend/STYLES.md). Becomes clickable when onClick
-// is provided.
+// Generic card with header/body/footer slots. Variant and size map to className
+// modifiers in Cards.module.css. Becomes clickable when onClick is provided.
 import { type ReactNode } from "react";
 import type { BtnVariant, BtnSize } from "../Buttons/BtnTypes";
 import styles from "./Cards.module.css";
@@ -25,9 +24,12 @@ const Card = ({
   return (
     <div
       onClick={onClick}
-      data-variant={variant}
-      data-size={size}
-      className={[styles.card, onClick != null && styles.isClickable]
+      className={[
+        styles.card,
+        variant !== "default" && styles[variant],
+        styles[size],
+        onClick != null && styles.isClickable,
+      ]
         .filter(Boolean)
         .join(" ")}>
       <div className={styles.header}>{header}</div>

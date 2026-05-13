@@ -25,12 +25,12 @@ input[type="radio"] {
   align-items: center;
   justify-content: space-between;
   width: fit-content;
-  gap: 20px;
+  gap: var(--gap-xl);
 
   &.labelAbove {
     flex-direction: column;
     align-items: start;
-    gap: 5px;
+    gap: var(--gap-xs);
   }
 
   label {
@@ -43,6 +43,23 @@ input[type="radio"] {
     input {
       width: 300px;
       color: var(--text-secondary);
+
+      &.error {
+        border-color: var(--border-error);
+        color: var(--text-error);
+      }
+
+      &.success {
+        border-color: var(--border-success);
+      }
+
+      &.warning {
+        border-color: var(--border-warning);
+      }
+
+      &.info {
+        border-color: var(--border-info);
+      }
     }
 
     .inputInfoMessage {
@@ -552,7 +569,7 @@ input[type="radio"] {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  padding: 2px var(--space-2);
+  padding: var(--space-half) var(--space-2);
   background-color: var(--bg-subtle);
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
@@ -628,7 +645,7 @@ input[type="radio"] {
   left: 2px;
   width: 20px;
   height: 20px;
-  background-color: white;
+  background-color: var(--white-100);
   border-radius: var(--radius-full);
   box-shadow: var(--shadow-sm);
   transition: transform var(--duration-base) var(--ease-out);
@@ -772,7 +789,7 @@ input[type="radio"] {
 
 .huePickerNumber {
   width: 2.75rem;
-  padding: 2px var(--space-2);
+  padding: var(--space-half) var(--space-2);
   text-align: right;
   font-size: var(--font-size-sm);
   color: var(--text-primary);

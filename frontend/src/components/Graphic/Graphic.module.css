@@ -1,6 +1,6 @@
 .cephadexLogo {
-  --fill: var(--electric-violet-500);
-  --fill-hover: var(--blaze-orange);
+  --fill: var(--violet-500);
+  --fill-hover: var(--orange-300);
 
   cursor: pointer;
   max-height: 50px;

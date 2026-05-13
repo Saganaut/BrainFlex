@@ -254,7 +254,7 @@
 }
 
 .featureIcon {
-  font-size: 2rem;
+  font-size: var(--font-size-xl);
   margin-bottom: var(--space-4);
   display: block;
 }

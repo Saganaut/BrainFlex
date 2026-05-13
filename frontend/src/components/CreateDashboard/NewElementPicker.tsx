@@ -8,6 +8,7 @@
  */
 import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 import { slideTypeGraphics } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
+import { SelectableTile } from "@/components/Common/SelectableTile/SelectableTile";
 import styles from "./NewElementPicker.module.css";
 
 interface NewElementPickerProps {
@@ -36,17 +37,15 @@ const NewElementPicker = ({ onPick }: NewElementPickerProps) => {
       {ELEMENT_KINDS.map((kind) => {
         const Graphic = slideTypeGraphics[kind];
         return (
-          <button
+          <SelectableTile
             key={kind}
-            type='button'
-            className={styles.tile}
+            size='sm'
+            media={<Graphic />}
+            title={KIND_LABELS[kind]}
             onClick={() => {
               onPick(kind);
             }}
-            aria-label={`Add ${KIND_LABELS[kind]}`}>
-            <Graphic />
-            <span className={styles.label}>{KIND_LABELS[kind]}</span>
-          </button>
+          />
         );
       })}
     </div>

@@ -4,6 +4,7 @@
 // recommended tier. Content is intentionally fully prop-driven so the same
 // component can render placeholder copy today and Stripe-backed plans later.
 import { Link } from "@tanstack/react-router";
+import { Btn } from "../../Common/Buttons/Btn";
 import { FeatureList, type FeatureItem } from "../FeatureList/FeatureList";
 import styles from "./PricingCard.module.css";
 
@@ -59,9 +60,9 @@ const PricingCard = ({
     );
   } else {
     cta = (
-      <button type='button' className={styles.cta} onClick={ctaOnClick}>
+      <Btn className={styles.cta} onClick={ctaOnClick}>
         {ctaLabel}
-      </button>
+      </Btn>
     );
   }
 

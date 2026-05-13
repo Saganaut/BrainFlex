@@ -6,6 +6,7 @@
  */
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { clearWsError } from "../../../store/gameSlice";
+import { IconBtn } from "../../Common/Buttons/IconBtn";
 import styles from "./WsErrorBanner.module.css";
 
 const WsErrorBanner = () => {
@@ -20,15 +21,14 @@ const WsErrorBanner = () => {
         <strong className={styles.operation}>{labelFor(error.operation)}:</strong>{" "}
         {error.message}
       </span>
-      <button
-        type='button'
-        className={styles.dismiss}
+      <IconBtn
+        type='close'
+        size='sm'
         onClick={() => {
           dispatch(clearWsError());
         }}
-        aria-label='Dismiss error'>
-        ✕
-      </button>
+        aria-label='Dismiss error'
+      />
     </div>
   );
 };

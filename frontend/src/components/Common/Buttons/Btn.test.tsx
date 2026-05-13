@@ -1,6 +1,6 @@
 // Unit tests for the Btn component — covers rendering, interaction, and prop-driven
-// data-attribute + className behavior. Variants/sizes are asserted on data-* attrs
-// because that's the contract that drives styling (see frontend/STYLES.md).
+// className behavior. Variant / size / mode each map to a class in
+// Buttons.module.css; the tests assert that class presence is the styling contract.
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -90,41 +90,42 @@ describe("Btn", () => {
     });
   });
 
-  describe("data-attribute modifiers", () => {
-    it("defaults to data-variant=default", () => {
+  describe("modifier classes", () => {
+    it("does not add a variant class for the default variant", () => {
       render(<Btn>Default</Btn>);
-      expect(screen.getByRole("button")).toHaveAttribute(
-        "data-variant",
-        "default",
-      );
+      const className = screen.getByRole("button").className;
+      expect(className).not.toContain("error");
+      expect(className).not.toContain("success");
+      expect(className).not.toContain("warning");
+      expect(className).not.toContain("info");
+      expect(className).not.toContain("brand");
     });
 
-    it("applies the given variant", () => {
+    it("applies the given variant as a class", () => {
       render(<Btn variant='error'>Error</Btn>);
-      expect(screen.getByRole("button")).toHaveAttribute(
-        "data-variant",
-        "error",
-      );
+      expect(screen.getByRole("button").className).toContain("error");
     });
 
-    it("defaults to data-size=md", () => {
+    it("defaults to the md size class", () => {
       render(<Btn>Default size</Btn>);
-      expect(screen.getByRole("button")).toHaveAttribute("data-size", "md");
+      expect(screen.getByRole("button").className).toContain("md");
     });
 
-    it("applies the given size", () => {
+    it("applies the given size as a class", () => {
       render(<Btn size='lg'>Large</Btn>);
-      expect(screen.getByRole("button")).toHaveAttribute("data-size", "lg");
+      expect(screen.getByRole("button").className).toContain("lg");
     });
 
-    it("applies the given mode", () => {
+    it("applies the given mode as a class", () => {
       render(<Btn mode='outline'>Outline</Btn>);
-      expect(screen.getByRole("button")).toHaveAttribute("data-mode", "outline");
+      expect(screen.getByRole("button").className).toContain("outline");
     });
 
-    it("does not set data-mode by default", () => {
+    it("does not add a mode class by default", () => {
       render(<Btn>Default</Btn>);
-      expect(screen.getByRole("button")).not.toHaveAttribute("data-mode");
+      const className = screen.getByRole("button").className;
+      expect(className).not.toContain("outline");
+      expect(className).not.toContain("ghost");
     });
   });
 

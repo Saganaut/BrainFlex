@@ -150,60 +150,6 @@
   width: 100%;
 }
 
-.packBtn {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  text-align: left;
-  background: var(--bg-surface);
-  border: 2px solid var(--border-default);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  cursor: pointer;
-  font-family: inherit;
-  transition: border-color var(--duration-fast) var(--ease-out);
-  overflow: hidden;
-}
-
-.packCover {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  background: var(--bg-subtle);
-}
-
-.packBtn:hover {
-  border-color: var(--action-hover);
-}
-
-.packBtn:focus-visible {
-  outline: 2px solid var(--action-hover);
-  outline-offset: 2px;
-}
-
-.packBtnSelected {
-  border-color: var(--action-hover);
-  background: var(--bg-canvas);
-}
-
-.packName {
-  font-weight: 700;
-  font-size: var(--font-size-md);
-}
-
-.packMeta {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-}
-
-.packDesc {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin-top: var(--space-1);
-}
-
 .helperText {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);

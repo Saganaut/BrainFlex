@@ -1,13 +1,11 @@
 package cephadex.brainflex.controller;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -23,6 +21,7 @@ import cephadex.brainflex.dto.RegisterRequest;
 import cephadex.brainflex.dto.UserDTO;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.AuthoritiesService;
 import cephadex.brainflex.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,12 +34,15 @@ public class AuthController {
     private final UserRepository userRepository;
     private final UserService userService;
     private final SecurityContextRepository securityContextRepository;
+    private final AuthoritiesService authoritiesService;
 
     public AuthController(UserRepository userRepository, UserService userService,
-            SecurityContextRepository securityContextRepository) {
+            SecurityContextRepository securityContextRepository,
+            AuthoritiesService authoritiesService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.securityContextRepository = securityContextRepository;
+        this.authoritiesService = authoritiesService;
     }
 
     @GetMapping("/me")
@@ -113,7 +115,7 @@ public class AuthController {
         User user = userService.createGuest(request.username());
         String authName = "guest:" + user.getId();
         var guestAuth = new UsernamePasswordAuthenticationToken(
-                authName, null, List.of(new SimpleGrantedAuthority("ROLE_GUEST")));
+                authName, null, authoritiesService.authoritiesFor(user));
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(guestAuth);
         SecurityContextHolder.setContext(context);

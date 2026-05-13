@@ -1,6 +1,6 @@
-// Shared type unions for Btn / IconBtn props.
-// Variant and Size mirror the data-variant / data-size modifier sets defined in
-// frontend/src/tokens.css — keep these in sync if new modifiers are added.
+// Shared type unions for Btn / IconBtn props. Each value here corresponds to a
+// className in Buttons.module.css (e.g. variant="error" → styles.error,
+// size="lg" → styles.lg). Keep these in sync if new modifier classes are added.
 
 export type BtnSize = "xs" | "sm" | "md" | "lg";
 export type BtnVariant =

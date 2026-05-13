@@ -1,6 +1,5 @@
 // Form components showcase for the design system page.
-// Shows all Common/Form primitives (Input, TextArea, Checkbox, Radio, RadioGroup, HuePicker)
-// with controlled state so they are actually interactive.
+// Shows every Common/Input primitive with controlled state so they're interactive.
 import { useState } from "react";
 import { Input } from "../../components/Common/Input/Input";
 import { TextArea } from "../../components/Common/Input/TextArea";
@@ -8,6 +7,10 @@ import { Checkbox } from "../../components/Common/Input/Checkbox";
 import { RadioGroup } from "../../components/Common/Input/RadioGroup";
 import { HuePicker } from "../../components/Common/Input/HuePicker";
 import { RichTextInput } from "../../components/Common/Input/RichTextInput";
+import { Toggle } from "../../components/Common/Input/Toggle";
+import { Dropdown } from "../../components/Common/Input/Dropdown";
+import { FileUpload } from "../../components/Common/Input/FileUpload";
+import { InputWithButton } from "../../components/Common/Input/InputWithButton";
 import { Accordion } from "../../components/Containers/Accordion";
 import styles from "./DesignSystem.module.css";
 
@@ -17,12 +20,31 @@ const GAME_MODE_OPTIONS: { value: string; label: string }[] = [
   { value: "tournament", label: "Tournament" },
 ];
 
+const FACTION_OPTIONS = [
+  { value: "fellowship", label: "Fellowship of the Ring" },
+  { value: "rohan", label: "Riders of Rohan" },
+  { value: "gondor", label: "Gondor" },
+  { value: "elves", label: "Elves of Lothlórien" },
+  { value: "dwarves", label: "Dwarves of Erebor" },
+  { value: "ents", label: "Ents of Fangorn" },
+  { value: "shire", label: "The Shire" },
+];
+
 const FormsSection = () => {
   const [hue, setHue] = useState(260);
   const [gameMode, setGameMode] = useState("solo");
   const [richText, setRichText] = useState(
     "<p>Click anywhere to <strong>edit</strong> — try the toolbar.</p>",
   );
+  const [toggleSounds, setToggleSounds] = useState(true);
+  const [toggleNotifs, setToggleNotifs] = useState(false);
+  const [singleFaction, setSingleFaction] = useState<string[]>(["fellowship"]);
+  const [multiFactions, setMultiFactions] = useState<string[]>([
+    "fellowship",
+    "rohan",
+  ]);
+  const [searchFaction, setSearchFaction] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
 
   return (
     <section>
@@ -54,6 +76,23 @@ const FormsSection = () => {
             />
           </div>
 
+          <h4>Input with Button</h4>
+          <div className={styles.formExampleRow}>
+            <InputWithButton
+              label='Search packs'
+              id='ds-input-with-btn'
+              placeholder='e.g. Geography'
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
+              buttonLabel='Search'
+              onButtonClick={() => {
+                console.log("search:", search);
+              }}
+            />
+          </div>
+
           <h4>Checkbox</h4>
           <div className={styles.formExampleRow}>
             <Checkbox label='Subscribe to newsletter' id='ds-checkbox-1' />
@@ -61,6 +100,32 @@ const FormsSection = () => {
             <Checkbox
               label='Disabled'
               id='ds-checkbox-3'
+              checked={true}
+              disabled
+            />
+          </div>
+
+          <h4>Toggle</h4>
+          <div className={styles.formExampleRow}>
+            <Toggle
+              label='Sound effects'
+              id='ds-toggle-1'
+              checked={toggleSounds}
+              onChange={(e) => {
+                setToggleSounds(e.target.checked);
+              }}
+            />
+            <Toggle
+              label='Push notifications'
+              id='ds-toggle-2'
+              checked={toggleNotifs}
+              onChange={(e) => {
+                setToggleNotifs(e.target.checked);
+              }}
+            />
+            <Toggle
+              label='Disabled'
+              id='ds-toggle-3'
               checked={true}
               disabled
             />
@@ -82,6 +147,45 @@ const FormsSection = () => {
               value='team'
               onChange={() => { /* disabled */ }}
               disabled
+            />
+          </div>
+
+          <h4>Dropdown</h4>
+          <div className={styles.formExampleRow}>
+            <Dropdown
+              label='Faction (single)'
+              id='ds-dropdown-single'
+              options={FACTION_OPTIONS}
+              value={singleFaction}
+              onChange={setSingleFaction}
+            />
+            <Dropdown
+              label='Allied factions (multi)'
+              id='ds-dropdown-multi'
+              multiple
+              options={FACTION_OPTIONS}
+              value={multiFactions}
+              onChange={setMultiFactions}
+            />
+            <Dropdown
+              label='Searchable'
+              id='ds-dropdown-search'
+              searchable
+              options={FACTION_OPTIONS}
+              value={searchFaction}
+              onChange={setSearchFaction}
+              placeholder='Find a faction…'
+            />
+          </div>
+
+          <h4>File Upload</h4>
+          <div className={styles.formExampleRow}>
+            <FileUpload
+              label='Upload an image'
+              accept='image/*'
+              onChange={(files) => {
+                console.log("files:", files);
+              }}
             />
           </div>
 

@@ -1,35 +1,71 @@
-/* Btn — consumes the canonical component manifest via var(--name, fallback). */
+/* Btn — owns its variant / size / mode classes. The base .btn declares the     */
 
-/* Variants and sizes come from data-variant / data-size on the element (see  */
+/* canonical component vars (--padding, --radius, --font-size, --color, …) so   */
 
-/* tokens.css). Component-specific shape (pill) stays as a module class.      */
+/* nested modifier classes only need to override the vars they care about.      */
 .btn {
+  --padding: var(--p-md);
+  --radius: var(--radius-lg);
+  --font-size: var(--font-size-md);
+  --color: var(--text-primary);
+  --background-color: var(--bg-secondary);
+  --border-color: currentcolor;
+  --gap: var(--space-2);
+
   display: flex;
   align-items: center;
   height: fit-content;
   width: fit-content;
-  padding: var(--padding, var(--p-md));
-  border-radius: var(--radius, var(--radius-lg));
-  font-size: var(--font-size, var(--font-size-md));
-  color: var(--color, var(--text-primary));
-  background-color: oklch(
-    from var(--background-color, var(--lavender-200)) l c h / 20%
-  );
-  border-color: var(--border-color, currentcolor);
+  gap: var(--gap);
+  padding: var(--padding);
+  border-radius: var(--radius);
+  font-size: var(--font-size);
+  color: var(--color);
+  background-color: var(--background-color);
   transition:
     background-color 300ms ease-in-out,
-    color 300ms ease-in-out,
-    border-color 300ms ease-in-out;
+    color 300ms ease-in-out;
 
   &:hover {
     color: var(--action-hover);
   }
 
+  /* ─── Variants ─────────────────────────────────────────────── */
+  &.error {
+    --color: var(--text-error);
+    --background-color: var(--bg-error);
+    --border-color: var(--border-error);
+  }
+
+  &.success {
+    --color: var(--text-success);
+    --background-color: var(--bg-success);
+    --border-color: var(--border-success);
+  }
+
+  &.warning {
+    --color: var(--text-warning);
+    --background-color: var(--bg-warning);
+    --border-color: var(--border-warning);
+  }
+
+  &.info {
+    --color: var(--text-info);
+    --background-color: var(--bg-info);
+    --border-color: var(--border-info);
+  }
+
+  &.brand {
+    --color: var(--text-on-brand);
+    --background-color: var(--bg-brand);
+    --border-color: var(--border-brand);
+  }
+
   /* Status variants derive hover via oklch from whatever the modifier set. */
-  &[data-variant="error"]:hover,
-  &[data-variant="success"]:hover,
-  &[data-variant="warning"]:hover,
-  &[data-variant="info"]:hover {
+  &.error:hover,
+  &.success:hover,
+  &.warning:hover,
+  &.info:hover {
     color: oklch(from var(--color) calc(l - 0.1) calc(c + 0.01) h);
     background-color: oklch(
       from var(--background-color) calc(l + 0.8) calc(c + 0.02) h
@@ -39,6 +75,47 @@
     );
   }
 
+  /* ─── Sizes ─────────────────────────────────────────────────── */
+  &.xs {
+    --padding: var(--p-pill-xs);
+    --font-size: var(--font-size-xs);
+    --radius: var(--radius-sm);
+    --gap: var(--space-1);
+  }
+
+  &.sm {
+    --padding: var(--p-pill-sm);
+    --font-size: var(--font-size-xs);
+    --radius: var(--radius-md);
+    --gap: var(--space-2);
+  }
+
+  &.md {
+    --padding: var(--p-pill-md);
+    --font-size: var(--font-size-base);
+    --radius: var(--radius-md);
+    --gap: var(--space-3);
+  }
+
+  &.lg {
+    --padding: var(--p-pill-lg);
+    --font-size: var(--font-size-lg);
+    --radius: var(--radius-lg);
+    --gap: var(--space-4);
+  }
+
+  /* ─── Modes ─────────────────────────────────────────────────── */
+  &.outline {
+    --background-color: transparent;
+    --border-color: var(--color, currentcolor);
+  }
+
+  &.ghost {
+    --background-color: transparent;
+    --border-color: transparent;
+  }
+
+  /* ─── Shape (component-local concept, not part of the modifier set) ── */
   &.pill {
     border-radius: var(--radius-full);
   }
@@ -52,17 +129,27 @@
   }
 }
 
-/* IconBtn — same var-fallback manifest as .btn, with IconBtn-tuned dimensions */
+/* IconBtn — same variant/size/mode pattern as .btn, but IconBtn-tuned        */
 
-/* per data-size. Component-specific concepts (close / avatar / bordered /     */
+/* dimensions (height/width) live in the size classes. Component-specific     */
 
-/* withBackground / round / pill / isCollapsed) stay as module classes.        */
+/* concepts (close / avatar / bordered / withBackground / round / pill /      */
+
+/* isCollapsed) stay as additional module classes.                            */
 .iconBtn {
-  height: var(--height, 56px);
-  width: var(--width, 56px);
-  padding: var(--padding, var(--p-xs));
-  border-radius: var(--radius, var(--radius-md));
-  color: var(--color, var(--border-default));
+  --padding: var(--p-xs);
+  --radius: var(--radius-md);
+  --color: var(--border-default);
+  --background-color: var(--bg-surface);
+  --border-color: transparent;
+  --height: 56px;
+  --width: 56px;
+
+  height: var(--height);
+  width: var(--width);
+  padding: var(--padding);
+  border-radius: var(--radius);
+  color: var(--color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -75,18 +162,9 @@
     border-color 300ms ease-in-out,
     color 300ms ease-in-out;
 
-  &.withBackground {
-    background-color: var(--background-color, var(--bg-surface));
-
-    &:hover {
-      background-color: var(--action-hover);
-      color: var(--bg-surface);
-    }
-  }
-
   /* SVG strokes follow currentcolor, so state changes on the button's    */
 
-  /* `color` automatically animate via the color transition above.        */
+  /* `color` animate via the color transition above.                       */
   svg,
   img {
     --max-height: 28px;
@@ -101,33 +179,70 @@
     transition: transform 300ms ease-in-out;
   }
 
-  /* IconBtn-tuned size overrides. Higher specificity than the global        */
+  /* ─── Variants — color only; bg/border kick in only with withBackground ── */
+  &.error {
+    --color: var(--text-error);
+    --background-color: var(--bg-error);
+    --border-color: var(--border-error);
+  }
 
-  /* [data-size=...] rule, so IconBtn's height/width/padding always win for  */
+  &.success {
+    --color: var(--text-success);
+    --background-color: var(--bg-success);
+    --border-color: var(--border-success);
+  }
 
-  /* this component while still sharing the same data-size vocabulary.      */
-  &[data-size="xs"] {
+  &.warning {
+    --color: var(--text-warning);
+    --background-color: var(--bg-warning);
+    --border-color: var(--border-warning);
+  }
+
+  &.info {
+    --color: var(--text-info);
+    --background-color: var(--bg-info);
+    --border-color: var(--border-info);
+  }
+
+  &.brand {
+    --color: var(--text-on-brand);
+    --background-color: var(--bg-brand);
+    --border-color: var(--border-brand);
+  }
+
+  /* ─── Sizes — IconBtn tunes height/width too ───────────────────── */
+  &.xs {
     --height: 28px;
     --width: 28px;
     --padding: 0;
   }
 
-  &[data-size="sm"] {
+  &.sm {
     --height: 36px;
     --width: 36px;
     --padding: var(--p-xs);
   }
 
-  &[data-size="md"] {
+  &.md {
     --height: 56px;
     --width: 56px;
     --padding: var(--p-xs);
   }
 
-  &[data-size="lg"] {
+  &.lg {
     --height: 72px;
     --width: 72px;
     --padding: var(--p-md);
+  }
+
+  /* ─── Component-local shapes / modes ───────────────────────────── */
+  &.withBackground {
+    background-color: var(--background-color);
+
+    &:hover {
+      background-color: var(--action-hover);
+      color: var(--bg-surface);
+    }
   }
 
   &.round,
@@ -140,8 +255,7 @@
   }
 
   &.bordered {
-    border: 2px solid
-      var(--border-color, var(--color, var(--border-default)));
+    border: 2px solid var(--border-color, var(--color, var(--border-default)));
 
     &:hover {
       border-color: var(--action-hover);
@@ -162,7 +276,7 @@
   }
 
   &.close:hover {
-    color: var(--text-error);
+    color: var(--action-hover);
   }
 
   &:disabled,

@@ -45,6 +45,10 @@ public class AuthController {
         this.authoritiesService = authoritiesService;
     }
 
+    // TODO: Should we always receive a guest endpoint? I think if there is no
+    // username put in, its not a geust but a visitor and shouldn't receive anything
+    // back
+
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated() &&

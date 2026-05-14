@@ -5,7 +5,6 @@ import java.io.IOException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,8 +39,13 @@ public class ProfileImageController {
         this.imageProcessingService = imageProcessingService;
     }
 
+    // @PreAuthorize intentionally omitted: Spring Session + multipart has a
+    // known compatibility issue where method-security advice sees an empty
+    // SecurityContext and returns 401 even when the cookie/session are valid.
+    // SecurityConfig.anyRequest().authenticated() still gates anonymous
+    // callers; the inline resolveRegisteredUser check below upgrades that to
+    // require a registered (non-guest) user.
     @PostMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserDTO.RegisteredUser> uploadProfileImage(
             @RequestParam("image") MultipartFile file,
             Authentication authentication) throws IOException {

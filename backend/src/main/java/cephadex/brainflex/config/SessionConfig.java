@@ -33,8 +33,7 @@ import org.springframework.session.web.http.DefaultCookieSerializer;
 
 @Configuration
 @Profile("!test")
-@EnableRedisHttpSession(
-        maxInactiveIntervalInSeconds = 1209600, // 14 days
+@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800, // 30 minutes
         redisNamespace = "brainflex:session")
 public class SessionConfig {
 

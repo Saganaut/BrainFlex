@@ -62,8 +62,10 @@ public class DeckController {
     }
 
     @GetMapping("/{id}")
-    public DeckDTO getDeck(@PathVariable String id) {
-        return new DeckDTO(deckService.getById(id));
+    public DeckDTO getDeck(@PathVariable String id, Authentication authentication) {
+        User caller = resolveUser(authentication);
+
+        return new DeckDTO(deckService.getById(caller, id));
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -98,7 +100,10 @@ public class DeckController {
 
     // ---- Element CRUD ----
 
-    /** Append a new element to the deck. The polymorphic body picks its subtype via `kind`. */
+    /**
+     * Append a new element to the deck. The polymorphic body picks its subtype via
+     * `kind`.
+     */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/elements")
     public ResponseEntity<DeckDTO> addElement(

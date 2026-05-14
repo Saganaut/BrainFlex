@@ -13,10 +13,12 @@ import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 
+//TODO: Update this with new content in @Deck.java 
 public record DeckDTO(
         String id,
         String name,
         String description,
+        String creatorUserId,
         List<String> tags,
         boolean isSystem,
         DeckVisibility visibility,
@@ -35,6 +37,7 @@ public record DeckDTO(
                 deck.getId(),
                 deck.getName(),
                 deck.getDescription(),
+                deck.getCreatorUserId(),
                 deck.getTags(),
                 deck.isSystem(),
                 deck.getVisibility(),

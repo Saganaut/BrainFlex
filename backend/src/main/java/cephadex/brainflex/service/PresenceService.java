@@ -33,19 +33,26 @@ public class PresenceService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    /** Register a new WebSocket session for this user; broadcasts on 0→1 transition. */
+    /**
+     * Register a new WebSocket session for this user; broadcasts on 0→1 transition.
+     */
     public void onConnect(String userId) {
-        if (userId == null) return;
-        Integer next = sessionCount.merge(userId, 1, Integer::sum);
+        if (userId == null)
+            return;
+        Integer next = sessionCount.merge(userId, 1, (a, b) -> (a == null ? 0 : a) + (b == null ? 0 : b));
         if (next == 1) {
             log.debug("Presence: {} online", userId);
             broadcast(userId, true);
         }
     }
 
-    /** Drop a WebSocket session for this user; broadcasts on last-session → 0 transition. */
+    /**
+     * Drop a WebSocket session for this user; broadcasts on last-session → 0
+     * transition.
+     */
     public void onDisconnect(String userId) {
-        if (userId == null) return;
+        if (userId == null)
+            return;
         Integer next = sessionCount.computeIfPresent(userId, (k, v) -> v - 1);
         if (next != null && next <= 0) {
             sessionCount.remove(userId);
@@ -54,7 +61,10 @@ public class PresenceService {
         }
     }
 
-    /** Read-only snapshot of currently online userIds — useful for REST endpoints later. */
+    /**
+     * Read-only snapshot of currently online userIds — useful for REST endpoints
+     * later.
+     */
     public Set<String> onlineUserIds() {
         return Set.copyOf(sessionCount.keySet());
     }

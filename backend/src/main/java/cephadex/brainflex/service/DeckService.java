@@ -47,12 +47,20 @@ public class DeckService {
     }
 
     public List<Deck> listByOwner(String userId) {
+
         return deckRepository.findByCreatorUserId(userId);
     }
 
-    public Deck getById(String id) {
-        return deckRepository.findById(id)
+    // Only return the deck if it is public or owned by the user
+    // TODO: Build other route to get decks for viewing for games/showcases
+    public Deck getById(User creator, String id) {
+        Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found"));
+
+        if (deck.getVisibility().equals(DeckVisibility.PUBLIC) || deck.getCreatorUserId().equals(creator.getId())) {
+            return deck;
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not have access to this deck");
     }
 
     // ---- Deck CRUD ----
@@ -79,7 +87,7 @@ public class DeckService {
         deck.setThemeId(request.themeId());
         deck.setEstimatedDurationMinutes(request.estimatedDurationMinutes());
         deck.setSystem(false);
-        
+
         deck.setCreatorUserId(creator.getId());
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
@@ -88,11 +96,16 @@ public class DeckService {
 
     public Deck updateDeck(String id, User caller, UpdateDeckRequest request) {
         Deck deck = requireOwned(id, caller);
-        if (request.name() != null) deck.setName(request.name());
-        if (request.description() != null) deck.setDescription(request.description());
-        if (request.tags() != null) deck.setTags(request.tags());
-        if (request.visibility() != null) deck.setVisibility(request.visibility());
-        if (request.recommendedPreset() != null) deck.setRecommendedPreset(request.recommendedPreset());
+        if (request.name() != null)
+            deck.setName(request.name());
+        if (request.description() != null)
+            deck.setDescription(request.description());
+        if (request.tags() != null)
+            deck.setTags(request.tags());
+        if (request.visibility() != null)
+            deck.setVisibility(request.visibility());
+        if (request.recommendedPreset() != null)
+            deck.setRecommendedPreset(request.recommendedPreset());
         // empty string clears; null leaves alone
         if (request.coverImageUrl() != null) {
             deck.setCoverImageUrl(request.coverImageUrl().isEmpty() ? null : request.coverImageUrl());
@@ -118,7 +131,10 @@ public class DeckService {
 
     // ---- Element CRUD (operates on Deck.elements directly) ----
 
-    /** Append an element to the end of the deck. Assigns a server-side id if missing. */
+    /**
+     * Append an element to the end of the deck. Assigns a server-side id if
+     * missing.
+     */
     public Deck addElement(String deckId, User caller, DeckElement incoming) {
         Deck deck = requireOwned(deckId, caller);
         DeckElement withId = ensureElementId(incoming);
@@ -127,14 +143,17 @@ public class DeckService {
         return deckRepository.save(deck);
     }
 
-    /** Replace the element with matching id; throws 404 if not found in the deck. */
+    /**
+     * Replace the element with matching id; throws 404 if not found in the deck.
+     */
     public Deck updateElement(String deckId, String elementId, User caller, DeckElement incoming) {
         Deck deck = requireOwned(deckId, caller);
         int idx = indexOfElement(deck, elementId);
         // Preserve the id even if the client omits it on update.
         DeckElement withId = ensureElementId(incoming);
         if (!elementId.equals(withId.id())) {
-            // Different ids — caller is trying to swap one element for another; treat as PUT semantics.
+            // Different ids — caller is trying to swap one element for another; treat as
+            // PUT semantics.
         }
         deck.getElements().set(idx, withId);
         deck.setUpdatedAt(LocalDateTime.now());
@@ -149,12 +168,16 @@ public class DeckService {
         return deckRepository.save(deck);
     }
 
-    /** Move the element with `elementId` to position `targetIndex` (clamped to deck size). */
+    /**
+     * Move the element with `elementId` to position `targetIndex` (clamped to deck
+     * size).
+     */
     public Deck moveElement(String deckId, String elementId, int targetIndex, User caller) {
         Deck deck = requireOwned(deckId, caller);
         int currentIdx = indexOfElement(deck, elementId);
         int clamped = Math.max(0, Math.min(targetIndex, deck.getElements().size() - 1));
-        if (currentIdx == clamped) return deck;
+        if (currentIdx == clamped)
+            return deck;
         DeckElement element = deck.getElements().remove(currentIdx);
         deck.getElements().add(clamped, element);
         deck.setUpdatedAt(LocalDateTime.now());
@@ -169,20 +192,23 @@ public class DeckService {
 
     private int indexOfElement(Deck deck, String elementId) {
         Optional<Integer> idx = findIndex(deck.getElements(), elementId);
-        return idx.orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Element not in this deck"));
+        return idx.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Element not in this deck"));
     }
 
     private static Optional<Integer> findIndex(List<DeckElement> elements, String elementId) {
         for (int i = 0; i < elements.size(); i++) {
-            if (elementId.equals(elements.get(i).id())) return Optional.of(i);
+            if (elementId.equals(elements.get(i).id()))
+                return Optional.of(i);
         }
         return Optional.empty();
     }
 
-    /** Ensures the element has a stable id — generates one if the client omitted it. */
+    /**
+     * Ensures the element has a stable id — generates one if the client omitted it.
+     */
     private static DeckElement ensureElementId(DeckElement element) {
-        if (element.id() != null && !element.id().isBlank()) return element;
+        if (element.id() != null && !element.id().isBlank())
+            return element;
         String newId = UUID.randomUUID().toString();
         return DeckElementCloner.withId(element, newId);
     }

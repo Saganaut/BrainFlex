@@ -134,8 +134,11 @@ public class ThemeController {
         return ResponseEntity.ok().build();
     }
 
+    // @PreAuthorize intentionally omitted on multipart endpoints — see
+    // ProfileImageController for the rationale. The inline
+    // resolveRegisteredUser + authorizationService.requireThemeEditable pair
+    // performs both authn and ownership authorization here.
     @PostMapping(value = "/{id}/background", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ThemeDTO.ThemeResponse> uploadBackground(
             @PathVariable String id,
             @RequestParam("image") MultipartFile file,
@@ -151,7 +154,6 @@ public class ThemeController {
     }
 
     @PostMapping(value = "/{id}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ThemeDTO.ThemeResponse> uploadLogo(
             @PathVariable String id,
             @RequestParam("image") MultipartFile file,

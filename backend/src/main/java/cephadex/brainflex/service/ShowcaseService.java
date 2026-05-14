@@ -61,7 +61,6 @@ import cephadex.brainflex.model.ShowcasePlayer;
 import cephadex.brainflex.model.ShowcaseResult;
 import cephadex.brainflex.model.ShowcaseSettings;
 import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.Slide;
@@ -128,17 +127,27 @@ public class ShowcaseService {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Deck has no elements");
         }
 
-        // Start from the deck's author-suggested defaults, then layer the host's overrides.
+        // Start from the deck's author-suggested defaults, then layer the host's
+        // overrides.
         ShowcaseSettings settings = copyOf(deck.getDefaultSettings());
-        if (request.gameMode() != null) settings.setGameMode(request.gameMode());
-        if (request.totalRounds() != null) settings.setTotalRounds(request.totalRounds());
-        if (request.timePerQuestion() != null) settings.setTimePerQuestion(request.timePerQuestion());
-        if (request.speedBonus() != null) settings.setSpeedBonus(request.speedBonus());
-        if (request.allowGuests() != null) settings.setAllowGuests(request.allowGuests());
-        if (request.maxPlayers() != null) settings.setMaxPlayers(request.maxPlayers());
-        if (request.allowLateJoin() != null) settings.setAllowLateJoin(request.allowLateJoin());
-        if (request.showScoresImmediately() != null) settings.setShowScoresImmediately(request.showScoresImmediately());
-        if (request.scoringEnabled() != null) settings.setScoringEnabled(request.scoringEnabled());
+        if (request.gameMode() != null)
+            settings.setGameMode(request.gameMode());
+        if (request.totalRounds() != null)
+            settings.setTotalRounds(request.totalRounds());
+        if (request.timePerQuestion() != null)
+            settings.setTimePerQuestion(request.timePerQuestion());
+        if (request.speedBonus() != null)
+            settings.setSpeedBonus(request.speedBonus());
+        if (request.allowGuests() != null)
+            settings.setAllowGuests(request.allowGuests());
+        if (request.maxPlayers() != null)
+            settings.setMaxPlayers(request.maxPlayers());
+        if (request.allowLateJoin() != null)
+            settings.setAllowLateJoin(request.allowLateJoin());
+        if (request.showScoresImmediately() != null)
+            settings.setShowScoresImmediately(request.showScoresImmediately());
+        if (request.scoringEnabled() != null)
+            settings.setScoringEnabled(request.scoringEnabled());
         // totalRounds is upper-bounded by the deck's actual element count.
         settings.setTotalRounds(Math.min(settings.getTotalRounds(), elements.size()));
 
@@ -184,7 +193,8 @@ public class ShowcaseService {
 
         boolean alreadyJoined = session.getPlayers().stream()
                 .anyMatch(p -> p.getUserId().equals(player.getId()));
-        if (alreadyJoined) return session;
+        if (alreadyJoined)
+            return session;
 
         if (!session.getSettings().isAllowGuests() && Boolean.TRUE.equals(player.getIsGuest()))
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This showcase does not allow guests");
@@ -236,11 +246,13 @@ public class ShowcaseService {
                 PlayerAnswer ans = player.getAnswers().stream()
                         .filter(a -> a.getElementId().equals(element.id()))
                         .findFirst().orElse(null);
-                if (ans == null) continue;
+                if (ans == null)
+                    continue;
                 details.add(new ShowcaseReviewDTO.PlayerRoundDetail(
                         player.getUserId(), player.getUserName(),
                         ans.getPayload(), ans.isCorrect(), ans.getPointsAwarded()));
-                if (ans.getPayload() instanceof TimeoutAnswer) timedOut++;
+                if (ans.getPayload() instanceof TimeoutAnswer)
+                    timedOut++;
             }
             rounds.add(new ShowcaseReviewDTO.RoundReview(i, element, timedOut, details));
         }
@@ -281,22 +293,28 @@ public class ShowcaseService {
     public void submitAnswer(String roomCode, AnswerSubmitRequest request, String principalName) {
         synchronized (getLock(roomCode)) {
             Showcase session = loadActiveSession(roomCode);
-            if (session.getStatus() != GameStatus.IN_PROGRESS) return;
-            if (session.getPhase() != ShowcasePhase.SUBMIT) return;
+            if (session.getStatus() != GameStatus.IN_PROGRESS)
+                return;
+            if (session.getPhase() != ShowcasePhase.SUBMIT)
+                return;
 
             DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
-            if (!current.id().equals(request.elementId())) return; // stale answer
-            if (current instanceof Slide) return; // slides accept no answers
+            if (!current.id().equals(request.elementId()))
+                return; // stale answer
+            if (current instanceof Slide)
+                return; // slides accept no answers
 
             String userId = resolveUserId(principalName);
             ShowcasePlayer player = session.getPlayers().stream()
                     .filter(p -> p.getUserId().equals(userId))
                     .findFirst().orElse(null);
-            if (player == null) return;
+            if (player == null)
+                return;
 
             boolean alreadyAnswered = player.getAnswers().stream()
                     .anyMatch(a -> a.getElementId().equals(current.id()));
-            if (alreadyAnswered) return;
+            if (alreadyAnswered)
+                return;
 
             ElementScorer.Result result = ElementScorer.score(current, request.payload());
             int points = result.points();
@@ -325,7 +343,8 @@ public class ShowcaseService {
             boolean allAnswered = session.getPlayers().stream()
                     .allMatch(p -> p.getAnswers().stream()
                             .anyMatch(a -> a.getElementId().equals(current.id())));
-            if (allAnswered) completeRound(session);
+            if (allAnswered)
+                completeRound(session);
         }
     }
 
@@ -362,8 +381,10 @@ public class ShowcaseService {
         synchronized (getLock(roomCode)) {
             Showcase session = getByRoomCode(roomCode);
             validateHost(session, principalName);
-            if (session.getStatus() != GameStatus.IN_PROGRESS) return;
-            if (session.getSettings().getGameMode() != GameMode.TURN_BASED) return;
+            if (session.getStatus() != GameStatus.IN_PROGRESS)
+                return;
+            if (session.getSettings().getGameMode() != GameMode.TURN_BASED)
+                return;
             startNextRound(roomCode);
         }
     }
@@ -371,7 +392,8 @@ public class ShowcaseService {
     public void leaveGame(String roomCode, String principalName) {
         synchronized (getLock(roomCode)) {
             Showcase session = loadActiveSession(roomCode);
-            if (session.getStatus() == GameStatus.FINISHED || session.getStatus() == GameStatus.CANCELLED) return;
+            if (session.getStatus() == GameStatus.FINISHED || session.getStatus() == GameStatus.CANCELLED)
+                return;
 
             String userId = resolveUserId(principalName);
             session.getPlayers().removeIf(p -> p.getUserId().equals(userId));
@@ -387,9 +409,12 @@ public class ShowcaseService {
         synchronized (getLock(roomCode)) {
             Showcase session = showcaseCache.get(roomCode)
                     .orElseGet(() -> showcaseRepository.findByRoomCode(roomCode).orElse(null));
-            if (session == null) return;
-            if (session.getStatus() != GameStatus.IN_PROGRESS) return;
-            if (session.getCurrentRound() != timedRound) return;
+            if (session == null)
+                return;
+            if (session.getStatus() != GameStatus.IN_PROGRESS)
+                return;
+            if (session.getCurrentRound() != timedRound)
+                return;
 
             DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
             if (current instanceof Slide) {
@@ -435,7 +460,8 @@ public class ShowcaseService {
         for (ShowcasePlayer player : session.getPlayers()) {
             boolean answered = player.getAnswers().stream()
                     .anyMatch(a -> a.getElementId().equals(element.id()));
-            if (answered) continue;
+            if (answered)
+                continue;
             PlayerAnswer timeout = new PlayerAnswer();
             timeout.setElementId(element.id());
             timeout.setPayload(new TimeoutAnswer());
@@ -447,14 +473,20 @@ public class ShowcaseService {
         }
     }
 
-    /** True if at least one player submitted a real answer (i.e. has a submissionId) for the element. */
+    /**
+     * True if at least one player submitted a real answer (i.e. has a submissionId)
+     * for the element.
+     */
     private static boolean hasVoteEligibleSubmission(Showcase session, DeckElement element) {
         return session.getPlayers().stream()
                 .flatMap(p -> p.getAnswers().stream())
                 .anyMatch(a -> element.id().equals(a.getElementId()) && a.getSubmissionId() != null);
     }
 
-    /** Broadcast the standard round-result message (best-answer outcome may be null). */
+    /**
+     * Broadcast the standard round-result message (best-answer outcome may be
+     * null).
+     */
     private void broadcastRoundResult(
             Showcase session,
             DeckElement element,
@@ -493,7 +525,10 @@ public class ShowcaseService {
         if (session.getSettings().getGameMode() == GameMode.SIMULTANEOUS) {
             String roomCode = session.getRoomCode();
             scheduler.schedule(() -> {
-                try { startNextRound(roomCode); } catch (Exception ignored) {}
+                try {
+                    startNextRound(roomCode);
+                } catch (Exception ignored) {
+                }
             }, BETWEEN_ROUNDS_DELAY_SECONDS, TimeUnit.SECONDS);
         }
     }
@@ -537,28 +572,34 @@ public class ShowcaseService {
     public void submitVote(String roomCode, VoteSubmitRequest request, String principalName) {
         synchronized (getLock(roomCode)) {
             Showcase session = loadActiveSession(roomCode);
-            if (session.getStatus() != GameStatus.IN_PROGRESS) return;
-            if (session.getPhase() != ShowcasePhase.VOTE) return;
+            if (session.getStatus() != GameStatus.IN_PROGRESS)
+                return;
+            if (session.getPhase() != ShowcasePhase.VOTE)
+                return;
 
             DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
-            if (!current.id().equals(request.elementId())) return; // stale vote
+            if (!current.id().equals(request.elementId()))
+                return; // stale vote
 
             // Validate the voted submission exists for this round.
             boolean validSubmission = session.getPlayers().stream()
                     .flatMap(p -> p.getAnswers().stream())
                     .anyMatch(a -> request.submissionId().equals(a.getSubmissionId())
                             && current.id().equals(a.getElementId()));
-            if (!validSubmission) return;
+            if (!validSubmission)
+                return;
 
             String userId = resolveUserId(principalName);
             ShowcasePlayer voter = session.getPlayers().stream()
                     .filter(p -> p.getUserId().equals(userId))
                     .findFirst().orElse(null);
-            if (voter == null) return;
+            if (voter == null)
+                return;
 
             boolean alreadyVoted = voter.getVotes().stream()
                     .anyMatch(v -> current.id().equals(v.getElementId()));
-            if (alreadyVoted) return;
+            if (alreadyVoted)
+                return;
 
             RoundVote vote = new RoundVote();
             vote.setElementId(current.id());
@@ -572,7 +613,8 @@ public class ShowcaseService {
             boolean allVoted = session.getPlayers().stream()
                     .allMatch(p -> p.getVotes().stream()
                             .anyMatch(v -> current.id().equals(v.getElementId())));
-            if (allVoted) completeVotePhase(session);
+            if (allVoted)
+                completeVotePhase(session);
         }
     }
 
@@ -609,8 +651,10 @@ public class ShowcaseService {
         List<String> winnerUserIds = new ArrayList<>();
         for (ShowcasePlayer p : session.getPlayers()) {
             for (PlayerAnswer a : p.getAnswers()) {
-                if (!element.id().equals(a.getElementId())) continue;
-                if (a.getSubmissionId() == null) continue;
+                if (!element.id().equals(a.getElementId()))
+                    continue;
+                if (a.getSubmissionId() == null)
+                    continue;
                 int count = voteCounts.getOrDefault(a.getSubmissionId(), 0);
                 tallies.add(new RoundResultMessage.SubmissionTally(
                         a.getSubmissionId(),
@@ -645,7 +689,10 @@ public class ShowcaseService {
 
     private void scheduleVoteTimer(String roomCode, int round, int timeLimitSeconds) {
         scheduler.schedule(() -> {
-            try { handleVoteTimeout(roomCode, round); } catch (Exception ignored) {}
+            try {
+                handleVoteTimeout(roomCode, round);
+            } catch (Exception ignored) {
+            }
         }, timeLimitSeconds, TimeUnit.SECONDS);
     }
 
@@ -653,10 +700,14 @@ public class ShowcaseService {
         synchronized (getLock(roomCode)) {
             Showcase session = showcaseCache.get(roomCode)
                     .orElseGet(() -> showcaseRepository.findByRoomCode(roomCode).orElse(null));
-            if (session == null) return;
-            if (session.getStatus() != GameStatus.IN_PROGRESS) return;
-            if (session.getCurrentRound() != timedRound) return;
-            if (session.getPhase() != ShowcasePhase.VOTE) return;
+            if (session == null)
+                return;
+            if (session.getStatus() != GameStatus.IN_PROGRESS)
+                return;
+            if (session.getCurrentRound() != timedRound)
+                return;
+            if (session.getPhase() != ShowcasePhase.VOTE)
+                return;
             completeVotePhase(session);
         }
     }
@@ -665,7 +716,8 @@ public class ShowcaseService {
         synchronized (getLock(roomCode)) {
             Showcase session = showcaseCache.get(roomCode)
                     .orElseGet(() -> showcaseRepository.findByRoomCode(roomCode).orElse(null));
-            if (session == null || session.getStatus() != GameStatus.IN_PROGRESS) return;
+            if (session == null || session.getStatus() != GameStatus.IN_PROGRESS)
+                return;
 
             session.setRoundStartedAt(LocalDateTime.now());
             session.setPhase(ShowcasePhase.SUBMIT);
@@ -708,7 +760,8 @@ public class ShowcaseService {
         showcaseCache.evict(session.getRoomCode());
 
         for (PlayerPlacement p : placements) {
-            if (!p.isGuest()) updateStatsAfterGame(p.getUserId(), p.getFinalScore(), p.getPlacement() == 1);
+            if (!p.isGuest())
+                updateStatsAfterGame(p.getUserId(), p.getFinalScore(), p.getPlacement() == 1);
         }
 
         messagingTemplate.convertAndSend(
@@ -726,7 +779,8 @@ public class ShowcaseService {
         }
         DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
         int timeWindow = effectiveDisplaySeconds(element, s);
-        if (timeWindow <= 0) return basePoints;
+        if (timeWindow <= 0)
+            return basePoints;
         long totalMillis = timeWindow * 1000L;
         long elapsed = Duration.between(session.getRoundStartedAt(), LocalDateTime.now()).toMillis();
         elapsed = Math.min(Math.max(elapsed, 0), totalMillis);
@@ -739,7 +793,8 @@ public class ShowcaseService {
             var stats = user.getStats();
             stats.setGamesPlayed(stats.getGamesPlayed() + 1);
             stats.setTotalPoints(stats.getTotalPoints() + finalScore);
-            if (finalScore > stats.getHighScore()) stats.setHighScore(finalScore);
+            if (finalScore > stats.getHighScore())
+                stats.setHighScore(finalScore);
             stats.setCurrentStreak(won ? stats.getCurrentStreak() + 1 : 0);
             userRepository.save(user);
         });
@@ -772,25 +827,31 @@ public class ShowcaseService {
             // unlimited for questions; slides force a sane minimum so they advance
             return;
         }
-        if (seconds <= 0) seconds = SLIDE_DEFAULT_SECONDS;
+        if (seconds <= 0)
+            seconds = SLIDE_DEFAULT_SECONDS;
         scheduleRoundTimer(session.getRoomCode(), round, seconds);
     }
 
     /**
      * Resolves the actual duration for an element:
-     *   element.displaySeconds > 0 → use it
-     *   else settings.timePerQuestion > 0 → use it
-     *   else 0 (unlimited)
+     * element.displaySeconds > 0 → use it
+     * else settings.timePerQuestion > 0 → use it
+     * else 0 (unlimited)
      */
     private static int effectiveDisplaySeconds(DeckElement element, ShowcaseSettings settings) {
-        if (element.displaySeconds() > 0) return element.displaySeconds();
-        if (settings.getTimePerQuestion() > 0) return settings.getTimePerQuestion();
+        if (element.displaySeconds() > 0)
+            return element.displaySeconds();
+        if (settings.getTimePerQuestion() > 0)
+            return settings.getTimePerQuestion();
         return 0;
     }
 
     private void scheduleRoundTimer(String roomCode, int round, int timeLimitSeconds) {
         scheduler.schedule(() -> {
-            try { handleRoundTimeout(roomCode, round); } catch (Exception ignored) {}
+            try {
+                handleRoundTimeout(roomCode, round);
+            } catch (Exception ignored) {
+            }
         }, timeLimitSeconds, TimeUnit.SECONDS);
     }
 
@@ -805,7 +866,8 @@ public class ShowcaseService {
     private String resolveUserId(String principalName) {
         if (principalName == null)
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
-        if (principalName.startsWith("guest:")) return principalName.substring(6);
+        if (principalName.startsWith("guest:"))
+            return principalName.substring(6);
         return userRepository.findByGoogleId(principalName)
                 .map(User::getId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -828,10 +890,13 @@ public class ShowcaseService {
         return p;
     }
 
-    /** Defensive copy so the deck's `defaultSettings` isn't mutated by a showcase. */
+    /**
+     * Defensive copy so the deck's `defaultSettings` isn't mutated by a showcase.
+     */
     private static ShowcaseSettings copyOf(ShowcaseSettings src) {
         ShowcaseSettings out = new ShowcaseSettings();
-        if (src == null) return out;
+        if (src == null)
+            return out;
         out.setMaxPlayers(src.getMaxPlayers());
         out.setTotalRounds(src.getTotalRounds());
         out.setTimePerQuestion(src.getTimePerQuestion());
@@ -847,7 +912,8 @@ public class ShowcaseService {
     private String generateUniqueRoomCode() {
         for (int attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
             String code = randomCode();
-            if (showcaseRepository.findByRoomCode(code).isEmpty()) return code;
+            if (showcaseRepository.findByRoomCode(code).isEmpty())
+                return code;
         }
         throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "Could not generate a unique room code");
     }

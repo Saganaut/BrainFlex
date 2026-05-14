@@ -51,16 +51,34 @@ public class DeckService {
         return deckRepository.findByCreatorUserId(userId);
     }
 
-    // Only return the deck if it is public or owned by the user
-    // TODO: Build other route to get decks for viewing for games/showcases
-    public Deck getById(User creator, String id) {
+    /**
+     * Fetches a deck for read-only viewing. Caller may be empty (anonymous
+     * visitor / guest); the visibility matrix decides what they can see:
+     *   PUBLIC, UNLISTED  → anyone with the id
+     *   ORG               → registered users in the same organization
+     *   PRIVATE           → the owner only
+     * Unmet visibility rules throw 401 (no caller) or 403 (caller, wrong scope).
+     */
+    public Deck getViewable(Optional<User> caller, String id) {
         Deck deck = deckRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found"));
-
-        if (deck.getVisibility().equals(DeckVisibility.PUBLIC) || deck.getCreatorUserId().equals(creator.getId())) {
+        DeckVisibility visibility = deck.getVisibility();
+        if (visibility == DeckVisibility.PUBLIC || visibility == DeckVisibility.UNLISTED) {
             return deck;
         }
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "You do not have access to this deck");
+        User user = caller.orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to view this deck"));
+        if (visibility == DeckVisibility.ORG) {
+            if (deck.getOrganizationId() != null
+                    && deck.getOrganizationId().equals(user.getOrganizationId())) {
+                return deck;
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Deck is restricted to its organization");
+        }
+        if (user.getId().equals(deck.getCreatorUserId())) {
+            return deck;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this deck");
     }
 
     // ---- Deck CRUD ----

@@ -171,7 +171,7 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
       <label className={styles.setting}>
         <span>
           Seconds per question
-          <span className={styles.settingHint}> — 0 = unlimited</span>
+          <span className={styles.settingHint}> (0 = unlimited )</span>
         </span>
         <Input
           type='number'
@@ -202,8 +202,14 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
             name='gameMode'
             legend='Game mode'
             options={[
-              { value: "SIMULTANEOUS", label: "Simultaneous — everyone answers at once" },
-              { value: "TURN_BASED", label: "Turn-based — host advances each round" },
+              {
+                value: "SIMULTANEOUS",
+                label: "Simultaneous — everyone answers at once",
+              },
+              {
+                value: "TURN_BASED",
+                label: "Turn-based — host advances each round",
+              },
             ]}
             value={settings.gameMode}
             onChange={(value) => {
@@ -254,7 +260,6 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
               }}
             />
           </label>
-
         </div>
       </details>
     </div>
@@ -345,7 +350,9 @@ const CreateGamePage = () => {
 
       {mode === "template" && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Pick a template — one click to play</h2>
+          <h2 className={styles.sectionTitle}>
+            Pick a template — one click to play
+          </h2>
           {createError && (
             <p className={styles.errorMsg} role='alert'>
               {extractErrorMessage(createError, "Failed to create game.")}
@@ -378,9 +385,7 @@ const CreateGamePage = () => {
       )}
 
       {mode === "custom" && (
-        <form
-          className={styles.form}
-          onSubmit={handleCustomSubmit}>
+        <form className={styles.form} onSubmit={handleCustomSubmit}>
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Choose Your Pack</h2>
             {loadingMine ? (
@@ -444,8 +449,9 @@ const CreateGamePage = () => {
             </span>
             <h2 className={styles.sectionTitle}>Auto-Generate — Coming Soon</h2>
             <p className={styles.authMsg}>
-              Soon you&apos;ll be able to type a topic, paste a webpage, or upload
-              a PDF, and we&apos;ll build a question pack for you automatically.
+              Soon you&apos;ll be able to type a topic, paste a webpage, or
+              upload a PDF, and we&apos;ll build a question pack for you
+              automatically.
             </p>
             <Btn
               type='button'

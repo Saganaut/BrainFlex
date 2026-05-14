@@ -101,22 +101,33 @@ public class UserService {
         userRepository.save(user);
     }
 
+    // For OAuth2-authenticated callers, Authentication.getName() returns the
+    // Google `sub` claim — that's the principal identifier Spring Security
+    // populates from the OIDC token, and it's the stable lookup key Google
+    // gives us. Internal User.id is used everywhere else once the lookup
+    // resolves. Guests carry a `guest:<internalId>` name instead (see
+    // resolveAnyAuthenticatedUser below).
     public Optional<User> resolveRegisteredUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) return Optional.empty();
+        if (authentication == null || !authentication.isAuthenticated())
+            return Optional.empty();
         boolean isRegistered = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
-        if (!isRegistered) return Optional.empty();
+        if (!isRegistered)
+            return Optional.empty();
         return userRepository.findByGoogleId(authentication.getName());
     }
 
     public Optional<User> resolveAnyAuthenticatedUser(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) return Optional.empty();
+        if (authentication == null || !authentication.isAuthenticated())
+            return Optional.empty();
         boolean hasRole = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_GUEST")
                         || a.getAuthority().equals("ROLE_USER"));
-        if (!hasRole) return Optional.empty();
+        if (!hasRole)
+            return Optional.empty();
         String name = authentication.getName();
-        if (name.startsWith("guest:")) return userRepository.findById(name.substring(6));
+        if (name.startsWith("guest:"))
+            return userRepository.findById(name.substring(6));
         return userRepository.findByGoogleId(name);
     }
 
@@ -130,7 +141,8 @@ public class UserService {
             var stats = user.getStats();
             stats.setGamesPlayed(stats.getGamesPlayed() + 1);
             stats.setTotalPoints(stats.getTotalPoints() + finalScore);
-            if (finalScore > stats.getHighScore()) stats.setHighScore(finalScore);
+            if (finalScore > stats.getHighScore())
+                stats.setHighScore(finalScore);
             stats.setCurrentStreak(won ? stats.getCurrentStreak() + 1 : 0);
             userRepository.save(user);
         });

@@ -45,10 +45,6 @@ public class AuthController {
         this.authoritiesService = authoritiesService;
     }
 
-    // TODO: Should we always receive a guest endpoint? I think if there is no
-    // username put in, its not a geust but a visitor and shouldn't receive anything
-    // back
-
     @GetMapping("/me")
     public ResponseEntity<UserDTO> getCurrentUser(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated() &&
@@ -71,9 +67,10 @@ public class AuthController {
             }
         }
 
-        // Unauthenticated visitor — return an anonymous guest stub so the frontend
-        // always receives a UserDTO shape from this endpoint.
-        return ResponseEntity.ok(new UserDTO.GuestUser("0", "Guest", true, null, null));
+        // Visitor — no session, not even a guest. Return 204 so the frontend's
+        // useCurrentUser maps it to state="visitor" via its data==null branch
+        // instead of treating the caller as a fake "id=0" guest.
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/register")

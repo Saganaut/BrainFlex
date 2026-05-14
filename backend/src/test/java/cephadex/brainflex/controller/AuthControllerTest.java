@@ -46,12 +46,9 @@ class AuthControllerTest {
     private UserService userService;
 
     @Test
-    void getCurrentUser_WhenNotAuthenticated_ReturnsGuestStub() throws Exception {
+    void getCurrentUser_WhenNotAuthenticated_ReturnsNoContent() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value("0"))
-                .andExpect(jsonPath("$.userName").value("Guest"))
-                .andExpect(jsonPath("$.isGuest").value(true));
+                .andExpect(status().isNoContent());
     }
 
     @Test

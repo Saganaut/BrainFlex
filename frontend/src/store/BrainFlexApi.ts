@@ -454,6 +454,17 @@ export type UpdateThemeRequest = {
   mode?: string;
   organizationId?: string;
 };
+export type ShowcaseSettings = {
+  maxPlayers?: number;
+  totalRounds?: number;
+  timePerQuestion?: number;
+  speedBonus?: boolean;
+  allowGuests?: boolean;
+  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+  allowLateJoin?: boolean;
+  showScoresImmediately?: boolean;
+  scoringEnabled?: boolean;
+};
 export type DeckElementBase = {
   kind: string;
 };
@@ -690,6 +701,8 @@ export type DeckDto = {
   id?: string;
   name?: string;
   description?: string;
+  creatorUserId?: string;
+  organizationId?: string;
   tags?: string[];
   isSystem?: boolean;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
@@ -697,6 +710,7 @@ export type DeckDto = {
   coverImageUrl?: string;
   backgroundImageUrl?: string;
   themeId?: string;
+  defaultSettings?: ShowcaseSettings;
   estimatedDurationMinutes?: number;
   elementCount?: number;
   elements?: (
@@ -711,6 +725,7 @@ export type DeckDto = {
     | Slide
     | TextQuestion
   )[];
+  parentDeckId?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -763,17 +778,6 @@ export type CreateThemeRequest = {
   hueAccent?: number;
   mode?: string;
   organizationId?: string;
-};
-export type ShowcaseSettings = {
-  maxPlayers?: number;
-  totalRounds?: number;
-  timePerQuestion?: number;
-  speedBonus?: boolean;
-  allowGuests?: boolean;
-  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
-  allowLateJoin?: boolean;
-  showScoresImmediately?: boolean;
-  scoringEnabled?: boolean;
 };
 export type ShowcasePlayerDto = {
   userId?: string;

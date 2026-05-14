@@ -21,6 +21,7 @@ const Input: React.FC<InputProps> = ({
   ref,
   onChange,
   maxLength,
+  type,
   id,
   variant = "default",
   infoMessage,
@@ -36,6 +37,7 @@ const Input: React.FC<InputProps> = ({
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.input}>
         <input
+          type={type}
           ref={ref}
           id={id}
           value={value}

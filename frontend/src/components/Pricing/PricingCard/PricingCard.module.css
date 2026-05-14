@@ -4,20 +4,16 @@
   flex-direction: column;
   gap: var(--space-6);
   padding: var(--space-8);
-  border: 2px solid var(--border-default);
   border-radius: var(--radius-lg);
   background: var(--bg-surface);
   color: var(--text-primary);
   transition:
-    border-color var(--duration-fast) var(--ease-out),
     transform var(--duration-fast) var(--ease-out),
     box-shadow var(--duration-base) var(--ease-out);
 }
 
 .card:hover {
   border-color: var(--action-hover);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
 }
 
 .featured {
@@ -31,11 +27,7 @@
   inset: 0;
   border-radius: var(--radius-lg);
   padding: var(--space-half);
-  background: linear-gradient(
-    135deg,
-    var(--border-brand),
-    var(--border-focus)
-  );
+  background: linear-gradient(135deg, var(--border-brand), var(--border-focus));
   pointer-events: none;
   opacity: 0.6;
   mask:
@@ -118,7 +110,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
   padding: var(--space-3) var(--space-6);
   border: 2px solid var(--border-default);
   border-radius: var(--radius-md);

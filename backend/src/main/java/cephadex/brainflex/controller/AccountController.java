@@ -21,14 +21,14 @@ import cephadex.brainflex.service.UserService;
 
 @RestController
 @RequestMapping("/api/users")
-public class ProfileImageController {
+public class AccountController {
 
     private final UserRepository userRepository;
     private final UserService userService;
     private final S3Service s3Service;
     private final ImageProcessingService imageProcessingService;
 
-    public ProfileImageController(
+    public AccountController(
             UserRepository userRepository,
             UserService userService,
             S3Service s3Service,

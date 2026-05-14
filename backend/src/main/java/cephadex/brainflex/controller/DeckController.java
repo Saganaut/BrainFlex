@@ -10,6 +10,7 @@
 package cephadex.brainflex.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,9 +64,8 @@ public class DeckController {
 
     @GetMapping("/{id}")
     public DeckDTO getDeck(@PathVariable String id, Authentication authentication) {
-        User caller = resolveUser(authentication);
-
-        return new DeckDTO(deckService.getById(caller, id));
+        Optional<User> caller = userService.resolveRegisteredUser(authentication);
+        return new DeckDTO(deckService.getViewable(caller, id));
     }
 
     @PreAuthorize("hasRole('USER')")

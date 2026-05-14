@@ -69,7 +69,7 @@ const MainPage = () => {
         />
       </section>
 
-      <section className={styles.quickJoin} aria-label='Quick join'>
+      {/* <section className={styles.quickJoin} aria-label='Quick join'>
         <form
           className={styles.quickJoinForm}
           onSubmit={(e) => {
@@ -105,12 +105,10 @@ const MainPage = () => {
             )}
           </p>
         )}
-      </section>
+      </section> */}
 
       {!isRegistered && userState.state !== "loading" && (
-        <p className={styles.signinHint}>
-          Sign in to create games and polls.
-        </p>
+        <p className={styles.signinHint}>Sign in to create games and polls.</p>
       )}
     </div>
   );

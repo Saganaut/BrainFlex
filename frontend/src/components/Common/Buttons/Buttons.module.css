@@ -11,10 +11,12 @@
   --background-color: var(--bg-secondary);
   --border-color: currentcolor;
   --gap: var(--space-2);
+  --min-height: 2.5rem;
 
   display: flex;
   align-items: center;
-  height: fit-content;
+  justify-content: center;
+  min-height: var(--min-height);
   width: fit-content;
   gap: var(--gap);
   padding: var(--padding);
@@ -76,11 +78,18 @@
   }
 
   /* ─── Sizes ─────────────────────────────────────────────────── */
+
+  /*
+   * `--min-height` pins the button height so icon-only and text-only buttons
+   * of the same size render identically. Values match font-size × 1.45 line
+   * height + the vertical padding for that size.
+   */
   &.xs {
     --padding: var(--p-pill-xs);
     --font-size: var(--font-size-xs);
     --radius: var(--radius-sm);
     --gap: var(--space-1);
+    --min-height: 1.5rem;
   }
 
   &.sm {
@@ -88,6 +97,7 @@
     --font-size: var(--font-size-xs);
     --radius: var(--radius-md);
     --gap: var(--space-2);
+    --min-height: 1.75rem;
   }
 
   &.md {
@@ -95,6 +105,7 @@
     --font-size: var(--font-size-base);
     --radius: var(--radius-md);
     --gap: var(--space-3);
+    --min-height: 2.5rem;
   }
 
   &.lg {
@@ -102,6 +113,7 @@
     --font-size: var(--font-size-lg);
     --radius: var(--radius-lg);
     --gap: var(--space-4);
+    --min-height: 3.75rem;
   }
 
   /* ─── Modes ─────────────────────────────────────────────────── */

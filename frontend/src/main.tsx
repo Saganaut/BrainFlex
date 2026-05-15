@@ -7,7 +7,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { Provider } from "react-redux";
 import { store } from "./store/store.ts";
 
-const router = createRouter({ routeTree });
+const router = createRouter({ routeTree, defaultViewTransition: true });
 
 declare module "@tanstack/react-router" {
   interface Register {

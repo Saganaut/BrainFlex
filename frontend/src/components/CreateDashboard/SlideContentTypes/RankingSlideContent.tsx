@@ -10,6 +10,7 @@ import { useState } from "react";
 import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
@@ -112,16 +113,18 @@ const RankingSlideContent = () => {
         {items.map((item, idx) => (
           <div key={item.id} className={styles.itemRow}>
             <span>{idx + 1}.</span>
-            <input
-              type='text'
-              className={styles.textInput}
-              value={item.label ?? ""}
-              placeholder={`Item ${(idx + 1).toString()}`}
-              onChange={(e) => {
-                if (item.id) handleItemLabelChange(item.id, e.target.value);
-              }}
-              onBlur={flush}
-            />
+            <div className={styles.itemRowField}>
+              <Input
+                type='text'
+                fullWidth
+                value={item.label ?? ""}
+                placeholder={`Item ${(idx + 1).toString()}`}
+                onChange={(e) => {
+                  if (item.id) handleItemLabelChange(item.id, e.target.value);
+                }}
+                onBlur={flush}
+              />
+            </div>
             <IconBtn
               type='default'
               size='xs'

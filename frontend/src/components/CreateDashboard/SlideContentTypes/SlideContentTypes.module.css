@@ -1,55 +1,13 @@
 /* Shared styles for the SlideContentTypes editors. Each kind-specific editor
    slots fields, inputs and helper rows in here so layout stays consistent
-   across the dashboard's slide canvas. */
-
-.fieldLabel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-3);
-}
-
-.textInput,
-.numberInput,
-.select {
-  width: 100%;
-  max-width: 320px;
-  padding: var(--space-2);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-canvas);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-}
-
-.numberInput {
-  max-width: 140px;
-}
-
-.textInput:focus,
-.numberInput:focus,
-.select:focus {
-  outline: none;
-  border-color: var(--border-focus);
-}
-
-.checkboxLabel {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin-bottom: var(--space-3);
-  cursor: pointer;
-}
+   across the dashboard's slide canvas. Form primitives themselves come from
+   Common/Input — these classes only handle row layout, warnings, and image
+   placeholders. */
 
 .fieldRow {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   gap: var(--space-4);
   margin-bottom: var(--space-3);
 }
@@ -87,7 +45,6 @@
 
 .optionImagePlaceholder {
   display: block;
-  width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: var(--radius-sm);
@@ -102,35 +59,25 @@
 
 .itemRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
 }
 
-.itemRow .textInput {
+/* Wrapper for an Input rendered inside .itemRow so the field stretches to
+   fill available width — Input itself has a fixed 300px default that we
+   override with `fullWidth`, but flex needs the wrapper to claim the row. */
+.itemRowField {
   flex: 1;
-  max-width: none;
+  min-width: 0;
 }
 
-.iconBtn {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  background-color: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.iconBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.iconBtn:hover:not(:disabled) {
-  background-color: var(--bg-subtle);
+/* Stack of fields next to a thumbnail (used by ImageChoice option rows). */
+.optionFieldsCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .sectionHeader {

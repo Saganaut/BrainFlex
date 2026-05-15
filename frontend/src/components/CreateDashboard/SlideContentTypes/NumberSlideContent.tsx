@@ -9,6 +9,8 @@
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput";
 import { useElementEditor } from "./useElementEditor";
 import type { NumberQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
@@ -77,85 +79,67 @@ const NumberSlideContent = () => {
       />
 
       <div className={styles.fieldRow}>
-        <label className={styles.fieldLabel}>
-          Correct value
-          <input
-            type='number'
-            className={styles.numberInput}
-            value={correctValue}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setCorrectValue(next);
-              schedule(buildPatch({ correctValue: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <NumberInput
+          label='Correct value'
+          id={`num-correct-${element.id ?? ""}`}
+          value={correctValue}
+          onChange={(next) => {
+            setCorrectValue(next);
+            schedule(buildPatch({ correctValue: next }));
+          }}
+          onBlur={flush}
+        />
 
-        <label className={styles.fieldLabel}>
-          Tolerance (±)
-          <input
-            type='number'
-            min={0}
-            className={styles.numberInput}
-            value={tolerance}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setTolerance(next);
-              schedule(buildPatch({ tolerance: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <NumberInput
+          label='Tolerance (±)'
+          id={`num-tolerance-${element.id ?? ""}`}
+          min={0}
+          value={tolerance}
+          onChange={(next) => {
+            setTolerance(next);
+            schedule(buildPatch({ tolerance: next }));
+          }}
+          onBlur={flush}
+        />
 
-        <label className={styles.fieldLabel}>
-          Decimal places
-          <input
-            type='number'
-            min={0}
-            max={10}
-            className={styles.numberInput}
-            value={decimalPlaces}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setDecimalPlaces(next);
-              schedule(buildPatch({ decimalPlaces: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <NumberInput
+          label='Decimal places'
+          id={`num-decimals-${element.id ?? ""}`}
+          min={0}
+          max={10}
+          value={decimalPlaces}
+          onChange={(next) => {
+            setDecimalPlaces(next);
+            schedule(buildPatch({ decimalPlaces: next }));
+          }}
+          onBlur={flush}
+        />
 
-        <label className={styles.fieldLabel}>
-          Unit label
-          <input
-            type='text'
-            className={styles.textInput}
-            value={unitLabel}
-            placeholder='e.g. km, $, %'
-            onChange={(e) => {
-              const next = e.target.value;
-              setUnitLabel(next);
-              schedule(buildPatch({ unitLabel: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <Input
+          label='Unit label'
+          id={`num-unit-${element.id ?? ""}`}
+          type='text'
+          value={unitLabel}
+          placeholder='e.g. km, $, %'
+          onChange={(e) => {
+            const next = e.target.value;
+            setUnitLabel(next);
+            schedule(buildPatch({ unitLabel: next }));
+          }}
+          onBlur={flush}
+        />
 
-        <label className={styles.fieldLabel}>
-          Points
-          <input
-            type='number'
-            min={0}
-            className={styles.numberInput}
-            value={pointValue}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setPointValue(next);
-              schedule(buildPatch({ pointValue: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <NumberInput
+          label='Points'
+          id={`num-points-${element.id ?? ""}`}
+          min={0}
+          value={pointValue}
+          onChange={(next) => {
+            setPointValue(next);
+            schedule(buildPatch({ pointValue: next }));
+          }}
+          onBlur={flush}
+        />
       </div>
     </SlideContentWrapper>
   );

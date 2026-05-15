@@ -208,7 +208,8 @@ const PlayPage = () => {
           <QuestionCard
             question={{
               questionText: "prompt" in element ? (element.prompt ?? "") : "",
-              pointValue: "pointValue" in element ? (element.pointValue ?? 0) : 0,
+              pointValue:
+                "pointValue" in element ? (element.pointValue ?? 0) : 0,
               timeLimit: questionCardTimeLimit,
               imageUrl: element.imageUrl,
             }}

@@ -2,6 +2,7 @@
 // Shows every Common/Input primitive with controlled state so they're interactive.
 import { useState } from "react";
 import { Input } from "../../components/Common/Input/Input";
+import { NumberInput } from "../../components/Common/Input/NumberInput";
 import { TextArea } from "../../components/Common/Input/TextArea";
 import { Checkbox } from "../../components/Common/Input/Checkbox";
 import { RadioGroup } from "../../components/Common/Input/RadioGroup";
@@ -45,6 +46,9 @@ const FormsSection = () => {
   ]);
   const [searchFaction, setSearchFaction] = useState<string[]>([]);
   const [search, setSearch] = useState("");
+  const [points, setPoints] = useState(50);
+  const [tolerance, setTolerance] = useState(0.1);
+  const [stretchedText, setStretchedText] = useState("");
 
   return (
     <section>
@@ -62,6 +66,51 @@ const FormsSection = () => {
               label='Disabled'
               id='ds-input-disabled'
               value='frodo_baggins'
+              disabled
+            />
+          </div>
+
+          <h4>Full-width Text Input</h4>
+          <div className={styles.formExampleRow}>
+            <div style={{ width: "100%" }}>
+              <Input
+                label='Caption (stretches to parent)'
+                id='ds-input-fullwidth'
+                placeholder='Used inside tight editor cells like MCQ option cards'
+                fullWidth
+                value={stretchedText}
+                onChange={(e) => {
+                  setStretchedText(e.target.value);
+                }}
+              />
+            </div>
+          </div>
+
+          <h4>Number Input</h4>
+          <div className={styles.formExampleRow}>
+            <NumberInput
+              label='Points'
+              id='ds-number-points'
+              min={0}
+              value={points}
+              onChange={setPoints}
+            />
+            <NumberInput
+              label='Tolerance (0–1)'
+              id='ds-number-tolerance'
+              min={0}
+              max={1}
+              step={0.01}
+              value={tolerance}
+              onChange={setTolerance}
+            />
+            <NumberInput
+              label='Disabled'
+              id='ds-number-disabled'
+              value={42}
+              onChange={() => {
+                /* disabled */
+              }}
               disabled
             />
           </div>

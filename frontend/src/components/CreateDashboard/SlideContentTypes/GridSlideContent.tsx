@@ -13,6 +13,9 @@
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput";
+import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { useElementEditor } from "./useElementEditor";
 import type { GridQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
@@ -99,93 +102,78 @@ const GridSlideContent = () => {
       />
 
       <div className={styles.fieldRow}>
-        <label className={styles.fieldLabel}>
-          Rows
-          <input
-            type='number'
-            min={1}
-            className={styles.numberInput}
-            value={rows}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 1;
-              setRows(next);
-              schedule(buildPatch({ rows: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.fieldLabel}>
-          Cols
-          <input
-            type='number'
-            min={1}
-            className={styles.numberInput}
-            value={cols}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 1;
-              setCols(next);
-              schedule(buildPatch({ cols: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.checkboxLabel}>
-          <input
-            type='checkbox'
-            checked={multipleCorrect}
-            onChange={(e) => {
-              const next = e.target.checked;
-              setMultipleCorrect(next);
-              schedule(buildPatch({ multipleCorrect: next }));
-            }}
-            onBlur={flush}
-          />
-          Multiple correct cells
-        </label>
-      </div>
-
-      <label className={styles.fieldLabel}>
-        Backing image URL (placeholder shown if blank)
-        <input
-          type='text'
-          className={styles.textInput}
-          value={backingImageUrl}
-          placeholder='https://…'
-          onChange={(e) => {
-            const next = e.target.value;
-            setBackingImageUrl(next);
-            schedule(
-              buildPatch({
-                cells: {
-                  ...element.cells,
-                  backingImageUrl: next || undefined,
-                },
-              }),
-            );
+        <NumberInput
+          label='Rows'
+          id={`grid-rows-${element.id ?? ""}`}
+          min={1}
+          value={rows}
+          onChange={(next) => {
+            const safe = next < 1 ? 1 : next;
+            setRows(safe);
+            schedule(buildPatch({ rows: safe }));
           }}
           onBlur={flush}
         />
-      </label>
+        <NumberInput
+          label='Cols'
+          id={`grid-cols-${element.id ?? ""}`}
+          min={1}
+          value={cols}
+          onChange={(next) => {
+            const safe = next < 1 ? 1 : next;
+            setCols(safe);
+            schedule(buildPatch({ cols: safe }));
+          }}
+          onBlur={flush}
+        />
+        <Checkbox
+          label='Multiple correct cells'
+          id={`grid-multi-${element.id ?? ""}`}
+          checked={multipleCorrect}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setMultipleCorrect(next);
+            schedule(buildPatch({ multipleCorrect: next }));
+          }}
+        />
+      </div>
+
+      <Input
+        label='Backing image URL (placeholder shown if blank)'
+        id={`grid-image-${element.id ?? ""}`}
+        type='text'
+        value={backingImageUrl}
+        placeholder='https://…'
+        onChange={(e) => {
+          const next = e.target.value;
+          setBackingImageUrl(next);
+          schedule(
+            buildPatch({
+              cells: {
+                ...element.cells,
+                backingImageUrl: next || undefined,
+              },
+            }),
+          );
+        }}
+        onBlur={flush}
+      />
 
       <img src={imgSrc} alt='' className={styles.imagePlaceholder} />
 
-      <label className={styles.fieldLabel}>
-        Correct cell indexes (comma-separated, row-major)
-        <input
-          type='text'
-          className={styles.textInput}
-          value={correctText}
-          placeholder='e.g. 0, 4, 8'
-          onChange={(e) => {
-            const next = e.target.value;
-            setCorrectText(next);
-            schedule(
-              buildPatch({ correctCellIndexes: inputToIndexes(next) }),
-            );
-          }}
-          onBlur={flush}
-        />
-      </label>
+      <Input
+        label='Correct cell indexes (comma-separated, row-major)'
+        id={`grid-correct-${element.id ?? ""}`}
+        type='text'
+        value={correctText}
+        placeholder='e.g. 0, 4, 8'
+        onChange={(e) => {
+          const next = e.target.value;
+          setCorrectText(next);
+          schedule(buildPatch({ correctCellIndexes: inputToIndexes(next) }));
+        }}
+        onBlur={flush}
+      />
 
       {/* TODO: Get more specs — visual cell-selection overlay on the backing
           image, per-cell labels (cells.labels), and the media-library picker

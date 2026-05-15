@@ -12,6 +12,8 @@ import { useState } from "react";
 import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { Radio } from "@/components/Common/Input/Radio";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
@@ -110,6 +112,7 @@ const ImageChoiceSlideContent = () => {
   const hasCorrect =
     correctOptionId !== undefined &&
     options.some((o) => o.id === correctOptionId);
+  const groupName = `img-correct-${element.id ?? ""}`;
 
   return (
     <SlideContentWrapper>
@@ -151,38 +154,39 @@ const ImageChoiceSlideContent = () => {
                 className={styles.optionImagePlaceholder}
                 style={{ width: 80, height: 80 }}
               />
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <input
+              <div className={styles.optionFieldsCol}>
+                <Input
                   type='text'
-                  className={styles.textInput}
+                  fullWidth
                   value={option.text ?? ""}
                   placeholder={`Caption ${(idx + 1).toString()}`}
                   onChange={(e) => {
-                    if (option.id) handleOptionField(option.id, "text", e.target.value);
+                    if (option.id)
+                      handleOptionField(option.id, "text", e.target.value);
                   }}
                   onBlur={flush}
                 />
-                <input
+                <Input
                   type='text'
-                  className={styles.textInput}
+                  fullWidth
                   value={option.imageUrl ?? ""}
                   placeholder='Image URL (or leave blank for placeholder)'
                   onChange={(e) => {
-                    if (option.id) handleOptionField(option.id, "imageUrl", e.target.value);
+                    if (option.id)
+                      handleOptionField(option.id, "imageUrl", e.target.value);
                   }}
                   onBlur={flush}
                 />
-                <label className={styles.checkboxLabel}>
-                  <input
-                    type='radio'
-                    name={`img-correct-${element.id ?? ""}`}
-                    checked={isCorrect}
-                    onChange={() => {
-                      if (option.id) handleSetCorrect(option.id);
-                    }}
-                  />
-                  Correct
-                </label>
+                <Radio
+                  label='Correct'
+                  name={groupName}
+                  id={`${groupName}-${id}`}
+                  value={id}
+                  checked={isCorrect}
+                  onChange={() => {
+                    if (option.id) handleSetCorrect(option.id);
+                  }}
+                />
               </div>
               <IconBtn
                 type='default'

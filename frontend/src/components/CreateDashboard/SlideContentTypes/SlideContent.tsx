@@ -7,13 +7,21 @@
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput";
+import { Dropdown } from "@/components/Common/Input/Dropdown";
 import { useElementEditor } from "./useElementEditor";
 import type { Slide } from "@/store/BrainFlexApi";
-import styles from "./SlideContentTypes.module.css";
 
 const isSlide = (e: { kind: string }): e is Slide => e.kind === "Slide";
 
-const SLIDE_KINDS = ["TITLE", "SECTION", "CALLOUT", "CONTENT", "END"] as const;
+const SLIDE_KIND_OPTIONS: { value: Slide["slideKind"]; label: string }[] = [
+  { value: "TITLE", label: "Title" },
+  { value: "SECTION", label: "Section" },
+  { value: "CALLOUT", label: "Callout" },
+  { value: "CONTENT", label: "Content" },
+  { value: "END", label: "End" },
+];
 
 const SlideContent = () => {
   const { element, schedule, flush, commit, syncedFromId, markSynced } =
@@ -58,39 +66,31 @@ const SlideContent = () => {
 
   return (
     <SlideContentWrapper>
-      <label className={styles.fieldLabel}>
-        Slide kind
-        <select
-          className={styles.select}
-          value={slideKind}
-          onChange={(e) => {
-            const next = e.target.value as Slide["slideKind"];
-            setSlideKind(next);
-            commit(buildPatch({ slideKind: next }));
-          }}>
-          {SLIDE_KINDS.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-      </label>
+      <Dropdown
+        label='Slide kind'
+        id={`slide-kind-${element.id ?? ""}`}
+        options={SLIDE_KIND_OPTIONS}
+        value={[slideKind]}
+        onChange={(values) => {
+          const next = (values[0] ?? "CONTENT") as Slide["slideKind"];
+          setSlideKind(next);
+          commit(buildPatch({ slideKind: next }));
+        }}
+      />
 
-      <label className={styles.fieldLabel}>
-        Title
-        <input
-          type='text'
-          className={styles.textInput}
-          value={title}
-          placeholder='Slide title…'
-          onChange={(e) => {
-            const next = e.target.value;
-            setTitle(next);
-            schedule(buildPatch({ title: next }));
-          }}
-          onBlur={flush}
-        />
-      </label>
+      <Input
+        label='Title'
+        id={`slide-title-${element.id ?? ""}`}
+        type='text'
+        value={title}
+        placeholder='Slide title…'
+        onChange={(e) => {
+          const next = e.target.value;
+          setTitle(next);
+          schedule(buildPatch({ title: next }));
+        }}
+        onBlur={flush}
+      />
 
       <RichTextInput
         label='Body'
@@ -104,37 +104,31 @@ const SlideContent = () => {
         onBlur={flush}
       />
 
-      <label className={styles.fieldLabel}>
-        Host notes
-        <input
-          type='text'
-          className={styles.textInput}
-          value={hostNotes}
-          placeholder='Notes for the host (not shown to players)'
-          onChange={(e) => {
-            const next = e.target.value;
-            setHostNotes(next);
-            schedule(buildPatch({ hostNotes: next }));
-          }}
-          onBlur={flush}
-        />
-      </label>
+      <Input
+        label='Host notes'
+        id={`slide-host-notes-${element.id ?? ""}`}
+        type='text'
+        value={hostNotes}
+        placeholder='Notes for the host (not shown to players)'
+        onChange={(e) => {
+          const next = e.target.value;
+          setHostNotes(next);
+          schedule(buildPatch({ hostNotes: next }));
+        }}
+        onBlur={flush}
+      />
 
-      <label className={styles.fieldLabel}>
-        Display seconds (0 = manual)
-        <input
-          type='number'
-          min={0}
-          className={styles.numberInput}
-          value={displaySeconds}
-          onChange={(e) => {
-            const next = Number(e.target.value) || 0;
-            setDisplaySeconds(next);
-            schedule(buildPatch({ displaySeconds: next }));
-          }}
-          onBlur={flush}
-        />
-      </label>
+      <NumberInput
+        label='Display seconds (0 = manual)'
+        id={`slide-display-seconds-${element.id ?? ""}`}
+        min={0}
+        value={displaySeconds}
+        onChange={(next) => {
+          setDisplaySeconds(next);
+          schedule(buildPatch({ displaySeconds: next }));
+        }}
+        onBlur={flush}
+      />
 
       {/* TODO: Get more specs — background/image/video/audio fields once the
           media library is in place. */}

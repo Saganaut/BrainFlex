@@ -30,10 +30,8 @@ body {
   margin: 0;
   text-align: center;
   min-height: 100svh;
-  display: grid;
-  grid-template:
-    "header header header" 80px
-    "main main main" 1fr / 1fr;
+  display: flex;
+  flex-direction: column;
 }
 
 a {

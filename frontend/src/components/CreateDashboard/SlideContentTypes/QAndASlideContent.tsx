@@ -8,6 +8,8 @@
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { NumberInput } from "@/components/Common/Input/NumberInput";
+import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { useElementEditor } from "./useElementEditor";
 import type { QAndAQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
@@ -70,49 +72,39 @@ const QAndASlideContent = () => {
       />
 
       <div className={styles.fieldRow}>
-        <label className={styles.fieldLabel}>
-          Max submissions per player (0 = unlimited)
-          <input
-            type='number'
-            min={0}
-            className={styles.numberInput}
-            value={maxSubmissions}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setMaxSubmissions(next);
-              schedule(buildPatch({ maxSubmissionsPerPlayer: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <NumberInput
+          label='Max submissions per player (0 = unlimited)'
+          id={`qa-max-${element.id ?? ""}`}
+          min={0}
+          value={maxSubmissions}
+          onChange={(next) => {
+            setMaxSubmissions(next);
+            schedule(buildPatch({ maxSubmissionsPerPlayer: next }));
+          }}
+          onBlur={flush}
+        />
 
-        <label className={styles.checkboxLabel}>
-          <input
-            type='checkbox'
-            checked={allowVoting}
-            onChange={(e) => {
-              const next = e.target.checked;
-              setAllowVoting(next);
-              schedule(buildPatch({ allowVoting: next }));
-            }}
-            onBlur={flush}
-          />
-          Allow upvoting
-        </label>
+        <Checkbox
+          label='Allow upvoting'
+          id={`qa-vote-${element.id ?? ""}`}
+          checked={allowVoting}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setAllowVoting(next);
+            schedule(buildPatch({ allowVoting: next }));
+          }}
+        />
 
-        <label className={styles.checkboxLabel}>
-          <input
-            type='checkbox'
-            checked={autoApprove}
-            onChange={(e) => {
-              const next = e.target.checked;
-              setAutoApprove(next);
-              schedule(buildPatch({ autoApprove: next }));
-            }}
-            onBlur={flush}
-          />
-          Auto-approve (skip host moderation)
-        </label>
+        <Checkbox
+          label='Auto-approve (skip host moderation)'
+          id={`qa-auto-${element.id ?? ""}`}
+          checked={autoApprove}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setAutoApprove(next);
+            schedule(buildPatch({ autoApprove: next }));
+          }}
+        />
       </div>
     </SlideContentWrapper>
   );

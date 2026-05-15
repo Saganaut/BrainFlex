@@ -13,6 +13,9 @@ import { useState } from "react";
 import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput";
+import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
@@ -109,77 +112,62 @@ const ScalesSlideContent = () => {
       />
 
       <div className={styles.fieldRow}>
-        <label className={styles.fieldLabel}>
-          Scale min
-          <input
-            type='number'
-            className={styles.numberInput}
-            value={scaleMin}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setScaleMin(next);
-              schedule(buildPatch({ scaleMin: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.fieldLabel}>
-          Scale max
-          <input
-            type='number'
-            className={styles.numberInput}
-            value={scaleMax}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setScaleMax(next);
-              schedule(buildPatch({ scaleMax: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.fieldLabel}>
-          Min label
-          <input
-            type='text'
-            className={styles.textInput}
-            value={minLabel}
-            placeholder='e.g. Strongly disagree'
-            onChange={(e) => {
-              const next = e.target.value;
-              setMinLabel(next);
-              schedule(buildPatch({ minLabel: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.fieldLabel}>
-          Max label
-          <input
-            type='text'
-            className={styles.textInput}
-            value={maxLabel}
-            placeholder='e.g. Strongly agree'
-            onChange={(e) => {
-              const next = e.target.value;
-              setMaxLabel(next);
-              schedule(buildPatch({ maxLabel: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.checkboxLabel}>
-          <input
-            type='checkbox'
-            checked={scored}
-            onChange={(e) => {
-              const next = e.target.checked;
-              setScored(next);
-              schedule(buildPatch({ scored: next }));
-            }}
-            onBlur={flush}
-          />
-          Scored (vs. pulse-style)
-        </label>
+        <NumberInput
+          label='Scale min'
+          id={`scales-min-${element.id ?? ""}`}
+          value={scaleMin}
+          onChange={(next) => {
+            setScaleMin(next);
+            schedule(buildPatch({ scaleMin: next }));
+          }}
+          onBlur={flush}
+        />
+        <NumberInput
+          label='Scale max'
+          id={`scales-max-${element.id ?? ""}`}
+          value={scaleMax}
+          onChange={(next) => {
+            setScaleMax(next);
+            schedule(buildPatch({ scaleMax: next }));
+          }}
+          onBlur={flush}
+        />
+        <Input
+          label='Min label'
+          id={`scales-minlabel-${element.id ?? ""}`}
+          type='text'
+          value={minLabel}
+          placeholder='e.g. Strongly disagree'
+          onChange={(e) => {
+            const next = e.target.value;
+            setMinLabel(next);
+            schedule(buildPatch({ minLabel: next }));
+          }}
+          onBlur={flush}
+        />
+        <Input
+          label='Max label'
+          id={`scales-maxlabel-${element.id ?? ""}`}
+          type='text'
+          value={maxLabel}
+          placeholder='e.g. Strongly agree'
+          onChange={(e) => {
+            const next = e.target.value;
+            setMaxLabel(next);
+            schedule(buildPatch({ maxLabel: next }));
+          }}
+          onBlur={flush}
+        />
+        <Checkbox
+          label='Scored (vs. pulse-style)'
+          id={`scales-scored-${element.id ?? ""}`}
+          checked={scored}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setScored(next);
+            schedule(buildPatch({ scored: next }));
+          }}
+        />
       </div>
 
       <div className={styles.sectionHeader}>
@@ -196,16 +184,18 @@ const ScalesSlideContent = () => {
         {statements.map((s, idx) => (
           <div key={s.id} className={styles.itemRow}>
             <span>{idx + 1}.</span>
-            <input
-              type='text'
-              className={styles.textInput}
-              value={s.text ?? ""}
-              placeholder={`Statement ${(idx + 1).toString()}`}
-              onChange={(e) => {
-                if (s.id) handleStatementTextChange(s.id, e.target.value);
-              }}
-              onBlur={flush}
-            />
+            <div className={styles.itemRowField}>
+              <Input
+                type='text'
+                fullWidth
+                value={s.text ?? ""}
+                placeholder={`Statement ${(idx + 1).toString()}`}
+                onChange={(e) => {
+                  if (s.id) handleStatementTextChange(s.id, e.target.value);
+                }}
+                onBlur={flush}
+              />
+            </div>
             <IconBtn
               type='default'
               size='xs'

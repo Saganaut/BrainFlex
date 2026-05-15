@@ -13,23 +13,37 @@ import { LeftSidebar } from "./LeftSidebar";
 import { SlideDisplay } from "./SlideDisplay";
 import styles from "./CreateDashboard.module.css";
 import { useCreateDashboard } from "./useCreateDashboard";
+import { useFullScreen } from "@/context/useFullScreen";
+import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
 
 const CreateDashboard = () => {
   const navigate = useNavigate();
-
   const { titleDraft, setTitleDraft, commitTitle, serverName } =
     useCreateDashboard();
+  const { toggleFullScreen } = useFullScreen();
 
   return (
     <div className={styles.createDashboard}>
       <div className={styles.navbar}>
-        <Btn
-          onClick={() => {
-            void navigate({ to: "/decks" });
-          }}>
-          Back
-        </Btn>
-
+        <div className={styles.leftControlButtons}>
+          <Btn
+            size={"md"}
+            shape={"pill"}
+            onClick={() => {
+              void navigate({
+                to: "/decks",
+              });
+            }}>
+            Back
+          </Btn>
+          <Btn
+            shape={"pill"}
+            size={"md"}
+            aria-label='Enter fullscreen'
+            onClick={toggleFullScreen}>
+            <ArrowsPointingOutIcon style={{ width: "1rem", height: "1rem" }} />
+          </Btn>
+        </div>
         <input
           aria-label='Deck title'
           value={titleDraft}

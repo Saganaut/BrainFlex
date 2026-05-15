@@ -3,15 +3,18 @@ import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import styles from "./NavBar.module.css";
 import { UserMenu } from "./UserMenu";
 import { CephadexLogo } from "@/components/Graphic/CephadexLogo";
+import { useFullScreen } from "@/context/useFullScreen";
 
-export function NavBar() {
+const NavBar = () => {
   const userState = useCurrentUser();
-
+  const { isFullScreen } = useFullScreen();
   if (userState.state === "loading") {
     return <div style={{ padding: "1rem" }}>Loading auth...</div>;
   }
   return (
-    <div className={styles.navContainer}>
+    <div
+      className={`${styles.navContainer} ${isFullScreen ? styles.isCollapsed : ""}`}
+      data-navbar>
       <div className={styles.homeMenuWrapper}>
         <Link to='/' viewTransition>
           <CephadexLogo />
@@ -36,4 +39,6 @@ export function NavBar() {
       </div>
     </div>
   );
-}
+};
+
+export { NavBar };

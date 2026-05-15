@@ -150,6 +150,20 @@ input[type="radio"] {
       left: 10px;
     }
   }
+
+  /* fullWidth lets a host (e.g. an MCQ option card or a tight inspector cell)
+     stretch the field to its parent's width instead of the default 300px.
+     Placed at the end of .inputContainer so the more-specific selectors above
+     win on cascade rather than specificity. */
+  /* stylelint-disable no-descending-specificity */
+  &.fullWidth,
+  &.fullWidth .input,
+  &.fullWidth .input input,
+  &.fullWidth .textarea,
+  &.fullWidth .textarea textarea {
+    width: 100%;
+  }
+  /* stylelint-enable no-descending-specificity */
 }
 
 /* ─── Checkbox ───────────────────────────────────────────── */

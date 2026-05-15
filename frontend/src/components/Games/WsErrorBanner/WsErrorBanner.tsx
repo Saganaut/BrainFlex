@@ -8,7 +8,7 @@ import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { clearWsError } from "../../../store/gameSlice";
 import { IconBtn } from "../../Common/Buttons/IconBtn";
 import styles from "./WsErrorBanner.module.css";
-
+//TODO: WE should have a general error banner component, likely in a provider so it can be re-used.
 const WsErrorBanner = () => {
   const dispatch = useAppDispatch();
   const error = useAppSelector((s) => s.game.wsError);
@@ -18,7 +18,9 @@ const WsErrorBanner = () => {
   return (
     <div className={styles.banner} role='alert'>
       <span className={styles.message}>
-        <strong className={styles.operation}>{labelFor(error.operation)}:</strong>{" "}
+        <strong className={styles.operation}>
+          {labelFor(error.operation)}:
+        </strong>{" "}
         {error.message}
       </span>
       <IconBtn

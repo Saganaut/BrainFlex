@@ -13,6 +13,8 @@
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput";
 import { useElementEditor } from "./useElementEditor";
 import type { PlaceOnImageQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
@@ -85,76 +87,62 @@ const PlaceOnImageSlideContent = () => {
         onBlur={flush}
       />
 
-      <label className={styles.fieldLabel}>
-        Target image URL (placeholder shown if blank)
-        <input
-          type='text'
-          className={styles.textInput}
-          value={targetImageUrl}
-          placeholder='https://…'
-          onChange={(e) => {
-            const next = e.target.value;
-            setTargetImageUrl(next);
-            schedule(buildPatch({ targetImageUrl: next }));
-          }}
-          onBlur={flush}
-        />
-      </label>
+      <Input
+        label='Target image URL (placeholder shown if blank)'
+        id={`place-image-${element.id ?? ""}`}
+        type='text'
+        value={targetImageUrl}
+        placeholder='https://…'
+        onChange={(e) => {
+          const next = e.target.value;
+          setTargetImageUrl(next);
+          schedule(buildPatch({ targetImageUrl: next }));
+        }}
+        onBlur={flush}
+      />
 
       <img src={imgSrc} alt='' className={styles.imagePlaceholder} />
 
       <div className={styles.fieldRow}>
-        <label className={styles.fieldLabel}>
-          Correct X (0–1)
-          <input
-            type='number'
-            min={0}
-            max={1}
-            step={0.01}
-            className={styles.numberInput}
-            value={correctX}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setCorrectX(next);
-              schedule(buildPatch({ correctX: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.fieldLabel}>
-          Correct Y (0–1)
-          <input
-            type='number'
-            min={0}
-            max={1}
-            step={0.01}
-            className={styles.numberInput}
-            value={correctY}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setCorrectY(next);
-              schedule(buildPatch({ correctY: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
-        <label className={styles.fieldLabel}>
-          Tolerance (0–1)
-          <input
-            type='number'
-            min={0}
-            max={1}
-            step={0.01}
-            className={styles.numberInput}
-            value={tolerance}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setTolerance(next);
-              schedule(buildPatch({ tolerance: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <NumberInput
+          label='Correct X (0–1)'
+          id={`place-x-${element.id ?? ""}`}
+          min={0}
+          max={1}
+          step={0.01}
+          value={correctX}
+          onChange={(next) => {
+            setCorrectX(next);
+            schedule(buildPatch({ correctX: next }));
+          }}
+          onBlur={flush}
+        />
+        <NumberInput
+          label='Correct Y (0–1)'
+          id={`place-y-${element.id ?? ""}`}
+          min={0}
+          max={1}
+          step={0.01}
+          value={correctY}
+          onChange={(next) => {
+            setCorrectY(next);
+            schedule(buildPatch({ correctY: next }));
+          }}
+          onBlur={flush}
+        />
+        <NumberInput
+          label='Tolerance (0–1)'
+          id={`place-tol-${element.id ?? ""}`}
+          min={0}
+          max={1}
+          step={0.01}
+          value={tolerance}
+          onChange={(next) => {
+            setTolerance(next);
+            schedule(buildPatch({ tolerance: next }));
+          }}
+          onBlur={flush}
+        />
       </div>
 
       {/* TODO: Get more specs — click-on-image to set (correctX, correctY)

@@ -9,6 +9,9 @@
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput";
+import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { useElementEditor } from "./useElementEditor";
 import type { TextQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
@@ -83,68 +86,57 @@ const TextSlideContent = () => {
         onBlur={flush}
       />
 
-      <label className={styles.fieldLabel}>
-        Correct answer
-        <input
-          type='text'
-          className={styles.textInput}
-          value={correctAnswer}
-          placeholder='Canonical correct answer'
-          onChange={(e) => {
-            const next = e.target.value;
-            setCorrectAnswer(next);
-            schedule(buildPatch({ correctAnswer: next }));
-          }}
-          onBlur={flush}
-        />
-      </label>
+      <Input
+        label='Correct answer'
+        id={`text-correct-${element.id ?? ""}`}
+        type='text'
+        value={correctAnswer}
+        placeholder='Canonical correct answer'
+        onChange={(e) => {
+          const next = e.target.value;
+          setCorrectAnswer(next);
+          schedule(buildPatch({ correctAnswer: next }));
+        }}
+        onBlur={flush}
+      />
 
-      <label className={styles.fieldLabel}>
-        Accepted variants (comma-separated)
-        <input
-          type='text'
-          className={styles.textInput}
-          value={variantsText}
-          placeholder='e.g. paree, parisien'
-          onChange={(e) => {
-            const next = e.target.value;
-            setVariantsText(next);
-            schedule(buildPatch({ acceptedVariants: inputToVariants(next) }));
-          }}
-          onBlur={flush}
-        />
-      </label>
+      <Input
+        label='Accepted variants (comma-separated)'
+        id={`text-variants-${element.id ?? ""}`}
+        type='text'
+        value={variantsText}
+        placeholder='e.g. paree, parisien'
+        onChange={(e) => {
+          const next = e.target.value;
+          setVariantsText(next);
+          schedule(buildPatch({ acceptedVariants: inputToVariants(next) }));
+        }}
+        onBlur={flush}
+      />
 
       <div className={styles.fieldRow}>
-        <label className={styles.checkboxLabel}>
-          <input
-            type='checkbox'
-            checked={caseSensitive}
-            onChange={(e) => {
-              const next = e.target.checked;
-              setCaseSensitive(next);
-              schedule(buildPatch({ caseSensitive: next }));
-            }}
-            onBlur={flush}
-          />
-          Case sensitive
-        </label>
+        <Checkbox
+          label='Case sensitive'
+          id={`text-case-${element.id ?? ""}`}
+          checked={caseSensitive}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setCaseSensitive(next);
+            schedule(buildPatch({ caseSensitive: next }));
+          }}
+        />
 
-        <label className={styles.fieldLabel}>
-          Points
-          <input
-            type='number'
-            min={0}
-            className={styles.numberInput}
-            value={pointValue}
-            onChange={(e) => {
-              const next = Number(e.target.value) || 0;
-              setPointValue(next);
-              schedule(buildPatch({ pointValue: next }));
-            }}
-            onBlur={flush}
-          />
-        </label>
+        <NumberInput
+          label='Points'
+          id={`text-points-${element.id ?? ""}`}
+          min={0}
+          value={pointValue}
+          onChange={(next) => {
+            setPointValue(next);
+            schedule(buildPatch({ pointValue: next }));
+          }}
+          onBlur={flush}
+        />
       </div>
 
       {!correctAnswer.trim() && (

@@ -26,7 +26,8 @@ const buildOptimisticDeck = (id: string, name: string): DeckDto => ({
   elementCount: 0,
   elements: [],
 });
-
+//TODO Extract this out into its own component, it should go with the other Card components - potentially be a variant
+//TODO the cards should have a small menu button on the top right that toggles a dropdown which then exposes options
 const DeckCard = ({
   deck,
   editable,
@@ -35,44 +36,52 @@ const DeckCard = ({
   deck: DeckDto;
   editable: boolean;
   onDelete?: (id: string) => void;
-}) => (
-  <div className={styles.card}>
-    <img
-      src={resolveDeckCover(deck.coverImageUrl, deck.id)}
-      alt=''
-      className={styles.cardCover}
-      loading='lazy'
-    />
-    <span className={styles.cardName}>{deck.name}</span>
-    {deck.isSystem && <span className={styles.systemBadge}>System</span>}
-    <span className={styles.cardMeta}>
-      {deck.elementCount ?? 0} elements
-      {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
-    </span>
-    {deck.description && (
-      <span className={styles.cardDesc}>{deck.description}</span>
-    )}
-    {editable && deck.id && (
-      <div className={styles.cardActions}>
-        <Link
-          to='/decks/$deckId/edit'
-          params={{ deckId: deck.id }}
-          search={{ questionId: undefined }}
-          viewTransition>
-          <Btn size='sm'>Edit</Btn>
-        </Link>
-        <Btn
-          size='sm'
-          variant='error'
-          onClick={() => {
-            if (deck.id) onDelete?.(deck.id);
-          }}>
-          Delete
-        </Btn>
-      </div>
-    )}
-  </div>
-);
+}) => {
+  const navigate = useNavigate();
+
+  return (
+    <div
+      className={styles.card}
+      onClick={() => {
+        void navigate({ to: `/decks/${deck.id}/edit` });
+      }}>
+      <img
+        src={resolveDeckCover(deck.coverImageUrl, deck.id)}
+        alt=''
+        className={styles.cardCover}
+        loading='lazy'
+      />
+      <span className={styles.cardName}>{deck.name}</span>
+      {deck.isSystem && <span className={styles.systemBadge}>System</span>}
+      <span className={styles.cardMeta}>
+        {deck.elementCount ?? 0} elements
+        {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
+      </span>
+      {deck.description && (
+        <span className={styles.cardDesc}>{deck.description}</span>
+      )}
+      {editable && deck.id && (
+        <div className={styles.cardActions}>
+          <Link
+            to='/decks/$deckId/edit'
+            params={{ deckId: deck.id }}
+            search={{ questionId: undefined }}
+            viewTransition>
+            <Btn size='sm'>Edit</Btn>
+          </Link>
+          <Btn
+            size='sm'
+            variant='error'
+            onClick={() => {
+              if (deck.id) onDelete?.(deck.id);
+            }}>
+            Delete
+          </Btn>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const MyDecksPage = () => {
   const userState = useCurrentUser();

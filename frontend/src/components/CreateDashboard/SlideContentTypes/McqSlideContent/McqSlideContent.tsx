@@ -24,6 +24,8 @@ import {
   type McqQuestion,
 } from "@/store/BrainFlexApi";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import { Input } from "@/components/Common/Input/Input";
+import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
@@ -202,27 +204,25 @@ const McqSlideContent = () => {
                     }}
                   />
                 </div>
-                <input
+                <Input
                   type='text'
-                  className={styles.optionInput}
-                  placeholder={`Option ${(idx + 1).toString()}`}
+                  fullWidth
                   value={option.text ?? ""}
+                  placeholder={`Option ${(idx + 1).toString()}`}
                   onChange={(e) => {
                     if (option.id)
                       handleOptionTextChange(option.id, e.target.value);
                   }}
                   onBlur={flush}
                 />
-                <label className={styles.optionCorrectLabel}>
-                  <input
-                    type='checkbox'
-                    checked={isCorrect}
-                    onChange={() => {
-                      if (option.id) handleToggleCorrect(option.id);
-                    }}
-                  />
-                  Correct
-                </label>
+                <Checkbox
+                  label='Correct'
+                  id={`mcq-correct-${optionId}`}
+                  checked={isCorrect}
+                  onChange={() => {
+                    if (option.id) handleToggleCorrect(option.id);
+                  }}
+                />
               </div>
             );
           })}

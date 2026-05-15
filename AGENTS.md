@@ -129,6 +129,15 @@ Manually populates MongoDB with the LOTR sample dataset (users, orgs, themes, de
 - **Avoid RTK for generic global state.** Minimize use of the Redux Toolkit core store for non-server state.
 - **Prefer RTK Query caching** as the primary mechanism for server-side data and associated UI state.
 
+**Fullscreen mode:**
+
+App-level fullscreen state lives in `LayoutProvider` (`frontend/src/context/LayoutProvider.tsx`) and is read via `useFullScreen()` (`frontend/src/context/useFullScreen.tsx`). The hook returns `{ isFullScreen, enterFullScreen, exitFullScreen, toggleFullScreen }`.
+
+- **Triggering**: wire `enterFullScreen` / `toggleFullScreen` to whatever UI you want (button, menu, keybinding). There's no per-page convention — each surface adds its own trigger.
+- **Exiting**: handled globally. `LayoutProvider` listens for the ESC key while fullscreen is active and renders a floating `ArrowsPointingInIcon` button fixed top-right (styled in `LayoutProvider.module.css`). Pages don't need to render their own exit control.
+- **Styling**: there is **no global CSS hook** (e.g. no `body.fullscreen` selector). Components that need to react to fullscreen — collapse the nav, expand a canvas, hide a sidebar — read `isFullScreen` from the hook and toggle a class on themselves in their own stylesheet. Example: `NavBar.tsx` adds `styles.isCollapsed` when fullscreen, and `NavBar.module.css` defines `.isCollapsed { display: none }`. Add a sibling class in any other module that needs to participate.
+- The browser Fullscreen API (`element.requestFullscreen()`) is intentionally **not** used — this is app-level layout only, so ESC behavior, mobile Safari, and gesture-trust caveats don't apply.
+
 **Rich text editing:**
 
 - The deck/slide authoring UI uses **TipTap** (`@tiptap/react`, `@tiptap/starter-kit`, `@tiptap/pm`) for any formatted-text field — slide bodies, question explanations, host notes, etc.
@@ -445,6 +454,7 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 | `frontend/src/components/CreateDashboard/useCreateDashboard.ts` | Hook for sidebar state: drag end, add element, build defaults |
 | `frontend/src/hooks/useDebouncedCommit.ts`            | Generic schedule / flush / cancel debouncer for server commits    |
 | `frontend/src/context/ModalProvider.tsx` / `useModal.tsx` | App-wide modal: `openModal({ title, content })` / `closeModal()` |
+| `frontend/src/context/LayoutProvider.tsx` / `useFullScreen.tsx` | App-level fullscreen state + global ESC handler + floating exit button |
 | `frontend/src/store/apiEnhancements.ts`               | `onQueryStarted` cache-sync for element/deck mutations            |
 | `frontend/src/routes/my-decks/create.tsx`             | Optimistic deck-create: UUID + cache seed + navigate              |
 | `frontend/openapi-config.cts`                         | Config for API codegen                                            |

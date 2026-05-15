@@ -9,7 +9,6 @@
 
   .slideHeader {
     display: flex;
-    border: 2px dashed yellow;
     justify-content: space-between;
     align-items: center;
     max-height: 20%;
@@ -18,12 +17,10 @@
   }
 
   .slideBody {
-    border: 2px dashed green;
     flex: 1;
   }
 
   .slideFooter {
-    border: 2px dashed blue;
     height: 80px;
   }
 }

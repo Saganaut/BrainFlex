@@ -1,6 +1,8 @@
 // Text input wrapped with label + helper/error message slot. Variant maps to a
 // className on the <input>; `errorMessage` (when set) forces variant="error" so
-// the input border tint and helper text tint together.
+// the input border tint and helper text tint together. `fullWidth` lets the
+// input fill its container instead of the default 300px (used inside tight
+// editor cells like MCQ option cards).
 import React from "react";
 import type { BtnVariant } from "../Buttons/BtnTypes";
 import styles from "./Input.module.css";
@@ -12,6 +14,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   labelPosition?: "labelAbove" | "labelInFront";
   checked?: boolean;
+  fullWidth?: boolean;
   ref?: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -20,9 +23,11 @@ const Input: React.FC<InputProps> = ({
   value,
   ref,
   onChange,
+  onBlur,
   maxLength,
   type,
   id,
+  name,
   variant = "default",
   infoMessage,
   label,
@@ -30,20 +35,38 @@ const Input: React.FC<InputProps> = ({
   errorMessage,
   placeholder,
   checked = false,
+  disabled,
+  fullWidth = false,
+  min,
+  max,
+  step,
 }) => {
   const inputVariant: BtnVariant = errorMessage != null ? "error" : variant;
   return (
-    <div className={[styles.inputContainer, styles[labelPosition]].join(" ")}>
+    <div
+      className={[
+        styles.inputContainer,
+        styles[labelPosition],
+        fullWidth ? styles.fullWidth : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.input}>
         <input
           type={type}
           ref={ref}
           id={id}
+          name={name}
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           maxLength={maxLength}
           placeholder={placeholder}
+          disabled={disabled}
+          min={min}
+          max={max}
+          step={step}
           className={
             inputVariant !== "default" && inputVariant !== "brand"
               ? styles[inputVariant]

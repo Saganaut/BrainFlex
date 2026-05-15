@@ -27,6 +27,10 @@
 - [ ] Divider
 - [x] Icon Button (icon-only button variant)
 
+### FRONTEND OTHER
+
+- When creating a new deck we should have a first slide skeleton in the slide container
+
 ---
 
 ### Design / Game Components

@@ -122,7 +122,7 @@ public class ShowcaseWebSocketController {
     /**
      * Catches any exception thrown by the @MessageMapping handlers above and forwards it
      * to the caller as a ShowcaseErrorMessage on /user/queue/errors. Without this handler
-     * a failed Start (e.g. "Content pack has no questions") was silently swallowed by
+     * a failed Start (e.g. "Content deck has no questions") was silently swallowed by
      * STOMP — clients had no way to surface the failure.
      */
     @MessageExceptionHandler(Throwable.class)

@@ -154,7 +154,7 @@ Field edits in any slide-content editor follow the same path:
 
 **Optimistic deck create:**
 
-`/my-packs/create` (a TanStack Router file route) mints a UUID, seeds an empty `DeckDto` into the `getDeck` cache via `BrainFlex.util.upsertQueryData`, navigates to `/decks/$deckId/view` immediately (replace), and fires `POST /api/decks` with that same `id` in the background. The backend accepts a client-supplied id and the operation is idempotent. Same pattern for new elements: the frontend generates the option/slide/item UUID up front so optimistic UI works.
+`/my-decks/create` (a TanStack Router file route) mints a UUID, seeds an empty `DeckDto` into the `getDeck` cache via `BrainFlex.util.upsertQueryData`, navigates to `/decks/$deckId/view` immediately (replace), and fires `POST /api/decks` with that same `id` in the background. The backend accepts a client-supplied id and the operation is idempotent. Same pattern for new elements: the frontend generates the option/slide/item UUID up front so optimistic UI works.
 
 **Image placeholders:**
 
@@ -438,7 +438,7 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 | `frontend/src/hooks/useDebouncedCommit.ts`            | Generic schedule / flush / cancel debouncer for server commits    |
 | `frontend/src/context/ModalProvider.tsx` / `useModal.tsx` | App-wide modal: `openModal({ title, content })` / `closeModal()` |
 | `frontend/src/store/apiEnhancements.ts`               | `onQueryStarted` cache-sync for element/deck mutations            |
-| `frontend/src/routes/my-packs/create.tsx`             | Optimistic deck-create: UUID + cache seed + navigate              |
+| `frontend/src/routes/my-decks/create.tsx`             | Optimistic deck-create: UUID + cache seed + navigate              |
 | `frontend/openapi-config.cts`                         | Config for API codegen                                            |
 | `backend/.../config/SecurityConfig.java`              | Auth, CORS, public routes                                         |
 | `backend/.../config/DataSeeder.java`                  | Seeds 15 LOTR test users on first startup                         |

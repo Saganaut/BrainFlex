@@ -1,6 +1,6 @@
 // CreateGamePage — three-mode fork for starting a game per GAMES.md.
-// Template: pick a system pack, defaults applied, one click to lobby.
-// Custom: pick one of the user's packs, edit settings, then create.
+// Template: pick a system deck, defaults applied, one click to lobby.
+// Custom: pick one of the user's decks, edit settings, then create.
 // Auto: AI question generation (stubbed; backend not yet implemented).
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
@@ -33,44 +33,44 @@ const DEFAULT_ALLOW_GUESTS = true;
 const DEFAULT_ALLOW_LATE_JOIN = false;
 const DEFAULT_SHOW_SCORES_IMMEDIATELY = true;
 
-// ─── Pack grid ────────────────────────────────────────────────────────────────
+// ─── Deck grid ────────────────────────────────────────────────────────────────
 
-interface PackGridProps {
-  packs: DeckDto[];
-  selectedPackId: string | null;
+interface DeckGridProps {
+  decks: DeckDto[];
+  selectedDeckId: string | null;
   onSelect: (id: string) => void;
   emptyMessage: string;
 }
 
-const PackGrid = ({
-  packs,
-  selectedPackId,
+const DeckGrid = ({
+  decks,
+  selectedDeckId,
   onSelect,
   emptyMessage,
-}: PackGridProps) => {
-  if (packs.length === 0) {
+}: DeckGridProps) => {
+  if (decks.length === 0) {
     return <p className={styles.authMsg}>{emptyMessage}</p>;
   }
   return (
-    <div className={styles.packGrid}>
-      {packs.map((pack) => (
+    <div className={styles.deckGrid}>
+      {decks.map((deck) => (
         <SelectableTile
-          key={pack.id}
+          key={deck.id}
           media={
             <img
-              src={resolveDeckCover(pack.coverImageUrl, pack.id)}
+              src={resolveDeckCover(deck.coverImageUrl, deck.id)}
               alt=''
               loading='lazy'
             />
           }
-          title={pack.name ?? ""}
-          meta={`${(pack.elementCount ?? 0).toString()} elements${
-            pack.tags && pack.tags.length > 0 ? ` · ${pack.tags[0]}` : ""
+          title={deck.name ?? ""}
+          meta={`${(deck.elementCount ?? 0).toString()} elements${
+            deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""
           }`}
-          description={pack.description}
-          selected={selectedPackId === pack.id}
+          description={deck.description}
+          selected={selectedDeckId === deck.id}
           onClick={() => {
-            if (pack.id) onSelect(pack.id);
+            if (deck.id) onSelect(deck.id);
           }}
         />
       ))}
@@ -94,7 +94,7 @@ const ModeTabs = ({ mode, onChange }: ModeTabsProps) => (
       selected={mode === "template"}
       icon='*'
       title='Template'
-      description='One click to start. Pre-built question packs ready to play.'
+      description='One click to start. Pre-built question decks ready to play.'
     />
     <ActionCard
       onClick={() => {
@@ -103,7 +103,7 @@ const ModeTabs = ({ mode, onChange }: ModeTabsProps) => (
       selected={mode === "custom"}
       icon='#'
       title='Custom'
-      description='Use a pack you built yourself. Full control over settings.'
+      description='Use a deck you built yourself. Full control over settings.'
     />
     <ActionCard
       onClick={() => {
@@ -274,15 +274,15 @@ const CreateGamePage = () => {
   const isRegistered = userState.state === "registered";
 
   const [mode, setMode] = useState<Mode>("template");
-  const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
+  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
 
-  const { data: allPacks = [], isLoading: loadingPublic } = useListDecksQuery();
-  const { data: myPacks = [], isLoading: loadingMine } = useListMyDecksQuery(
+  const { data: allDecks = [], isLoading: loadingPublic } = useListDecksQuery();
+  const { data: myDecks = [], isLoading: loadingMine } = useListMyDecksQuery(
     undefined,
     { skip: !isRegistered },
   );
-  const systemPacks = allPacks.filter((p) => p.isSystem);
+  const systemDecks = allDecks.filter((p) => p.isSystem);
 
   const [createGame, { isLoading: creating, error: createError }] =
     useCreateShowcaseMutation();
@@ -301,14 +301,14 @@ const CreateGamePage = () => {
   }
 
   const startGame = async (
-    packId: string,
+    deckId: string,
     overrides?: Partial<SettingsState>,
   ) => {
     const cfg = { ...settings, ...overrides };
     try {
       const session = await createGame({
         createShowcaseRequest: {
-          deckId: packId,
+          deckId,
           totalRounds: cfg.totalRounds,
           timePerQuestion: cfg.timePerQuestion,
           speedBonus: cfg.speedBonus,
@@ -330,15 +330,15 @@ const CreateGamePage = () => {
     }
   };
 
-  const handleTemplatePick = (packId: string) => {
-    setSelectedPackId(packId);
-    void startGame(packId, DEFAULT_SETTINGS);
+  const handleTemplatePick = (deckId: string) => {
+    setSelectedDeckId(deckId);
+    void startGame(deckId, DEFAULT_SETTINGS);
   };
 
   const handleCustomSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (!selectedPackId) return;
-    void startGame(selectedPackId);
+    if (!selectedDeckId) return;
+    void startGame(selectedDeckId);
   };
 
   return (
@@ -361,9 +361,9 @@ const CreateGamePage = () => {
           {loadingPublic ? (
             <p className={styles.authMsg}>Loading templates…</p>
           ) : (
-            <PackGrid
-              packs={systemPacks}
-              selectedPackId={selectedPackId}
+            <DeckGrid
+              decks={systemDecks}
+              selectedDeckId={selectedDeckId}
               onSelect={handleTemplatePick}
               emptyMessage='No templates available yet.'
             />
@@ -387,35 +387,31 @@ const CreateGamePage = () => {
       {mode === "custom" && (
         <form className={styles.form} onSubmit={handleCustomSubmit}>
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Choose Your Pack</h2>
+            <h2 className={styles.sectionTitle}>Choose Your Deck</h2>
             {loadingMine ? (
-              <p className={styles.authMsg}>Loading your packs…</p>
-            ) : myPacks.length === 0 ? (
-              <div className={styles.emptyPacks}>
+              <p className={styles.authMsg}>Loading your decks…</p>
+            ) : myDecks.length === 0 ? (
+              <div className={styles.emptyDecks}>
                 <p className={styles.authMsg}>
-                  You haven&apos;t created any packs yet.
+                  You haven&apos;t created any decks yet.
                 </p>
-                <Link
-                  to='/my-packs/create'
-                  search={{ returnTo: "/games/create" }}
-                  viewTransition>
-                  <Btn type='button'>+ Create Your First Pack</Btn>
+                <Link to='/decks' viewTransition>
+                  <Btn type='button'>+ Create Your First Deck</Btn>
                 </Link>
               </div>
             ) : (
               <>
-                <PackGrid
-                  packs={myPacks}
-                  selectedPackId={selectedPackId}
-                  onSelect={setSelectedPackId}
-                  emptyMessage='No packs yet.'
+                <DeckGrid
+                  decks={myDecks}
+                  selectedDeckId={selectedDeckId}
+                  onSelect={setSelectedDeckId}
+                  emptyMessage='No decks yet.'
                 />
                 <Link
-                  to='/my-packs/create'
-                  search={{ returnTo: "/games/create" }}
+                  to='/decks'
                   className={styles.helperText}
                   viewTransition>
-                  + Create a new pack
+                  + Create a new deck
                 </Link>
               </>
             )}
@@ -435,7 +431,7 @@ const CreateGamePage = () => {
           <Btn
             type='submit'
             className={styles.createBtn}
-            disabled={!selectedPackId || creating}>
+            disabled={!selectedDeckId || creating}>
             {creating ? "Creating…" : "Create Game"}
           </Btn>
         </form>
@@ -450,7 +446,7 @@ const CreateGamePage = () => {
             <h2 className={styles.sectionTitle}>Auto-Generate — Coming Soon</h2>
             <p className={styles.authMsg}>
               Soon you&apos;ll be able to type a topic, paste a webpage, or
-              upload a PDF, and we&apos;ll build a question pack for you
+              upload a PDF, and we&apos;ll build a question deck for you
               automatically.
             </p>
             <Btn

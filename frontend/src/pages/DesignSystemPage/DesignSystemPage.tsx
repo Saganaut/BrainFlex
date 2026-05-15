@@ -76,7 +76,7 @@ import { ReviewPanel } from "../../components/Games/ReviewPanel/ReviewPanel";
 import { reviewSampleData } from "./reviewSampleData";
 import { useAppDispatch } from "../../store/hooks";
 import { wsErrorReceived } from "../../store/gameSlice";
-import { ContentPackPicker } from "../../components/Games/ContentPackPicker/ContentPackPicker";
+import { ContentDeckPicker } from "../../components/Games/ContentDeckPicker/ContentDeckPicker";
 import { Accordion } from "../../components/Containers/Accordion";
 import { slideTypeGraphics } from "../../components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 import { Loader } from "../../components/Common/Loader/Loader";
@@ -181,7 +181,7 @@ function WsErrorBannerDemo() {
               operation: "start",
               roomCode: "DEMO00",
               status: 422,
-              message: "Content pack has no questions",
+              message: "Content deck has no questions",
             }),
           );
         }}>
@@ -302,7 +302,7 @@ const DesignSystemPage = () => {
                 }}
                 icon='*'
                 title='Template'
-                description='One click to start. Pre-built question packs ready to play.'
+                description='One click to start. Pre-built question decks ready to play.'
               />
               <ActionCard
                 onClick={() => {
@@ -310,7 +310,7 @@ const DesignSystemPage = () => {
                 }}
                 icon='#'
                 title='Custom'
-                description='Use a pack you built yourself. Full control over settings.'
+                description='Use a deck you built yourself. Full control over settings.'
                 selected
               />
               <ActionCard
@@ -886,11 +886,11 @@ const DesignSystemPage = () => {
               <ReviewPanel review={reviewSampleData} />
             </div>
           </Accordion>
-          <Accordion titleBar=' Content Pack Picker'>
+          <Accordion titleBar=' Content Deck Picker'>
             <h4> </h4>
             <div className={styles.cardComponentContainer}>
-              <ContentPackPicker
-                selectedPackId={"1"}
+              <ContentDeckPicker
+                selectedDeckId={"1"}
                 onSelect={() => {
                   console.log("selected 1");
                 }}
@@ -972,9 +972,9 @@ const DesignSystemPage = () => {
                 }}>
                 <EmptyState
                   icon={<InboxIcon />}
-                  title='No packs yet'
-                  message='Create your first content pack to get started.'
-                  action={<Btn size='sm'>+ New pack</Btn>}
+                  title='No decks yet'
+                  message='Create your first content deck to get started.'
+                  action={<Btn size='sm'>+ New deck</Btn>}
                 />
               </div>
               <div
@@ -1152,9 +1152,9 @@ const DesignSystemPage = () => {
                 variant='error'
                 onClick={() => {
                   void confirm({
-                    title: "Delete this pack?",
+                    title: "Delete this deck?",
                     message:
-                      "This will permanently remove the pack and its questions.",
+                      "This will permanently remove the deck and its questions.",
                     confirmLabel: "Delete",
                     cancelLabel: "Keep it",
                     variant: "danger",

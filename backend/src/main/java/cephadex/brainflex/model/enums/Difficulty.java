@@ -1,5 +1,5 @@
 /**
- * Relative difficulty of a question or content pack.
+ * Relative difficulty of a question or content deck.
  * Used for filtering and display; does not affect base point values directly
  * (point values are set per-question).
  */

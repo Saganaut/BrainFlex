@@ -19,7 +19,7 @@ flowchart TB
         subgraph Services["Services"]
             ImageSvc["ImageProcessingService\n⚠ to be offloaded"]
             S3Svc["S3Service"]
-            ContentSvc["ContentPackService"]
+            ContentSvc["DeckService"]
             GameSvc["GameService / GameCacheService"]
             UserSvc["UserService"]
         end

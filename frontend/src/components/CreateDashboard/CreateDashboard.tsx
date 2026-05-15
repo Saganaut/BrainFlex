@@ -25,7 +25,7 @@ const CreateDashboard = () => {
       <div className={styles.navbar}>
         <Btn
           onClick={() => {
-            void navigate({ to: "/my-packs" });
+            void navigate({ to: "/decks" });
           }}>
           Back
         </Btn>

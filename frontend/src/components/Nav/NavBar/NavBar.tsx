@@ -28,8 +28,8 @@ export function NavBar() {
           New Game
         </Link>
         {userState.state === "registered" && (
-          <Link to='/my-packs' viewTransition>
-            My Packs
+          <Link to='/decks' viewTransition>
+            My Decks
           </Link>
         )}
         <UserMenu />

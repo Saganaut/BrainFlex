@@ -233,10 +233,10 @@ Role-aware control panel + live player list.
 
 ## 7. Content authoring (My Decks)
 
-> The pack editor is being **rebuilt** against the polymorphic `DeckElement` model. `PackEditorPage.tsx` is currently a placeholder stub; the new authoring surface (`CreateDashboard` under `/decks/$deckId/view`) is in flight. Backend element CRUD (`DeckService.addElement / updateElement / deleteElement / moveElement`) is already in place and operates on `Deck.elements` directly.
+> The deck editor is being **rebuilt** against the polymorphic `DeckElement` model. `DeckEditorPage.tsx` is currently a placeholder stub; the new authoring surface (`CreateDashboard` under `/decks/$deckId/view`) is in flight. Backend element CRUD (`DeckService.addElement / updateElement / deleteElement / moveElement`) is already in place and operates on `Deck.elements` directly.
 
-- ✅ Create / edit / delete user-owned decks — `frontend/src/pages/MyPacksPage/`
-- ✅ List view shows owned + system decks — `MyPacksPage.tsx`
+- ✅ Create / edit / delete user-owned decks — `frontend/src/pages/MyDecksPage/`
+- ✅ List view shows owned + system decks — `MyDecksPage.tsx`
 - ✅ Immediate refresh after creating a deck (RTK `refetchOnMountOrArgChange`)
 - ✅ Backend element CRUD endpoints (add / update / delete / move within `Deck.elements`)
 - 🚧 Editor dashboard — `CreateDashboard` scaffold landed under `/decks/$deckId/view`; per-kind forms still being authored

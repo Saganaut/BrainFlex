@@ -79,7 +79,7 @@ const FormsSection = () => {
           <h4>Input with Button</h4>
           <div className={styles.formExampleRow}>
             <InputWithButton
-              label='Search packs'
+              label='Search decks'
               id='ds-input-with-btn'
               placeholder='e.g. Geography'
               value={search}

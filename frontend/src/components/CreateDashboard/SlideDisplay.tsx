@@ -21,7 +21,7 @@ import { QAndASlideContent } from "./SlideContentTypes/QAndASlideContent";
 import { GridSlideContent } from "./SlideContentTypes/GridSlideContent";
 import { PlaceOnImageSlideContent } from "./SlideContentTypes/PlaceOnImageSlideContent";
 
-const routeApi = getRouteApi("/decks/$deckId/view");
+const routeApi = getRouteApi("/decks/$deckId/edit");
 
 const SlideDisplay = () => {
   const { deckId } = routeApi.useParams();

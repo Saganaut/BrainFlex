@@ -2,17 +2,15 @@
 // or join an existing session with a room code. Per GAMES.md, this is the quick-start
 // surface — no customization shown up front; deeper options live behind the actions.
 // import { useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 // import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
-import { ActionCard } from "@/components/Common/ActionCard/ActionCard";
+import { ActionCard } from "@/components/Common/Cards/ActionCard";
 // import { Btn } from "@/components/Common/Buttons/Btn";
 // import { Input } from "@/components/Common/Input/Input";
 // import { extractErrorMessage } from "../../utils/utils";
 import styles from "./MainPage.module.css";
 
 const MainPage = () => {
-  const navigate = useNavigate();
   const userState = useCurrentUser();
   const isRegistered = userState.state === "registered";
 

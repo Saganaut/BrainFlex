@@ -30,7 +30,7 @@ interface useCreateDashboardResponse {
   questionId?: string;
 }
 
-const routeApi = getRouteApi("/decks/$deckId/view");
+const routeApi = getRouteApi("/decks/$deckId/edit");
 
 /**
  * Construct a minimum-viable payload for the requested element kind. The

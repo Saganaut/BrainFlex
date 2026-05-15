@@ -13,6 +13,7 @@ import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useGameSession } from "../../hooks/useGameSession";
 import { useGameWebSocket } from "../../hooks/useGameWebSocket";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { useGetShowcaseQuery } from "../../store/BrainFlexApi";
 import { resolveShowcaseBackground } from "../../utils/deckImages";
 import {
@@ -36,6 +37,7 @@ const PlayPage = () => {
     useGameWebSocket(roomCode);
   const { data: session } = useGetShowcaseQuery({ roomCode });
   const [timeRemaining, setTimeRemaining] = useState(0);
+  const confirm = useConfirm();
 
   const userId =
     userState.state === "registered" || userState.state === "guest"
@@ -74,13 +76,25 @@ const PlayPage = () => {
     }
   }, [userId, game.players, game.status, navigate]);
 
-  const handleBoot = (targetUserId: string) => {
-    if (!confirm("Remove this player from the showcase?")) return;
+  const handleBoot = async (targetUserId: string) => {
+    const ok = await confirm({
+      title: "Remove player",
+      message: "Remove this player from the showcase?",
+      confirmLabel: "Remove",
+      variant: "danger",
+    });
+    if (!ok) return;
     sendBoot(targetUserId);
   };
 
-  const handleEndShowcase = () => {
-    if (!confirm("End the showcase now? Scores so far will be final.")) return;
+  const handleEndShowcase = async () => {
+    const ok = await confirm({
+      title: "End showcase",
+      message: "End the showcase now? Scores so far will be final.",
+      confirmLabel: "End showcase",
+      variant: "danger",
+    });
+    if (!ok) return;
     sendEndShowcase();
   };
 
@@ -163,7 +177,9 @@ const PlayPage = () => {
           hideScores={hideScoresDuringPlay}
           offlineUserIds={game.offlineUserIds}
           isHost={isHost}
-          onBootPlayer={handleBoot}
+          onBootPlayer={(id) => {
+            void handleBoot(id);
+          }}
         />
       </div>
     );
@@ -239,14 +255,18 @@ const PlayPage = () => {
           }
           offlineUserIds={game.offlineUserIds}
           isHost={isHost}
-          onBootPlayer={handleBoot}
+          onBootPlayer={(id) => {
+            void handleBoot(id);
+          }}
         />
         {isHost && (
           <Btn
             type='button'
             variant='error'
             className={styles.endShowcaseBtn}
-            onClick={handleEndShowcase}>
+            onClick={() => {
+              void handleEndShowcase();
+            }}>
             End Showcase
           </Btn>
         )}

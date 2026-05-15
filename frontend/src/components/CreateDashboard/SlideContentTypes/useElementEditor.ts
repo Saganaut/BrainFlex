@@ -28,7 +28,7 @@ import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 
 type DeckElement = NonNullable<DeckDto["elements"]>[number];
 
-const routeApi = getRouteApi("/decks/$deckId/view");
+const routeApi = getRouteApi("/decks/$deckId/edit");
 
 interface ElementEditorApi<T extends DeckElement> {
   element: T | undefined;

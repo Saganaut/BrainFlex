@@ -15,14 +15,11 @@
   text-align: center;
   cursor: pointer;
   font-family: inherit;
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    transform var(--duration-fast) var(--ease-out);
+  transition: background-color var(--duration-base) ease-in-out;
 }
 
 .card:hover {
-  border-color: var(--action-hover);
-  transform: translateY(-2px);
+  background-color: var(--bg-primary);
 }
 
 .card:focus-visible {

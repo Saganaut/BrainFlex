@@ -11,7 +11,7 @@ import {
   useListMyDecksQuery,
 } from "../../store/BrainFlexApi";
 import type { DeckDto } from "../../store/BrainFlexApi";
-import { ActionCard } from "@/components/Common/ActionCard/ActionCard";
+import { ActionCard } from "@/components/Common/Cards/ActionCard";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input";
 import { Checkbox } from "@/components/Common/Input/Checkbox";
@@ -407,10 +407,7 @@ const CreateGamePage = () => {
                   onSelect={setSelectedDeckId}
                   emptyMessage='No decks yet.'
                 />
-                <Link
-                  to='/decks'
-                  className={styles.helperText}
-                  viewTransition>
+                <Link to='/decks' className={styles.helperText} viewTransition>
                   + Create a new deck
                 </Link>
               </>

@@ -26,7 +26,7 @@ interface SlideThumbnailProps {
   currentQuestionId?: string;
 }
 
-const routeApi = getRouteApi("/decks/$deckId/view");
+const routeApi = getRouteApi("/decks/$deckId/edit");
 
 const SlideThumbnail: React.FC<SlideThumbnailProps> = ({
   name,

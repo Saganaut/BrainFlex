@@ -48,7 +48,7 @@ import { BillingToggle } from "../../components/Pricing/BillingToggle/BillingTog
 import type { BillingCycle } from "../../components/Pricing/BillingToggle/BillingToggle";
 import { FeatureList } from "../../components/Pricing/FeatureList/FeatureList";
 import { PRICING_TIERS } from "../PricingPage/data";
-import { ActionCard } from "../../components/Common/ActionCard/ActionCard";
+import { ActionCard } from "../../components/Common/Cards/ActionCard";
 import { Badge } from "../../components/Common/Badge";
 import {
   colorPalette,

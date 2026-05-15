@@ -29,7 +29,7 @@ import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 import styles from "./McqSlideContent.module.css";
 
-const routeApi = getRouteApi("/decks/$deckId/view");
+const routeApi = getRouteApi("/decks/$deckId/edit");
 
 const MIN_OPTIONS = 2;
 const MAX_OPTIONS = 6;

@@ -37,7 +37,7 @@ brainflex/
 │   │   ├── repository/    # MongoDB repositories
 │   │   ├── model/         # MongoDB documents
 │   │   ├── dto/           # API data transfer objects
-│   │   └── config/        # Security, CORS, DataSeeder
+│   │   └── config/        # Security, CORS, SampleDataSeeder
 │   ├── src/test/          # Unit tests
 │   ├── pom.xml
 │   └── mvnw               # Maven wrapper
@@ -82,6 +82,14 @@ cd frontend
 npx @rtk-query/codegen-openapi openapi-config.cts
 # Overwrites src/store/BrainFlexApi.ts — do not edit that file manually
 ```
+
+### Seed sample data
+
+```bash
+./scripts/seed-sample-data.sh
+```
+
+Manually populates MongoDB with the LOTR sample dataset (users, orgs, themes, decks). Safe to re-run — idempotent per collection per user, never deletes existing data. Stop any running backend first (the script boots its own short-lived Spring Boot process).
 
 ---
 
@@ -194,7 +202,7 @@ service/      ← (business logic, if added)
 repository/   ← MongoRepository interfaces
 model/        ← MongoDB documents (@Document)
 dto/          ← API shapes (sealed UserDTO with GuestUser/RegisteredUser records)
-config/       ← Security, CORS, DataSeeder
+config/       ← Security, CORS, SampleDataSeeder (manual)
 ```
 
 ---
@@ -441,7 +449,8 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 | `frontend/src/routes/my-decks/create.tsx`             | Optimistic deck-create: UUID + cache seed + navigate              |
 | `frontend/openapi-config.cts`                         | Config for API codegen                                            |
 | `backend/.../config/SecurityConfig.java`              | Auth, CORS, public routes                                         |
-| `backend/.../config/DataSeeder.java`                  | Seeds 15 LOTR test users on first startup                         |
+| `backend/.../config/SampleDataSeeder.java`            | Manual sample data seeder (run via `scripts/seed-sample-data.sh`) |
+| `scripts/seed-sample-data.sh`                         | Trigger manual MongoDB sample-data seed (idempotent per collection)|
 | `backend/.../dto/UserDTO.java`                        | Sealed DTO interface (GuestUser / RegisteredUser)                 |
 | `backend/.../repository/UserRepository.java`          | MongoDB queries                                                   |
 | `backend/.../controller/ThemeController.java`         | REST endpoints at `/api/themes`                                   |
@@ -456,7 +465,7 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 
 - `BrainFlexApi.ts` is regenerated from `http://localhost:8080/v3/api-docs` — the backend must be running when you run codegen.
 - `spring.docker.compose.enabled=false` — Spring does **not** auto-start Docker; run `docker compose up -d` yourself.
-- The DataSeeder only runs when the `users` collection is empty. To reseed, drop the collection.
+- **Seeding sample data is manual.** Nothing runs on startup. Run `scripts/seed-sample-data.sh` to populate MongoDB with LOTR-themed users (from `seed/users.json` when the collection is empty), the two `system` decks (Welcome Tour + General Knowledge), faction-based Organizations, a personal Theme per user, and 1–2 LOTR-themed Decks per user. The seeder is idempotent **per collection per user** — re-running tops up missing pieces without overwriting anything (decks are skipped for any user who already owns ≥1 deck; themes are skipped for any user who already owns ≥1 theme; org membership is only set if `organizationId` is null). Nothing is ever deleted. The script runs the Spring Boot app with `--seed.run=true`, which is the only thing that activates `SampleDataSeeder`; a normal `./mvnw spring-boot:run` boot does not seed anything.
 - WebSocket support is included as a dependency but no WebSocket endpoints are implemented yet.
 - There is no `.env` file in the repo. For local development, copy `example.env` to `dev.env` and fill in real credentials. `DotenvEnvironmentPostProcessor` loads `dev.env` (or `.env`) at runtime but silently skips if neither exists — tests do not rely on it at all.
 - Backend tests require Docker to be running (`docker compose up -d`) because `@SpringBootTest` controller tests connect to the real local MongoDB and Redis.

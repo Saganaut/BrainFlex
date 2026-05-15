@@ -11,6 +11,7 @@ import {
 import type { DeckDto } from "../../store/BrainFlexApi";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./MyDecksPage.module.css";
 
@@ -92,9 +93,16 @@ const MyDecksPage = () => {
 
   const [deleteDeck] = useDeleteDeckMutation();
   const [createDeck] = useCreateDeckMutation();
+  const confirm = useConfirm();
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this deck and all its questions?")) return;
+    const ok = await confirm({
+      title: "Delete deck",
+      message: "Delete this deck and all its questions?",
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
     await deleteDeck({ id }).unwrap();
     void refetch();
   };

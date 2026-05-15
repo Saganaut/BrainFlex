@@ -15,6 +15,7 @@ import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
 import { resolveShowcaseBackground } from "../../../utils/deckImages";
 import styles from "./Lobby.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 
 interface LobbyProps {
   roomCode: string;
@@ -26,6 +27,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   const userState = useCurrentUser();
   const game = useGameSession();
   const { sendStart, sendLeave, sendBoot } = useGameWebSocket(roomCode);
+  const confirm = useConfirm();
 
   const { data: session } = useGetShowcaseQuery({ roomCode });
 
@@ -56,8 +58,14 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     }
   }, [userId, players, navigate]);
 
-  const handleBoot = (targetUserId: string) => {
-    if (!confirm("Remove this player from the lobby?")) return;
+  const handleBoot = async (targetUserId: string) => {
+    const ok = await confirm({
+      title: "Remove player",
+      message: "Remove this player from the lobby?",
+      confirmLabel: "Remove",
+      variant: "danger",
+    });
+    if (!ok) return;
     sendBoot(targetUserId);
   };
 
@@ -115,7 +123,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                     variant='error'
                     type='button'
                     onClick={() => {
-                      handleBoot(playerId);
+                      void handleBoot(playerId);
                     }}
                     aria-label={`Remove ${p.userName ?? "player"} from the lobby`}>
                     Boot

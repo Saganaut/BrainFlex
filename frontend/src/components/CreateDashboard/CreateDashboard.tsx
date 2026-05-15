@@ -10,11 +10,18 @@ import { useNavigate } from "@tanstack/react-router";
 import { Btn } from "../Common/Buttons/Btn";
 import { DeckSettingsMenu } from "./DeckSettingsMenu";
 import { LeftSidebar } from "./LeftSidebar";
+import { RightSidebar } from "./RightSidebar/RightSidebar";
 import { SlideDisplay } from "./SlideDisplay";
+import { SpeakerNotesDrawer } from "./SpeakerNotesDrawer/SpeakerNotesDrawer";
 import styles from "./CreateDashboard.module.css";
 import { useCreateDashboard } from "./useCreateDashboard";
 import { useFullScreen } from "@/context/useFullScreen";
-import { ArrowsPointingOutIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowsPointingOutIcon,
+  EyeIcon,
+  PlayIcon,
+} from "@heroicons/react/24/outline";
+import { DashboardContainer } from "../Containers/DashboardContainer";
 
 const CreateDashboard = () => {
   const navigate = useNavigate();
@@ -23,57 +30,88 @@ const CreateDashboard = () => {
   const { toggleFullScreen } = useFullScreen();
 
   return (
-    <div className={styles.createDashboard}>
-      <div className={styles.navbar}>
-        <div className={styles.leftControlButtons}>
-          <Btn
-            size={"md"}
-            shape={"pill"}
-            onClick={() => {
-              void navigate({
-                to: "/decks",
-              });
-            }}>
-            Back
-          </Btn>
-          <Btn
-            shape={"pill"}
-            size={"md"}
-            aria-label='Enter fullscreen'
-            onClick={toggleFullScreen}>
-            <ArrowsPointingOutIcon style={{ width: "1rem", height: "1rem" }} />
-          </Btn>
+    <DashboardContainer>
+      <div className={styles.createDashboard}>
+        <div className={styles.navbar}>
+          <div className={styles.leftControlButtons}>
+            <Btn
+              size={"md"}
+              shape={"pill"}
+              onClick={() => {
+                void navigate({
+                  to: "/decks",
+                });
+              }}>
+              Back
+            </Btn>
+            <Btn
+              shape={"pill"}
+              size={"md"}
+              aria-label='Enter fullscreen'
+              onClick={toggleFullScreen}>
+              <ArrowsPointingOutIcon
+                style={{ width: "1rem", height: "1rem" }}
+              />
+            </Btn>
+          </div>
+          <input
+            aria-label='Deck title'
+            value={titleDraft}
+            placeholder='Untitled Deck'
+            maxLength={100}
+            onChange={(e) => {
+              setTitleDraft(e.target.value);
+            }}
+            onBlur={commitTitle}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setTitleDraft(serverName);
+                e.currentTarget.blur();
+              }
+            }}
+          />
+          <div className={styles.rightControlButtons}>
+            <Btn
+              size={"md"}
+              shape={"pill"}
+              variant={"default"}
+              onClick={() => {
+                // TODO: open the deck preview view (read-only renderer)
+                console.log("preview deck", serverName);
+              }}>
+              <EyeIcon style={{ width: "1rem", height: "1rem" }} />
+              Preview
+            </Btn>
+            <Btn
+              size={"md"}
+              shape={"pill"}
+              variant={"brand"}
+              onClick={() => {
+                // TODO: kick off a live showcase session for this deck
+                console.log("start showcase", serverName);
+              }}>
+              <PlayIcon style={{ width: "1rem", height: "1rem" }} />
+              Start
+            </Btn>
+            <DeckSettingsMenu />
+          </div>
         </div>
-        <input
-          aria-label='Deck title'
-          value={titleDraft}
-          placeholder='Untitled Deck'
-          maxLength={100}
-          onChange={(e) => {
-            setTitleDraft(e.target.value);
-          }}
-          onBlur={commitTitle}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
-            if (e.key === "Escape") {
-              setTitleDraft(serverName);
-              e.currentTarget.blur();
-            }
-          }}
-        />
-        <DeckSettingsMenu />
-      </div>
 
-      <div className={styles.mainCanvas}>
-        <LeftSidebar />
+        <div className={styles.mainCanvas}>
+          <LeftSidebar />
 
-        <div className={styles.slideCanvas}>
-          <SlideDisplay />
+          <div className={styles.slideCanvas}>
+            <div className={styles.slideStack}>
+              <SlideDisplay />
+              <SpeakerNotesDrawer />
+            </div>
+          </div>
+
+          <RightSidebar />
         </div>
-
-        <div className={styles.rightSidebar}>Right sidebar</div>
       </div>
-    </div>
+    </DashboardContainer>
   );
 };
 

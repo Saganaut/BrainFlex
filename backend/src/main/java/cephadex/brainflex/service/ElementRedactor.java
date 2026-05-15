@@ -36,7 +36,7 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case ImageChoiceQuestion q -> new ImageChoiceQuestion(
                     q.id(), q.prompt(), q.options(),
@@ -44,7 +44,7 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case TextQuestion q -> new TextQuestion(
                     q.id(), q.prompt(),
@@ -54,7 +54,7 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case NumberQuestion q -> new NumberQuestion(
                     q.id(), q.prompt(),
@@ -64,7 +64,7 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case RankingQuestion q -> new RankingQuestion(
                     q.id(), q.prompt(), q.items(),
@@ -73,7 +73,7 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case ScalesQuestion q -> new ScalesQuestion(
                     q.id(), q.prompt(), q.statements(),
@@ -83,7 +83,7 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case QAndAQuestion q -> q; // no answer key to hide
             case GridQuestion q -> new GridQuestion(
@@ -93,7 +93,7 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
                     q.id(), q.prompt(), q.targetImageUrl(),
@@ -103,19 +103,19 @@ public final class ElementRedactor {
                     q.pointValue(), q.difficulty(),
                     q.bestAnswerMode(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.hostNotes(), q.backgroundImageUrl(),
+                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
         };
     }
 
     /**
-     * Also strips the host-only `hostNotes` field — used when broadcasting an
+     * Also strips the host-only `speakerNotes` field — used when broadcasting an
      * element to non-host participants. The host sees the un-redacted version
      * via a separate /user/queue/host channel (future).
      */
     public static DeckElement redactForParticipant(DeckElement element) {
         DeckElement redacted = redact(element);
-        // For v1 hostNotes is included in the redact() output above; we expose this
+        // For v1 speakerNotes is included in the redact() output above; we expose this
         // method now so callers can opt into per-recipient stripping later without
         // changing call sites.
         return redacted;

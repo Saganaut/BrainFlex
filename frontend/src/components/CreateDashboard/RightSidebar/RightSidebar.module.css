@@ -1,0 +1,78 @@
+/* Right-edge tool rail with a slide-in drawer that opens to the rail's left.
+   The rail is a thin vertical strip; the drawer is absolutely positioned
+   directly to its left so it overlays the slide canvas without pushing the
+   icons or shrinking the editor's layout grid. */
+
+.rightSidebar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: var(--p-md);
+  height: 100%;
+}
+
+.iconStrip {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  z-index: 2;
+}
+
+.active {
+  background-color: var(--bg-subtle);
+  border-color: var(--action-active);
+  color: var(--action-active);
+}
+
+.drawer {
+  position: absolute;
+  top: var(--p-md);
+  bottom: var(--p-md);
+  right: calc(100% - var(--p-md));
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 1;
+  overflow: hidden;
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+  background-color: var(--bg-canvas);
+}
+
+.drawerTitle {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.placeholderMuted {
+  color: var(--text-muted);
+  font-style: italic;
+}

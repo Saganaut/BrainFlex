@@ -29,7 +29,7 @@ public record McqQuestion(
         String explanation,
         // shared chrome
         int displaySeconds,
-        String hostNotes,
+        String speakerNotes,
         String backgroundImageUrl,
         String imageUrl,
         String videoUrl,

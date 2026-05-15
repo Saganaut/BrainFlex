@@ -488,7 +488,7 @@ export type GridQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -513,7 +513,7 @@ export type ImageChoiceQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -533,7 +533,7 @@ export type McqQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -555,7 +555,7 @@ export type NumberQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -578,7 +578,7 @@ export type PlaceOnImageQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -599,7 +599,7 @@ export type QAndAQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -625,7 +625,7 @@ export type RankingQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -654,7 +654,7 @@ export type ScalesQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -669,7 +669,7 @@ export type Slide = {
     title?: string;
     body?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;
@@ -690,7 +690,7 @@ export type TextQuestion = {
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
-    hostNotes?: string;
+    speakerNotes?: string;
     backgroundImageUrl?: string;
     imageUrl?: string;
     videoUrl?: string;

@@ -24,6 +24,10 @@ body {
   box-sizing: border-box;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 #root {
   width: var(--max-screen-width);
   max-width: 100%;

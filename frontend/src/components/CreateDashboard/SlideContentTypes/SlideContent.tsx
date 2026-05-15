@@ -1,8 +1,10 @@
 /**
  * Author surface for a non-interactive Slide (title screen / section divider /
  * callout / content / end card). Captures slide kind, title, rich-text body,
- * host notes, and display seconds. Media URLs (image/video/audio/background)
- * are intentionally not exposed yet — that requires the media-picker library.
+ * and display seconds. Speaker notes live in the global drawer below the
+ * canvas (see SpeakerNotesDrawer) so every element kind exposes them in the
+ * same place. Media URLs (image/video/audio/background) are intentionally not
+ * exposed yet — that requires the media-picker library.
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
@@ -29,7 +31,6 @@ const SlideContent = () => {
 
   const [title, setTitle] = useState<string>(element?.title ?? "");
   const [body, setBody] = useState<string>(element?.body ?? "");
-  const [hostNotes, setHostNotes] = useState<string>(element?.hostNotes ?? "");
   const [displaySeconds, setDisplaySeconds] = useState<number>(
     element?.displaySeconds ?? 0,
   );
@@ -41,7 +42,6 @@ const SlideContent = () => {
     markSynced(element.id);
     setTitle(element.title ?? "");
     setBody(element.body ?? "");
-    setHostNotes(element.hostNotes ?? "");
     setDisplaySeconds(element.displaySeconds ?? 0);
     setSlideKind(element.slideKind ?? "CONTENT");
   }
@@ -58,7 +58,6 @@ const SlideContent = () => {
     ...element,
     title,
     body,
-    hostNotes,
     displaySeconds,
     slideKind,
     ...overrides,
@@ -100,20 +99,6 @@ const SlideContent = () => {
         onChange={(html) => {
           setBody(html);
           schedule(buildPatch({ body: html }));
-        }}
-        onBlur={flush}
-      />
-
-      <Input
-        label='Host notes'
-        id={`slide-host-notes-${element.id ?? ""}`}
-        type='text'
-        value={hostNotes}
-        placeholder='Notes for the host (not shown to players)'
-        onChange={(e) => {
-          const next = e.target.value;
-          setHostNotes(next);
-          schedule(buildPatch({ hostNotes: next }));
         }}
         onBlur={flush}
       />

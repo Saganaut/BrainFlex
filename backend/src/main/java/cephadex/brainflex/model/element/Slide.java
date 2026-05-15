@@ -16,7 +16,7 @@ public record Slide(
         String body,                  // markdown-friendly; rendered as plain text for v1
         // shared chrome
         int displaySeconds,
-        String hostNotes,
+        String speakerNotes,
         String backgroundImageUrl,
         String imageUrl,
         String videoUrl,

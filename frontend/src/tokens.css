@@ -350,6 +350,9 @@
   --z-modal: 1000;
   --z-tooltip: 1100;
 
+  /* --- component sizes * --- */
+  --navbar-height: 80px;
+
   /* --- Transitions & Timing --- */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 150ms;
@@ -532,17 +535,3 @@
   --action-active: oklch(93% 0.2 var(--hue-accent));
   --action-disabled: oklch(28% 0.06 calc(var(--hue-primary) + 30deg));
 }
-
-/* ─── Component Modifiers ───────────────────────────────────────── */
-
-/* Variants, sizes, and modes are NOT defined globally. Each component */
-
-/* owns its own .error / .success / .xs / .lg / .outline / .ghost     */
-
-/* classes inside its own *.module.css so it can tune --padding,       */
-
-/* --font-size, --gap, etc. to its own ergonomics. Components consume  */
-
-/* shared semantic tokens (--text-error, --bg-success, --p-md, …)      */
-
-/* directly; the modifier mapping lives next to the component.        */

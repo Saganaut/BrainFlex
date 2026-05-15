@@ -1,0 +1,72 @@
+/* Speaker notes drawer — sits below the slide canvas. Collapsed state shows
+   only the header bar; expanded state reveals a rich-text editor. The header
+   doubles as the toggle button. */
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--space-2) var(--space-4);
+  background-color: var(--bg-canvas);
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+
+.header:hover {
+  background-color: var(--bg-subtle);
+}
+
+.drawer.open .header {
+  border-bottom-color: var(--border-subtle);
+}
+
+.headerLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+/* Small dot beside the label when notes exist — quick affordance that
+   something is in the drawer without needing to expand it. */
+.headerDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background-color: var(--action-active);
+}
+
+.headerChevron {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+}
+
+.body {
+  padding: var(--space-3) var(--space-4) var(--space-4);
+}
+
+.emptyState {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}

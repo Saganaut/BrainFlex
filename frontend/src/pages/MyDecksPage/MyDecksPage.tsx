@@ -7,15 +7,36 @@ import {
   useListDecksQuery,
   useDeleteDeckMutation,
   useCreateDeckMutation,
+  useAddElementMutation,
 } from "../../store/BrainFlexApi";
-import type { DeckDto } from "../../store/BrainFlexApi";
+import type { DeckDto, Slide } from "../../store/BrainFlexApi";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./MyDecksPage.module.css";
 
-const buildOptimisticDeck = (id: string, name: string): DeckDto => ({
+/**
+ * Starter slide stamped into every new deck so the editor never opens onto an
+ * empty rail. Same id is used for the optimistic cache seed AND the persisted
+ * `addElement` call after the deck is created — that way the slide stays
+ * selected and visible without a flicker between optimistic and confirmed state.
+ */
+const buildFirstSlide = (id: string): Slide => ({
+  kind: "Slide",
+  id,
+  slideKind: "TITLE",
+  title: "Untitled slide",
+  body: "",
+  displaySeconds: 0,
+  mediaPosition: "NONE",
+});
+
+const buildOptimisticDeck = (
+  id: string,
+  name: string,
+  firstSlide: Slide,
+): DeckDto => ({
   id,
   name,
   description: "",
@@ -23,8 +44,8 @@ const buildOptimisticDeck = (id: string, name: string): DeckDto => ({
   isSystem: false,
   visibility: "PRIVATE",
   recommendedPreset: "GAME",
-  elementCount: 0,
-  elements: [],
+  elementCount: 1,
+  elements: [firstSlide],
 });
 //TODO Extract this out into its own component, it should go with the other Card components - potentially be a variant
 //TODO the cards should have a small menu button on the top right that toggles a dropdown which then exposes options
@@ -102,6 +123,7 @@ const MyDecksPage = () => {
 
   const [deleteDeck] = useDeleteDeckMutation();
   const [createDeck] = useCreateDeckMutation();
+  const [addElement] = useAddElementMutation();
   const confirm = useConfirm();
 
   const handleDelete = async (id: string) => {
@@ -119,23 +141,25 @@ const MyDecksPage = () => {
   const handleCreateDeck = () => {
     const id = crypto.randomUUID();
     const name = "Untitled Deck";
+    const firstSlide = buildFirstSlide(crypto.randomUUID());
 
     void dispatch(
       BrainFlex.util.upsertQueryData(
         "getDeck",
         { id },
-        buildOptimisticDeck(id, name),
+        buildOptimisticDeck(id, name, firstSlide),
       ),
     );
 
     void navigate({
       to: "/decks/$deckId/edit",
       params: { deckId: id },
-      search: { questionId: undefined },
+      search: { questionId: firstSlide.id },
     });
 
     void createDeck({ createDeckRequest: { id, name } })
       .unwrap()
+      .then(() => addElement({ id, body: firstSlide }).unwrap())
       .catch((err: unknown) => {
         console.error("Failed to create deck", err);
       });

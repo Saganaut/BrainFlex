@@ -45,7 +45,7 @@ public sealed interface DeckElement
     int displaySeconds();
 
     /** Private notes shown only to the host during play. Never broadcast to participants. */
-    String hostNotes();
+    String speakerNotes();
 
     /** Element-level background image override; falls back to deck-level. */
     String backgroundImageUrl();

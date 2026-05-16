@@ -29,6 +29,7 @@ import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
+import { EditorWarning } from "../EditorWarning";
 import styles from "./McqSlideContent.module.css";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
@@ -92,7 +93,7 @@ const McqSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Multiple choice'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -158,83 +159,82 @@ const McqSlideContent = () => {
   const hasCorrectAnswer = correctOptionIds.length > 0;
 
   return (
-    <SlideContentWrapper>
-      <div className={styles.slideInnerHeader}>
-        <RichTextInput
-          label='Question'
-          id={`mcq-prompt-${element.id ?? ""}`}
-          placeholder='Type your question…'
-          value={prompt}
-          onChange={handlePromptChange}
-          onBlur={flush}
-        />
-      </div>
-      <div className={styles.slideInnerBody}>
-        <div className={styles.optionsHeader}>
-          <span className={styles.optionsLabel}>Options</span>
-          <Btn
-            size='sm'
-            onClick={handleAddOption}
-            disabled={options.length >= MAX_OPTIONS}>
-            + Add option
-          </Btn>
-        </div>
+    <SlideContentWrapper
+      title='Multiple choice'
+      description='Two to six options. Any non-empty subset can be marked correct.'
+      footer={
+        !hasCorrectAnswer ? (
+          <EditorWarning>
+            Not setting a correct answer means this slide is not scoreable in a
+            game showcase.
+          </EditorWarning>
+        ) : null
+      }>
+      <RichTextInput
+        label='Question'
+        id={`mcq-prompt-${element.id ?? ""}`}
+        placeholder='Type your question…'
+        value={prompt}
+        onChange={handlePromptChange}
+        onBlur={flush}
+      />
 
-        <div className={styles.optionsRow}>
-          {options.map((option, idx) => {
-            const optionId = option.id ?? `__no-id-${idx.toString()}`;
-            const isCorrect = option.id
-              ? correctOptionIds.includes(option.id)
-              : false;
-            return (
-              <div
-                key={optionId}
-                className={`${styles.optionCard} ${isCorrect ? styles.optionCardCorrect : ""}`}>
-                <div className={styles.optionTopRow}>
-                  <span className={styles.optionIndex}>{idx + 1}</span>
-                  <IconBtn
-                    type='default'
-                    size='xs'
-                    bordered
-                    icon={<MinusIcon />}
-                    aria-label={`Remove option ${(idx + 1).toString()}`}
-                    disabled={options.length <= MIN_OPTIONS}
-                    onClick={() => {
-                      if (option.id) handleRemoveOption(option.id);
-                    }}
-                  />
-                </div>
-                <Input
-                  type='text'
-                  fullWidth
-                  value={option.text ?? ""}
-                  placeholder={`Option ${(idx + 1).toString()}`}
-                  onChange={(e) => {
-                    if (option.id)
-                      handleOptionTextChange(option.id, e.target.value);
-                  }}
-                  onBlur={flush}
-                />
-                <Checkbox
-                  label='Correct'
-                  id={`mcq-correct-${optionId}`}
-                  checked={isCorrect}
-                  onChange={() => {
-                    if (option.id) handleToggleCorrect(option.id);
+      <div className={styles.optionsHeader}>
+        <span className={styles.optionsLabel}>Options</span>
+        <Btn
+          size='sm'
+          onClick={handleAddOption}
+          disabled={options.length >= MAX_OPTIONS}>
+          + Add option
+        </Btn>
+      </div>
+
+      <div className={styles.optionsRow}>
+        {options.map((option, idx) => {
+          const optionId = option.id ?? `__no-id-${idx.toString()}`;
+          const isCorrect = option.id
+            ? correctOptionIds.includes(option.id)
+            : false;
+          return (
+            <div
+              key={optionId}
+              className={`${styles.optionCard} ${isCorrect ? styles.optionCardCorrect : ""}`}>
+              <div className={styles.optionTopRow}>
+                <span className={styles.optionIndex}>{idx + 1}</span>
+                <IconBtn
+                  type='default'
+                  size='xs'
+                  bordered
+                  icon={<MinusIcon />}
+                  aria-label={`Remove option ${(idx + 1).toString()}`}
+                  disabled={options.length <= MIN_OPTIONS}
+                  onClick={() => {
+                    if (option.id) handleRemoveOption(option.id);
                   }}
                 />
               </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className={styles.slideInnerFooter}>
-        {!hasCorrectAnswer && (
-          <p className={styles.warning} role='alert'>
-            Not setting a correct answer means this slide is not scoreable in a
-            game showcase.
-          </p>
-        )}
+              <Input
+                type='text'
+                fullWidth
+                value={option.text ?? ""}
+                placeholder={`Option ${(idx + 1).toString()}`}
+                onChange={(e) => {
+                  if (option.id)
+                    handleOptionTextChange(option.id, e.target.value);
+                }}
+                onBlur={flush}
+              />
+              <Checkbox
+                label='Correct'
+                id={`mcq-correct-${optionId}`}
+                checked={isCorrect}
+                onChange={() => {
+                  if (option.id) handleToggleCorrect(option.id);
+                }}
+              />
+            </div>
+          );
+        })}
       </div>
     </SlideContentWrapper>
   );

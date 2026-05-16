@@ -55,7 +55,7 @@ const ScalesSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Scales'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -98,7 +98,9 @@ const ScalesSlideContent = () => {
   };
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Scales'
+      description='A numeric scale plus one or more statements players rate. Useful for pulse rounds or Likert-style scored items.'>
       <RichTextInput
         label='Question'
         id={`scales-prompt-${element.id ?? ""}`}
@@ -183,7 +185,7 @@ const ScalesSlideContent = () => {
       <div className={styles.itemList}>
         {statements.map((s, idx) => (
           <div key={s.id} className={styles.itemRow}>
-            <span>{idx + 1}.</span>
+            <span className={styles.itemRowIndex}>{idx + 1}</span>
             <div className={styles.itemRowField}>
               <Input
                 type='text'

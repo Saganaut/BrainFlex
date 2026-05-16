@@ -80,6 +80,8 @@ import { ContentDeckPicker } from "../../components/Games/ContentDeckPicker/Cont
 import { Accordion } from "../../components/Containers/Accordion";
 import { slideTypeGraphics } from "../../components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 import { Loader } from "../../components/Common/Loader/Loader";
+import { SlideContentWrapper } from "../../components/CreateDashboard/SlideContentTypes/SlideContentWrapper";
+import { EditorWarning } from "../../components/CreateDashboard/SlideContentTypes/EditorWarning";
 import {
   NotFoundPage,
   ServerErrorPage,
@@ -492,6 +494,43 @@ const DesignSystemPage = () => {
                   borderRadius: "var(--radius-md)",
                 }}>
                 <ServiceUnavailablePage />
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Slide editor shell'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-4)",
+                maxWidth: "640px",
+              }}>
+              <div
+                style={{
+                  height: "320px",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "var(--radius-md)",
+                  overflow: "hidden",
+                  background: "var(--bg-canvas)",
+                }}>
+                <SlideContentWrapper
+                  title='Slide editor shell'
+                  description='Shared layout for every kind-specific editor: header, scrollable body, footer slot.'
+                  footer={
+                    <EditorWarning>
+                      EditorWarning lives in the footer slot for inline,
+                      non-blocking author guidance.
+                    </EditorWarning>
+                  }>
+                  <p style={{ margin: 0, color: "var(--text-secondary)" }}>
+                    Body content goes here. The body scrolls independently of
+                    the header and footer.
+                  </p>
+                  <p style={{ margin: 0, color: "var(--text-secondary)" }}>
+                    Use this shell from every editor in
+                    <code> CreateDashboard/SlideContentTypes/</code>.
+                  </p>
+                </SlideContentWrapper>
               </div>
             </div>
           </Accordion>

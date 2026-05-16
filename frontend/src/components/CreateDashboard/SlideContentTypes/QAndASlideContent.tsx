@@ -42,7 +42,7 @@ const QAndASlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Q & A'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -58,7 +58,9 @@ const QAndASlideContent = () => {
   });
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Q & A'
+      description='Open-ended round. Players submit free-form questions or comments — never scored.'>
       <RichTextInput
         label='Question'
         id={`qa-prompt-${element.id ?? ""}`}

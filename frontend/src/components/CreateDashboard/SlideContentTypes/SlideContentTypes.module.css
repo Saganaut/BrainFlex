@@ -1,25 +1,89 @@
 /* Shared styles for the SlideContentTypes editors. Each kind-specific editor
-   slots fields, inputs and helper rows in here so layout stays consistent
-   across the dashboard's slide canvas. Form primitives themselves come from
-   Common/Input — these classes only handle row layout, warnings, and image
-   placeholders. */
+   slots fields, inputs, and helper rows in here so layout stays consistent
+   across the deck editor's slide canvas. Form primitives themselves come from
+   Common/Input — these classes handle the editor shell (header / body /
+   footer), row layout, warnings, and image placeholders. */
+
+.editorShell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: var(--space-5) var(--space-6);
+  gap: var(--space-3);
+}
+
+.editorHeader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.editorTitle {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.editorDescription {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.editorBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: var(--space-1);
+}
+
+.editorFooter {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
 
 .fieldRow {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
   gap: var(--space-4);
-  margin-bottom: var(--space-3);
 }
 
 .warning {
-  margin-top: var(--space-3);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
   padding: var(--space-2) var(--space-3);
   border-left: 4px solid var(--text-warning, oklch(72% 0.16 70deg));
   background-color: var(--bg-subtle);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
   border-radius: var(--radius-sm);
+}
+
+.warningIcon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--text-warning, oklch(72% 0.16 70deg));
+}
+
+.warningIcon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .placeholder {
@@ -59,8 +123,20 @@
 
 .itemRow {
   display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.itemRowIndex {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 1.5rem;
+  text-align: right;
 }
 
 /* Wrapper for an Input rendered inside .itemRow so the field stretches to
@@ -77,19 +153,43 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .sectionHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: var(--space-4);
-  margin-bottom: var(--space-2);
+  gap: var(--space-3);
 }
 
 .sectionLabel {
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.imageEditorRow {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.imageEditorPreview {
+  flex: 0 0 auto;
+}
+
+.imageEditorFields {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }

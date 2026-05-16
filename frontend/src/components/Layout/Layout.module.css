@@ -4,47 +4,54 @@
   height: 100dvh;
 }
 
-.mainHeader {
-  height: var(--navbar-height);
-  width: 100%;
-  transition: height var(--duration-base) ease-in-out;
+.mainHeader,
+.rightSidebar,
+.leftSidebar,
+.canvasHeader {
+  transition:
+    height var(--duration-base) ease-in-out,
+    overflow 0s var(--duration-base);
 
   &.isCollapsed {
     overflow: hidden;
+  }
+}
+
+.mainHeader {
+  height: var(--navbar-height);
+  flex: 0 0 auto;
+
+  &.isCollapsed {
     height: 0;
   }
 }
 
 .rightSidebar {
-  width: 15dvw;
-  border: 1px dashed white;
-  transition: width var(--duration-base) ease-in-out;
+  position: relative;
+  flex: 0 0 auto;
+  align-self: stretch;
 
   &.isCollapsed {
     width: 0;
-    overflow: hidden;
   }
 }
 
 .leftSidebar {
-  width: 20dvw;
-  border: 1px dashed white;
-  transition: width var(--duration-base) ease-in-out;
+  flex: 0 0 auto;
+  width: auto;
+  min-width: max-content;
 
   &.isCollapsed {
     width: 0;
-    overflow: hidden;
   }
 }
 
 .canvasHeader {
   border: 1px dashed white;
   height: var(--navbar-height);
-  transition: height var(--duration-base) ease-in-out;
 
   &.isCollapsed {
     height: 0;
-    overflow: hidden;
   }
 }
 
@@ -62,4 +69,5 @@
 
 .innerDisplay {
   flex: 1;
+  position: relative;
 }

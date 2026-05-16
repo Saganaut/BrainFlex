@@ -48,7 +48,7 @@ const SlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Slide'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -64,7 +64,10 @@ const SlideContent = () => {
   });
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Slide'
+      description='A non-interactive screen — title, content, callout, or end card.'>
+
       <Dropdown
         label='Slide kind'
         id={`slide-kind-${element.id ?? ""}`}

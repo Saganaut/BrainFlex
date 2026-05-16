@@ -38,7 +38,7 @@ const RankingSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Ranking'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -84,7 +84,9 @@ const RankingSlideContent = () => {
   };
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Ranking'
+      description='Players order the items from top to bottom. The on-screen order is treated as correct.'>
       <RichTextInput
         label='Question'
         id={`rank-prompt-${element.id ?? ""}`}
@@ -112,7 +114,7 @@ const RankingSlideContent = () => {
       <div className={styles.itemList}>
         {items.map((item, idx) => (
           <div key={item.id} className={styles.itemRow}>
-            <span>{idx + 1}.</span>
+            <span className={styles.itemRowIndex}>{idx + 1}</span>
             <div className={styles.itemRowField}>
               <Input
                 type='text'

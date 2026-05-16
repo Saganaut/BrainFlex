@@ -1,8 +1,10 @@
 /**
- * Bottom drawer below the slide canvas where the author records private
- * notes-to-self for the active element. Speaker notes live on EVERY element
- * kind (not just Slide), so this drawer reads/writes the active element's
- * `speakerNotes` field regardless of kind.
+ * Drawer pinned to the bottom of the slide canvas. The header bar is always
+ * visible; when the user toggles it open, the editor body grows UPWARD over
+ * the slide so the drawer reveals itself like a real bottom-anchored sheet.
+ *
+ * Speaker notes live on EVERY element kind (not just Slide), so this drawer
+ * reads/writes the active element's `speakerNotes` field regardless of kind.
  *
  * Edits use the same debounced-commit pattern as the SlideContentTypes
  * editors: type into RichTextInput → schedule(patch) → flush() on blur. The
@@ -79,23 +81,8 @@ const SpeakerNotesDrawer = () => {
         .filter(Boolean)
         .join(" ")}
       aria-label='Speaker notes'>
-      <button
-        type='button'
-        className={styles.header}
-        aria-expanded={isOpen}
-        aria-controls='speaker-notes-body'
-        onClick={() => {
-          setIsOpen((prev) => !prev);
-        }}>
-        <span className={styles.headerLabel}>
-          Speaker notes
-          {hasNotes && <span className={styles.headerDot} aria-hidden='true' />}
-        </span>
-        <span className={styles.headerChevron} aria-hidden='true'>
-          {isOpen ? <ChevronDownIcon /> : <ChevronUpIcon />}
-        </span>
-      </button>
-
+      {/* Body comes first in DOM so it sits ABOVE the always-visible header
+          (the drawer is pinned to the bottom; growth runs upward). */}
       {isOpen && (
         <div
           className={styles.body}
@@ -117,6 +104,23 @@ const SpeakerNotesDrawer = () => {
           )}
         </div>
       )}
+
+      <button
+        type='button'
+        className={styles.header}
+        aria-expanded={isOpen}
+        aria-controls='speaker-notes-body'
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+        }}>
+        <span className={styles.headerLabel}>
+          Speaker notes
+          {hasNotes && <span className={styles.headerDot} aria-hidden='true' />}
+        </span>
+        <span className={styles.headerChevron} aria-hidden='true'>
+          {isOpen ? <ChevronDownIcon /> : <ChevronUpIcon />}
+        </span>
+      </button>
     </section>
   );
 };

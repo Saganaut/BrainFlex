@@ -26,8 +26,7 @@ const isGrid = (e: { kind: string }): e is GridQuestion =>
 const placeholderImageUrl = (seed: string) =>
   `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
 
-const indexesToInput = (idxs: number[] | undefined) =>
-  (idxs ?? []).join(", ");
+const indexesToInput = (idxs: number[] | undefined) => (idxs ?? []).join(", ");
 const inputToIndexes = (raw: string) =>
   raw
     .split(",")
@@ -63,7 +62,7 @@ const GridSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Grid'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -88,7 +87,9 @@ const GridSlideContent = () => {
     backingImageUrl.trim() !== "" ? backingImageUrl : placeholderImageUrl(seed);
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Grid'
+      description='N×M grid overlaid on an image. Players tap one or more cells.'>
       <RichTextInput
         label='Question'
         id={`grid-prompt-${element.id ?? ""}`}
@@ -138,42 +139,53 @@ const GridSlideContent = () => {
         />
       </div>
 
-      <Input
-        label='Backing image URL (placeholder shown if blank)'
-        id={`grid-image-${element.id ?? ""}`}
-        type='text'
-        value={backingImageUrl}
-        placeholder='https://…'
-        onChange={(e) => {
-          const next = e.target.value;
-          setBackingImageUrl(next);
-          schedule(
-            buildPatch({
-              cells: {
-                ...element.cells,
-                backingImageUrl: next || undefined,
-              },
-            }),
-          );
-        }}
-        onBlur={flush}
-      />
-
-      <img src={imgSrc} alt='' className={styles.imagePlaceholder} />
-
-      <Input
-        label='Correct cell indexes (comma-separated, row-major)'
-        id={`grid-correct-${element.id ?? ""}`}
-        type='text'
-        value={correctText}
-        placeholder='e.g. 0, 4, 8'
-        onChange={(e) => {
-          const next = e.target.value;
-          setCorrectText(next);
-          schedule(buildPatch({ correctCellIndexes: inputToIndexes(next) }));
-        }}
-        onBlur={flush}
-      />
+      <div className={styles.imageEditorRow}>
+        <img
+          src={imgSrc}
+          alt=''
+          className={styles.imagePlaceholder}
+          style={{ width: 240 }}
+        />
+        <div className={styles.imageEditorFields}>
+          <Input
+            label='Backing image URL (placeholder shown if blank)'
+            id={`grid-image-${element.id ?? ""}`}
+            type='text'
+            fullWidth
+            value={backingImageUrl}
+            placeholder='https://…'
+            onChange={(e) => {
+              const next = e.target.value;
+              setBackingImageUrl(next);
+              schedule(
+                buildPatch({
+                  cells: {
+                    ...element.cells,
+                    backingImageUrl: next || undefined,
+                  },
+                }),
+              );
+            }}
+            onBlur={flush}
+          />
+          <Input
+            label='Correct cell indexes (comma-separated, row-major)'
+            id={`grid-correct-${element.id ?? ""}`}
+            type='text'
+            fullWidth
+            value={correctText}
+            placeholder='e.g. 0, 4, 8'
+            onChange={(e) => {
+              const next = e.target.value;
+              setCorrectText(next);
+              schedule(
+                buildPatch({ correctCellIndexes: inputToIndexes(next) }),
+              );
+            }}
+            onBlur={flush}
+          />
+        </div>
+      </div>
 
       {/* TODO: Get more specs — visual cell-selection overlay on the backing
           image, per-cell labels (cells.labels), and the media-library picker

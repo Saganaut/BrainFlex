@@ -47,7 +47,7 @@ const NumberSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Numeric answer'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -65,7 +65,9 @@ const NumberSlideContent = () => {
   });
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Numeric answer'
+      description='Players enter a number; a submission counts when it lands within ± tolerance of the target.'>
       <RichTextInput
         label='Question'
         id={`num-prompt-${element.id ?? ""}`}

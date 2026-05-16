@@ -111,11 +111,9 @@ const CreateDashboard = () => {
           <InnerDisplay>
             <div className={styles.slideCanvasContainer}>
               <div className={styles.slideCanvas}>
-                <div className={styles.slideStack}>
-                  <SlideDisplay />
-                  <SpeakerNotesDrawer />
-                </div>
-              </div>
+                <SlideDisplay />
+              </div>{" "}
+              <SpeakerNotesDrawer />
             </div>
           </InnerDisplay>
           <RightSidebar>

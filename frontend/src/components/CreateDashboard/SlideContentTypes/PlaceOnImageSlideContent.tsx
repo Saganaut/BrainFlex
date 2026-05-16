@@ -50,7 +50,7 @@ const PlaceOnImageSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Place on image'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -74,7 +74,9 @@ const PlaceOnImageSlideContent = () => {
       : placeholderImageUrl(element.id ?? "place");
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Place on image'
+      description='Players tap a point on the image. Correct point and tolerance are normalised 0–1.'>
       <RichTextInput
         label='Question'
         id={`place-prompt-${element.id ?? ""}`}
@@ -87,21 +89,30 @@ const PlaceOnImageSlideContent = () => {
         onBlur={flush}
       />
 
-      <Input
-        label='Target image URL (placeholder shown if blank)'
-        id={`place-image-${element.id ?? ""}`}
-        type='text'
-        value={targetImageUrl}
-        placeholder='https://…'
-        onChange={(e) => {
-          const next = e.target.value;
-          setTargetImageUrl(next);
-          schedule(buildPatch({ targetImageUrl: next }));
-        }}
-        onBlur={flush}
-      />
-
-      <img src={imgSrc} alt='' className={styles.imagePlaceholder} />
+      <div className={styles.imageEditorRow}>
+        <img
+          src={imgSrc}
+          alt=''
+          className={styles.imagePlaceholder}
+          style={{ width: 240 }}
+        />
+        <div className={styles.imageEditorFields}>
+          <Input
+            label='Target image URL (placeholder shown if blank)'
+            id={`place-image-${element.id ?? ""}`}
+            type='text'
+            fullWidth
+            value={targetImageUrl}
+            placeholder='https://…'
+            onChange={(e) => {
+              const next = e.target.value;
+              setTargetImageUrl(next);
+              schedule(buildPatch({ targetImageUrl: next }));
+            }}
+            onBlur={flush}
+          />
+        </div>
+      </div>
 
       <div className={styles.fieldRow}>
         <NumberInput

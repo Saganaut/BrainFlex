@@ -17,6 +17,7 @@ import { Radio } from "@/components/Common/Input/Radio";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
+import { EditorWarning } from "./EditorWarning";
 import type {
   ImageChoiceQuestion,
   McqOption,
@@ -53,7 +54,7 @@ const ImageChoiceSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Image choice'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -115,7 +116,17 @@ const ImageChoiceSlideContent = () => {
   const groupName = `img-correct-${element.id ?? ""}`;
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Image choice'
+      description='Players pick from a row of image tiles. One correct answer.'
+      footer={
+        !hasCorrect ? (
+          <EditorWarning>
+            Not setting a correct answer means this slide is not scoreable in a
+            game showcase.
+          </EditorWarning>
+        ) : null
+      }>
       <RichTextInput
         label='Question'
         id={`img-prompt-${element.id ?? ""}`}
@@ -203,13 +214,6 @@ const ImageChoiceSlideContent = () => {
           );
         })}
       </div>
-
-      {!hasCorrect && (
-        <p className={styles.warning} role='alert'>
-          Not setting a correct answer means this slide is not scoreable in a
-          game showcase.
-        </p>
-      )}
 
       {/* TODO: Get more specs — replace the URL field with the media library
           picker (drag-and-drop, crop, alt text). Multi-correct on

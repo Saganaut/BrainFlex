@@ -13,6 +13,7 @@ import { Input } from "@/components/Common/Input/Input";
 import { NumberInput } from "@/components/Common/Input/NumberInput";
 import { Checkbox } from "@/components/Common/Input/Checkbox";
 import { useElementEditor } from "./useElementEditor";
+import { EditorWarning } from "./EditorWarning";
 import type { TextQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
 
@@ -56,7 +57,7 @@ const TextSlideContent = () => {
 
   if (!element) {
     return (
-      <SlideContentWrapper>
+      <SlideContentWrapper title='Text answer'>
         <p>Select a slide to edit.</p>
       </SlideContentWrapper>
     );
@@ -73,7 +74,17 @@ const TextSlideContent = () => {
   });
 
   return (
-    <SlideContentWrapper>
+    <SlideContentWrapper
+      title='Text answer'
+      description='Players type a free-form answer; match against the canonical answer and any variants.'
+      footer={
+        !correctAnswer.trim() ? (
+          <EditorWarning>
+            Not setting a correct answer means this slide is not scoreable in a
+            game showcase.
+          </EditorWarning>
+        ) : null
+      }>
       <RichTextInput
         label='Question'
         id={`text-prompt-${element.id ?? ""}`}
@@ -139,12 +150,6 @@ const TextSlideContent = () => {
         />
       </div>
 
-      {!correctAnswer.trim() && (
-        <p className={styles.warning} role='alert'>
-          Not setting a correct answer means this slide is not scoreable in a
-          game showcase.
-        </p>
-      )}
     </SlideContentWrapper>
   );
 };

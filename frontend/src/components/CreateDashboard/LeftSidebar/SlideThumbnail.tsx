@@ -16,11 +16,13 @@ import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { DropdownMenu, DropdownMenuItem } from "../../Menus/DropdownMenu";
 import { useDeleteElementMutation } from "@/store/BrainFlexApi";
 import styles from "./LeftSidebarContent.module.css";
+import { SlideThumbnailContent } from "./SlideThumbnailContent";
+import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 
 interface SlideThumbnailProps {
   name: string;
   id: string;
-  type: string;
+  slideType: ElementKind;
   index: number;
   deckId: string;
   currentQuestionId?: string;
@@ -31,7 +33,7 @@ const routeApi = getRouteApi("/decks/$deckId/edit");
 const SlideThumbnail: React.FC<SlideThumbnailProps> = ({
   name,
   id,
-  type,
+  slideType,
   index,
   deckId,
   currentQuestionId,
@@ -85,18 +87,17 @@ const SlideThumbnail: React.FC<SlideThumbnailProps> = ({
       className={`${styles.slideThumbnailWrapper} ${isDragging && styles.isDragging}`}
       ref={setRefs}>
       <DropdownMenu
-        position={"top-right"}
+        position={"top-left"}
+        anchorToCursor
         trigger={(toggle) => (
           <div
             onContextMenu={(e) => {
               e.preventDefault();
-              toggle();
+              toggle(e);
             }}
             onClick={handleSelectQuestion}
             className={`${styles.slideThumbnail} ${isActive && styles.active}`}>
-            <div>
-              {index} {name} {id} {type}
-            </div>
+            <SlideThumbnailContent slideType={slideType} title={name} />
           </div>
         )}>
         <DropdownMenuItem onClick={handleDeleteSlide}>

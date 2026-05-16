@@ -20,6 +20,11 @@ export function extractErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+export function truncateText(str: string, maxLength: number): string {
+  if (!str || str.length <= maxLength) return str;
+  return str.slice(0, maxLength) + "...";
+}
+
 export function camelToNormalCase(str: string): string {
   if (!str) return str;
 

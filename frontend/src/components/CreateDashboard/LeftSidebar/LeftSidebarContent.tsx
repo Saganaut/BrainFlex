@@ -10,6 +10,7 @@
  */
 
 import { DragDropProvider } from "@dnd-kit/react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import { Btn } from "../../Common/Buttons/Btn";
 import { SlideThumbnail } from "./SlideThumbnail";
 import styles from "./LeftSidebarContent.module.css";
@@ -56,22 +57,40 @@ const LeftSidebarContent = () => {
         <Btn onClick={handleNewSlideClick}>New Slide</Btn>
       </div>
       <div className={styles.slideContainer}>
-        <DragDropProvider
-          onDragEnd={(event) => {
-            handleDragEnd(event);
-          }}>
-          {elements.map((element, index) => (
-            <SlideThumbnail
-              key={element.id}
-              index={index}
-              id={element.id ?? ""}
-              name={elementDisplayName(element)}
-              type={element.kind}
-              currentQuestionId={questionId}
-              deckId={deckId}
-            />
-          ))}
-        </DragDropProvider>
+        {elements.length === 0 ? (
+          <button
+            type='button'
+            className={styles.emptySlide}
+            onClick={handleNewSlideClick}
+            aria-label='Create your first slide'>
+            <span className={styles.emptySlideIcon} aria-hidden='true'>
+              <PlusIcon />
+            </span>
+            <span className={styles.emptySlideTitle}>
+              Create your first slide
+            </span>
+            <span className={styles.emptySlideSubtitle}>
+              Pick a question type to add to the deck.
+            </span>
+          </button>
+        ) : (
+          <DragDropProvider
+            onDragEnd={(event) => {
+              handleDragEnd(event);
+            }}>
+            {elements.map((element, index) => (
+              <SlideThumbnail
+                key={element.id}
+                index={index}
+                id={element.id ?? ""}
+                name={elementDisplayName(element)}
+                slideType={element.kind}
+                currentQuestionId={questionId}
+                deckId={deckId}
+              />
+            ))}
+          </DragDropProvider>
+        )}
       </div>
     </div>
   );

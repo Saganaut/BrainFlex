@@ -18,11 +18,23 @@ type DropdownPosition =
   | "top-right"
   | "top-left";
 
+// Anything with clientX/clientY — typically a MouseEvent / React.MouseEvent.
+// Only used when `anchorToCursor` is set; otherwise toggle ignores its argument.
+interface CursorAnchor {
+  clientX: number;
+  clientY: number;
+}
+type ToggleFn = (anchor?: CursorAnchor) => void;
+
 interface DropdownMenuProps {
-  trigger: (toggle: () => void) => ReactElement;
+  trigger: (toggle: ToggleFn) => ReactElement;
   children: ReactNode;
   position?: DropdownPosition;
   className?: string;
+  // Opt-in: pin the panel at the cursor passed to toggle (context-menu style)
+  // instead of anchoring to the trigger. `position` still names which corner
+  // of the panel sits at the cursor.
+  anchorToCursor?: boolean;
 }
 
 const positionClassMap: Record<DropdownPosition, string> = {
@@ -37,14 +49,23 @@ const DropdownMenu = ({
   children,
   position = "top-right",
   className,
+  anchorToCursor = false,
 }: DropdownMenuProps) => {
   const [open, setOpen] = useState(false);
+  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const toggle = () => {
+  const toggle: ToggleFn = (anchor) => {
+    if (anchorToCursor && anchor) {
+      setCursor({ x: anchor.clientX, y: anchor.clientY });
+      setOpen(true);
+      return;
+    }
+    setCursor(null);
     setOpen((prev) => !prev);
   };
   const closeMenu = () => {
     setOpen(false);
+    setCursor(null);
   };
 
   useEffect(() => {
@@ -54,6 +75,7 @@ const DropdownMenu = ({
         !wrapperRef.current.contains(e.target as Node)
       ) {
         setOpen(false);
+        setCursor(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -61,6 +83,22 @@ const DropdownMenu = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // In cursor mode the panel is fixed-positioned at the click point; the
+  // `position` prop names which corner of the panel sits at the cursor.
+  const cursorStyle: React.CSSProperties | undefined = cursor
+    ? {
+        position: "fixed",
+        top: position.startsWith("top") ? cursor.y : undefined,
+        bottom: position.startsWith("bottom")
+          ? window.innerHeight - cursor.y
+          : undefined,
+        left: position.endsWith("left") ? cursor.x : undefined,
+        right: position.endsWith("right")
+          ? window.innerWidth - cursor.x
+          : undefined,
+      }
+    : undefined;
 
   return (
     <div
@@ -70,7 +108,12 @@ const DropdownMenu = ({
       {open && (
         <DropdownMenuContext value={closeMenu}>
           <div
-            className={[styles.panel, positionClassMap[position]].join(" ")}>
+            className={
+              cursor
+                ? styles.panel
+                : [styles.panel, positionClassMap[position]].join(" ")
+            }
+            style={cursorStyle}>
             {children}
           </div>
         </DropdownMenuContext>

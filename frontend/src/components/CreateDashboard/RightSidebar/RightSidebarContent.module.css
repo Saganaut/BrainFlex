@@ -1,15 +1,17 @@
 /* Right-edge tool rail with a slide-in drawer that opens to the rail's left.
-   The rail is a thin vertical strip; the drawer is absolutely positioned
-   directly to its left so it overlays the slide canvas without pushing the
-   icons or shrinking the editor's layout grid. */
+   The rail is a thin vertical strip pinned to the right side; the drawer is
+   absolutely positioned directly to its left so it overlays the slide canvas
+   without pushing the icons or shrinking the editor's layout grid. */
 
-.rightSidebar {
+.rightSidebarContent {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  padding: var(--p-md);
+  padding: var(--space-3);
   height: 100%;
+  background-color: var(--bg-canvas);
+  border-left: 1px solid var(--border-subtle);
 }
 
 .iconStrip {
@@ -27,18 +29,31 @@
 
 .drawer {
   position: absolute;
-  top: var(--p-md);
-  bottom: var(--p-md);
-  right: calc(100% - var(--p-md));
-  width: 280px;
+  top: var(--space-3);
+  bottom: var(--space-3);
+  right: calc(100% + var(--space-2));
+  width: 320px;
   display: flex;
   flex-direction: column;
   background-color: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  z-index: 1;
+  box-shadow: -8px 0 24px rgb(0 0 0 / 12%);
+  z-index: 3;
   overflow: hidden;
+  animation: slide-in-left var(--duration-base, 200ms) var(--ease-out, ease-out);
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .drawerHeader {

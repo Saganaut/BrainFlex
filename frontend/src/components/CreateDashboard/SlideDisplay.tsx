@@ -9,7 +9,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import styles from "./SlideDisplay.module.css";
 import { Loader } from "../Common/Loader/Loader";
 import { CephadexLogo } from "../Graphic/CephadexLogo";
-import { slideTypeGraphics } from "../Common/Slides/SlideTypeGraphics/slideTypeGraphics";
+import { SlideTypeGraphic } from "../Common/Slides/SlideTypeGraphics/SlideTypeGraphic";
 import { SlideContent } from "./SlideContentTypes/SlideContent";
 import { McqSlideContent } from "./SlideContentTypes/McqSlideContent/McqSlideContent";
 import { TextSlideContent } from "./SlideContentTypes/TextSlideContent";
@@ -36,12 +36,6 @@ const SlideDisplay = () => {
       }),
     },
   );
-
-  const renderHeaderGraphic = () => {
-    if (!element?.kind) return null;
-    const Graphic = slideTypeGraphics[element.kind];
-    return <Graphic />;
-  };
 
   const renderBody = () => {
     if (isLoading) return <Loader />;
@@ -77,7 +71,8 @@ const SlideDisplay = () => {
   return (
     <div className={styles.slideDisplay}>
       <div className={styles.slideHeader}>
-        <CephadexLogo size={"md"} /> {renderHeaderGraphic()}
+        <CephadexLogo size={"md"} />{" "}
+        {element?.kind && <SlideTypeGraphic kind={element.kind} />}
       </div>
       <div className={styles.slideBody}>
         {renderBody()}

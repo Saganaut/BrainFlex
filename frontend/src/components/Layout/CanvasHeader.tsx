@@ -10,7 +10,7 @@ const CanvasHeader = ({ children }: CanvasHeaderProps) => {
   const { isFullScreen } = useFullScreen();
   return (
     <div
-      className={`${styles.canvasHeader} ${isFullScreen ? styles.collapsed : " "}`}>
+      className={`${styles.canvasHeader} ${isFullScreen ? styles.isCollapsed : " "} `}>
       {children}
     </div>
   );

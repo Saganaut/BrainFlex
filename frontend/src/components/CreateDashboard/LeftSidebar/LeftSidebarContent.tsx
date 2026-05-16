@@ -10,11 +10,11 @@
  */
 
 import { DragDropProvider } from "@dnd-kit/react";
-import { Btn } from "../Common/Buttons/Btn";
+import { Btn } from "../../Common/Buttons/Btn";
 import { SlideThumbnail } from "./SlideThumbnail";
-import styles from "./CreateDashboard.module.css";
-import { useCreateDashboard } from "./useCreateDashboard";
-import { NewElementPicker } from "./NewElementPicker";
+import styles from "./LeftSidebarContent.module.css";
+import { useCreateDashboard } from "../useCreateDashboard";
+import { NewElementPicker } from "../NewElementPicker";
 import { useModal } from "@/context/useModal";
 import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 import type { DeckDto } from "@/store/BrainFlexApi";

@@ -24,19 +24,6 @@
   align-items: center;
   border: none;
   border-radius: var(--radius);
-  height: var(--navbar-height);
-  max-height: 9999px;
-  position: fixed;
-  transition:
-    max-height var(--duration-fast) ease-in-out,
-    padding var(--duration-fast) ease-in-out;
-
-  &.isCollapsed {
-    overflow: hidden;
-    padding-top: 0;
-    padding-bottom: 0;
-    max-height: 0;
-  }
 
   a {
     transition:

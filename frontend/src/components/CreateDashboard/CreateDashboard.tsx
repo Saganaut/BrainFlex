@@ -9,7 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { Btn } from "../Common/Buttons/Btn";
 import { DeckSettingsMenu } from "./DeckSettingsMenu";
-import { LeftSidebar } from "./LeftSidebar";
+import { LeftSidebarContent } from "./LeftSidebar/LeftSidebarContent";
 import { RightSidebarContent } from "./RightSidebar/RightSidebarContent";
 import { SlideDisplay } from "./SlideDisplay";
 import { SpeakerNotesDrawer } from "./SpeakerNotesDrawer/SpeakerNotesDrawer";
@@ -22,9 +22,11 @@ import {
   PlayIcon,
 } from "@heroicons/react/24/outline";
 import { MainBodyDashboard } from "../Layout/MainBodyDashboard";
-import { CanvasHeader } from "../Layout/canvasHeader";
+import { CanvasHeader } from "../Layout/CanvasHeader";
 import { CanvasBody } from "../Layout/CanvasBody";
 import { RightSidebar } from "../Layout/RightSidebar";
+import { LeftSidebar } from "../Layout/LeftSidebar";
+import { InnerDisplay } from "../Layout/InnerDisplay";
 
 const CreateDashboard = () => {
   const navigate = useNavigate();
@@ -33,88 +35,94 @@ const CreateDashboard = () => {
   const { toggleFullScreen } = useFullScreen();
 
   return (
-    <MainBodyDashboard id='createDashboard'>
-      <CanvasHeader>
-        <div className={styles.navbar}>
-          <div className={styles.leftControlButtons}>
-            <Btn
-              size={"md"}
-              shape={"pill"}
-              onClick={() => {
-                void navigate({
-                  to: "/decks",
-                });
-              }}>
-              Back
-            </Btn>
-            <Btn
-              shape={"pill"}
-              size={"md"}
-              aria-label='Enter fullscreen'
-              onClick={toggleFullScreen}>
-              <ArrowsPointingOutIcon
-                style={{ width: "1rem", height: "1rem" }}
-              />
-            </Btn>
+    <MainBodyDashboard>
+      <div className={styles.createDashboard}>
+        <CanvasHeader>
+          <div className={styles.navbar}>
+            <div className={styles.leftControlButtons}>
+              <Btn
+                size={"md"}
+                shape={"pill"}
+                onClick={() => {
+                  void navigate({
+                    to: "/decks",
+                  });
+                }}>
+                Back
+              </Btn>
+              <Btn
+                shape={"pill"}
+                size={"md"}
+                aria-label='Enter fullscreen'
+                onClick={toggleFullScreen}>
+                <ArrowsPointingOutIcon
+                  style={{ width: "1rem", height: "1rem" }}
+                />
+              </Btn>
+            </div>
+            <input
+              aria-label='Deck title'
+              value={titleDraft}
+              placeholder='Untitled Deck'
+              maxLength={100}
+              onChange={(e) => {
+                setTitleDraft(e.target.value);
+              }}
+              onBlur={commitTitle}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Escape") {
+                  setTitleDraft(serverName);
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+            <div className={styles.rightControlButtons}>
+              <Btn
+                size={"md"}
+                shape={"pill"}
+                variant={"default"}
+                onClick={() => {
+                  // TODO: open the deck preview view (read-only renderer)
+                  console.log("preview deck", serverName);
+                }}>
+                <EyeIcon style={{ width: "1rem", height: "1rem" }} />
+                Preview
+              </Btn>
+              <Btn
+                size={"md"}
+                shape={"pill"}
+                variant={"brand"}
+                onClick={() => {
+                  // TODO: kick off a live showcase session for this deck
+                  console.log("start showcase", serverName);
+                }}>
+                <PlayIcon style={{ width: "1rem", height: "1rem" }} />
+                Start
+              </Btn>
+              <DeckSettingsMenu />
+            </div>
           </div>
-          <input
-            aria-label='Deck title'
-            value={titleDraft}
-            placeholder='Untitled Deck'
-            maxLength={100}
-            onChange={(e) => {
-              setTitleDraft(e.target.value);
-            }}
-            onBlur={commitTitle}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") e.currentTarget.blur();
-              if (e.key === "Escape") {
-                setTitleDraft(serverName);
-                e.currentTarget.blur();
-              }
-            }}
-          />
-          <div className={styles.rightControlButtons}>
-            <Btn
-              size={"md"}
-              shape={"pill"}
-              variant={"default"}
-              onClick={() => {
-                // TODO: open the deck preview view (read-only renderer)
-                console.log("preview deck", serverName);
-              }}>
-              <EyeIcon style={{ width: "1rem", height: "1rem" }} />
-              Preview
-            </Btn>
-            <Btn
-              size={"md"}
-              shape={"pill"}
-              variant={"brand"}
-              onClick={() => {
-                // TODO: kick off a live showcase session for this deck
-                console.log("start showcase", serverName);
-              }}>
-              <PlayIcon style={{ width: "1rem", height: "1rem" }} />
-              Start
-            </Btn>
-            <DeckSettingsMenu />
-          </div>
-        </div>
-      </CanvasHeader>
-      <CanvasBody id='canvasBody'>
-        <LeftSidebar />
-
-        <div className={styles.slideCanvas}>
-          <div className={styles.slideStack}>
-            <SlideDisplay />
-            <SpeakerNotesDrawer />
-          </div>
-        </div>
-
-        <RightSidebar id='rightSidebar'>
-          <RightSidebarContent />
-        </RightSidebar>
-      </CanvasBody>
+        </CanvasHeader>
+        <CanvasBody>
+          <LeftSidebar>
+            <LeftSidebarContent />
+          </LeftSidebar>
+          <InnerDisplay>
+            <div className={styles.slideCanvasContainer}>
+              <div className={styles.slideCanvas}>
+                <div className={styles.slideStack}>
+                  <SlideDisplay />
+                  <SpeakerNotesDrawer />
+                </div>
+              </div>
+            </div>
+          </InnerDisplay>
+          <RightSidebar>
+            <RightSidebarContent />
+          </RightSidebar>
+        </CanvasBody>
+      </div>
     </MainBodyDashboard>
   );
 };

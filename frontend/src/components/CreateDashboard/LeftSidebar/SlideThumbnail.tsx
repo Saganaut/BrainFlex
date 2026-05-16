@@ -13,9 +13,9 @@
 import React, { useEffect, useRef } from "react";
 import { useSortable } from "@dnd-kit/react/sortable";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
-import { DropdownMenu, DropdownMenuItem } from "../Menus/DropdownMenu";
+import { DropdownMenu, DropdownMenuItem } from "../../Menus/DropdownMenu";
 import { useDeleteElementMutation } from "@/store/BrainFlexApi";
-import styles from "./CreateDashboard.module.css";
+import styles from "./LeftSidebarContent.module.css";
 
 interface SlideThumbnailProps {
   name: string;

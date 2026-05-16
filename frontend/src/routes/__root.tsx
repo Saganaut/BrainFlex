@@ -7,6 +7,7 @@ import { ToastProvider } from "../context/ToastProvider";
 import { NotFoundPage } from "../pages/ErrorPage/ErrorPage";
 import { AuthPromptBridge } from "../components/Common/LoginModal/AuthPromptBridge";
 import { Layout } from "@/components/Layout/Layout";
+import { MainHeader } from "@/components/Layout/MainHeader";
 
 export const Route = createRootRoute({
   component: () => (
@@ -15,7 +16,8 @@ export const Route = createRootRoute({
         <ModalProvider>
           <Layout>
             <AuthPromptBridge />
-            <NavBar />
+            <MainHeader children={<NavBar />} />
+
             <Outlet />
           </Layout>
           <TanStackRouterDevtools />

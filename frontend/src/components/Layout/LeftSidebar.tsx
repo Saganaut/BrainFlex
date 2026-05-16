@@ -10,7 +10,7 @@ const LeftSidebar = ({ children }: LeftSidebarProps) => {
   const { isFullScreen } = useFullScreen();
   return (
     <div
-      className={`${styles.leftSidebar} ${isFullScreen ? styles.collapsed : " "}`}>
+      className={`${styles.leftSidebar} ${isFullScreen ? styles.isCollapsed : " "}`}>
       {children}
     </div>
   );

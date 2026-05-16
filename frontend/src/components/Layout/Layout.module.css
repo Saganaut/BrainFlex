@@ -1,32 +1,65 @@
 .mainLayout {
-  flex: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  height: 100dvh;
 }
 
-.leftSidebar,
-.rightSidebar {
-  max-width: 15dvh;
-  transition: max-width var(--duration-base) ease-in-out;
+.mainHeader {
+  height: var(--navbar-height);
+  width: 100%;
+  transition: height var(--duration-base) ease-in-out;
 
   &.isCollapsed {
-    max-width: 0;
+    overflow: hidden;
+    height: 0;
+  }
+}
+
+.rightSidebar {
+  width: 15dvw;
+  border: 1px dashed white;
+  transition: width var(--duration-base) ease-in-out;
+
+  &.isCollapsed {
+    width: 0;
+    overflow: hidden;
+  }
+}
+
+.leftSidebar {
+  width: 20dvw;
+  border: 1px dashed white;
+  transition: width var(--duration-base) ease-in-out;
+
+  &.isCollapsed {
+    width: 0;
+    overflow: hidden;
   }
 }
 
 .canvasHeader {
-  max-height: 80px;
-  transition: max-height var(--duration-base) ease-in-out;
+  border: 1px dashed white;
+  height: var(--navbar-height);
+  transition: height var(--duration-base) ease-in-out;
 
   &.isCollapsed {
-    max-height: 0;
+    height: 0;
+    overflow: hidden;
   }
 }
 
 .mainBodyDashboard {
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .canvasBody {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+}
+
+.innerDisplay {
   flex: 1;
 }

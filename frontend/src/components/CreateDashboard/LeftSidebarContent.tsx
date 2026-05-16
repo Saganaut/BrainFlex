@@ -31,7 +31,7 @@ const elementDisplayName = (element: DeckElement): string => {
   return "Untitled";
 };
 
-const LeftSidebar = () => {
+const LeftSidebarContent = () => {
   const { handleAddElement, handleDragEnd, elements, deckId, questionId } =
     useCreateDashboard();
   const { openModal, closeModal } = useModal();
@@ -51,7 +51,7 @@ const LeftSidebar = () => {
   };
 
   return (
-    <div className={styles.leftSidebar}>
+    <div className={styles.leftSidebarContent}>
       <div>
         <Btn onClick={handleNewSlideClick}>New Slide</Btn>
       </div>
@@ -77,4 +77,4 @@ const LeftSidebar = () => {
   );
 };
 
-export { LeftSidebar };
+export { LeftSidebarContent };

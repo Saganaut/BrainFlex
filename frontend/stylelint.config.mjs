@@ -79,5 +79,11 @@ export default {
         message: "Expected class selector to be lowerCamelCase",
       },
     ],
+    "selector-id-pattern": [
+      "^[a-z][a-zA-Z0-9]+$",
+      {
+        message: "Expected id selector to be lowerCamelCase",
+      },
+    ],
   },
 };

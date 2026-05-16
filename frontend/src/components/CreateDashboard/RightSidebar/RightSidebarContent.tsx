@@ -16,7 +16,7 @@ import {
   ShareIcon,
 } from "@heroicons/react/24/outline";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
-import styles from "./RightSidebar.module.css";
+import styles from "./RightSidebarContent.module.css";
 
 type PanelKey = "edit" | "theme" | "participants" | "sharing";
 
@@ -34,7 +34,7 @@ const PlaceholderPanel = ({ description }: { description: string }) => (
   </div>
 );
 
-const RightSidebar = () => {
+const RightSidebarContent = () => {
   const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
 
   const toggle = (key: PanelKey) => {
@@ -42,11 +42,9 @@ const RightSidebar = () => {
   };
 
   return (
-    <div className={styles.rightSidebar}>
+    <div className={styles.rightSidebarContent}>
       {openPanel !== null && (
-        <aside
-          className={styles.drawer}
-          aria-label={PANEL_TITLES[openPanel]}>
+        <aside className={styles.drawer} aria-label={PANEL_TITLES[openPanel]}>
           <div className={styles.drawerHeader}>
             <h3 className={styles.drawerTitle}>{PANEL_TITLES[openPanel]}</h3>
             <IconBtn
@@ -133,4 +131,4 @@ const RightSidebar = () => {
   );
 };
 
-export { RightSidebar };
+export { RightSidebarContent };

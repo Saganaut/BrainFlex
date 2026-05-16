@@ -38,13 +38,3 @@
     }
   }
 }
-
-.dashboardContainer {
-  max-height: calc(100svh - var(--navbar-height));
-  overflow: hidden;
-  transition: max-height var(--duration-slow) ease-in-out;
-
-  &.isFullScreen {
-    max-height: 100svh;
-  }
-}

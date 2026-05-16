@@ -29,9 +29,17 @@
 
 ### FRONTEND OTHER
 
-- When creating a new deck we should have a first slide skeleton in the slide container
-
----
+- Navbar We shoudl have a preview and start (showcase) btn in the navbar (these are yet to be implemented)
+- Left side bar
+  - When creating a new deck we should have a first slide skeleton in the slide container
+- Right side bar
+  - should include a little vertical menu that includes the following icon btns:
+  - Edit slide (pencil icon) When clicked it opens another drawer to the left of it that displays a bunch of slide edit options (yet to be decided)
+  - Theme (palette icon) When clicked it opens another drawer to the left of it that displays a bunch of theme options (yet to be decided)
+  - Partitcipant settings (users icon) When clicked it opens another drawer to the left of it that displays a list of participants and some options for each participant (yet to be decided)
+  - Sharing preferences (share icon) When clicked it opens another drawer to the left of it that displays sharing options (yet to be decided)
+- Below main slide area, we should have a drawer that can pop up where the user can add speaker notes, we should use our rich text editor for this.We need to add speaker notes to our data model also.
+- ***
 
 ### Design / Game Components
 

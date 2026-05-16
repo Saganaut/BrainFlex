@@ -10,7 +10,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Btn } from "../Common/Buttons/Btn";
 import { DeckSettingsMenu } from "./DeckSettingsMenu";
 import { LeftSidebar } from "./LeftSidebar";
-import { RightSidebar } from "./RightSidebar/RightSidebar";
+import { RightSidebarContent } from "./RightSidebar/RightSidebarContent";
 import { SlideDisplay } from "./SlideDisplay";
 import { SpeakerNotesDrawer } from "./SpeakerNotesDrawer/SpeakerNotesDrawer";
 import styles from "./CreateDashboard.module.css";
@@ -21,7 +21,10 @@ import {
   EyeIcon,
   PlayIcon,
 } from "@heroicons/react/24/outline";
-import { DashboardContainer } from "../Containers/DashboardContainer";
+import { MainBodyDashboard } from "../Layout/MainBodyDashboard";
+import { CanvasHeader } from "../Layout/canvasHeader";
+import { CanvasBody } from "../Layout/CanvasBody";
+import { RightSidebar } from "../Layout/RightSidebar";
 
 const CreateDashboard = () => {
   const navigate = useNavigate();
@@ -30,8 +33,8 @@ const CreateDashboard = () => {
   const { toggleFullScreen } = useFullScreen();
 
   return (
-    <DashboardContainer>
-      <div className={styles.createDashboard}>
+    <MainBodyDashboard id='createDashboard'>
+      <CanvasHeader>
         <div className={styles.navbar}>
           <div className={styles.leftControlButtons}>
             <Btn
@@ -97,21 +100,22 @@ const CreateDashboard = () => {
             <DeckSettingsMenu />
           </div>
         </div>
+      </CanvasHeader>
+      <CanvasBody id='canvasBody'>
+        <LeftSidebar />
 
-        <div className={styles.mainCanvas}>
-          <LeftSidebar />
-
-          <div className={styles.slideCanvas}>
-            <div className={styles.slideStack}>
-              <SlideDisplay />
-              <SpeakerNotesDrawer />
-            </div>
+        <div className={styles.slideCanvas}>
+          <div className={styles.slideStack}>
+            <SlideDisplay />
+            <SpeakerNotesDrawer />
           </div>
-
-          <RightSidebar />
         </div>
-      </div>
-    </DashboardContainer>
+
+        <RightSidebar id='rightSidebar'>
+          <RightSidebarContent />
+        </RightSidebar>
+      </CanvasBody>
+    </MainBodyDashboard>
   );
 };
 

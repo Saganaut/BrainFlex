@@ -5,7 +5,7 @@
 /* triplet are component-local CSS vars; child components own their own         */
 
 /* variant/size className modifiers (see Buttons.module.css for the pattern).  */
-.createDashboard {
+#createDashboard {
   /* Component-local hover sextet — base manifest comes through fallbacks.   */
   --color-hover: var(--action-hover);
   --color-muted: oklch(from var(--color, var(--text-primary)) l c h / 40%);
@@ -35,10 +35,7 @@
     }
   }
 
-  .mainCanvas {
-    display: grid;
-    grid-template-columns: 1fr 4fr 1fr;
-    min-height: 80dvh;
+  #mainCanvas {
     background-color: var(--bg-canvas);
 
     .slideCanvas {

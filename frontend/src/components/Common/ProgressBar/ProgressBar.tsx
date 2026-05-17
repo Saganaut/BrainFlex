@@ -9,6 +9,7 @@ interface ProgressBarProps {
   value: number;
   max?: number;
   variant?: "default" | "brand" | "success" | "warning" | "error";
+  color?: string;
   size?: "sm" | "md" | "lg";
   showLabel?: boolean;
   label?: string;
@@ -20,6 +21,7 @@ const ProgressBar = ({
   value,
   max = 100,
   variant = "default",
+  color,
   size = "md",
   showLabel = false,
   label,
@@ -29,7 +31,11 @@ const ProgressBar = ({
   const safeMax = max <= 0 ? 1 : max;
   const clamped = Math.max(0, Math.min(value, safeMax));
   const pct = (clamped / safeMax) * 100;
-  const fillStyle = { "--progress-pct": `${pct.toString()}%` } as CSSProperties;
+  const fillStyle = {
+    ...(indeterminate ? {} : { "--progress-pct": `${pct.toString()}%` }),
+    ...(color ? { backgroundColor: color } : {}),
+  } as CSSProperties;
+  const hasFillStyle = !indeterminate || Boolean(color);
 
   return (
     <div
@@ -54,12 +60,12 @@ const ProgressBar = ({
         <div
           className={[
             styles.fill,
-            styles[variant],
+            color ? "" : styles[variant],
             indeterminate ? styles.indeterminate : "",
           ]
             .filter(Boolean)
             .join(" ")}
-          style={indeterminate ? undefined : fillStyle}
+          style={hasFillStyle ? fillStyle : undefined}
         />
       </div>
     </div>

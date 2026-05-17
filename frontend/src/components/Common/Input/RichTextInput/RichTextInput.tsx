@@ -49,6 +49,7 @@ interface RichTextInputProps {
   label?: string;
   id?: string;
   ref?: React.Ref<RichTextInputHandle>;
+  isBordered?: boolean;
 }
 
 // A handful of presets — "a few choices" per the spec.
@@ -212,6 +213,7 @@ const RichTextInput = ({
   label,
   id,
   ref,
+  isBordered = true,
 }: RichTextInputProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [toolbarOpen, setToolbarOpen] = useState(false);
@@ -278,7 +280,8 @@ const RichTextInput = ({
           {label}
         </label>
       )}
-      <div className={styles.surface}>
+      <div
+        className={`${styles.surface} ${isBordered ? " " : styles.noBorders}`}>
         {toolbarOpen && (
           <div className={styles.floatingToolbar}>
             <Toolbar

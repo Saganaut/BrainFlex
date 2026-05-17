@@ -99,6 +99,7 @@
   /* TipTap tags the contenteditable element with the global `.ProseMirror`
    class. Bump the min-height and add a left indent so the editor feels like
    a roomy notes area rather than a single-line input. */
+  /* stylelint-disable-next-line selector-class-pattern, selector-pseudo-class-no-unknown  */
   .bodyInner :global(.ProseMirror) {
     min-height: 12rem;
     padding-left: var(--space-4);

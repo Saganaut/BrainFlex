@@ -46,4 +46,13 @@ input[type="radio"] {
   &.fullWidth {
     width: 100%;
   }
+
+  input {
+    border: 2px solid var(--border-color, var(--border-default));
+    border-radius: var(--radius-md);
+
+    &.noBorders {
+      border-color: transparent;
+    }
+  }
 }

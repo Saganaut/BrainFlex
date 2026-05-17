@@ -24,13 +24,19 @@
   border-radius: var(--radius-md);
   background-color: transparent;
   transition: border-color var(--duration-base, 300ms) ease-in-out;
+
+  &.noBorders {
+    border-color: transparent;
+  }
 }
 
 .surface:hover {
+  border: 2px solid var(--border-default);
   border-color: var(--action-hover);
 }
 
 .surface:focus-within {
+  border: 2px solid var(--border-default);
   border-color: var(--border-focus);
 }
 

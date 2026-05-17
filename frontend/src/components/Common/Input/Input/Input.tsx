@@ -17,6 +17,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   checked?: boolean;
   fullWidth?: boolean;
   ref?: React.RefObject<HTMLInputElement | null>;
+  isBordered?: boolean;
 }
 
 /** We can optionally display some information below the input field, if an error message is relevant it will temporary replace the info **/
@@ -38,6 +39,7 @@ const Input = ({
   checked = false,
   disabled,
   fullWidth = false,
+  isBordered = true,
   min,
   max,
   step,
@@ -71,11 +73,12 @@ const Input = ({
           min={min}
           max={max}
           step={step}
-          className={
+          className={[
             inputVariant !== "default" && inputVariant !== "brand"
               ? styles[inputVariant]
-              : undefined
-          }
+              : undefined,
+            isBordered ? "" : shared.noBorders,
+          ].join(" ")}
         />
 
         {(errorMessage != null || infoMessage != null) && (

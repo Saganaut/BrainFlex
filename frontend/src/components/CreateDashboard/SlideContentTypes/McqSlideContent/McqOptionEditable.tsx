@@ -43,7 +43,6 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
-import { TrashIcon } from "@heroicons/react/24/outline";
 import {
   BrainFlex,
   type McqOption as McqOptionType,
@@ -52,19 +51,27 @@ import { useAppDispatch } from "@/store/hooks";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { Toggle } from "@/components/Common/Input/Toggle/Toggle";
-import {
-  Popover,
-  PopoverRow,
-  PopoverButton,
-  PopoverDivider,
-  PopoverGroupLabel,
-} from "@/components/Common/Input/Popover/Popover";
+
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
+import { useTheme } from "@/hooks/useTheme";
 import { useMcqOptionEditor } from "../useElementEditor";
 import styles from "./McqOptionEditable.module.css";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { ProgressBar } from "@/components/Common/ProgressBar/ProgressBar";
+import { EditOptionToolbar } from "./EditOptionToolbar";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
+
+// Six swatches spaced evenly around the wheel from the theme's primary hue.
+// Constant lightness/chroma keeps them visually balanced and re-themes
+// cascade automatically. Authors can still override per-option via the
+// color swatch in the popover (`option.color`).
+const OPTION_HUE_OFFSETS = [0, 60, 120, 180, 240, 300] as const;
+const MAX_OPTION_COLORS = OPTION_HUE_OFFSETS.length;
+const buildOptionPalette = (huePrimary: number): string[] =>
+  OPTION_HUE_OFFSETS.map(
+    (offset) => `oklch(0.65 0.18 ${((huePrimary + offset) % 360).toString()})`,
+  );
 
 interface McqOptionEditableProps {
   /** Option to edit. Only `id` is read directly — the freshest field
@@ -80,6 +87,7 @@ const McqOptionEditable = ({
   const { deckId } = routeApi.useParams();
   const dispatch = useAppDispatch();
   const openPicker = useGalleryPicker();
+  const { huePrimary } = useTheme();
 
   const {
     option,
@@ -173,20 +181,30 @@ const McqOptionEditable = ({
       );
 
       // Persisted write: galleryImageId only. The backend rejects writes
-      // that set both fields (mutual exclusion in DeckService).
+      // that set both fields (mutual exclusion in DeckService). Build the
+      // option field-by-field rather than spreading + clearing imageUrl:
+      // `option` already carries a hydrated presigned URL (apiEnhancements
+      // re-merges it onto every mutation response), and that URL leaks
+      // through the spread before the JSON.stringify of `imageUrl: undefined`
+      // can drop it.
       commit({
-        ...option,
+        id: option.id,
+        text: option.text,
+        color: option.color,
         galleryImageId,
-        imageUrl: undefined,
       });
     });
   };
 
   const handlePasteUrlChange = (next: string) => {
     setPasteUrl(next);
+    // Explicit construction so a stale `galleryImageId` on `option` (carried
+    // from a prior gallery pick) can't leak through alongside the new URL —
+    // the backend's mutual-exclusion validator rejects writes that set both.
     schedule({
-      ...option,
-      galleryImageId: undefined,
+      id: option.id,
+      text: option.text,
+      color: option.color,
       imageUrl: next,
     });
   };
@@ -194,10 +212,12 @@ const McqOptionEditable = ({
   const handleClearImage = () => {
     flush();
     setPasteUrl("");
+    // Explicit construction so neither image field carries through from
+    // `option` — same reasoning as above.
     commit({
-      ...option,
-      galleryImageId: undefined,
-      imageUrl: undefined,
+      id: option.id,
+      text: option.text,
+      color: option.color,
     });
   };
 
@@ -217,7 +237,12 @@ const McqOptionEditable = ({
   const hasImage = previewUrl.trim() !== "" || !!option.galleryImageId;
   const inputIdBase = `mcq-opt-${optionId}`;
   const displayIndex = index >= 0 ? index + 1 : 0;
-
+  // Theme-derived default; only applied when the author hasn't overridden
+  // via the popover swatch. Indexes past MAX_OPTION_COLORS wrap.
+  const palette = buildOptionPalette(huePrimary);
+  const paletteIndex = (index >= 0 ? index : 0) % MAX_OPTION_COLORS;
+  const paletteColor = palette[paletteIndex] ?? palette[0];
+  const color = option.color ?? paletteColor;
   // Clicking anywhere on the card toggles the popover EXCEPT inside the
   // "interactive zones" below (text input + correct toggle), which call
   // `e.stopPropagation()` so their own click never bubbles up here. The
@@ -233,26 +258,33 @@ const McqOptionEditable = ({
       className={`${styles.card} ${isCorrect ? styles.cardCorrect : ""}`}
       onClick={handleCardClick}>
       <div className={styles.topRow}>
-        <span className={styles.indexPill}>{displayIndex}</span>
+        <div>
+          <span className={styles.indexPill}>{displayIndex}</span>
+          <div
+            className={styles.interactiveZone}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}>
+            <Input
+              isBordered={false}
+              type='text'
+              id={`${inputIdBase}-text`}
+              fullWidth
+              value={text}
+              placeholder='Type the option…'
+              onChange={(e) => {
+                handleTextChange(e.target.value);
+              }}
+              onBlur={flush}
+            />
+          </div>
+        </div>
+        <div className={styles.imgThumbnail}>
+          <img src={option.imageUrl ?? option.galleryImageId} />
+        </div>
       </div>
 
-      <div
-        className={styles.interactiveZone}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}>
-        <Input
-          type='text'
-          id={`${inputIdBase}-text`}
-          fullWidth
-          value={text}
-          placeholder='Type the option…'
-          onChange={(e) => {
-            handleTextChange(e.target.value);
-          }}
-          onBlur={flush}
-        />
-      </div>
+      <ProgressBar value={100} color={color} />
       <div className={styles.footer}>
         <div
           className={[styles.interactiveZone, styles.correctToggle].join(" ")}
@@ -282,82 +314,21 @@ const McqOptionEditable = ({
         />
       </div>
       {popoverOpen && (
-        <div
-          className={styles.popoverWrap}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}>
-          <Popover
-            role='dialog'
-            ariaLabel={`Option ${displayIndex.toString()} settings`}>
-            <PopoverRow>
-              <PopoverGroupLabel>Image</PopoverGroupLabel>
-              <button
-                type='button'
-                className={[
-                  styles.imageThumb,
-                  hasImage ? "" : styles.imageThumbEmpty,
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                style={
-                  previewUrl
-                    ? { backgroundImage: `url(${previewUrl})` }
-                    : undefined
-                }
-                aria-label={hasImage ? "Change image" : "Pick image"}
-                onClick={handlePickFromGallery}>
-                {!hasImage && <span aria-hidden='true'>+</span>}
-              </button>
-              {hasImage && (
-                <PopoverButton
-                  ariaLabel='Clear image'
-                  onClick={handleClearImage}>
-                  Clear
-                </PopoverButton>
-              )}
-
-              <PopoverDivider />
-
-              <PopoverGroupLabel>Color</PopoverGroupLabel>
-              <input
-                type='color'
-                id={`${inputIdBase}-color`}
-                className={styles.colorSwatch}
-                value={option.color ?? "#ffffff"}
-                onChange={(e) => {
-                  handleColorChange(e.target.value);
-                }}
-                onBlur={flush}
-                aria-label='Option color'
-              />
-
-              <PopoverDivider />
-
-              <PopoverButton
-                ariaLabel={`Remove option ${displayIndex.toString()}`}
-                disabled={!canRemove}
-                onClick={handleRemove}>
-                <TrashIcon />
-              </PopoverButton>
-            </PopoverRow>
-
-            <PopoverRow>
-              <PopoverGroupLabel>URL</PopoverGroupLabel>
-              <input
-                type='text'
-                id={`${inputIdBase}-url`}
-                placeholder='Or paste an image URL'
-                value={pasteUrl}
-                onChange={(e) => {
-                  handlePasteUrlChange(e.target.value);
-                }}
-                onBlur={flush}
-                className={styles.popoverUrlInput}
-              />
-            </PopoverRow>
-          </Popover>
-        </div>
+        <EditOptionToolbar
+          canRemove={canRemove}
+          pasteUrl={pasteUrl}
+          handlePickFromGallery={handlePickFromGallery}
+          hasImage={hasImage}
+          handleRemove={handleRemove}
+          handleClearImage={handleClearImage}
+          handleColorChange={handleColorChange}
+          handlePasteUrlChange={handlePasteUrlChange}
+          displayIndex={displayIndex}
+          previewUrl={previewUrl}
+          option={option}
+          inputIdBase={inputIdBase}
+          flush={flush}
+        />
       )}
     </div>
   );

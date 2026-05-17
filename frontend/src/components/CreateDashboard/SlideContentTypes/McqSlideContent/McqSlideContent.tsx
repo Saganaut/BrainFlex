@@ -81,6 +81,7 @@ const McqSlideContent = () => {
       }>
       <div className={styles.slideHeader}>
         <RichTextInput
+          isBordered={false}
           id={`mcq-prompt-${question.id ?? ""}`}
           placeholder='Type your question…'
           value={prompt}

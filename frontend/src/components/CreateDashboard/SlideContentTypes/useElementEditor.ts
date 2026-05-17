@@ -39,6 +39,37 @@ const MAX_MCQ_OPTIONS = 6;
 const isMcqQuestion = (e: DeckElement): e is McqQuestion =>
   e.kind === "McqQuestion";
 
+/**
+ * Strip the hydrated presigned `imageUrl` from any gallery-backed option
+ * before we PUT the element back. `apiEnhancements.preserveGalleryUrls`
+ * keeps that URL on cached options so the editor doesn't flash on every
+ * mutation, but the backend's `validateOptionImages` rejects any write
+ * that carries both `galleryImageId` and `imageUrl` on the same option.
+ * Without this, editing option B fails because option A in the same
+ * question still has both fields set in the cache.
+ */
+const sanitizeOptionsForCommit = (options: McqOption[]): McqOption[] =>
+  options.map((opt) =>
+    opt.galleryImageId && opt.imageUrl
+      ? {
+          id: opt.id,
+          text: opt.text,
+          color: opt.color,
+          galleryImageId: opt.galleryImageId,
+        }
+      : opt,
+  );
+
+const sanitizeElementForCommit = <T extends DeckElement>(element: T): T => {
+  if (element.kind === "McqQuestion") {
+    return {
+      ...element,
+      options: sanitizeOptionsForCommit(element.options ?? []),
+    };
+  }
+  return element;
+};
+
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
 interface ElementEditorApi<T extends DeckElement> {
@@ -74,7 +105,7 @@ const useElementEditor = <T extends DeckElement>(
     void updateElement({
       id: deckId,
       elementId: element.id,
-      body: patch,
+      body: sanitizeElementForCommit(patch),
     })
       .unwrap()
       .catch((err: unknown) => {

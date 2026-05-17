@@ -103,8 +103,7 @@ img {
 }
 
 input {
-  border: 2px solid var(--border-color, var(--border-default));
-  border-radius: var(--radius-md);
+  border: none;
   padding: var(--p-sm);
   background-color: transparent;
   transition:

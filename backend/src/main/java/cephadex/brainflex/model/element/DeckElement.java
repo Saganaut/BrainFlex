@@ -37,7 +37,6 @@ import cephadex.brainflex.model.enums.ResponseMode;
         @JsonSubTypes.Type(value = McqQuestion.class),
         @JsonSubTypes.Type(value = TextQuestion.class),
         @JsonSubTypes.Type(value = NumberQuestion.class),
-        @JsonSubTypes.Type(value = ImageChoiceQuestion.class),
         @JsonSubTypes.Type(value = RankingQuestion.class),
         @JsonSubTypes.Type(value = ScalesQuestion.class),
         @JsonSubTypes.Type(value = QAndAQuestion.class),
@@ -45,7 +44,7 @@ import cephadex.brainflex.model.enums.ResponseMode;
         @JsonSubTypes.Type(value = PlaceOnImageQuestion.class)
 })
 public sealed interface DeckElement
-        permits Slide, McqQuestion, TextQuestion, NumberQuestion, ImageChoiceQuestion,
+        permits Slide, McqQuestion, TextQuestion, NumberQuestion,
                 RankingQuestion, ScalesQuestion, QAndAQuestion, GridQuestion,
                 PlaceOnImageQuestion {
 
@@ -97,7 +96,7 @@ public sealed interface DeckElement
 
     /**
      * null = single-select (default); n = player may submit up to n picks.
-     * Currently honored by MCQ and ImageChoice — other kinds ignore it.
+     * Currently honored by MCQ — other kinds ignore it.
      */
     Integer multipleSelections();
 

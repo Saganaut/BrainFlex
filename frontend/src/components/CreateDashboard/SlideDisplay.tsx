@@ -62,6 +62,8 @@ const SlideDisplay = () => {
         return <GridSlideContent />;
       case "PlaceOnImageQuestion":
         return <PlaceOnImageSlideContent />;
+      default:
+        return <div>No slide selected</div>;
     }
   };
 
@@ -71,11 +73,7 @@ const SlideDisplay = () => {
         <CephadexLogo size={"md"} />{" "}
         {element?.kind && <SlideTypeGraphic kind={element.kind} />}
       </div>
-      <div className={styles.slideBody}>
-        {renderBody()}
-        {/* <McqSlideContent />; */}
-      </div>
-      <div className={styles.slideFooter} />
+      <div className={styles.slideBody}>{renderBody()}</div>
     </div>
   );
 };

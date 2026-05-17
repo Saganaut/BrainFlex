@@ -109,7 +109,7 @@ appears verbatim in `AccountPage.tsx:97-100`, `ThemeEditor.tsx:240-244`,
 
 ## 2. Missed Component Reuse
 
-### 2.1 `pages/AccountPage/ThemeEditor.tsx` reimplements multiple Common inputs
+DONE ### 2.1 `pages/AccountPage/ThemeEditor.tsx` reimplements multiple Common inputs
 
 This single file rebuilds primitives that already exist as Common components:
 
@@ -294,14 +294,14 @@ linear-gradient(#fff 0 0);
 This is the only `#xxx` literal in any `.module.css` file. Replace with a token
 or a transparent gradient if it's a masking trick.
 
-### 4.6 Inline `display: "none"` on hidden file inputs
+DONE ### 4.6 Inline `display: "none"` on hidden file inputs
 
 `pages/AccountPage/ThemeEditor.tsx:313, 350` use `style={{ display: "none" }}`
 on `<input type="file">`. There's already a `.fileInputHidden` class in
 `AccountPage.module.css:122-124`. Either way, the right fix is 2.1 — use
 `FileUpload`.
 
-### 4.7 Inline `style={{ width: 240 }}` / `{ width: 80, height: 80 }` on image previews
+DONE ### 4.7 Inline `style={{ width: 240 }}` / `{ width: 80, height: 80 }` on image previews
 
 `PlaceOnImageSlideContent.tsx:100`, `GridSlideContent.tsx:150`,
 `ImageChoiceSlideContent.tsx:184` set image dimensions inline instead of via

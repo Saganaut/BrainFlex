@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = McqAnswer.class),
         @JsonSubTypes.Type(value = TextAnswer.class),
         @JsonSubTypes.Type(value = NumberAnswer.class),
-        @JsonSubTypes.Type(value = ImageChoiceAnswer.class),
         @JsonSubTypes.Type(value = RankingAnswer.class),
         @JsonSubTypes.Type(value = ScalesAnswer.class),
         @JsonSubTypes.Type(value = GridAnswer.class),
@@ -27,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = TimeoutAnswer.class)
 })
 public sealed interface AnswerPayload
-        permits McqAnswer, TextAnswer, NumberAnswer, ImageChoiceAnswer,
+        permits McqAnswer, TextAnswer, NumberAnswer,
                 RankingAnswer, ScalesAnswer, GridAnswer, PlaceOnImageAnswer,
                 TimeoutAnswer {
 }

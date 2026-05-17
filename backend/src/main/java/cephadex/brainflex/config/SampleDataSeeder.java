@@ -47,7 +47,6 @@ import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
-import cephadex.brainflex.model.element.ImageChoiceQuestion;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
@@ -601,7 +600,7 @@ public class SampleDataSeeder {
                         "https://picsum.photos/seed/lotr-mathom/400/300", null),
                 new McqOption("pipe-pony", "A Brandywine pony", null,
                         "https://picsum.photos/seed/lotr-pony/400/300", null));
-        els.add(new ImageChoiceQuestion("sf-img-1",
+        els.add(new McqQuestion("sf-img-1",
                 pub("sf-img-1"), prv("sf-img-1"),
                 "Which of these would you find Gandalf enjoying outside Bag End?", null,
                 "Which of these would you find Gandalf enjoying outside Bag End?",
@@ -867,14 +866,14 @@ public class SampleDataSeeder {
                         "https://picsum.photos/seed/landmark-bigben/400/300", null),
                 new McqOption("lm-statue", "Statue of Liberty", null,
                         "https://picsum.photos/seed/landmark-statue/400/300", null));
-        els.add(new ImageChoiceQuestion("wt-img-1",
+        els.add(new McqQuestion("wt-img-1",
                 pub("wt-img-1"), prv("wt-img-1"),
                 "Which of these is the Eiffel Tower?", null,
                 "Which of these is the Eiffel Tower?",
                 landmarks, List.of("lm-eiffel"),
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Image-choice variant of MCQ — options carry images.",
+                false, null, 0, "MCQ option carries images.",
                 20, null, null, null, null, null, MediaPosition.NONE));
 
         els.add(new Slide("wt-s-end", SlideKind.END,

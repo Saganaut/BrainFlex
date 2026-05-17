@@ -14,7 +14,6 @@
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-3);
-  border: 2px solid var(--border-subtle);
   border-radius: var(--radius-md);
   background-color: var(--bg-canvas);
   cursor: pointer;
@@ -28,7 +27,7 @@
   }
 
   &.cardCorrect {
-    background-color: var(--bg-success);
+    background-color: var(--bg-primary);
   }
 
   .footer {

@@ -19,6 +19,7 @@ import {
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { ThemePanel } from "./ThemePanel";
 import styles from "./RightSidebarContent.module.css";
+import { RightSidebar } from "@/components/Layout/RightSidebar";
 
 type PanelKey = "edit" | "theme" | "participants" | "sharing";
 
@@ -40,8 +41,7 @@ const RightSidebarContent = () => {
   const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
 
   const setPanel = (next: PanelKey | null) => {
-    const isSwap =
-      openPanel !== null && next !== null && openPanel !== next;
+    const isSwap = openPanel !== null && next !== null && openPanel !== next;
     if (isSwap && typeof document.startViewTransition === "function") {
       document.startViewTransition(() => {
         // flushSync is required inside startViewTransition so React commits
@@ -61,7 +61,7 @@ const RightSidebarContent = () => {
   };
 
   return (
-    <div className={styles.rightSidebarContent}>
+    <RightSidebar className={styles.rightSidebarContent}>
       {openPanel !== null && (
         <aside className={styles.drawer} aria-label={PANEL_TITLES[openPanel]}>
           <div className={styles.panelContent} key={openPanel}>
@@ -146,7 +146,7 @@ const RightSidebarContent = () => {
           }}
         />
       </div>
-    </div>
+    </RightSidebar>
   );
 };
 

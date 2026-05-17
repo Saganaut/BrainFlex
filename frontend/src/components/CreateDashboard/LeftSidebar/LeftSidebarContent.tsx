@@ -19,6 +19,7 @@ import { NewElementPicker } from "../NewElementPicker";
 import { useModal } from "@/context/useModal";
 import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 import type { DeckDto } from "@/store/BrainFlexApi";
+import { LeftSidebar } from "@/components/Layout/LeftSidebar";
 
 export type DeckElement = NonNullable<DeckDto["elements"]>[number];
 
@@ -52,7 +53,7 @@ const LeftSidebarContent = () => {
   };
 
   return (
-    <div className={styles.leftSidebarContent}>
+    <LeftSidebar className={styles.leftSidebarContent}>
       <div>
         <Btn onClick={handleNewSlideClick}>New Slide</Btn>
       </div>
@@ -92,7 +93,7 @@ const LeftSidebarContent = () => {
           </DragDropProvider>
         )}
       </div>
-    </div>
+    </LeftSidebar>
   );
 };
 

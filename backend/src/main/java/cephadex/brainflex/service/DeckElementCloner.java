@@ -10,7 +10,6 @@ import java.util.List;
 
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.GridQuestion;
-import cephadex.brainflex.model.element.ImageChoiceQuestion;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
@@ -37,18 +36,6 @@ public final class DeckElementCloner {
                 q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
     }
 
-    /** Clone an ImageChoiceQuestion with a substituted options list. */
-    public static ImageChoiceQuestion withOptions(ImageChoiceQuestion q, List<McqOption> options) {
-        return new ImageChoiceQuestion(
-                q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                q.prompt(), options, q.correctOptionIds(),
-                q.pointValue(), q.difficulty(),
-                q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
-                q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
-    }
-
     public static DeckElement withId(DeckElement element, String id) {
         return switch (element) {
             case Slide s -> new Slide(
@@ -58,14 +45,6 @@ public final class DeckElementCloner {
                     s.displaySeconds(), s.speakerNotes(), s.backgroundImageUrl(),
                     s.imageUrl(), s.videoUrl(), s.audioUrl(), s.mediaPosition());
             case McqQuestion q -> new McqQuestion(
-                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.options(), q.correctOptionIds(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
-                    q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
-            case ImageChoiceQuestion q -> new ImageChoiceQuestion(
                     id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.options(), q.correctOptionIds(),
                     q.pointValue(), q.difficulty(),

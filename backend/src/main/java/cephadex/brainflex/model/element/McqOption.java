@@ -1,5 +1,5 @@
 /**
- * One option in an MCQ or IMAGE_CHOICE question.
+ * One option in an MCQ question.
  *
  * Stable per-option id lets clients submit the chosen option by id rather than
  * by index — so the editor / runtime can reorder options freely without

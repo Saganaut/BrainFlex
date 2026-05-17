@@ -13,7 +13,6 @@ import java.util.List;
 
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.GridQuestion;
-import cephadex.brainflex.model.element.ImageChoiceQuestion;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.PlaceOnImageQuestion;
@@ -34,16 +33,6 @@ public final class ElementRedactor {
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.options(),
                     null,        // correctOptionIds — redacted before reveal
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
-                    null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
-                    q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
-            case ImageChoiceQuestion q -> new ImageChoiceQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.options(),
-                    null,        // correctOptionIds
                     q.pointValue(), q.difficulty(),
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),

@@ -92,7 +92,6 @@ const McqSlideContent = () => {
         />
       </div>
       <div className={styles.optionsHeader}>
-        <span className={styles.optionsLabel}>Options</span>
         <Btn size='sm' onClick={addOption} disabled={!canAddOption}>
           + Add option
         </Btn>

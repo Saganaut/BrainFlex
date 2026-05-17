@@ -25,7 +25,6 @@ import cephadex.brainflex.dto.UpdateDeckRequest;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.element.ImageChoiceQuestion;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.enums.DeckPreset;
@@ -194,7 +193,6 @@ public class DeckService {
     private static void validateOptionImages(DeckElement element) {
         List<McqOption> options = switch (element) {
             case McqQuestion q -> q.options();
-            case ImageChoiceQuestion q -> q.options();
             default -> null;
         };
         if (options == null) return;

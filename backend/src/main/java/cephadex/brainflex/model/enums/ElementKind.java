@@ -2,7 +2,7 @@
  * Top-level discriminator for items in a Deck.
  *
  * SLIDE — non-interactive content (title screen, section divider, callout).
- * MCQ / TEXT / NUMBER / IMAGE_CHOICE — questions with a single concrete correct answer.
+ * MCQ / TEXT / NUMBER — questions with a single concrete correct answer.
  * RANKING — order an item list correctly (covers chronological + lowest-to-highest).
  * SCALES — Likert-style rating of one or more statements (typically unscored).
  * Q_AND_A — Slido-style audience submission; host moderates; never scored.
@@ -18,7 +18,6 @@ public enum ElementKind {
     MCQ,
     TEXT,
     NUMBER,
-    IMAGE_CHOICE,
     RANKING,
     SCALES,
     Q_AND_A,

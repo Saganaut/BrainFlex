@@ -9,10 +9,10 @@
  * presigned URL pulled from S3. The on-disk deck is untouched — hydration
  * produces a transformed copy used only for the response body.
  *
- * Scope today: McqOption (used by both McqQuestion and ImageChoiceQuestion).
- * When `imageUrl` on the DeckElement interface (slide media, place-on-image
- * target, element background) also gains a gallery-id companion, extend this
- * service rather than duplicating the lookup logic per call site.
+ * Scope today: McqOption (used by McqQuestion). When `imageUrl` on the
+ * DeckElement interface (slide media, place-on-image target, element
+ * background) also gains a gallery-id companion, extend this service rather
+ * than duplicating the lookup logic per call site.
  */
 package cephadex.brainflex.service;
 
@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.GalleryImage;
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.element.ImageChoiceQuestion;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.repository.GalleryImageRepository;
@@ -64,7 +63,6 @@ public class DeckImageHydrationService {
         for (DeckElement element : deck.getElements()) {
             hydrated.add(switch (element) {
                 case McqQuestion q -> DeckElementCloner.withOptions(q, hydrateOptions(q.options(), byId));
-                case ImageChoiceQuestion q -> DeckElementCloner.withOptions(q, hydrateOptions(q.options(), byId));
                 default -> element;
             });
         }
@@ -94,7 +92,6 @@ public class DeckImageHydrationService {
         for (DeckElement element : elements) {
             List<McqOption> options = switch (element) {
                 case McqQuestion q -> q.options();
-                case ImageChoiceQuestion q -> q.options();
                 default -> null;
             };
             if (options == null) continue;

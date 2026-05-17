@@ -8,7 +8,6 @@
 import { useNavigate } from "@tanstack/react-router";
 
 import { Btn } from "../Common/Buttons/Btn";
-import { DeckSettingsMenu } from "./DeckSettingsMenu";
 import { LeftSidebarContent } from "./LeftSidebar/LeftSidebarContent";
 import { RightSidebarContent } from "./RightSidebar/RightSidebarContent";
 import { SlideDisplay } from "./SlideDisplay";
@@ -24,8 +23,7 @@ import {
 import { MainBodyDashboard } from "../Layout/MainBodyDashboard";
 import { CanvasHeader } from "../Layout/CanvasHeader";
 import { CanvasBody } from "../Layout/CanvasBody";
-import { RightSidebar } from "../Layout/RightSidebar";
-import { LeftSidebar } from "../Layout/LeftSidebar";
+
 import { InnerDisplay } from "../Layout/InnerDisplay";
 
 const CreateDashboard = () => {
@@ -99,7 +97,6 @@ const CreateDashboard = () => {
               <PlayIcon style={{ width: "1rem", height: "1rem" }} />
               Start
             </Btn>
-            <DeckSettingsMenu />
           </div>
         </div>
       </CanvasHeader>

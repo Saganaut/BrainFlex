@@ -15,7 +15,6 @@ import java.util.Locale;
 
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.GridAnswer;
-import cephadex.brainflex.model.answer.ImageChoiceAnswer;
 import cephadex.brainflex.model.answer.McqAnswer;
 import cephadex.brainflex.model.answer.NumberAnswer;
 import cephadex.brainflex.model.answer.PlaceOnImageAnswer;
@@ -25,7 +24,6 @@ import cephadex.brainflex.model.answer.TextAnswer;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.GridQuestion;
-import cephadex.brainflex.model.element.ImageChoiceQuestion;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.PlaceOnImageQuestion;
@@ -58,7 +56,6 @@ public final class ElementScorer {
         return switch (element) {
             case @SuppressWarnings("unused") Slide ignored -> Result.ZERO;
             case McqQuestion q -> scoreMcq(q, payload);
-            case ImageChoiceQuestion q -> scoreImageChoice(q, payload);
             case TextQuestion q -> scoreText(q, payload);
             case NumberQuestion q -> scoreNumber(q, payload);
             case RankingQuestion q -> scoreRanking(q, payload);
@@ -75,16 +72,10 @@ public final class ElementScorer {
         return scoreOptionPicks(a.optionIds(), q.correctOptionIds(), q.pointValue());
     }
 
-    private static Result scoreImageChoice(ImageChoiceQuestion q, AnswerPayload payload) {
-        if (!(payload instanceof ImageChoiceAnswer a))
-            return Result.ZERO;
-        return scoreOptionPicks(a.optionIds(), q.correctOptionIds(), q.pointValue());
-    }
-
     /**
-     * Shared scoring for MCQ and ImageChoice: when multiple correct ids exist
-     * the submitted set must equal the correct set; otherwise (single-correct)
-     * any submitted id matching counts. Empty correct set = unscored.
+     * MCQ scoring: when multiple correct ids exist the submitted set must equal
+     * the correct set; otherwise (single-correct) any submitted id matching
+     * counts. Empty correct set = unscored.
      */
     private static Result scoreOptionPicks(List<String> submitted, List<String> correctIds, int points) {
         if (submitted == null || submitted.isEmpty() || correctIds == null || correctIds.isEmpty())

@@ -1,13 +1,17 @@
 /**
- * Utility for re-emitting a DeckElement with a different id. Records are
- * immutable so we need a polymorphic clone per kind; this is the single
- * place that knows the full constructor of every element type.
+ * Utility for re-emitting a DeckElement with a different id or with a
+ * substituted child list. Records are immutable so we need a polymorphic
+ * clone per kind; this is the single place that knows the full constructor
+ * of every element type.
  */
 package cephadex.brainflex.service;
+
+import java.util.List;
 
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.GridQuestion;
 import cephadex.brainflex.model.element.ImageChoiceQuestion;
+import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.PlaceOnImageQuestion;
@@ -21,67 +25,111 @@ public final class DeckElementCloner {
 
     private DeckElementCloner() {}
 
+    /** Clone an McqQuestion with a substituted options list. */
+    public static McqQuestion withOptions(McqQuestion q, List<McqOption> options) {
+        return new McqQuestion(
+                q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                q.prompt(), options, q.correctOptionIds(),
+                q.pointValue(), q.difficulty(),
+                q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
+                q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
+                q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+    }
+
+    /** Clone an ImageChoiceQuestion with a substituted options list. */
+    public static ImageChoiceQuestion withOptions(ImageChoiceQuestion q, List<McqOption> options) {
+        return new ImageChoiceQuestion(
+                q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                q.prompt(), options, q.correctOptionIds(),
+                q.pointValue(), q.difficulty(),
+                q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
+                q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
+                q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+    }
+
     public static DeckElement withId(DeckElement element, String id) {
         return switch (element) {
             case Slide s -> new Slide(
-                    id, s.slideKind(), s.title(), s.body(),
+                    id, s.slideKind(), s.publicKey(), s.privateKey(),
+                    s.title(), s.styledTitle(), s.body(),
+                    s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
                     s.displaySeconds(), s.speakerNotes(), s.backgroundImageUrl(),
                     s.imageUrl(), s.videoUrl(), s.audioUrl(), s.mediaPosition());
             case McqQuestion q -> new McqQuestion(
-                    id, q.prompt(), q.options(), q.correctOptionIds(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.options(), q.correctOptionIds(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case ImageChoiceQuestion q -> new ImageChoiceQuestion(
-                    id, q.prompt(), q.options(), q.correctOptionId(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.options(), q.correctOptionIds(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case TextQuestion q -> new TextQuestion(
-                    id, q.prompt(), q.correctAnswer(), q.acceptedVariants(), q.caseSensitive(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.correctAnswer(), q.acceptedVariants(), q.caseSensitive(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case NumberQuestion q -> new NumberQuestion(
-                    id, q.prompt(), q.correctValue(), q.tolerance(), q.unitLabel(), q.decimalPlaces(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.correctValue(), q.tolerance(), q.unitLabel(), q.decimalPlaces(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case RankingQuestion q -> new RankingQuestion(
-                    id, q.prompt(), q.items(), q.correctOrder(), q.scoring(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.items(), q.correctOrder(), q.scoring(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case ScalesQuestion q -> new ScalesQuestion(
-                    id, q.prompt(), q.statements(), q.scaleMin(), q.scaleMax(),
-                    q.minLabel(), q.maxLabel(), q.scored(), q.correctRatings(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.statements(), q.scaleMin(), q.scaleMax(),
+                    q.minLabel(), q.maxLabel(), q.correctRatings(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case QAndAQuestion q -> new QAndAQuestion(
-                    id, q.prompt(), q.maxSubmissionsPerPlayer(), q.allowVoting(), q.autoApprove(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.maxSubmissionsPerPlayer(), q.allowVoting(), q.autoApprove(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case GridQuestion q -> new GridQuestion(
-                    id, q.prompt(), q.rows(), q.cols(), q.cells(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.rows(), q.cols(), q.cells(),
                     q.correctCellIndexes(), q.multipleCorrect(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
-                    id, q.prompt(), q.targetImageUrl(),
+                    id, q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.targetImageUrl(),
                     q.correctX(), q.correctY(), q.tolerance(), q.scoring(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(), q.explanation(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
         };

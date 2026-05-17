@@ -7,9 +7,9 @@
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
-import { RichTextInput } from "@/components/Common/Input/RichTextInput";
-import { NumberInput } from "@/components/Common/Input/NumberInput";
-import { Checkbox } from "@/components/Common/Input/Checkbox";
+import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
+import { NumberInput } from "@/components/Common/Input/NumberInput/NumberInput";
+import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
 import { useElementEditor } from "./useElementEditor";
 import type { QAndAQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";

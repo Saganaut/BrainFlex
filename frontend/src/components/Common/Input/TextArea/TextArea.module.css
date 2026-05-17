@@ -1,0 +1,43 @@
+/* TextArea — multi-line text entry that visually matches the single-line Input.
+   Lives in the .inputContainer shared with Input, so the label/info layout
+   matches form rows that mix the two. */
+
+.textarea {
+  position: relative;
+
+  textarea {
+    width: 300px;
+    min-height: 100px;
+    color: var(--text-secondary);
+    border: 2px solid var(--border-default);
+    border-radius: var(--radius-md);
+    padding: var(--p-sm);
+    background-color: transparent;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-base);
+    resize: vertical;
+    transition:
+      color 300ms ease-in-out,
+      border-color 300ms ease-in-out;
+
+    &:hover {
+      border-color: var(--action-hover);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--border-focus);
+    }
+  }
+
+  .message {
+    position: absolute;
+    bottom: -24px;
+    left: 10px;
+  }
+}
+
+.fullWidth,
+.fullWidth textarea {
+  width: 100%;
+}

@@ -1,10 +1,12 @@
 // Text input fused with an action button, used for search or submit-inline patterns
 import React from "react";
 import type { ReactNode } from "react";
-import styles from "./Input.module.css";
-import { Btn } from "../Buttons/Btn";
+import shared from "../Input.module.css";
+import styles from "./InputWithButton.module.css";
+import { Btn } from "../../Buttons/Btn";
 
-interface InputWithButtonProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputWithButtonProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   labelPosition?: "labelAbove" | "labelInFront";
   buttonLabel?: ReactNode;
@@ -13,7 +15,7 @@ interface InputWithButtonProps extends React.InputHTMLAttributes<HTMLInputElemen
   infoMessage?: string;
 }
 
-const InputWithButton: React.FC<InputWithButtonProps> = ({
+const InputWithButton = ({
   id,
   value,
   onChange,
@@ -26,9 +28,10 @@ const InputWithButton: React.FC<InputWithButtonProps> = ({
   onButtonClick,
   errorMessage,
   infoMessage,
-}) => {
+}: InputWithButtonProps) => {
   return (
-    <div className={[styles.inputContainer, styles[labelPosition]].join(" ")}>
+    <div
+      className={[shared.inputContainer, shared[labelPosition]].join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.inputWithButton}>
         <input
@@ -45,9 +48,12 @@ const InputWithButton: React.FC<InputWithButtonProps> = ({
         {(errorMessage != null || infoMessage != null) && (
           <span
             className={[
-              styles.inputInfoMessage,
-              errorMessage && styles.errorMessage,
-            ].join(" ")}>
+              shared.inputInfoMessage,
+              styles.message,
+              errorMessage && shared.errorMessage,
+            ]
+              .filter(Boolean)
+              .join(" ")}>
             {errorMessage ?? infoMessage}
           </span>
         )}

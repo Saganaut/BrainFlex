@@ -1,54 +1,58 @@
-// Toggle switch built on a visually-hidden checkbox; CSS :has() drives all visual state
+// Common radio input component used in form option groups throughout the app
 import React, { useId } from "react";
-import styles from "./Input.module.css";
+import shared from "../Input.module.css";
+import styles from "./Radio.module.css";
 
-interface ToggleProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface RadioProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   labelPosition?: "labelBefore" | "labelAfter";
   errorMessage?: string;
   infoMessage?: string;
 }
 
-const Toggle: React.FC<ToggleProps> = ({
+const Radio = ({
   id,
   label,
   labelPosition = "labelAfter",
   checked,
   onChange,
+  name,
+  value,
   disabled,
   errorMessage,
   infoMessage,
-}) => {
+}: RadioProps) => {
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
   return (
     <div
       className={[
-        styles.toggleContainer,
+        styles.radioContainer,
         labelPosition === "labelBefore" ? styles.labelBefore : "",
       ]
         .filter(Boolean)
         .join(" ")}>
       <input
-        type='checkbox'
+        type='radio'
         id={inputId}
-        className={styles.toggleInput}
+        className={styles.radioInput}
+        name={name}
+        value={value}
         checked={checked}
         onChange={onChange}
         disabled={disabled}
       />
-      <label htmlFor={inputId} className={styles.toggleWrap}>
-        <span className={styles.toggleTrack}>
-          <span className={styles.toggleThumb} />
-        </span>
-        {label && <span className={styles.toggleLabelText}>{label}</span>}
+      <label htmlFor={inputId} className={styles.radioWrap}>
+        <span className={styles.radioControl} />
+        {label && <span className={styles.radioLabelText}>{label}</span>}
       </label>
       {(errorMessage != null || infoMessage != null) && (
         <span
           className={[
-            styles.inputInfoMessage,
-            errorMessage ? styles.errorMessage : "",
+            shared.inputInfoMessage,
+            styles.message,
+            errorMessage ? shared.errorMessage : "",
           ]
             .filter(Boolean)
             .join(" ")}>
@@ -59,4 +63,4 @@ const Toggle: React.FC<ToggleProps> = ({
   );
 };
 
-export { Toggle };
+export { Radio };

@@ -12,10 +12,12 @@
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
-import { RichTextInput } from "@/components/Common/Input/RichTextInput";
-import { Input } from "@/components/Common/Input/Input";
-import { NumberInput } from "@/components/Common/Input/NumberInput";
+import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
+import { Input } from "@/components/Common/Input/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput/NumberInput";
+import { Btn } from "@/components/Common/Buttons/Btn";
 import { useElementEditor } from "./useElementEditor";
+import { useGalleryPicker } from "@/hooks/useGalleryPicker";
 import type { PlaceOnImageQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
 
@@ -26,8 +28,9 @@ const placeholderImageUrl = (seed: string) =>
   `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
 
 const PlaceOnImageSlideContent = () => {
-  const { element, schedule, flush, syncedFromId, markSynced } =
+  const { element, schedule, flush, commit, syncedFromId, markSynced } =
     useElementEditor<PlaceOnImageQuestion>(isPlaceOnImage);
+  const openPicker = useGalleryPicker();
 
   const [prompt, setPrompt] = useState(element?.prompt ?? "");
   const [targetImageUrl, setTargetImageUrl] = useState(
@@ -90,27 +93,37 @@ const PlaceOnImageSlideContent = () => {
       />
 
       <div className={styles.imageEditorRow}>
-        <img
-          src={imgSrc}
-          alt=''
-          className={styles.imagePlaceholder}
-          style={{ width: 240 }}
-        />
+        <img src={imgSrc} alt='' className={styles.imagePlaceholder} />
         <div className={styles.imageEditorFields}>
-          <Input
-            label='Target image URL (placeholder shown if blank)'
-            id={`place-image-${element.id ?? ""}`}
-            type='text'
-            fullWidth
-            value={targetImageUrl}
-            placeholder='https://…'
-            onChange={(e) => {
-              const next = e.target.value;
-              setTargetImageUrl(next);
-              schedule(buildPatch({ targetImageUrl: next }));
-            }}
-            onBlur={flush}
-          />
+          <div className={styles.urlPickerRow}>
+            <div className={styles.urlPickerInput}>
+              <Input
+                label='Target image URL (placeholder shown if blank)'
+                id={`place-image-${element.id ?? ""}`}
+                type='text'
+                fullWidth
+                value={targetImageUrl}
+                placeholder='https://…'
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setTargetImageUrl(next);
+                  schedule(buildPatch({ targetImageUrl: next }));
+                }}
+                onBlur={flush}
+              />
+            </div>
+            <Btn
+              size='sm'
+              onClick={() => {
+                flush();
+                openPicker((url) => {
+                  setTargetImageUrl(url);
+                  commit(buildPatch({ targetImageUrl: url }));
+                });
+              }}>
+              Gallery
+            </Btn>
+          </div>
         </div>
       </div>
 
@@ -157,8 +170,8 @@ const PlaceOnImageSlideContent = () => {
       </div>
 
       {/* TODO: Get more specs — click-on-image to set (correctX, correctY)
-          visually; draw the tolerance radius overlay; replace URL field with
-          media-library picker. */}
+          visually and draw the tolerance radius overlay. The media-library
+          picker is now wired in via the `Gallery` button. */}
     </SlideContentWrapper>
   );
 };

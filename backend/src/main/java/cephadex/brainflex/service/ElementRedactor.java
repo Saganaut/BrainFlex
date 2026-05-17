@@ -31,77 +31,92 @@ public final class ElementRedactor {
         return switch (element) {
             case Slide s -> s; // nothing to redact
             case McqQuestion q -> new McqQuestion(
-                    q.id(), q.prompt(), q.options(),
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.options(),
                     null,        // correctOptionIds — redacted before reveal
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case ImageChoiceQuestion q -> new ImageChoiceQuestion(
-                    q.id(), q.prompt(), q.options(),
-                    null,        // correctOptionId
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.options(),
+                    null,        // correctOptionIds
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case TextQuestion q -> new TextQuestion(
-                    q.id(), q.prompt(),
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(),
                     null,        // correctAnswer
                     List.of(),   // acceptedVariants
                     q.caseSensitive(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case NumberQuestion q -> new NumberQuestion(
-                    q.id(), q.prompt(),
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(),
                     0.0,         // correctValue
                     0.0,         // tolerance
                     q.unitLabel(), q.decimalPlaces(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case RankingQuestion q -> new RankingQuestion(
-                    q.id(), q.prompt(), q.items(),
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.items(),
                     List.of(),   // correctOrder
                     q.scoring(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case ScalesQuestion q -> new ScalesQuestion(
-                    q.id(), q.prompt(), q.statements(),
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.statements(),
                     q.scaleMin(), q.scaleMax(), q.minLabel(), q.maxLabel(),
-                    q.scored(),
                     List.of(),   // correctRatings
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case QAndAQuestion q -> q; // no answer key to hide
             case GridQuestion q -> new GridQuestion(
-                    q.id(), q.prompt(), q.rows(), q.cols(), q.cells(),
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.rows(), q.cols(), q.cells(),
                     java.util.Set.of(),  // correctCellIndexes
                     q.multipleCorrect(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
-                    q.id(), q.prompt(), q.targetImageUrl(),
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.targetImageUrl(),
                     0.0,         // correctX
                     0.0,         // correctY
                     q.tolerance(), q.scoring(),
                     q.pointValue(), q.difficulty(),
-                    q.bestAnswerMode(), q.bestAnswerBonus(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.backgroundImageUrl(),
                     q.imageUrl(), q.videoUrl(), q.audioUrl(), q.mediaPosition());

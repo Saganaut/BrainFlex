@@ -1,7 +1,9 @@
 /**
- * Drawer pinned to the bottom of the slide canvas. The header bar is always
- * visible; when the user toggles it open, the editor body grows UPWARD over
- * the slide so the drawer reveals itself like a real bottom-anchored sheet.
+ * Drawer pinned to the bottom of the slide canvas, stretched full width
+ * across the relative grandparent. The header sits on top and stays visible;
+ * the body sits BELOW the header and animates its height open/closed so the
+ * drawer's top edge slides upward when toggled. The header doubles as the
+ * toggle button.
  *
  * Speaker notes live on EVERY element kind (not just Slide), so this drawer
  * reads/writes the active element's `speakerNotes` field regardless of kind.
@@ -10,7 +12,7 @@
  * editors: type into RichTextInput → schedule(patch) → flush() on blur. The
  * apiEnhancements layer syncs the response into the getDeck cache.
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import {
@@ -19,7 +21,10 @@ import {
   type DeckDto,
 } from "@/store/BrainFlexApi";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
-import { RichTextInput } from "@/components/Common/Input/RichTextInput";
+import {
+  RichTextInput,
+  type RichTextInputHandle,
+} from "@/components/Common/Input/RichTextInput/RichTextInput";
 import styles from "./SpeakerNotesDrawer.module.css";
 
 type DeckElement = NonNullable<DeckDto["elements"]>[number];
@@ -66,6 +71,20 @@ const SpeakerNotesDrawer = () => {
   }
 
   const [isOpen, setIsOpen] = useState(false);
+  const editorRef = useRef<RichTextInputHandle>(null);
+
+  // Closing the drawer only animates `max-height` to 0 — the contenteditable
+  // inside stays focused, which leaves the BubbleMenu toolbar floating in
+  // empty space (and may also leave the link popover open). Drive both
+  // signals to false via the editor's imperative handle so the toolbar
+  // dismisses with the drawer.
+  const handleToggle = () => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (!next) editorRef.current?.blur();
+      return next;
+    });
+  };
 
   const handleNotesChange = (html: string) => {
     setNotes(html);
@@ -81,16 +100,31 @@ const SpeakerNotesDrawer = () => {
         .filter(Boolean)
         .join(" ")}
       aria-label='Speaker notes'>
-      {/* Body comes first in DOM so it sits ABOVE the always-visible header
-          (the drawer is pinned to the bottom; growth runs upward). */}
-      {isOpen && (
-        <div
-          className={styles.body}
-          id='speaker-notes-body'
-          role='region'
-          aria-label='Speaker notes editor'>
+      <button
+        type='button'
+        className={styles.header}
+        aria-expanded={isOpen}
+        aria-controls='speaker-notes-body'
+        onClick={handleToggle}>
+        <span className={styles.headerLabel}>
+          Speaker notes
+          {hasNotes && <span className={styles.headerDot} aria-hidden='true' />}
+        </span>
+        <span className={styles.headerChevron} aria-hidden='true'>
+          {isOpen ? <ChevronDownIcon /> : <ChevronUpIcon />}
+        </span>
+      </button>
+
+      <div
+        className={styles.body}
+        id='speaker-notes-body'
+        role='region'
+        aria-label='Speaker notes editor'
+        aria-hidden={!isOpen}>
+        <div className={styles.bodyInner}>
           {element ? (
             <RichTextInput
+              ref={editorRef}
               id={`speaker-notes-${element.id ?? ""}`}
               placeholder='Notes for the presenter — never shown to participants.'
               value={notes}
@@ -103,24 +137,7 @@ const SpeakerNotesDrawer = () => {
             </p>
           )}
         </div>
-      )}
-
-      <button
-        type='button'
-        className={styles.header}
-        aria-expanded={isOpen}
-        aria-controls='speaker-notes-body'
-        onClick={() => {
-          setIsOpen((prev) => !prev);
-        }}>
-        <span className={styles.headerLabel}>
-          Speaker notes
-          {hasNotes && <span className={styles.headerDot} aria-hidden='true' />}
-        </span>
-        <span className={styles.headerChevron} aria-hidden='true'>
-          {isOpen ? <ChevronDownIcon /> : <ChevronUpIcon />}
-        </span>
-      </button>
+      </div>
     </section>
   );
 };

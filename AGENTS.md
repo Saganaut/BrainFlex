@@ -245,12 +245,12 @@ All endpoints are prefixed `/api`.
 
 ### Organization Endpoints (`/api/organizations`) — requires `ROLE_USER`
 
-| Method | Path                          | Description                                     |
-| ------ | ----------------------------- | ----------------------------------------------- |
-| GET    | `/api/organizations/me`       | Caller's current organization (404 if none)     |
-| POST   | `/api/organizations`          | Create org and set caller as owner/first member |
-| POST   | `/api/organizations/join`     | Join an org by ID; body: `{ organizationId }`   |
-| DELETE | `/api/organizations/me/leave` | Leave current org (sets organizationId to null) |
+| Method | Path                              | Description                                                |
+| ------ | --------------------------------- | ---------------------------------------------------------- |
+| GET    | `/api/organizations/mine`         | All organizations the caller belongs to (may be empty)     |
+| POST   | `/api/organizations`              | Create org and add the caller as owner + member            |
+| POST   | `/api/organizations/join`         | Join an org by ID; body: `{ organizationId }` (idempotent) |
+| DELETE | `/api/organizations/{id}/leave`   | Remove the caller from one specific org                    |
 
 ---
 
@@ -266,7 +266,7 @@ userName         String
 isGuest          Boolean
 googleId         String
 pictureUrl       String
-organizationId   String   (nullable — set when user joins an org)
+organizationIds  List<String> (orgs this user belongs to; empty = personal-only)
 activeThemeId    String   (nullable — ID of the user's active custom theme)
 stats            PlayerStats (embedded)
 lastLogin        LocalDateTime
@@ -293,7 +293,7 @@ ownerId     String   (userId of creator)
 createdAt   LocalDateTime
 ```
 
-One user belongs to at most one organization at a time. Joining a new org requires leaving the current one first.
+Users may belong to multiple organizations simultaneously. `User.organizationIds` is the list of memberships; joining/leaving an org adds/removes an id from that list. A theme's or deck's `organizationId` is still a single string — content is scoped to one org at a time. Theme create/update rejects an `organizationId` that isn't in the caller's `organizationIds`.
 
 ### Theme (MongoDB document, collection: `themes`)
 
@@ -313,7 +313,7 @@ createdAt           LocalDateTime
 ### DTOs
 
 - `UserDTO.GuestUser` — id, userName, isGuest, pictureUrl, stats (safe for leaderboard)
-- `UserDTO.RegisteredUser` — all fields including email, googleId, organizationId, activeThemeId, timestamps (authenticated only)
+- `UserDTO.RegisteredUser` — all fields including email, googleId, organizationIds, activeThemeId, timestamps (authenticated only)
 
 ### Image Processing Tiers
 
@@ -475,7 +475,7 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 
 - `BrainFlexApi.ts` is regenerated from `http://localhost:8080/v3/api-docs` — the backend must be running when you run codegen.
 - `spring.docker.compose.enabled=false` — Spring does **not** auto-start Docker; run `docker compose up -d` yourself.
-- **Seeding sample data is manual.** Nothing runs on startup. Run `scripts/seed-sample-data.sh` to populate MongoDB with LOTR-themed users (from `seed/users.json` when the collection is empty), the two `system` decks (Welcome Tour + General Knowledge), faction-based Organizations, a personal Theme per user, and 1–2 LOTR-themed Decks per user. The seeder is idempotent **per collection per user** — re-running tops up missing pieces without overwriting anything (decks are skipped for any user who already owns ≥1 deck; themes are skipped for any user who already owns ≥1 theme; org membership is only set if `organizationId` is null). Nothing is ever deleted. The script runs the Spring Boot app with `--seed.run=true`, which is the only thing that activates `SampleDataSeeder`; a normal `./mvnw spring-boot:run` boot does not seed anything.
+- **Seeding sample data is manual.** Nothing runs on startup. Run `scripts/seed-sample-data.sh` to populate MongoDB with LOTR-themed users (from `seed/users.json` when the collection is empty), the two `system` decks (Welcome Tour + General Knowledge), faction-based Organizations, a personal Theme per user, and 1–2 LOTR-themed Decks per user. The seeder is idempotent **per collection per user** — re-running tops up missing pieces without overwriting anything (decks are skipped for any user who already owns ≥1 deck; themes are skipped for any user who already owns ≥1 theme; a user's faction org is added to `organizationIds` only if they're not already a member of it). Nothing is ever deleted. The script runs the Spring Boot app with `--seed.run=true`, which is the only thing that activates `SampleDataSeeder`; a normal `./mvnw spring-boot:run` boot does not seed anything.
 - WebSocket support is included as a dependency but no WebSocket endpoints are implemented yet.
 - There is no `.env` file in the repo. For local development, copy `example.env` to `dev.env` and fill in real credentials. `DotenvEnvironmentPostProcessor` loads `dev.env` (or `.env`) at runtime but silently skips if neither exists — tests do not rely on it at all.
 - Backend tests require Docker to be running (`docker compose up -d`) because `@SpringBootTest` controller tests connect to the real local MongoDB and Redis.

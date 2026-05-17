@@ -99,12 +99,14 @@ class ShowcaseServiceTest {
         List<DeckElement> els = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String id = "el-" + i;
-            McqOption a = new McqOption(id + "-a", "A", null);
-            McqOption b = new McqOption(id + "-b", "B", null);
+            McqOption a = new McqOption(id + "-a", "A", null, null, null);
+            McqOption b = new McqOption(id + "-b", "B", null, null, null);
             els.add(new McqQuestion(
-                    id, "Prompt " + i, List.of(a, b), List.of(a.id()),
+                    id, "pub_" + id, "prv_" + id, "Prompt " + i, null,
+                    "Prompt " + i, List.of(a, b), List.of(a.id()),
                     100, Difficulty.EASY,
-                    false, 0, null,
+                    true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
+                    false, null, 0, null,
                     15, null, null, null, null, null, MediaPosition.NONE));
         }
         return els;
@@ -353,7 +355,7 @@ class ShowcaseServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         DeckElement el = session.getDeckSnapshot().get(0);
-        AnswerSubmitRequest req = new AnswerSubmitRequest(el.id(), new McqAnswer(el.id() + "-a"));
+        AnswerSubmitRequest req = new AnswerSubmitRequest(el.id(), new McqAnswer(List.of(el.id() + "-a")));
 
         showcaseService.submitAnswer("ABCD12", req, "guest:p1");
         showcaseService.submitAnswer("ABCD12", req, "guest:p2");
@@ -384,7 +386,7 @@ class ShowcaseServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         DeckElement el = session.getDeckSnapshot().get(0);
-        AnswerSubmitRequest answerReq = new AnswerSubmitRequest(el.id(), new McqAnswer(el.id() + "-a"));
+        AnswerSubmitRequest answerReq = new AnswerSubmitRequest(el.id(), new McqAnswer(List.of(el.id() + "-a")));
         showcaseService.submitAnswer("ABCD12", answerReq, "guest:p1");
         showcaseService.submitAnswer("ABCD12", answerReq, "guest:p2");
         showcaseService.submitAnswer("ABCD12", answerReq, "guest:p3");
@@ -490,12 +492,14 @@ class ShowcaseServiceTest {
 
     /** A best-answer-mode MCQ whose correct option is {id}-a. */
     private static McqQuestion bestAnswerMcq(String id, int bonus) {
-        McqOption a = new McqOption(id + "-a", "A", null);
-        McqOption b = new McqOption(id + "-b", "B", null);
+        McqOption a = new McqOption(id + "-a", "A", null, null, null);
+        McqOption b = new McqOption(id + "-b", "B", null, null, null);
         return new McqQuestion(
-                id, "Prompt", List.of(a, b), List.of(a.id()),
+                id, "pub_" + id, "prv_" + id, "Prompt", null,
+                "Prompt", List.of(a, b), List.of(a.id()),
                 100, Difficulty.EASY,
-                true, bonus, null,
+                true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
+                true, null, bonus, null,
                 15, null, null, null, null, null, MediaPosition.NONE);
     }
 }

@@ -7,10 +7,12 @@
 .editorShell {
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
   padding: var(--space-5) var(--space-6);
   gap: var(--space-3);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .editorHeader {
@@ -39,10 +41,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  flex: 1;
-  min-height: 0;
   overflow-y: auto;
   padding-right: var(--space-1);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .editorFooter {
@@ -99,8 +103,8 @@
 
 .imagePlaceholder {
   display: block;
-  width: 100%;
-  max-width: 320px;
+  width: 240px;
+  max-width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   border-radius: var(--radius-md);
@@ -109,6 +113,7 @@
 
 .optionImagePlaceholder {
   display: block;
+  width: 80px;
   aspect-ratio: 1 / 1;
   object-fit: cover;
   border-radius: var(--radius-sm);
@@ -192,4 +197,17 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+}
+
+/* Inline "URL field + Pick-from-gallery button" cluster. The input grows;
+   the button stays fixed-width on the right. */
+.urlPickerRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.urlPickerInput {
+  flex: 1;
+  min-width: 0;
 }

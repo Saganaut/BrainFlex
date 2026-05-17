@@ -3,7 +3,7 @@
 // ripple instantly through every semantic token on the page.
 import { useTheme } from "../../hooks/useTheme";
 import { Btn } from "../../components/Common/Buttons/Btn";
-import { HuePicker } from "../../components/Common/Input/HuePicker";
+import { HuePicker } from "../../components/Common/Input/HuePicker/HuePicker";
 import { themePresets } from "./data";
 import styles from "./DesignSystem.module.css";
 

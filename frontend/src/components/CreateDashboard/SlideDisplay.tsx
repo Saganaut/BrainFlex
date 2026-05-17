@@ -14,7 +14,6 @@ import { SlideContent } from "./SlideContentTypes/SlideContent";
 import { McqSlideContent } from "./SlideContentTypes/McqSlideContent/McqSlideContent";
 import { TextSlideContent } from "./SlideContentTypes/TextSlideContent";
 import { NumberSlideContent } from "./SlideContentTypes/NumberSlideContent";
-import { ImageChoiceSlideContent } from "./SlideContentTypes/ImageChoiceSlideContent";
 import { RankingSlideContent } from "./SlideContentTypes/RankingSlideContent";
 import { ScalesSlideContent } from "./SlideContentTypes/ScalesSlideContent";
 import { QAndASlideContent } from "./SlideContentTypes/QAndASlideContent";
@@ -53,8 +52,6 @@ const SlideDisplay = () => {
         return <TextSlideContent />;
       case "NumberQuestion":
         return <NumberSlideContent />;
-      case "ImageChoiceQuestion":
-        return <ImageChoiceSlideContent />;
       case "RankingQuestion":
         return <RankingSlideContent />;
       case "ScalesQuestion":

@@ -9,8 +9,8 @@
 import { useState } from "react";
 import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "./SlideContentWrapper";
-import { RichTextInput } from "@/components/Common/Input/RichTextInput";
-import { Input } from "@/components/Common/Input/Input";
+import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
+import { Input } from "@/components/Common/Input/Input/Input";
 import { useElementEditor } from "./useElementEditor";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";

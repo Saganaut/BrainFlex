@@ -1,28 +1,34 @@
-// Organization management: create, join by ID, view current, or leave.
+// Organization management: list every org the user belongs to, create a new
+// one, join by ID, and leave any individual org. Users may belong to multiple
+// orgs simultaneously — there's no "leave first" step.
 import { useState } from "react";
 import {
   useCreateOrgMutation,
-  useGetMyOrgQuery,
   useJoinOrgMutation,
   useLeaveOrgMutation,
+  useListMyOrgsQuery,
 } from "../../store/BrainFlexApi";
+import type { OrganizationResponse } from "../../store/BrainFlexApi";
 import styles from "./ThemeSection.module.css";
 import accountStyles from "./AccountPage.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import { Input } from "@/components/Common/Input/Input";
+import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
+import { Input } from "@/components/Common/Input/Input/Input";
+import { extractErrorMessage } from "@/utils/utils";
 
 const OrgSection = () => {
-  const { data: org, refetch, isLoading } = useGetMyOrgQuery();
+  const { data: orgs = [], refetch, isLoading } = useListMyOrgsQuery();
 
   const [createOrg, { isLoading: isCreating }] = useCreateOrgMutation();
   const [joinOrg, { isLoading: isJoining }] = useJoinOrgMutation();
-  const [leaveOrg, { isLoading: isLeaving }] = useLeaveOrgMutation();
+  const [leaveOrg] = useLeaveOrgMutation();
 
   const [createName, setCreateName] = useState("");
   const [joinId, setJoinId] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [leaveConfirm, setLeaveConfirm] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [leavingId, setLeavingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const handleCreate = async () => {
     if (!createName.trim()) {
@@ -37,11 +43,7 @@ const OrgSection = () => {
       setCreateName("");
       await refetch();
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "data" in err
-          ? String(err.data)
-          : null;
-      setError(msg ?? "Failed to create organization.");
+      setError(extractErrorMessage(err, "Failed to create organization."));
     }
   };
 
@@ -58,31 +60,35 @@ const OrgSection = () => {
       setJoinId("");
       await refetch();
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "data" in err
-          ? String(err.data)
-          : null;
-      setError(msg ?? "Organization not found.");
+      setError(extractErrorMessage(err, "Organization not found."));
     }
   };
 
-  const handleLeave = async () => {
+  const handleLeave = async (id: string) => {
+    const ok = await confirm({
+      title: "Leave organization",
+      message: "Leave this organization?",
+      confirmLabel: "Leave",
+      variant: "danger",
+    });
+    if (!ok) return;
     setError(null);
+    setLeavingId(id);
     try {
-      await leaveOrg().unwrap();
-      setLeaveConfirm(false);
+      await leaveOrg({ id }).unwrap();
       await refetch();
     } catch {
       setError("Failed to leave organization.");
+    } finally {
+      setLeavingId(null);
     }
   };
 
-  const handleCopyId = async () => {
-    if (!org?.id) return;
-    await navigator.clipboard.writeText(org.id);
-    setCopied(true);
+  const handleCopyId = async (id: string) => {
+    await navigator.clipboard.writeText(id);
+    setCopiedId(id);
     setTimeout(() => {
-      setCopied(false);
+      setCopiedId((cur) => (cur === id ? null : cur));
     }, 2000);
   };
 
@@ -90,95 +96,86 @@ const OrgSection = () => {
 
   return (
     <section className={accountStyles.section}>
-      <h2 className={accountStyles.sectionTitle}>Organization</h2>
+      <h2 className={accountStyles.sectionTitle}>Organizations</h2>
 
-      {org ? (
-        <div className={styles.orgInfo}>
-          <p className={styles.orgName}>{org.name}</p>
-          <p className={styles.orgId}>ID: {org.id}</p>
-          <div style={{ display: "flex", gap: "var(--space-3)" }}>
-            <Btn
-              onClick={() => {
-                void handleCopyId();
-              }}>
-              {copied ? "Copied!" : "Copy ID"}
-            </Btn>
-            {!leaveConfirm ? (
-              <Btn
-                onClick={() => {
-                  setLeaveConfirm(true);
-                }}>
-                Leave organization
-              </Btn>
-            ) : (
-              <>
-                <Btn
-                  onClick={() => {
-                    void handleLeave();
-                  }}
-                  disabled={isLeaving}>
-                  {isLeaving ? "Leaving..." : "Confirm leave"}
-                </Btn>
-                <Btn
-                  onClick={() => {
-                    setLeaveConfirm(false);
-                  }}>
-                  Cancel
-                </Btn>
-              </>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className={styles.orgJoinForm}>
-          <div className={styles.orgRow}>
-            <Input
-              type='text'
-              className={styles.orgInput}
-              placeholder='Organization name'
-              value={createName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setCreateName(e.target.value);
-              }}
-              maxLength={128}
-              aria-label='New organization name'
-            />
-            <Btn
-              onClick={() => {
-                void handleCreate();
-              }}
-              disabled={isCreating}>
-              {isCreating ? "Creating..." : "Create"}
-            </Btn>
-          </div>
-
-          <div className={styles.orgDivider}>
-            <span className={styles.orgDividerText}>
-              or join an existing one
-            </span>
-          </div>
-
-          <div className={styles.orgRow}>
-            <Input
-              type='text'
-              className={styles.orgInput}
-              placeholder='Organization ID'
-              value={joinId}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                setJoinId(e.target.value);
-              }}
-              aria-label='Organization ID to join'
-            />
-            <Btn
-              onClick={() => {
-                void handleJoin();
-              }}
-              disabled={isJoining}>
-              {isJoining ? "Joining..." : "Join"}
-            </Btn>
-          </div>
+      {orgs.length > 0 && (
+        <div className={styles.orgList}>
+          {orgs.map((org: OrganizationResponse) => {
+            const id = org.id ?? "";
+            const isLeaving = leavingId === id;
+            return (
+              <div key={id} className={styles.orgInfo}>
+                <p className={styles.orgName}>{org.name}</p>
+                <p className={styles.orgId}>ID: {id}</p>
+                <div style={{ display: "flex", gap: "var(--space-3)" }}>
+                  <Btn
+                    onClick={() => {
+                      void handleCopyId(id);
+                    }}>
+                    {copiedId === id ? "Copied!" : "Copy ID"}
+                  </Btn>
+                  <Btn
+                    onClick={() => {
+                      void handleLeave(id);
+                    }}
+                    disabled={isLeaving}>
+                    {isLeaving ? "Leaving..." : "Leave"}
+                  </Btn>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
+
+      <div className={styles.orgJoinForm}>
+        <div className={styles.orgRow}>
+          <Input
+            type='text'
+            className={styles.orgInput}
+            placeholder='New organization name'
+            value={createName}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setCreateName(e.target.value);
+            }}
+            maxLength={128}
+            aria-label='New organization name'
+          />
+          <Btn
+            onClick={() => {
+              void handleCreate();
+            }}
+            disabled={isCreating}>
+            {isCreating ? "Creating..." : "Create"}
+          </Btn>
+        </div>
+
+        <div className={styles.orgDivider}>
+          <span className={styles.orgDividerText}>
+            or join an existing one
+          </span>
+        </div>
+
+        <div className={styles.orgRow}>
+          <Input
+            type='text'
+            className={styles.orgInput}
+            placeholder='Organization ID'
+            value={joinId}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setJoinId(e.target.value);
+            }}
+            aria-label='Organization ID to join'
+          />
+          <Btn
+            onClick={() => {
+              void handleJoin();
+            }}
+            disabled={isJoining}>
+            {isJoining ? "Joining..." : "Join"}
+          </Btn>
+        </div>
+      </div>
 
       {error && <p className={accountStyles.error}>{error}</p>}
     </section>

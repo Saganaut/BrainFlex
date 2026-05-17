@@ -1,9 +1,11 @@
 // Numeric input: same chrome as Input, but the value/onChange API is typed as
 // `number` so callers don't repeat the parse-fallback dance. min / max / step
 // flow through to the native control. Mirrors the labelled-container layout
-// of Input so the two read identically in a form.
+// of Input so the two read identically in a form. Reuses Input's CSS module
+// so the bordered-text-box chrome stays in one place.
 import React from "react";
-import styles from "./Input.module.css";
+import shared from "../Input.module.css";
+import styles from "../Input/Input.module.css";
 
 interface NumberInputProps
   extends Omit<
@@ -19,7 +21,7 @@ interface NumberInputProps
   fullWidth?: boolean;
 }
 
-const NumberInput: React.FC<NumberInputProps> = ({
+const NumberInput = ({
   value,
   onChange,
   onBlur,
@@ -35,18 +37,21 @@ const NumberInput: React.FC<NumberInputProps> = ({
   max,
   step,
   placeholder,
-}) => {
+}: NumberInputProps) => {
   return (
     <div
       className={[
-        styles.inputContainer,
-        styles[labelPosition],
-        fullWidth ? styles.fullWidth : "",
+        shared.inputContainer,
+        shared[labelPosition],
+        fullWidth ? shared.fullWidth : "",
       ]
         .filter(Boolean)
         .join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
-      <div className={styles.input}>
+      <div
+        className={[styles.input, fullWidth ? styles.fullWidth : ""]
+          .filter(Boolean)
+          .join(" ")}>
         <input
           type='number'
           id={id}
@@ -67,8 +72,9 @@ const NumberInput: React.FC<NumberInputProps> = ({
         {(errorMessage != null || infoMessage != null) && (
           <span
             className={[
-              styles.inputInfoMessage,
-              errorMessage ? styles.errorMessage : "",
+              shared.inputInfoMessage,
+              styles.message,
+              errorMessage && shared.errorMessage,
             ]
               .filter(Boolean)
               .join(" ")}>

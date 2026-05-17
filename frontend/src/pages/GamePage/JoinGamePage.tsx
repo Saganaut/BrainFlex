@@ -4,7 +4,7 @@ import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
 import { extractErrorMessage } from "../../utils/utils";
 import styles from "./GameHub.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import { Input } from "@/components/Common/Input/Input";
+import { Input } from "@/components/Common/Input/Input/Input";
 const JoinGamePage = () => {
   const navigate = useNavigate();
   const [code, setCode] = useState("");

@@ -1,7 +1,7 @@
 // Avatar button + contextual auth/account menu in the NavBar
 import React from "react";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
-import { Input } from "@/components/Common/Input/Input";
+import { Input } from "@/components/Common/Input/Input/Input";
 import lightModeIcon from "@/assets/nav/LightModeIcon.svg";
 import darkModeIcon from "@/assets/nav/DarkModeIcon.svg";
 import { Link } from "@tanstack/react-router";

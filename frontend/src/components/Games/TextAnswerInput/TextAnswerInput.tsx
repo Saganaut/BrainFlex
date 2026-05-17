@@ -5,7 +5,7 @@
  */
 import { useState } from "react";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import { Input } from "@/components/Common/Input/Input";
+import { Input } from "@/components/Common/Input/Input/Input";
 import styles from "./TextAnswerInput.module.css";
 
 interface TextAnswerInputProps {

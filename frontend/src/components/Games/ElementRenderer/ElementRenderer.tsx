@@ -72,40 +72,21 @@ const ElementRenderer = ({
           onSelect={(idx) => {
             const opt = options[idx];
             if (opt.id) {
-              onSubmit({ kind: "McqAnswer", optionId: opt.id });
+              onSubmit({ kind: "McqAnswer", optionIds: [opt.id] });
             }
           }}
           disabled={disabled}
         />
       );
     }
-
-    case "ImageChoiceQuestion": {
-      const options = liveElement.options ?? [];
-      const selectedIdx = optionIndex(options, mySubmission);
-      const correctIdx = roundResultElement
-        ? options.findIndex((o) => o.id === liveElement.correctOptionId)
-        : -1;
-      return (
-        <AnswerOptions
-          options={options.map((o) => o.text ?? "")}
-          selectedOption={selectedIdx >= 0 ? selectedIdx : null}
-          correctOption={correctIdx >= 0 ? correctIdx : undefined}
-          onSelect={(idx) => {
-            const opt = options[idx];
-            if (opt.id) {
-              onSubmit({ kind: "ImageChoiceAnswer", optionId: opt.id });
-            }
-          }}
-          disabled={disabled}
-        />
-      );
-    }
-
     case "TextQuestion": {
       const myText =
-        mySubmission?.kind === "TextAnswer" ? (mySubmission.text ?? null) : null;
-      const correctText = roundResultElement ? liveElement.correctAnswer : undefined;
+        mySubmission?.kind === "TextAnswer"
+          ? (mySubmission.text ?? null)
+          : null;
+      const correctText = roundResultElement
+        ? liveElement.correctAnswer
+        : undefined;
       return (
         <TextAnswerInput
           key={liveElement.id}
@@ -123,7 +104,9 @@ const ElementRenderer = ({
 
     case "NumberQuestion": {
       const myValue =
-        mySubmission?.kind === "NumberAnswer" ? (mySubmission.value ?? null) : null;
+        mySubmission?.kind === "NumberAnswer"
+          ? (mySubmission.value ?? null)
+          : null;
       return (
         <NumberAnswerInput
           key={liveElement.id}
@@ -166,11 +149,8 @@ const optionIndex = (
   options: { id?: string }[],
   payload: AnswerPayload | null,
 ): number => {
-  if (!payload) return -1;
-  if (payload.kind !== "McqAnswer" && payload.kind !== "ImageChoiceAnswer") {
-    return -1;
-  }
-  const oid = payload.optionId;
+  if (payload?.kind !== "McqAnswer") return -1;
+  const oid = payload.optionIds?.[0];
   if (!oid) return -1;
   return options.findIndex((o) => o.id === oid);
 };

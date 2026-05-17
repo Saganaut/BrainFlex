@@ -1,6 +1,13 @@
-/* McqSlideContent — author UI for MCQ slides. Options sit in a horizontal
-   row that wraps when the canvas gets tight; each option is a small card.
-   The input/checkbox primitives come from Common/Input. */
+/* McqSlideContent — author UI for MCQ slides. Renders the prompt + a grid
+   of option cards. Each card is an <McqOptionEditable />, which owns its
+   own per-option chrome (index, remove, correct toggle, fields). Styles
+   that belong to a single option card live in McqOptionEditable.module.css. */
+
+.slideHeader {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+}
 
 .optionsHeader {
   display: flex;
@@ -16,54 +23,9 @@
 }
 
 .optionsRow {
-  display: flex;
-  flex-wrap: wrap;
+  --cols: 2;
+
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
   gap: var(--space-3);
-}
-
-.optionCard {
-  flex: 1 1 180px;
-  min-width: 160px;
-  max-width: 240px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 2px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-surface);
-  transition:
-    border-color var(--duration-fast, 150ms) ease-out,
-    background-color var(--duration-fast, 150ms) ease-out,
-    box-shadow var(--duration-fast, 150ms) ease-out;
-}
-
-.optionCard:hover {
-  border-color: var(--border-default);
-}
-
-.optionCardCorrect {
-  border-color: var(--action-active);
-  background-color: var(--bg-subtle);
-  box-shadow: 0 0 0 1px var(--action-active) inset;
-}
-
-.optionTopRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.optionIndex {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.5rem;
-  height: 1.5rem;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-full);
-  background-color: var(--bg-canvas);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  color: var(--text-primary);
 }

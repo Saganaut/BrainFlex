@@ -10,13 +10,20 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.util.Map;
+
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.PlaceScoring;
+import cephadex.brainflex.model.enums.ResponseMode;
 
 public record PlaceOnImageQuestion(
         String id,
+        String publicKey,
+        String privateKey,
+        String title,
+        Map<String, Object> styledTitle,
         String prompt,
         String targetImageUrl,
         double correctX,               // 0..1
@@ -26,8 +33,13 @@ public record PlaceOnImageQuestion(
         // scoring
         int pointValue,
         Difficulty difficulty,
+        boolean scored,
+        boolean survey,
+        Integer multipleSelections,
+        ResponseMode responseMode,
         // best-answer modifier
         boolean bestAnswerMode,
+        String bestAnswerTitle,
         int bestAnswerBonus,
         String explanation,
         // shared chrome

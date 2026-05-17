@@ -1,7 +1,7 @@
 // RadioGroup — wraps Radio items into a named fieldset where exactly one option must be selected
-import React from "react";
-import { Radio } from "./Radio";
-import styles from "./Input.module.css";
+import shared from "../Input.module.css";
+import styles from "./RadioGroup.module.css";
+import { Radio } from "../Radio/Radio";
 
 interface RadioGroupOption {
   value: string;
@@ -19,7 +19,7 @@ interface RadioGroupProps {
   infoMessage?: string;
 }
 
-const RadioGroup: React.FC<RadioGroupProps> = ({
+const RadioGroup = ({
   name,
   legend,
   options,
@@ -28,7 +28,7 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
   disabled,
   errorMessage,
   infoMessage,
-}) => {
+}: RadioGroupProps) => {
   return (
     <fieldset className={styles.radioGroupContainer}>
       {legend && <legend className={styles.radioGroupLegend}>{legend}</legend>}
@@ -41,7 +41,9 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
             value={option.value}
             label={option.label}
             checked={value === option.value}
-            onChange={() => { onChange(option.value); }}
+            onChange={() => {
+              onChange(option.value);
+            }}
             disabled={disabled}
           />
         ))}
@@ -49,8 +51,9 @@ const RadioGroup: React.FC<RadioGroupProps> = ({
       {(errorMessage != null || infoMessage != null) && (
         <span
           className={[
-            styles.inputInfoMessage,
-            errorMessage ? styles.errorMessage : "",
+            shared.inputInfoMessage,
+            styles.message,
+            errorMessage ? shared.errorMessage : "",
           ]
             .filter(Boolean)
             .join(" ")}>

@@ -4,7 +4,6 @@
 import type { ComponentType } from "react";
 import type { DeckElement } from "@/types/elements";
 import { GridGraphic } from "./GridGraphic";
-import { ImageChoiceGraphic } from "./ImageChoiceGraphic";
 import { McqGraphic } from "./McqGraphic";
 import { NumberGraphic } from "./NumberGraphic";
 import { PlaceOnImageGraphic } from "./PlaceOnImageGraphic";
@@ -21,7 +20,6 @@ export const slideTypeGraphics: Record<ElementKind, ComponentType> = {
   McqQuestion: McqGraphic,
   TextQuestion: TextGraphic,
   NumberQuestion: NumberGraphic,
-  ImageChoiceQuestion: ImageChoiceGraphic,
   RankingQuestion: RankingGraphic,
   ScalesQuestion: ScalesGraphic,
   QAndAQuestion: QAndAGraphic,

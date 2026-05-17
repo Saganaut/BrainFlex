@@ -1,56 +1,54 @@
-// Common radio input component used in form option groups throughout the app
+// Common checkbox input component used in forms throughout the app
 import React, { useId } from "react";
-import styles from "./Input.module.css";
+import shared from "../Input.module.css";
+import styles from "./Checkbox.module.css";
 
-interface RadioProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: React.ReactNode;
   labelPosition?: "labelBefore" | "labelAfter";
   errorMessage?: string;
   infoMessage?: string;
 }
 
-const Radio: React.FC<RadioProps> = ({
+const Checkbox = ({
   id,
   label,
   labelPosition = "labelAfter",
   checked,
   onChange,
-  name,
-  value,
   disabled,
   errorMessage,
   infoMessage,
-}) => {
+}: CheckboxProps) => {
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
   return (
     <div
       className={[
-        styles.radioContainer,
+        styles.checkboxContainer,
         labelPosition === "labelBefore" ? styles.labelBefore : "",
       ]
         .filter(Boolean)
         .join(" ")}>
       <input
-        type='radio'
+        type='checkbox'
         id={inputId}
-        className={styles.radioInput}
-        name={name}
-        value={value}
+        className={styles.checkboxInput}
         checked={checked}
         onChange={onChange}
         disabled={disabled}
       />
-      <label htmlFor={inputId} className={styles.radioWrap}>
-        <span className={styles.radioControl} />
-        {label && <span className={styles.radioLabelText}>{label}</span>}
+      <label htmlFor={inputId} className={styles.checkboxWrap}>
+        <span className={styles.checkboxControl} />
+        {label && <span className={styles.checkboxLabelText}>{label}</span>}
       </label>
       {(errorMessage != null || infoMessage != null) && (
         <span
           className={[
-            styles.inputInfoMessage,
-            errorMessage ? styles.errorMessage : "",
+            shared.inputInfoMessage,
+            styles.message,
+            errorMessage ? shared.errorMessage : "",
           ]
             .filter(Boolean)
             .join(" ")}>
@@ -61,4 +59,4 @@ const Radio: React.FC<RadioProps> = ({
   );
 };
 
-export { Radio };
+export { Checkbox };

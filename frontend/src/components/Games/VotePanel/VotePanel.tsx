@@ -83,9 +83,9 @@ const VotePanel = ({
 };
 
 /**
- * Formats an anonymized submission for display. For MCQ / ImageChoice we look
- * up the option text on the (still-redacted) element so voters see a real
- * answer rather than an opaque option id.
+ * Formats an anonymized submission for display. For MCQ we look up the option
+ * text on the (still-redacted) element so voters see a real answer rather than
+ * an opaque option id.
  */
 const renderSubmission = (
   element: DeckElement,
@@ -96,16 +96,13 @@ const renderSubmission = (
       return payload.text ?? "(blank)";
     case "NumberAnswer":
       return payload.value !== undefined ? String(payload.value) : "(blank)";
-    case "McqAnswer":
-    case "ImageChoiceAnswer": {
-      if (
-        element.kind === "McqQuestion" ||
-        element.kind === "ImageChoiceQuestion"
-      ) {
-        const opt = element.options?.find((o) => o.id === payload.optionId);
-        return opt?.text ?? payload.optionId ?? "(unknown)";
+    case "McqAnswer": {
+      const oid = payload.optionIds?.[0];
+      if (element.kind === "McqQuestion") {
+        const opt = element.options?.find((o) => o.id === oid);
+        return opt?.text ?? oid ?? "(unknown)";
       }
-      return payload.optionId ?? "(unknown)";
+      return oid ?? "(unknown)";
     }
     case "TimeoutAnswer":
       return "(timed out)";

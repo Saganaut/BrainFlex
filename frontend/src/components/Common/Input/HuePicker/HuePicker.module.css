@@ -1,0 +1,219 @@
+/* HuePicker — a 0–360° oklch hue picker. Reads as a labelled card with a
+   rainbow slider; clicking the swatch opens a 2D area + named quick-picks
+   in a popover below the card. */
+
+.huePickerContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  position: relative;
+}
+
+.huePickerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.huePickerLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.huePickerValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.huePickerControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Circle swatch — inner gap + outer ring avoids layout shift on hover */
+.huePickerSwatch {
+  flex-shrink: 0;
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-full);
+  border: 3px solid var(--bg-canvas);
+  box-shadow: 0 0 0 1.5px var(--border-default);
+  cursor: pointer;
+  padding: 0;
+  background: transparent;
+  transition:
+    box-shadow var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    box-shadow: 0 0 0 2px var(--action-hover);
+    transform: scale(1.1);
+  }
+}
+
+/* stylelint-disable selector-pseudo-element-no-unknown */
+.huePickerSlider {
+  appearance: none;
+  width: 100%;
+  height: 12px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    to right,
+    oklch(65% 0.2 0deg),
+    oklch(65% 0.2 60deg),
+    oklch(65% 0.2 120deg),
+    oklch(65% 0.2 180deg),
+    oklch(65% 0.2 240deg),
+    oklch(65% 0.2 300deg),
+    oklch(65% 0.2 360deg)
+  );
+  border: none;
+  box-shadow: var(--shadow-sm);
+  outline: none;
+  cursor: pointer;
+}
+
+/* Thumb is colored with the current hue so it reads as a position indicator */
+.huePickerSlider::-webkit-slider-thumb {
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: oklch(65% 0.2 var(--current-hue, 0deg));
+  border: 3px solid var(--bg-canvas);
+  box-shadow: var(--shadow-md);
+  cursor: grab;
+}
+
+.huePickerSlider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: oklch(65% 0.2 var(--current-hue, 0deg));
+  border: 3px solid var(--bg-canvas);
+  box-shadow: var(--shadow-md);
+  cursor: grab;
+}
+
+/* Hide browser spin buttons on the degree input */
+.huePickerNumber::-webkit-inner-spin-button,
+.huePickerNumber::-webkit-outer-spin-button {
+  appearance: none;
+}
+
+/* stylelint-enable selector-pseudo-element-no-unknown */
+
+.huePickerNumber {
+  width: 2.75rem;
+  padding: var(--space-half) var(--space-2);
+  text-align: right;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+
+  &:focus {
+    outline: none;
+    border-color: var(--border-focus);
+  }
+}
+
+.huePickerDegree {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+/* ─── Color picker popover ───────────────────────────────────────────────── */
+
+.colorPickerPopover {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* 2D hue×lightness gradient — x = hue (0–360°), y = lightness (dark/light ends) */
+.colorArea {
+  width: 100%;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  cursor: crosshair;
+  position: relative;
+  user-select: none;
+  border: 1px solid var(--border-subtle);
+  background:
+    linear-gradient(
+      to bottom,
+      oklch(92% 0.001 0deg),
+      transparent 35%,
+      transparent 65%,
+      oklch(18% 0.001 0deg)
+    ),
+    linear-gradient(
+      to right,
+      oklch(65% 0.2 0deg),
+      oklch(65% 0.2 45deg),
+      oklch(65% 0.2 90deg),
+      oklch(65% 0.2 135deg),
+      oklch(65% 0.2 180deg),
+      oklch(65% 0.2 225deg),
+      oklch(65% 0.2 270deg),
+      oklch(65% 0.2 315deg),
+      oklch(65% 0.2 360deg)
+    );
+}
+
+.colorAreaMarker {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  border: 2px solid white;
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 25%),
+    var(--shadow-sm);
+  pointer-events: none;
+  background: oklch(65% 0.2 var(--current-hue, 0deg));
+}
+
+.quickPicks {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-1);
+}
+
+.quickPickSwatch {
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--bg-canvas);
+  box-shadow: 0 0 0 1px var(--border-subtle);
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  transition: transform var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    transform: scale(1.25);
+    z-index: 1;
+  }
+}

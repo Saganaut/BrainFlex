@@ -63,3 +63,6 @@
 ## Backend
 
 _(nothing tracked yet)_
+
+TODO: Need proper frontend validation on all images uploads functionality + error messages
+2026-05-17T11:21:50.364Z WARN 43970 --- [brainflex] [nio-8080-exec-3] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.web.multipart.MaxUploadSizeExceededException: Maximum upload size exceeded]

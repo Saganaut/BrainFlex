@@ -1,12 +1,9 @@
 // Dropdown with optional multi-select and searchable filtering of options
-import React, { useEffect, useId, useRef, useState } from "react";
-import styles from "./Input.module.css";
-import { Btn } from "../Buttons/Btn";
-
-interface DropdownOption {
-  value: string;
-  label: string;
-}
+import { useId } from "react";
+import shared from "../Input.module.css";
+import styles from "./Dropdown.module.css";
+import { useDropdown, type DropdownOption } from "./useDropdown";
+import { Btn } from "../../Buttons/Btn";
 
 interface DropdownProps {
   options: DropdownOption[];
@@ -22,7 +19,7 @@ interface DropdownProps {
   id?: string;
 }
 
-const Dropdown: React.FC<DropdownProps> = ({
+const Dropdown = ({
   options,
   value = [],
   onChange,
@@ -34,60 +31,19 @@ const Dropdown: React.FC<DropdownProps> = ({
   errorMessage,
   infoMessage,
   id,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
+}: DropdownProps) => {
   const listboxId = useId();
-
-  const filtered = searchable
-    ? options.filter((o) => o.label.toLowerCase().includes(query.toLowerCase()))
-    : options;
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) {
-        setIsOpen(false);
-        setQuery("");
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-    };
-  }, [isOpen]);
-
-  const toggle = (optValue: string) => {
-    let next: string[];
-    if (multiple) {
-      next = value.includes(optValue)
-        ? value.filter((v) => v !== optValue)
-        : [...value, optValue];
-    } else {
-      next = [optValue];
-      setIsOpen(false);
-      setQuery("");
-    }
-    onChange?.(next);
-  };
-
-  const handleTriggerClick = () => {
-    if (isOpen) setQuery("");
-    setIsOpen((prev) => !prev);
-  };
-
-  const removeChip = (e: React.MouseEvent, v: string) => {
-    e.stopPropagation();
-    onChange?.(value.filter((x) => x !== v));
-  };
-
-  const removeChipOnKey = (e: React.KeyboardEvent, v: string) => {
-    if (e.key === "Enter") {
-      e.stopPropagation();
-      onChange?.(value.filter((x) => x !== v));
-    }
-  };
+  const {
+    isOpen,
+    query,
+    setQuery,
+    containerRef,
+    filtered,
+    toggle,
+    handleTriggerClick,
+    removeChip,
+    removeChipOnKey,
+  } = useDropdown({ options, value, multiple, searchable, onChange });
 
   const triggerContent =
     value.length === 0 ? (
@@ -123,7 +79,8 @@ const Dropdown: React.FC<DropdownProps> = ({
     );
 
   return (
-    <div className={[styles.inputContainer, styles[labelPosition]].join(" ")}>
+    <div
+      className={[shared.inputContainer, shared[labelPosition]].join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.dropdown} ref={containerRef}>
         <Btn
@@ -215,8 +172,9 @@ const Dropdown: React.FC<DropdownProps> = ({
         {(errorMessage != null || infoMessage != null) && (
           <span
             className={[
-              styles.inputInfoMessage,
-              errorMessage ? styles.errorMessage : "",
+              shared.inputInfoMessage,
+              styles.message,
+              errorMessage ? shared.errorMessage : "",
             ]
               .filter(Boolean)
               .join(" ")}>

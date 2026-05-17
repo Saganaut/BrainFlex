@@ -1,15 +1,13 @@
 import React, { type ReactNode } from "react";
 import styles from "./Layout.module.css";
 interface InnerDisplayProps {
-  id?: string;
   children: ReactNode;
+  className?: string;
 }
 
-const InnerDisplay: React.FC<InnerDisplayProps> = ({ children, id }) => {
+const InnerDisplay: React.FC<InnerDisplayProps> = ({ className, children }) => {
   return (
-    <div id={id} className={styles.innerDisplay}>
-      {children}
-    </div>
+    <div className={` ${styles.innerDisplay} ${className} `}>{children}</div>
   );
 };
 

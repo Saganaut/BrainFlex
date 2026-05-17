@@ -4,7 +4,8 @@
 // input fill its container instead of the default 300px (used inside tight
 // editor cells like MCQ option cards).
 import React from "react";
-import type { BtnVariant } from "../Buttons/BtnTypes";
+import type { BtnVariant } from "../../Buttons/BtnTypes";
+import shared from "../Input.module.css";
 import styles from "./Input.module.css";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -19,7 +20,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 /** We can optionally display some information below the input field, if an error message is relevant it will temporary replace the info **/
-const Input: React.FC<InputProps> = ({
+const Input = ({
   value,
   ref,
   onChange,
@@ -40,19 +41,22 @@ const Input: React.FC<InputProps> = ({
   min,
   max,
   step,
-}) => {
+}: InputProps) => {
   const inputVariant: BtnVariant = errorMessage != null ? "error" : variant;
   return (
     <div
       className={[
-        styles.inputContainer,
-        styles[labelPosition],
-        fullWidth ? styles.fullWidth : "",
+        shared.inputContainer,
+        shared[labelPosition],
+        fullWidth ? shared.fullWidth : "",
       ]
         .filter(Boolean)
         .join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
-      <div className={styles.input}>
+      <div
+        className={[styles.input, fullWidth ? styles.fullWidth : ""]
+          .filter(Boolean)
+          .join(" ")}>
         <input
           type={type}
           ref={ref}
@@ -77,9 +81,12 @@ const Input: React.FC<InputProps> = ({
         {(errorMessage != null || infoMessage != null) && (
           <span
             className={[
-              styles.inputInfoMessage,
-              errorMessage && styles.errorMessage,
-            ].join(" ")}>
+              shared.inputInfoMessage,
+              styles.message,
+              errorMessage && shared.errorMessage,
+            ]
+              .filter(Boolean)
+              .join(" ")}>
             {errorMessage ?? infoMessage}
           </span>
         )}

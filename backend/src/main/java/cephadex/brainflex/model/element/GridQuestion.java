@@ -7,14 +7,20 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.util.Map;
 import java.util.Set;
 
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.MediaPosition;
+import cephadex.brainflex.model.enums.ResponseMode;
 
 public record GridQuestion(
         String id,
+        String publicKey,
+        String privateKey,
+        String title,
+        Map<String, Object> styledTitle,
         String prompt,
         int rows,
         int cols,
@@ -24,8 +30,13 @@ public record GridQuestion(
         // scoring
         int pointValue,
         Difficulty difficulty,
+        boolean scored,
+        boolean survey,
+        Integer multipleSelections,
+        ResponseMode responseMode,
         // best-answer modifier
         boolean bestAnswerMode,
+        String bestAnswerTitle,
         int bestAnswerBonus,
         String explanation,
         // shared chrome

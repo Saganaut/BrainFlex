@@ -35,92 +35,82 @@ const CreateDashboard = () => {
   const { toggleFullScreen } = useFullScreen();
 
   return (
-    <MainBodyDashboard>
-      <div className={styles.createDashboard}>
-        <CanvasHeader>
-          <div className={styles.navbar}>
-            <div className={styles.leftControlButtons}>
-              <Btn
-                size={"md"}
-                shape={"pill"}
-                onClick={() => {
-                  void navigate({
-                    to: "/decks",
-                  });
-                }}>
-                Back
-              </Btn>
-              <Btn
-                shape={"pill"}
-                size={"md"}
-                aria-label='Enter fullscreen'
-                onClick={toggleFullScreen}>
-                <ArrowsPointingOutIcon
-                  style={{ width: "1rem", height: "1rem" }}
-                />
-              </Btn>
-            </div>
-            <input
-              aria-label='Deck title'
-              value={titleDraft}
-              placeholder='Untitled Deck'
-              maxLength={100}
-              onChange={(e) => {
-                setTitleDraft(e.target.value);
-              }}
-              onBlur={commitTitle}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") e.currentTarget.blur();
-                if (e.key === "Escape") {
-                  setTitleDraft(serverName);
-                  e.currentTarget.blur();
-                }
-              }}
-            />
-            <div className={styles.rightControlButtons}>
-              <Btn
-                size={"md"}
-                shape={"pill"}
-                variant={"default"}
-                onClick={() => {
-                  // TODO: open the deck preview view (read-only renderer)
-                  console.log("preview deck", serverName);
-                }}>
-                <EyeIcon style={{ width: "1rem", height: "1rem" }} />
-                Preview
-              </Btn>
-              <Btn
-                size={"md"}
-                shape={"pill"}
-                variant={"brand"}
-                onClick={() => {
-                  // TODO: kick off a live showcase session for this deck
-                  console.log("start showcase", serverName);
-                }}>
-                <PlayIcon style={{ width: "1rem", height: "1rem" }} />
-                Start
-              </Btn>
-              <DeckSettingsMenu />
-            </div>
+    <MainBodyDashboard className={styles.createDashboard}>
+      <CanvasHeader>
+        <div className={styles.navbar}>
+          <div className={styles.leftControlButtons}>
+            <Btn
+              size={"md"}
+              shape={"pill"}
+              onClick={() => {
+                void navigate({
+                  to: "/decks",
+                });
+              }}>
+              Back
+            </Btn>
+            <Btn
+              shape={"pill"}
+              size={"md"}
+              aria-label='Enter fullscreen'
+              onClick={toggleFullScreen}>
+              <ArrowsPointingOutIcon
+                style={{ width: "1rem", height: "1rem" }}
+              />
+            </Btn>
           </div>
-        </CanvasHeader>
-        <CanvasBody>
-          <LeftSidebar>
-            <LeftSidebarContent />
-          </LeftSidebar>
-          <InnerDisplay>
-            <div className={styles.slideCanvasContainer}>
-              <div className={styles.slideCanvas}>
-                <SlideDisplay />
-              </div>{" "}
-              <SpeakerNotesDrawer />
-            </div>
-          </InnerDisplay>
-          <RightSidebar>
-            <RightSidebarContent />
-          </RightSidebar>
-        </CanvasBody>
-      </div>
+          <input
+            aria-label='Deck title'
+            value={titleDraft}
+            placeholder='Untitled Deck'
+            maxLength={100}
+            onChange={(e) => {
+              setTitleDraft(e.target.value);
+            }}
+            onBlur={commitTitle}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") e.currentTarget.blur();
+              if (e.key === "Escape") {
+                setTitleDraft(serverName);
+                e.currentTarget.blur();
+              }
+            }}
+          />
+          <div className={styles.rightControlButtons}>
+            <Btn
+              size={"md"}
+              shape={"pill"}
+              variant={"default"}
+              onClick={() => {
+                // TODO: open the deck preview view (read-only renderer)
+                console.log("preview deck", serverName);
+              }}>
+              <EyeIcon style={{ width: "1rem", height: "1rem" }} />
+              Preview
+            </Btn>
+            <Btn
+              size={"md"}
+              shape={"pill"}
+              variant={"brand"}
+              onClick={() => {
+                // TODO: kick off a live showcase session for this deck
+                console.log("start showcase", serverName);
+              }}>
+              <PlayIcon style={{ width: "1rem", height: "1rem" }} />
+              Start
+            </Btn>
+            <DeckSettingsMenu />
+          </div>
+        </div>
+      </CanvasHeader>
+      <CanvasBody>
+        <LeftSidebarContent />
+        <InnerDisplay className={styles.slideCanvasContainer}>
+          <SlideDisplay />
+          <SpeakerNotesDrawer />
+        </InnerDisplay>
+        <RightSidebarContent />
+      </CanvasBody>
     </MainBodyDashboard>
   );
 };

@@ -1,8 +1,10 @@
 // Common textarea component matching Input structure for multi-line text entry
 import React from "react";
-import styles from "./Input.module.css";
+import shared from "../Input.module.css";
+import styles from "./TextArea.module.css";
 
-interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+interface TextAreaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   variant?: "default";
   infoMessage?: string;
   errorMessage?: string;
@@ -10,21 +12,20 @@ interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   labelPosition?: "labelAbove" | "labelInFront";
 }
 
-const TextArea: React.FC<TextAreaProps> = ({
+const TextArea = ({
   value,
   onChange,
   maxLength,
   id,
   rows = 4,
-  variant = "default",
   infoMessage,
   label,
   labelPosition = "labelAbove",
   errorMessage,
-}) => {
-  console.log(variant);
+}: TextAreaProps) => {
   return (
-    <div className={[styles.inputContainer, styles[labelPosition]].join(" ")}>
+    <div
+      className={[shared.inputContainer, shared[labelPosition]].join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.textarea}>
         <textarea
@@ -37,9 +38,12 @@ const TextArea: React.FC<TextAreaProps> = ({
         {(errorMessage != null || infoMessage != null) && (
           <span
             className={[
-              styles.inputInfoMessage,
-              errorMessage && styles.errorMessage,
-            ].join(" ")}>
+              shared.inputInfoMessage,
+              styles.message,
+              errorMessage && shared.errorMessage,
+            ]
+              .filter(Boolean)
+              .join(" ")}>
             {errorMessage ?? infoMessage}
           </span>
         )}

@@ -1,15 +1,16 @@
-// Common checkbox input component used in forms throughout the app
+// Toggle switch built on a visually-hidden checkbox; CSS :has() drives all visual state
 import React, { useId } from "react";
-import styles from "./Input.module.css";
+import shared from "../Input.module.css";
+import styles from "./Toggle.module.css";
 
-interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: React.ReactNode;
+interface ToggleProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
   labelPosition?: "labelBefore" | "labelAfter";
   errorMessage?: string;
   infoMessage?: string;
 }
 
-const Checkbox: React.FC<CheckboxProps> = ({
+const Toggle = ({
   id,
   label,
   labelPosition = "labelAfter",
@@ -18,14 +19,14 @@ const Checkbox: React.FC<CheckboxProps> = ({
   disabled,
   errorMessage,
   infoMessage,
-}) => {
+}: ToggleProps) => {
   const generatedId = useId();
   const inputId = id ?? generatedId;
 
   return (
     <div
       className={[
-        styles.checkboxContainer,
+        styles.toggleContainer,
         labelPosition === "labelBefore" ? styles.labelBefore : "",
       ]
         .filter(Boolean)
@@ -33,20 +34,23 @@ const Checkbox: React.FC<CheckboxProps> = ({
       <input
         type='checkbox'
         id={inputId}
-        className={styles.checkboxInput}
+        className={styles.toggleInput}
         checked={checked}
         onChange={onChange}
         disabled={disabled}
       />
-      <label htmlFor={inputId} className={styles.checkboxWrap}>
-        <span className={styles.checkboxControl} />
-        {label && <span className={styles.checkboxLabelText}>{label}</span>}
+      <label htmlFor={inputId} className={styles.toggleWrap}>
+        <span className={styles.toggleTrack}>
+          <span className={styles.toggleThumb} />
+        </span>
+        {label && <span className={styles.toggleLabelText}>{label}</span>}
       </label>
       {(errorMessage != null || infoMessage != null) && (
         <span
           className={[
-            styles.inputInfoMessage,
-            errorMessage ? styles.errorMessage : "",
+            shared.inputInfoMessage,
+            styles.message,
+            errorMessage ? shared.errorMessage : "",
           ]
             .filter(Boolean)
             .join(" ")}>
@@ -57,4 +61,4 @@ const Checkbox: React.FC<CheckboxProps> = ({
   );
 };
 
-export { Checkbox };
+export { Toggle };

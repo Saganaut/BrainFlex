@@ -77,7 +77,7 @@
   font-size: var(--font-size-sm);
 }
 
-.dangerButton {
+.dangerBtn {
   background-color: var(--border-error);
   color: var(--text-on-brand);
   border: none;

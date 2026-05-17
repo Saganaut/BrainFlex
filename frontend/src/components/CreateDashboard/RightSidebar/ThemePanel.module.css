@@ -1,0 +1,104 @@
+/* Vertical theme picker drawer body. Fits inside the 320px drawer; rows are
+   button-shaped tiles with mini-swatches on the left so the user can scan
+   palettes at a glance. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.heading {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 2px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+
+  &:hover {
+    border-color: var(--action-hover);
+    background-color: var(--bg-subtle);
+  }
+}
+
+.rowActive {
+  border-color: var(--border-brand);
+  background-color: var(--bg-subtle);
+}
+
+.swatch {
+  display: inline-flex;
+  width: 32px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+}
+
+.swatchPrimary {
+  flex: 2;
+}
+
+.swatchAccent {
+  flex: 1;
+}
+
+.rowLabel {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activeBadge,
+.orgBadge {
+  font-size: var(--font-size-xs);
+  padding: var(--space-half) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.activeBadge {
+  background-color: var(--border-brand);
+  color: var(--bg-brand);
+}
+
+.orgBadge {
+  background-color: var(--bg-surface-raised);
+  color: var(--text-secondary);
+}
+
+.newBtn {
+  align-self: stretch;
+}

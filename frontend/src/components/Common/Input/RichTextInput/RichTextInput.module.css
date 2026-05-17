@@ -8,6 +8,7 @@
   gap: var(--space-1);
   width: 100%;
   max-width: 600px;
+  position: relative;
 }
 
 .label {
@@ -17,6 +18,7 @@
 }
 
 .surface {
+  anchor-name: --rte;
   position: relative;
   border: 2px solid var(--border-default);
   border-radius: var(--radius-md);
@@ -30,6 +32,29 @@
 
 .surface:focus-within {
   border-color: var(--border-focus);
+}
+
+/* Floating toolbar wrapper — anchored to the surface via CSS Anchor
+   Positioning so it sits just above the input regardless of where the input
+   lives in the page flow. `position: fixed` keeps it out of the surface's
+   overflow/border box. z-index ensures it paints over any positioned
+   siblings (e.g. the SpeakerNotesDrawer at z-index 2). */
+.floatingToolbar {
+  position: fixed;
+  position-anchor: --rte;
+  bottom: anchor(top);
+  left: anchor(left);
+  margin-bottom: var(--space-1);
+  z-index: var(--z-tooltip);
+}
+
+/* Link editor — when open, hangs off the bottom-left of the toolbar so it
+   visually sits "below" the format toolbar (overlapping the input area)
+   without resizing the toolbar wrapper above it. */
+.linkPopover {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
 }
 
 .editor {
@@ -62,43 +87,9 @@
 
 /* ─── Toolbar ───────────────────────────────────────────────────────────── */
 
-.toolbar {
-  position: absolute;
-  bottom: calc(100% + var(--space-1));
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2);
-  background-color: var(--bg-surface);
-  border: 2px solid var(--border-default);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  z-index: var(--z-tooltip);
-}
-
-.toolbarRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.linkEditor {
-  position: absolute;
-  top: calc(100% + var(--space-1));
-  left: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-2);
-  background-color: var(--bg-surface);
-  border: 2px solid var(--border-default);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  white-space: nowrap;
-  z-index: var(--z-tooltip);
-}
+/* The toolbar surface chrome (border, bg, shadow, row layout, button +
+   divider + group-label styles) lives in the shared Popover component —
+   only RichTextInput-specific bits stay here. */
 
 .linkInput {
   flex: 1;
@@ -150,59 +141,7 @@
   background-color: var(--bg-subtle);
 }
 
-.toolbarBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 var(--space-2);
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background-color: transparent;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  cursor: pointer;
-  transition:
-    background-color var(--duration-fast, 150ms) ease-out,
-    border-color var(--duration-fast, 150ms) ease-out;
-}
-
-.toolbarBtn:hover {
-  background-color: var(--bg-subtle);
-  border-color: var(--border-subtle);
-}
-
-.toolbarBtnActive {
-  background-color: var(--action-active);
-  color: var(--white-100);
-  border-color: var(--action-active);
-}
-
-.toolbarDivider {
-  width: 1px;
-  align-self: stretch;
-  background-color: var(--border-subtle);
-  margin: 0 var(--space-1);
-}
-
-.toolbarGroupLabel {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-  padding: 0 var(--space-1);
-}
-
-.colorSwatch {
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  padding: 0;
-  transition: transform var(--duration-fast, 150ms) ease-out;
-}
-
-.colorSwatch:hover {
-  transform: scale(1.1);
+/* stylelint-disable-next-line selector-pseudo-class-no-unknown */
+:global(.tiptap) {
+  text-align: start;
 }

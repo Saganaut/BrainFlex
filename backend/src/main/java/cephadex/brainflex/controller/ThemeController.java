@@ -50,18 +50,21 @@ public class ThemeController {
         this.authorizationService = authorizationService;
     }
 
-    /** Returns all themes owned by the caller plus any shared with their org. */
+    /** Returns all themes owned by the caller plus any shared with their orgs. */
     @GetMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ThemeDTO.ThemeResponse>> listThemes(Authentication authentication) {
         return userService.resolveRegisteredUser(authentication)
                 .map(user -> {
                     List<Theme> themes = new ArrayList<>(themeRepository.findByOwnerId(user.getId()));
-                    if (user.getOrganizationId() != null && !user.getOrganizationId().isBlank()) {
-                        List<Theme> orgThemes = themeRepository.findByOrganizationId(user.getOrganizationId());
-                        orgThemes.stream()
-                                .filter(t -> !t.getOwnerId().equals(user.getId()))
-                                .forEach(themes::add);
+                    List<String> orgIds = user.getOrganizationIds();
+                    if (orgIds != null && !orgIds.isEmpty()) {
+                        for (String orgId : orgIds) {
+                            if (orgId == null || orgId.isBlank()) continue;
+                            themeRepository.findByOrganizationId(orgId).stream()
+                                    .filter(t -> !t.getOwnerId().equals(user.getId()))
+                                    .forEach(themes::add);
+                        }
                     }
                     List<ThemeDTO.ThemeResponse> response = themes.stream()
                             .map(ThemeDTO.ThemeResponse::new)
@@ -84,7 +87,7 @@ public class ThemeController {
                     theme.setHuePrimary(clampHue(request.huePrimary()));
                     theme.setHueAccent(clampHue(request.hueAccent()));
                     theme.setMode(validateMode(request.mode()));
-                    theme.setOrganizationId(request.organizationId());
+                    theme.setOrganizationId(resolveOrgScope(user, request.organizationId()));
                     Theme saved = themeRepository.save(theme);
                     return ResponseEntity.status(HttpStatus.CREATED)
                             .body(new ThemeDTO.ThemeResponse(saved));
@@ -114,10 +117,10 @@ public class ThemeController {
         if (request.mode() != null) {
             theme.setMode(validateMode(request.mode()));
         }
-        // Passing empty string clears org sharing; null leaves it unchanged
+        // Passing empty string clears org sharing; null leaves it unchanged.
+        // Sharing to an org the caller does not belong to is rejected.
         if (request.organizationId() != null) {
-            theme.setOrganizationId(
-                    request.organizationId().isBlank() ? null : request.organizationId());
+            theme.setOrganizationId(resolveOrgScope(user, request.organizationId()));
         }
         return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
     }
@@ -180,5 +183,19 @@ public class ThemeController {
             case "light", "dark", "system" -> mode;
             default -> "system";
         };
+    }
+
+    /**
+     * Normalises a client-supplied org scope: blank/null → personal (null
+     * stored); otherwise reject unless the caller is a member of that org.
+     */
+    private static String resolveOrgScope(User caller, String orgId) {
+        if (orgId == null || orgId.isBlank()) return null;
+        List<String> memberships = caller.getOrganizationIds();
+        if (memberships == null || !memberships.contains(orgId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "You can only share themes with organizations you belong to");
+        }
+        return orgId;
     }
 }

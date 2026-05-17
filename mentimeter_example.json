@@ -1,0 +1,175 @@
+
+
+        "slides": [
+            {
+                "slide_id": "019e3112-a2ea-79f3-89a0-f88307de4cbb",
+                "slide_admin_key": "m19ui9gvkbny",
+                "slide_public_key": "8hf59tfccij8",
+                "title": "What to do?",
+                "static_content": {
+                    "type": "open-ended",
+                    "image": {
+                        "imageInset": false,
+                        "imageLayoutPosition": {
+                            "end": 0,
+                            "start": 0
+                        }
+                    },
+                    "label": "",
+                    "layout": {
+                        "gridRows": 4,
+                        "gridColumns": 8,
+                        "snapDirection": "x"
+                    },
+                    "styledTitle": {
+                        "type": "doc",
+                        "content": [
+                            {
+                                "type": "paragraph",
+                                "content": [
+                                    {
+                                        "text": "What to do?",
+                                        "type": "text"
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "textSizeOffset": 0,
+                    "interactiveContentStyling": {
+                        "visualization": "speech_bubbles"
+                    }
+                },
+                "interactive_contents": [
+                    {
+                        "interactive_content_id": "019e31b0-0ec4-74e4-9d82-8c5394dd9976",
+                        "response_mode": "accepting-responses",
+                        "title": "What to do?",
+                        "description": "",
+                        "max_entries": null,
+                        "countdown": null,
+                        "scoring": null,
+                        "correct_answer_mode": null,
+                        "choices": [
+                            {
+                                "interactive_content_choice_id": "019e31b0-0ec9-75e3-9cd1-7490a3c9d61f",
+                                "title": "Open-ended choice",
+                                "marked_correct": false,
+                                "response_settings": null,
+                                "correct_answer_range": null,
+                                "image": null,
+                                "legacy_choice_id": null,
+                                "legacy_question_metadata_field_id": null
+                            }
+                        ],
+                        "image": null,
+                        "correct_area": null,
+                        "vote_settings": null,
+                        "response_policy": "no-restriction",
+                        "response_range": null,
+                        "response_point_quota": null
+                    }
+                ],
+                "images": [],
+                "speaker_notes": "",
+                "design": {
+                    "logo_image": {
+                        "image_id": "8c93ad4d-b832-42bf-8c91-645b7b2b82c4",
+                        "path": "themes/light-logo.svg",
+                        "alt_text": "",
+                        "original_height": 693,
+                        "original_width": 5663,
+                        "presets": {
+                            "original": {
+                                "url": "https://images.mentimeter.com/themes/light-logo.svg?auto=compress%2Cformat\u0026q=60\u0026w=2000\u0026expires=1781567999\u0026s=9a689feabcbdab25b95b8c3874a7bd37",
+                                "height": 693,
+                                "width": 5663
+                            },
+                            "source": {
+                                "url": "https://images.mentimeter.com/themes/light-logo.svg?auto=compress%2Cformat\u0026q=60\u0026expires=1781567999\u0026s=fb5d2a585e80cf37876a8f781ba82688",
+                                "height": 693,
+                                "width": 5663
+                            },
+                            "preview": {
+                                "url": "https://images.mentimeter.com/themes/light-logo.svg?auto=compress%2Cformat\u0026q=60\u0026w=150\u0026expires=1781567999\u0026s=1e177787f4eee565bf1bc9dfb8b41bb8",
+                                "height": null,
+                                "width": 150
+                            },
+                            "small": {
+                                "url": "https://images.mentimeter.com/themes/light-logo.svg?auto=compress%2Cformat\u0026q=60\u0026w=400\u0026expires=1781567999\u0026s=82cb17980ec1599539263b7244086150",
+                                "height": null,
+                                "width": 400
+                            },
+                            "medium": {
+                                "url": "https://images.mentimeter.com/themes/light-logo.svg?auto=compress%2Cformat\u0026q=60\u0026w=800\u0026expires=1781567999\u0026s=73680b054b16d28ec302426a5bdaa279",
+                                "height": null,
+                                "width": 800
+                            },
+                            "large": {
+                                "url": "https://images.mentimeter.com/themes/light-logo.svg?auto=compress%2Cformat\u0026q=60\u0026w=1080\u0026expires=1781567999\u0026s=ec325ee34538320a91bb88d91ea8e1a4",
+                                "height": null,
+                                "width": 1080
+                            },
+                            "huge": {
+                                "url": "https://images.mentimeter.com/themes/light-logo.svg?auto=compress%2Cformat\u0026q=60\u0026w=2160\u0026expires=1781567999\u0026s=bb19915557653ef587a5bab95dbfdb0e",
+                                "height": null,
+                                "width": 2160
+                            }
+                        },
+                        "crop": {
+                            "x": 0,
+                            "y": 0,
+                            "height": 693,
+                            "width": 5663
+                        }
+                    },
+                    "background_image": null,
+                    "font": {
+                        "name": "Menti",
+                        "key": "menti-text",
+                        "body": "menti-text",
+                        "heading": "menti-display"
+                    },
+                    "colors": {
+                        "custom": false,
+                        "background_alpha": 0.55,
+                        "background_color": "#FFFFFF",
+                        "visualization_colors": [
+                            "#5769E7",
+                            "#FF7471",
+                            "#323C7C",
+                            "#8E8EEA",
+                            "#A93C39",
+                            "#FFA6A4",
+                            "#5E59B3"
+                        ],
+                        "text_accessible_colors": [
+                            "#5769E7",
+                            "#C74E4C",
+                            "#323C7C",
+                            "#6C67CF",
+                            "#802E2D"
+                        ],
+                        "text_color": "#161617",
+                        "primary_color": "#5769E7"
+                    },
+                    "computed_colors": {
+                        "bar_text_colors": [
+                            "#fff",
+                            "#333",
+                            "#fff",
+                            "#333",
+                            "#fff",
+                            "#333",
+                            "#fff"
+                        ]
+                    }
+                },
+                "response_visibility": "visible",
+                "qr_code_visibility": "visible",
+                "instructions_bar_visibility": "hidden",
+                "visibility": "visible",
+                "has_comments": false
+            },
+
+        ],

@@ -1,17 +1,17 @@
 // Form components showcase for the design system page.
 // Shows every Common/Input primitive with controlled state so they're interactive.
 import { useState } from "react";
-import { Input } from "../../components/Common/Input/Input";
-import { NumberInput } from "../../components/Common/Input/NumberInput";
-import { TextArea } from "../../components/Common/Input/TextArea";
-import { Checkbox } from "../../components/Common/Input/Checkbox";
-import { RadioGroup } from "../../components/Common/Input/RadioGroup";
-import { HuePicker } from "../../components/Common/Input/HuePicker";
-import { RichTextInput } from "../../components/Common/Input/RichTextInput";
-import { Toggle } from "../../components/Common/Input/Toggle";
-import { Dropdown } from "../../components/Common/Input/Dropdown";
-import { FileUpload } from "../../components/Common/Input/FileUpload";
-import { InputWithButton } from "../../components/Common/Input/InputWithButton";
+import { Input } from "../../components/Common/Input/Input/Input";
+import { NumberInput } from "../../components/Common/Input/NumberInput/NumberInput";
+import { TextArea } from "../../components/Common/Input/TextArea/TextArea";
+import { Checkbox } from "../../components/Common/Input/Checkbox/Checkbox";
+import { RadioGroup } from "../../components/Common/Input/RadioGroup/RadioGroup";
+import { HuePicker } from "../../components/Common/Input/HuePicker/HuePicker";
+import { RichTextInput } from "../../components/Common/Input/RichTextInput/RichTextInput";
+import { Toggle } from "../../components/Common/Input/Toggle/Toggle";
+import { Dropdown } from "../../components/Common/Input/Dropdown/Dropdown";
+import { FileUpload } from "../../components/Common/Input/FileUpload/FileUpload";
+import { InputWithButton } from "../../components/Common/Input/InputWithButton/InputWithButton";
 import { Accordion } from "../../components/Containers/Accordion";
 import styles from "./DesignSystem.module.css";
 

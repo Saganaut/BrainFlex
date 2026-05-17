@@ -1,16 +1,10 @@
 // Reusable oklch hue picker: color swatch that opens a custom popover,
 // a rainbow range slider, and a numeric degree input.
 // Used wherever a 0–360° hue angle needs to be picked (ThemePicker, ThemeEditor).
-import {
-  useRef,
-  useState,
-  useEffect,
-  type CSSProperties,
-  type ChangeEvent,
-  type MouseEvent as ReactMouseEvent,
-} from "react";
-import styles from "./Input.module.css";
-import { Btn } from "../Buttons/Btn";
+import type { CSSProperties } from "react";
+import styles from "./HuePicker.module.css";
+import { useHuePicker, useColorAreaDrag } from "./useHuePicker";
+import { Btn } from "../../Buttons/Btn";
 
 // Named hues aligned with the design system's palette stops.
 const quickPickHues = [
@@ -34,16 +28,10 @@ interface ColorPickerPopoverProps {
 }
 
 const ColorPickerPopover = ({ value, onChange }: ColorPickerPopoverProps) => {
-  const areaRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-
-  const getHueFromEvent = (e: ReactMouseEvent) => {
-    if (!areaRef.current) return value;
-    const rect = areaRef.current.getBoundingClientRect();
-    return Math.round(
-      Math.max(0, Math.min(360, ((e.clientX - rect.left) / rect.width) * 360)),
-    );
-  };
+  const { areaRef, onMouseDown, onMouseMove, stopDrag } = useColorAreaDrag(
+    value,
+    onChange,
+  );
 
   return (
     <div
@@ -54,19 +42,10 @@ const ColorPickerPopover = ({ value, onChange }: ColorPickerPopoverProps) => {
       <div
         ref={areaRef}
         className={styles.colorArea}
-        onMouseDown={(e) => {
-          isDragging.current = true;
-          onChange(getHueFromEvent(e));
-        }}
-        onMouseMove={(e) => {
-          if (isDragging.current) onChange(getHueFromEvent(e));
-        }}
-        onMouseUp={() => {
-          isDragging.current = false;
-        }}
-        onMouseLeave={() => {
-          isDragging.current = false;
-        }}>
+        onMouseDown={onMouseDown}
+        onMouseMove={onMouseMove}
+        onMouseUp={stopDrag}
+        onMouseLeave={stopDrag}>
         <div
           className={styles.colorAreaMarker}
           style={{ left: `${(value / 360) * 100}%` }}
@@ -99,24 +78,8 @@ interface HuePickerProps {
 }
 
 const HuePicker = ({ label, value, onChange }: HuePickerProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handlePointerDown = (e: PointerEvent) => {
-      if (!containerRef.current?.contains(e.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isOpen]);
-
-  const handleNumberInput = (e: ChangeEvent<HTMLInputElement>) => {
-    const n = Number(e.target.value);
-    if (Number.isFinite(n)) onChange(Math.max(0, Math.min(360, n)));
-  };
+  const { isOpen, containerRef, toggleOpen, handleNumberInput } =
+    useHuePicker(onChange);
 
   return (
     <div
@@ -143,9 +106,7 @@ const HuePicker = ({ label, value, onChange }: HuePickerProps) => {
           type='button'
           className={styles.huePickerSwatch}
           style={{ background: `oklch(65% 0.2 ${value}deg)` }}
-          onClick={() => {
-            setIsOpen((o) => !o);
-          }}
+          onClick={toggleOpen}
           aria-label={`Pick ${label.toLowerCase()} color`}
           aria-expanded={isOpen}
           aria-haspopup='dialog'

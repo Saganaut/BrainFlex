@@ -4,13 +4,14 @@ import styles from "./Layout.module.css";
 
 interface LeftSidebarProps {
   children: ReactNode;
+  className?: string;
 }
 
-const LeftSidebar = ({ children }: LeftSidebarProps) => {
+const LeftSidebar = ({ children, className }: LeftSidebarProps) => {
   const { isFullScreen } = useFullScreen();
   return (
     <div
-      className={`${styles.leftSidebar} ${isFullScreen ? styles.isCollapsed : " "}`}>
+      className={`${styles.leftSidebar} ${isFullScreen ? styles.isCollapsed : " "} ${className}`}>
       {children}
     </div>
   );

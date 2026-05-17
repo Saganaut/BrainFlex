@@ -72,18 +72,30 @@ public final class ElementScorer {
     private static Result scoreMcq(McqQuestion q, AnswerPayload payload) {
         if (!(payload instanceof McqAnswer a))
             return Result.ZERO;
-        List<String> correctIds = q.correctOptionIds();
-        boolean correct = a.optionId() != null
-                && correctIds != null
-                && correctIds.contains(a.optionId());
-        return new Result(correct, correct ? q.pointValue() : 0);
+        return scoreOptionPicks(a.optionIds(), q.correctOptionIds(), q.pointValue());
     }
 
     private static Result scoreImageChoice(ImageChoiceQuestion q, AnswerPayload payload) {
         if (!(payload instanceof ImageChoiceAnswer a))
             return Result.ZERO;
-        boolean correct = a.optionId() != null && a.optionId().equals(q.correctOptionId());
-        return new Result(correct, correct ? q.pointValue() : 0);
+        return scoreOptionPicks(a.optionIds(), q.correctOptionIds(), q.pointValue());
+    }
+
+    /**
+     * Shared scoring for MCQ and ImageChoice: when multiple correct ids exist
+     * the submitted set must equal the correct set; otherwise (single-correct)
+     * any submitted id matching counts. Empty correct set = unscored.
+     */
+    private static Result scoreOptionPicks(List<String> submitted, List<String> correctIds, int points) {
+        if (submitted == null || submitted.isEmpty() || correctIds == null || correctIds.isEmpty())
+            return Result.ZERO;
+        if (correctIds.size() == 1) {
+            boolean correct = submitted.contains(correctIds.get(0));
+            return new Result(correct, correct ? points : 0);
+        }
+        boolean correct = submitted.size() == correctIds.size()
+                && submitted.containsAll(correctIds);
+        return new Result(correct, correct ? points : 0);
     }
 
     private static Result scoreText(TextQuestion q, AnswerPayload payload) {

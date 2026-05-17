@@ -141,6 +141,23 @@
   }
 }
 
+/* ColorOptionBtn — small filled square used inside toolbars/popovers to pick */
+
+/* a swatch. Border-radius matches the rest of the toolbar primitives.        */
+.colorOptionBtn {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--duration-fast, 150ms) ease-out;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
 /* IconBtn — same variant/size/mode pattern as .btn, but IconBtn-tuned        */
 
 /* dimensions (height/width) live in the size classes. Component-specific     */

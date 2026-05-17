@@ -1,0 +1,153 @@
+/* McqOptionEditable — option card. Owns:
+     - the card frame (border + correct-state highlight)
+     - the top row (index pill + popover-trigger button)
+     - the option-text input and "Correct" toggle (always visible)
+     - the floating popover with image / color / delete controls (built on
+       the shared Popover primitive; this file only carries the small
+       option-specific bits like the image-thumb button and the URL input)
+   McqSlideContent renders these inside a CSS grid and does not draw any
+   per-option chrome itself. */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-canvas);
+  cursor: pointer;
+  transition:
+    border-color var(--duration-fast, 150ms) ease-out,
+    background-color var(--duration-fast, 150ms) ease-out,
+    box-shadow var(--duration-fast, 150ms) ease-out;
+
+  &:hover {
+    border-color: var(--border-default);
+  }
+
+  &.cardCorrect {
+    background-color: var(--bg-success);
+  }
+
+  .footer {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* Zones the card-click handler is NOT supposed to fire under. The text input
+   and the "Correct" toggle handle their own focus + state, so we restore the
+   default cursor (instead of the card's pointer) and the children's onClick
+   stops propagation on the wrapping div. */
+.interactiveZone {
+  cursor: auto;
+}
+
+.correctToggle {
+  width: fit-content;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.indexPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background-color: var(--bg-canvas);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ─── Floating popover ─────────────────────────────────────────────────── */
+
+.popoverWrap {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: var(--z-dropdown);
+}
+
+/* Small clickable preview that opens the gallery picker. Mirrors a
+   PopoverButton's footprint (28px) so the toolbar row reads as a single
+   line of equal-height controls. */
+.imageThumb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-canvas);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color var(--duration-fast, 150ms) ease-out;
+}
+
+.imageThumb:hover {
+  border-color: var(--action-hover);
+}
+
+.imageThumbEmpty {
+  background-color: var(--bg-canvas);
+}
+
+.colorSwatch {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+/* stylelint-disable selector-pseudo-element-no-unknown */
+.colorSwatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.colorSwatch::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--radius-sm);
+}
+/* stylelint-enable */
+
+.popoverUrlInput {
+  flex: 1;
+  min-width: 150px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.popoverUrlInput:focus {
+  outline: none;
+  border-color: var(--border-focus);
+}

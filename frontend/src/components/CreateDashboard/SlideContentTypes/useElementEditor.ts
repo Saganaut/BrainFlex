@@ -23,10 +23,21 @@ import {
   useGetDeckQuery,
   useUpdateElementMutation,
   type DeckDto,
+  type McqOption,
+  type McqQuestion,
 } from "@/store/BrainFlexApi";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 
 type DeckElement = NonNullable<DeckDto["elements"]>[number];
+
+/** Shared option-count bounds for MCQ-shaped questions. Enforced inside
+ *  the hooks so out-of-bounds calls are silent no-ops rather than corrupt
+ *  saves; exported so callers can hide their UI when at the bound. */
+const MIN_MCQ_OPTIONS = 2;
+const MAX_MCQ_OPTIONS = 6;
+
+const isMcqQuestion = (e: DeckElement): e is McqQuestion =>
+  e.kind === "McqQuestion";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -87,4 +98,236 @@ const useElementEditor = <T extends DeckElement>(
   };
 };
 
-export { useElementEditor };
+/**
+ * Option-scoped editor on top of `useElementEditor<McqQuestion>`. The active
+ * deck element must be an `McqQuestion`; the hook finds the option by id
+ * inside `parent.options` and returns helpers that rebuild the parent
+ * question with that single option swapped, then route the commit through
+ * the shared deck-element mutation pipeline.
+ *
+ * Why this lives next to `useElementEditor`:
+ *   `McqOption` is embedded in `McqQuestion`, which is what the
+ *   `updateElement` mutation actually accepts. There is no per-option
+ *   endpoint — every option edit becomes a full McqQuestion write. This
+ *   hook keeps that mechanical detail out of the option-editor component
+ *   and reuses the existing debouncer/cache-sync plumbing.
+ *
+ * Concurrency note: each option editor instance owns its own debounce
+ * timer (because `useElementEditor` is called once per option editor). In
+ * practice this is safe because only one input can hold focus at a time,
+ * and every input flushes on blur — switching from option A to option B
+ * fires A's pending commit first. Color/image clicks commit immediately,
+ * sidestepping the debounce window entirely.
+ */
+interface McqOptionEditorApi {
+  /** The freshest option from the deck cache, narrowed by id. Undefined
+   *  while the deck is loading or if the active element isn't an MCQ. */
+  option: McqOption | undefined;
+  /** Parent question — exposed for callers that need sibling option
+   *  context (e.g. cache mutation keyed off the question id). */
+  parent: McqQuestion | undefined;
+
+  // ── field-level commits (option's own shape) ─────────────────────────
+  /** Debounced commit of `next` as the new value for this option id. */
+  schedule: (next: McqOption) => void;
+  /** Immediate commit of `next` (use for structural changes — image pick,
+   *  color swatch click, etc.). */
+  commit: (next: McqOption) => void;
+  /** Flush the pending debounced commit (typical: onBlur). Also called
+   *  internally before structural ops below. */
+  flush: () => void;
+
+  // ── derived parent-state, scoped to this option ──────────────────────
+  /** Zero-based position in `parent.options`. -1 if not found. */
+  index: number;
+  /** Whether this option's id is in `parent.correctOptionIds`. */
+  isCorrect: boolean;
+  /** Whether the parent has more than `MIN_MCQ_OPTIONS` options (so
+   *  removing this one is allowed). */
+  canRemove: boolean;
+
+  // ── question-shape ops scoped to this option (immediate commits) ────
+  /** Flip this option's id in `parent.correctOptionIds`. */
+  toggleCorrect: () => void;
+  /** Remove this option from `parent.options` and strip its id from
+   *  `parent.correctOptionIds`. No-op below the min-option bound. */
+  remove: () => void;
+
+  syncedFromId: string | undefined;
+  markSynced: (id: string | undefined) => void;
+}
+
+const useMcqOptionEditor = (
+  optionId: string | undefined,
+  delay = 500,
+): McqOptionEditorApi => {
+  const {
+    element: parent,
+    schedule: scheduleParent,
+    commit: commitParent,
+    flush,
+    syncedFromId,
+    markSynced,
+  } = useElementEditor<McqQuestion>(isMcqQuestion, delay);
+
+  const options = parent?.options ?? [];
+  const index = optionId ? options.findIndex((o) => o.id === optionId) : -1;
+  const option = index >= 0 ? options[index] : undefined;
+  const isCorrect = !!(
+    optionId && parent?.correctOptionIds?.includes(optionId)
+  );
+  const canRemove = options.length > MIN_MCQ_OPTIONS;
+
+  /** Build a complete McqQuestion patch from `parent` with overrides
+   *  applied. The defaults read from the cache, so concurrent edits in
+   *  sibling McqOptionEditable instances aren't stomped (the latest
+   *  flushed value is whatever's in `parent.options` right now). Returns
+   *  undefined when there's no parent — callers treat that as a no-op. */
+  const patchParent = (overrides: {
+    options?: McqOption[];
+    correctOptionIds?: string[];
+  }): McqQuestion | undefined => {
+    if (!parent) return undefined;
+    return {
+      ...parent,
+      options: overrides.options ?? parent.options,
+      correctOptionIds: overrides.correctOptionIds ?? parent.correctOptionIds,
+    };
+  };
+
+  /** Patch this single option in place inside `parent.options`. */
+  const replaceOption = (next: McqOption): McqOption[] | undefined => {
+    if (!optionId) return undefined;
+    return options.map((o) => (o.id === optionId ? next : o));
+  };
+
+  const schedule = (next: McqOption) => {
+    const swapped = replaceOption(next);
+    if (!swapped) return;
+    const patched = patchParent({ options: swapped });
+    if (patched) scheduleParent(patched);
+  };
+
+  const commit = (next: McqOption) => {
+    const swapped = replaceOption(next);
+    if (!swapped) return;
+    const patched = patchParent({ options: swapped });
+    if (patched) commitParent(patched);
+  };
+
+  const toggleCorrect = () => {
+    if (!parent || !optionId) return;
+    flush();
+    const current = parent.correctOptionIds ?? [];
+    const next = current.includes(optionId)
+      ? current.filter((cid) => cid !== optionId)
+      : [...current, optionId];
+    const patched = patchParent({ correctOptionIds: next });
+    if (patched) commitParent(patched);
+  };
+
+  const remove = () => {
+    if (!parent || !optionId || !canRemove) return;
+    flush();
+    const nextOptions = options.filter((o) => o.id !== optionId);
+    const nextCorrect = (parent.correctOptionIds ?? []).filter(
+      (cid) => cid !== optionId,
+    );
+    const patched = patchParent({
+      options: nextOptions,
+      correctOptionIds: nextCorrect,
+    });
+    if (patched) commitParent(patched);
+  };
+
+  return {
+    option,
+    parent,
+    schedule,
+    commit,
+    flush,
+    index,
+    isCorrect,
+    canRemove,
+    toggleCorrect,
+    remove,
+    syncedFromId,
+    markSynced,
+  };
+};
+
+/**
+ * Question-scoped editor on top of `useElementEditor<McqQuestion>`. Owns
+ * the genuinely *question-level* operations — prompt edits and appending
+ * options. Per-option ops (text/image/color/remove/toggleCorrect) live on
+ * `useMcqOptionEditor` so each option-card component owns its own commit
+ * pipeline and there's no shared option-list state to fight over.
+ *
+ * Mutation semantics:
+ *   - `schedulePrompt` is debounced (typing should feel responsive).
+ *   - `addOption` commits immediately (structural changes are never
+ *     debounced). The new option gets a fresh UUID and an empty text body
+ *     so the renderer can show it the moment the round-trip lands.
+ *
+ * Bounds (`MIN_MCQ_OPTIONS` / `MAX_MCQ_OPTIONS`) are enforced inside the
+ * hook — callers gate their UI on `canAddOption`, but a slipped call is a
+ * no-op rather than a corrupted save.
+ */
+interface McqQuestionEditorApi {
+  question: McqQuestion | undefined;
+  schedulePrompt: (prompt: string) => void;
+  flush: () => void;
+  syncedFromId: string | undefined;
+  markSynced: (id: string | undefined) => void;
+  /** True when another option can be appended (below the max). */
+  canAddOption: boolean;
+  /** Append a blank option. Silent no-op at the max bound. */
+  addOption: () => void;
+}
+
+const useMcqQuestionEditor = (delay = 500): McqQuestionEditorApi => {
+  const {
+    element: question,
+    schedule,
+    commit,
+    flush,
+    syncedFromId,
+    markSynced,
+  } = useElementEditor<McqQuestion>(isMcqQuestion, delay);
+
+  const optionCount = question?.options?.length ?? 0;
+  const canAddOption = optionCount < MAX_MCQ_OPTIONS;
+
+  const schedulePrompt = (prompt: string) => {
+    if (!question) return;
+    schedule({ ...question, prompt });
+  };
+
+  const addOption = () => {
+    if (!question || !canAddOption) return;
+    flush();
+    const nextOptions: McqOption[] = [
+      ...(question.options ?? []),
+      { id: crypto.randomUUID(), text: "" },
+    ];
+    commit({ ...question, options: nextOptions });
+  };
+
+  return {
+    question,
+    schedulePrompt,
+    flush,
+    syncedFromId,
+    markSynced,
+    canAddOption,
+    addOption,
+  };
+};
+
+export {
+  useElementEditor,
+  useMcqOptionEditor,
+  useMcqQuestionEditor,
+  MIN_MCQ_OPTIONS,
+  MAX_MCQ_OPTIONS,
+};

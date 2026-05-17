@@ -1,97 +1,64 @@
 /**
  * Author surface for an MCQ slide.
  *
- * Edits are kept in local state so typing stays responsive, then committed to
- * the server through a debounced `updateElement` mutation. The rich-text
- * prompt and option text inputs schedule a commit on every keystroke and
- * flush on blur. Structural changes (add / remove option, toggle correct)
- * flush any pending text edits first, then commit immediately.
+ * Composition:
+ *   - Prompt editor (debounced rich text) — owns a local mirror so typing
+ *     stays responsive.
+ *   - "Options" header with the add-option button.
+ *   - A CSS grid of `<McqOptionEditable />` cards. Each card is fully
+ *     self-contained: it draws its own index pill, remove button,
+ *     text/image/color fields, and correct-answer checkbox, and routes
+ *     every write through `useMcqOptionEditor`.
  *
- * MCQ rules enforced here:
- *   - 2–6 options; freshly-created MCQs start with 4 blanks (via the picker).
- *   - Any subset of options may be marked "correct" — including none. A
- *     question with zero correct answers is not scoreable in a showcase, so
- *     we surface a small warning at the bottom of the editor.
+ * Question-level operations (prompt edits, addOption) route through
+ * `useMcqQuestionEditor`. Option-scoped operations (text/image/color,
+ * remove, toggleCorrect) live on each `<McqOptionEditable />` via
+ * `useMcqOptionEditor`. There's no local mirror of `options` or
+ * `correctOptionIds` in this parent — those read straight from the deck
+ * cache so concurrent option edits never get stomped by a parent rebuild.
+ *
+ * MCQ rules enforced via the hooks:
+ *   - `MIN_MCQ_OPTIONS`–`MAX_MCQ_OPTIONS` bound the option count.
+ *   - Zero correct answers is allowed but flagged by `EditorWarning`
+ *     because the slide isn't scoreable in that state.
  */
 import { useState } from "react";
-import { getRouteApi } from "@tanstack/react-router";
-import { MinusIcon } from "@heroicons/react/24/outline";
 import { SlideContentWrapper } from "../SlideContentWrapper";
-import {
-  useGetDeckQuery,
-  useUpdateElementMutation,
-  type McqOption,
-  type McqQuestion,
-} from "@/store/BrainFlexApi";
-import { RichTextInput } from "@/components/Common/Input/RichTextInput";
-import { Input } from "@/components/Common/Input/Input";
-import { Checkbox } from "@/components/Common/Input/Checkbox";
+import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import { IconBtn } from "@/components/Common/Buttons/IconBtn";
-import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
+import { useMcqQuestionEditor } from "../useElementEditor";
 import { EditorWarning } from "../EditorWarning";
+import { McqOptionEditable } from "./McqOptionEditable";
 import styles from "./McqSlideContent.module.css";
 
-const routeApi = getRouteApi("/decks/$deckId/edit");
-
-const MIN_OPTIONS = 2;
-const MAX_OPTIONS = 6;
-
 const McqSlideContent = () => {
-  const { deckId } = routeApi.useParams();
-  const { questionId } = routeApi.useSearch();
+  const {
+    question,
+    schedulePrompt,
+    flush,
+    syncedFromId,
+    markSynced,
+    canAddOption,
+    addOption,
+  } = useMcqQuestionEditor();
 
-  const { element } = useGetDeckQuery(
-    { id: deckId },
-    {
-      selectFromResult: ({ data }) => ({
-        element: data?.elements?.find((e) => e.id === questionId) as
-          | McqQuestion
-          | undefined,
-      }),
-    },
-  );
+  // Only the prompt needs a local mirror — typing should feel responsive
+  // and the rich-text editor controls its own DOM. Options come straight
+  // from the cache via each `<McqOptionEditable />`.
+  const [prompt, setPrompt] = useState(question?.prompt ?? "");
 
-  const [updateElement] = useUpdateElementMutation();
-
-  // ---- commit pipeline ---------------------------------------------------
-  // The debounced commit always sends a fresh, complete McqQuestion built
-  // from the latest local state — we never mutate `element` directly.
-  const commitMcq = (patch: McqQuestion) => {
-    if (!element?.id) return;
-    void updateElement({
-      id: deckId,
-      elementId: element.id,
-      body: patch,
-    })
-      .unwrap()
-      .catch((err: unknown) => {
-        console.error("Failed to update MCQ", err);
-      });
-  };
-  const { schedule, flush } = useDebouncedCommit<McqQuestion>(commitMcq, 500);
-
-  // ---- local-state mirror -------------------------------------------------
-  const [prompt, setPrompt] = useState<string>(element?.prompt ?? "");
-  const [options, setOptions] = useState<McqOption[]>(element?.options ?? []);
-  const [correctOptionIds, setCorrectOptionIds] = useState<string[]>(
-    element?.correctOptionIds ?? [],
-  );
-
-  // Resync when we switch to a different slide. React's "derive state during
-  // render" pattern: setState during render is fine when the new value
-  // differs, and it avoids the set-state-in-effect anti-pattern.
-  const [syncedFromId, setSyncedFromId] = useState<string | undefined>(
-    element?.id,
-  );
-  if (element && syncedFromId !== element.id) {
-    setSyncedFromId(element.id);
-    setPrompt(element.prompt ?? "");
-    setOptions(element.options ?? []);
-    setCorrectOptionIds(element.correctOptionIds ?? []);
+  // Resync local mirror when the active question changes. "Derive state
+  // during render" pattern — safe when the new value differs.
+  if (question && syncedFromId !== question.id) {
+    markSynced(question.id);
+    setPrompt(question.prompt ?? "");
   }
 
-  if (!element) {
+  // Even-column grid: round up half the option count, never below 2.
+  const optionCount = question?.options?.length ?? 0;
+  const columns = optionCount ? Math.max(Math.ceil(optionCount / 2), 2) : 2;
+
+  if (!question) {
     return (
       <SlideContentWrapper title='Multiple choice'>
         <p>Select a slide to edit.</p>
@@ -99,69 +66,11 @@ const McqSlideContent = () => {
     );
   }
 
-  // Build a complete McqQuestion from the latest local state for committing.
-  const buildPatch = (overrides: {
-    prompt?: string;
-    options?: McqOption[];
-    correctOptionIds?: string[];
-  }): McqQuestion => ({
-    ...element,
-    prompt: overrides.prompt ?? prompt,
-    options: overrides.options ?? options,
-    correctOptionIds: overrides.correctOptionIds ?? correctOptionIds,
-  });
-
-  // ---- handlers -----------------------------------------------------------
-  const handlePromptChange = (html: string) => {
-    setPrompt(html);
-    schedule(buildPatch({ prompt: html }));
-  };
-
-  const handleOptionTextChange = (id: string, text: string) => {
-    const next = options.map((o) => (o.id === id ? { ...o, text } : o));
-    setOptions(next);
-    schedule(buildPatch({ options: next }));
-  };
-
-  const handleAddOption = () => {
-    if (options.length >= MAX_OPTIONS) return;
-    flush();
-    const newOption: McqOption = {
-      id: crypto.randomUUID(),
-      text: "",
-    };
-    const next = [...options, newOption];
-    setOptions(next);
-    commitMcq(buildPatch({ options: next }));
-  };
-
-  const handleRemoveOption = (id: string) => {
-    if (options.length <= MIN_OPTIONS) return;
-    flush();
-    const next = options.filter((o) => o.id !== id);
-    const nextCorrect = correctOptionIds.filter((cid) => cid !== id);
-    setOptions(next);
-    if (nextCorrect.length !== correctOptionIds.length) {
-      setCorrectOptionIds(nextCorrect);
-    }
-    commitMcq(buildPatch({ options: next, correctOptionIds: nextCorrect }));
-  };
-
-  const handleToggleCorrect = (id: string) => {
-    flush();
-    const next = correctOptionIds.includes(id)
-      ? correctOptionIds.filter((cid) => cid !== id)
-      : [...correctOptionIds, id];
-    setCorrectOptionIds(next);
-    commitMcq(buildPatch({ correctOptionIds: next }));
-  };
-
-  const hasCorrectAnswer = correctOptionIds.length > 0;
+  const options = question.options ?? [];
+  const hasCorrectAnswer = (question.correctOptionIds?.length ?? 0) > 0;
 
   return (
     <SlideContentWrapper
-      title='Multiple choice'
-      description='Two to six options. Any non-empty subset can be marked correct.'
       footer={
         !hasCorrectAnswer ? (
           <EditorWarning>
@@ -170,71 +79,34 @@ const McqSlideContent = () => {
           </EditorWarning>
         ) : null
       }>
-      <RichTextInput
-        label='Question'
-        id={`mcq-prompt-${element.id ?? ""}`}
-        placeholder='Type your question…'
-        value={prompt}
-        onChange={handlePromptChange}
-        onBlur={flush}
-      />
-
+      <div className={styles.slideHeader}>
+        <RichTextInput
+          id={`mcq-prompt-${question.id ?? ""}`}
+          placeholder='Type your question…'
+          value={prompt}
+          onChange={(html) => {
+            setPrompt(html);
+            schedulePrompt(html);
+          }}
+          onBlur={flush}
+        />
+      </div>
       <div className={styles.optionsHeader}>
         <span className={styles.optionsLabel}>Options</span>
-        <Btn
-          size='sm'
-          onClick={handleAddOption}
-          disabled={options.length >= MAX_OPTIONS}>
+        <Btn size='sm' onClick={addOption} disabled={!canAddOption}>
           + Add option
         </Btn>
       </div>
 
-      <div className={styles.optionsRow}>
-        {options.map((option, idx) => {
-          const optionId = option.id ?? `__no-id-${idx.toString()}`;
-          const isCorrect = option.id
-            ? correctOptionIds.includes(option.id)
-            : false;
-          return (
-            <div
-              key={optionId}
-              className={`${styles.optionCard} ${isCorrect ? styles.optionCardCorrect : ""}`}>
-              <div className={styles.optionTopRow}>
-                <span className={styles.optionIndex}>{idx + 1}</span>
-                <IconBtn
-                  type='default'
-                  size='xs'
-                  bordered
-                  icon={<MinusIcon />}
-                  aria-label={`Remove option ${(idx + 1).toString()}`}
-                  disabled={options.length <= MIN_OPTIONS}
-                  onClick={() => {
-                    if (option.id) handleRemoveOption(option.id);
-                  }}
-                />
-              </div>
-              <Input
-                type='text'
-                fullWidth
-                value={option.text ?? ""}
-                placeholder={`Option ${(idx + 1).toString()}`}
-                onChange={(e) => {
-                  if (option.id)
-                    handleOptionTextChange(option.id, e.target.value);
-                }}
-                onBlur={flush}
-              />
-              <Checkbox
-                label='Correct'
-                id={`mcq-correct-${optionId}`}
-                checked={isCorrect}
-                onChange={() => {
-                  if (option.id) handleToggleCorrect(option.id);
-                }}
-              />
-            </div>
-          );
-        })}
+      <div
+        className={styles.optionsRow}
+        style={{ "--cols": columns } as React.CSSProperties}>
+        {options.map((option, idx) => (
+          <McqOptionEditable
+            key={option.id ?? `__no-id-${idx.toString()}`}
+            option={option}
+          />
+        ))}
       </div>
     </SlideContentWrapper>
   );

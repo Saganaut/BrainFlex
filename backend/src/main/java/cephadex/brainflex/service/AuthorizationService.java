@@ -23,12 +23,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.GalleryImage;
 import cephadex.brainflex.model.Organization;
 import cephadex.brainflex.model.Showcase;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.DeckRepository;
+import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.ShowcaseRepository;
 import cephadex.brainflex.repository.ThemeRepository;
@@ -40,16 +44,19 @@ public class AuthorizationService {
     private final ThemeRepository themeRepository;
     private final ShowcaseRepository showcaseRepository;
     private final OrganizationRepository organizationRepository;
+    private final GalleryImageRepository galleryImageRepository;
 
     public AuthorizationService(
             DeckRepository deckRepository,
             ThemeRepository themeRepository,
             ShowcaseRepository showcaseRepository,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository,
+            GalleryImageRepository galleryImageRepository) {
         this.deckRepository = deckRepository;
         this.themeRepository = themeRepository;
         this.showcaseRepository = showcaseRepository;
         this.organizationRepository = organizationRepository;
+        this.galleryImageRepository = galleryImageRepository;
     }
 
     public Deck requireDeckEditable(String deckId, User caller) {
@@ -86,5 +93,26 @@ public class AuthorizationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this organization");
         }
         return org;
+    }
+
+    public GalleryImage requireGalleryImageEditable(String imageId, User caller) {
+        GalleryImage image = galleryImageRepository.findById(imageId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gallery image not found"));
+        if (!caller.getId().equals(image.getOwnerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this gallery image");
+        }
+        return image;
+    }
+
+    public GalleryImage requireGalleryImageVisible(String imageId, User caller) {
+        GalleryImage image = galleryImageRepository.findById(imageId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gallery image not found"));
+        if (caller.getId().equals(image.getOwnerId())) return image;
+        String orgId = image.getOrganizationId();
+        if (orgId != null && !orgId.isBlank()) {
+            List<String> memberships = caller.getOrganizationIds();
+            if (memberships != null && memberships.contains(orgId)) return image;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this gallery image");
     }
 }

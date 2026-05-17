@@ -8,10 +8,10 @@
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
-import { RichTextInput } from "@/components/Common/Input/RichTextInput";
-import { Input } from "@/components/Common/Input/Input";
-import { NumberInput } from "@/components/Common/Input/NumberInput";
-import { Checkbox } from "@/components/Common/Input/Checkbox";
+import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
+import { Input } from "@/components/Common/Input/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput/NumberInput";
+import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
 import { useElementEditor } from "./useElementEditor";
 import { EditorWarning } from "./EditorWarning";
 import type { TextQuestion } from "@/store/BrainFlexApi";

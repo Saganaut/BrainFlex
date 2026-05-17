@@ -2,7 +2,7 @@
  * Single source of truth for the GrantedAuthorities a {@link User} carries.
  *
  * Authorities are derived from persisted state (membership tier + status,
- * organizationId, isGuest), not from anything the client supplies. Every entry
+ * organizationIds, isGuest), not from anything the client supplies. Every entry
  * point that builds a SecurityContext — the OAuth2 success path and the guest
  * login endpoint — must funnel through this helper so the authority set stays
  * consistent across login mechanisms.
@@ -74,14 +74,17 @@ public class AuthoritiesService {
         auths.add(new SimpleGrantedAuthority(ROLE_USER));
         auths.add(new SimpleGrantedAuthority(tierRole(user.getMembership())));
 
-        String orgId = user.getOrganizationId();
-        if (orgId != null && !orgId.isBlank()) {
-            auths.add(new SimpleGrantedAuthority(ROLE_ORG_MEMBER));
-            organizationRepository.findById(orgId).ifPresent(org -> {
-                if (user.getId() != null && user.getId().equals(org.getOwnerId())) {
-                    auths.add(new SimpleGrantedAuthority(ROLE_ORG_OWNER));
-                }
-            });
+        var orgIds = user.getOrganizationIds();
+        if (orgIds != null) {
+            for (String orgId : orgIds) {
+                if (orgId == null || orgId.isBlank()) continue;
+                auths.add(new SimpleGrantedAuthority(ROLE_ORG_MEMBER));
+                organizationRepository.findById(orgId).ifPresent(org -> {
+                    if (user.getId() != null && user.getId().equals(org.getOwnerId())) {
+                        auths.add(new SimpleGrantedAuthority(ROLE_ORG_OWNER));
+                    }
+                });
+            }
         }
 
         return auths;

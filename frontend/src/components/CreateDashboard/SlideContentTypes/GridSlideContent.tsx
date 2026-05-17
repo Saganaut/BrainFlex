@@ -12,11 +12,13 @@
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
-import { RichTextInput } from "@/components/Common/Input/RichTextInput";
-import { Input } from "@/components/Common/Input/Input";
-import { NumberInput } from "@/components/Common/Input/NumberInput";
-import { Checkbox } from "@/components/Common/Input/Checkbox";
+import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
+import { Input } from "@/components/Common/Input/Input/Input";
+import { NumberInput } from "@/components/Common/Input/NumberInput/NumberInput";
+import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
+import { Btn } from "@/components/Common/Buttons/Btn";
 import { useElementEditor } from "./useElementEditor";
+import { useGalleryPicker } from "@/hooks/useGalleryPicker";
 import type { GridQuestion } from "@/store/BrainFlexApi";
 import styles from "./SlideContentTypes.module.css";
 
@@ -34,8 +36,9 @@ const inputToIndexes = (raw: string) =>
     .filter((n) => Number.isFinite(n) && n >= 0);
 
 const GridSlideContent = () => {
-  const { element, schedule, flush, syncedFromId, markSynced } =
+  const { element, schedule, flush, commit, syncedFromId, markSynced } =
     useElementEditor<GridQuestion>(isGrid);
+  const openPicker = useGalleryPicker();
 
   const [prompt, setPrompt] = useState(element?.prompt ?? "");
   const [rows, setRows] = useState<number>(element?.rows ?? 3);
@@ -140,34 +143,48 @@ const GridSlideContent = () => {
       </div>
 
       <div className={styles.imageEditorRow}>
-        <img
-          src={imgSrc}
-          alt=''
-          className={styles.imagePlaceholder}
-          style={{ width: 240 }}
-        />
+        <img src={imgSrc} alt='' className={styles.imagePlaceholder} />
         <div className={styles.imageEditorFields}>
-          <Input
-            label='Backing image URL (placeholder shown if blank)'
-            id={`grid-image-${element.id ?? ""}`}
-            type='text'
-            fullWidth
-            value={backingImageUrl}
-            placeholder='https://…'
-            onChange={(e) => {
-              const next = e.target.value;
-              setBackingImageUrl(next);
-              schedule(
-                buildPatch({
-                  cells: {
-                    ...element.cells,
-                    backingImageUrl: next || undefined,
-                  },
-                }),
-              );
-            }}
-            onBlur={flush}
-          />
+          <div className={styles.urlPickerRow}>
+            <div className={styles.urlPickerInput}>
+              <Input
+                label='Backing image URL (placeholder shown if blank)'
+                id={`grid-image-${element.id ?? ""}`}
+                type='text'
+                fullWidth
+                value={backingImageUrl}
+                placeholder='https://…'
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setBackingImageUrl(next);
+                  schedule(
+                    buildPatch({
+                      cells: {
+                        ...element.cells,
+                        backingImageUrl: next || undefined,
+                      },
+                    }),
+                  );
+                }}
+                onBlur={flush}
+              />
+            </div>
+            <Btn
+              size='sm'
+              onClick={() => {
+                flush();
+                openPicker((url) => {
+                  setBackingImageUrl(url);
+                  commit(
+                    buildPatch({
+                      cells: { ...element.cells, backingImageUrl: url },
+                    }),
+                  );
+                });
+              }}>
+              Gallery
+            </Btn>
+          </div>
           <Input
             label='Correct cell indexes (comma-separated, row-major)'
             id={`grid-correct-${element.id ?? ""}`}
@@ -188,8 +205,8 @@ const GridSlideContent = () => {
       </div>
 
       {/* TODO: Get more specs — visual cell-selection overlay on the backing
-          image, per-cell labels (cells.labels), and the media-library picker
-          for the backing image. */}
+          image and per-cell labels (cells.labels). The media-library picker
+          is now wired in via the `Gallery` button. */}
     </SlideContentWrapper>
   );
 };

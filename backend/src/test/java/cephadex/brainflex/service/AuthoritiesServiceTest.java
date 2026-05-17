@@ -2,11 +2,12 @@
  * Unit tests for AuthoritiesService.
  *
  * Verifies that the derived authority set covers every (tier × status) and
- * (organizationId × ownership) combination. The OrganizationRepository is
+ * (membership × ownership) combination. The OrganizationRepository is
  * mocked so no real MongoDB is required.
  */
 package cephadex.brainflex.service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -153,7 +154,7 @@ class AuthoritiesServiceTest {
     @Test
     void orgMemberNonOwner_GetsMemberRoleOnly() {
         User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
-        user.setOrganizationId("org-99");
+        user.setOrganizationIds(new java.util.ArrayList<>(List.of("org-99")));
 
         Organization org = new Organization();
         org.setId("org-99");
@@ -169,7 +170,7 @@ class AuthoritiesServiceTest {
     @Test
     void orgOwner_GetsBothMemberAndOwnerRoles() {
         User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
-        user.setOrganizationId("org-99");
+        user.setOrganizationIds(new java.util.ArrayList<>(List.of("org-99")));
 
         Organization org = new Organization();
         org.setId("org-99");
@@ -183,9 +184,29 @@ class AuthoritiesServiceTest {
     }
 
     @Test
+    void multipleMemberships_GrantsOwnerWhenAnyOrgIsOwned() {
+        User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
+        user.setOrganizationIds(new java.util.ArrayList<>(List.of("org-not-owned", "org-owned")));
+
+        Organization notOwned = new Organization();
+        notOwned.setId("org-not-owned");
+        notOwned.setOwnerId("someone-else");
+        Organization owned = new Organization();
+        owned.setId("org-owned");
+        owned.setOwnerId(user.getId());
+        lenient().when(organizationRepository.findById("org-not-owned")).thenReturn(Optional.of(notOwned));
+        lenient().when(organizationRepository.findById("org-owned")).thenReturn(Optional.of(owned));
+
+        Set<String> result = roles(authoritiesService.authoritiesFor(user));
+
+        assertTrue(result.contains(AuthoritiesService.ROLE_ORG_MEMBER));
+        assertTrue(result.contains(AuthoritiesService.ROLE_ORG_OWNER));
+    }
+
+    @Test
     void orgIdSetButOrgMissing_StillGrantsMemberRole() {
         User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
-        user.setOrganizationId("org-ghost");
+        user.setOrganizationIds(new java.util.ArrayList<>(List.of("org-ghost")));
         lenient().when(organizationRepository.findById("org-ghost")).thenReturn(Optional.empty());
 
         Set<String> result = roles(authoritiesService.authoritiesFor(user));
@@ -195,9 +216,20 @@ class AuthoritiesServiceTest {
     }
 
     @Test
-    void blankOrgId_DoesNotAddOrgRoles() {
+    void emptyMemberships_DoesNotAddOrgRoles() {
         User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
-        user.setOrganizationId("   ");
+        user.setOrganizationIds(new java.util.ArrayList<>());
+
+        Set<String> result = roles(authoritiesService.authoritiesFor(user));
+
+        assertFalse(result.contains(AuthoritiesService.ROLE_ORG_MEMBER));
+        assertFalse(result.contains(AuthoritiesService.ROLE_ORG_OWNER));
+    }
+
+    @Test
+    void blankOrgIdInList_IsIgnored() {
+        User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
+        user.setOrganizationIds(new java.util.ArrayList<>(List.of("   ")));
 
         Set<String> result = roles(authoritiesService.authoritiesFor(user));
 

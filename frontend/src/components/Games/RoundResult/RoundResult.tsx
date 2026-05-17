@@ -169,12 +169,6 @@ const correctAnswerText = (element: DeckElement): string | null => {
         .filter(Boolean);
       return correctTexts.length > 0 ? correctTexts.join(", ") : null;
     }
-    case "ImageChoiceQuestion": {
-      const correct = element.options?.find(
-        (o) => o.id === element.correctOptionId,
-      );
-      return correct?.text ?? null;
-    }
     case "TextQuestion":
       return element.correctAnswer ?? null;
     case "NumberQuestion":
@@ -198,13 +192,13 @@ const humanReadableAnswer = (
       return payload.text ?? null;
     case "NumberAnswer":
       return payload.value !== undefined ? String(payload.value) : null;
-    case "McqAnswer":
-    case "ImageChoiceAnswer": {
-      if (element.kind === "McqQuestion" || element.kind === "ImageChoiceQuestion") {
-        const opt = element.options?.find((o) => o.id === payload.optionId);
+    case "McqAnswer": {
+      const oid = payload.optionIds?.[0];
+      if (element.kind === "McqQuestion") {
+        const opt = element.options?.find((o) => o.id === oid);
         return opt?.text ?? null;
       }
-      return payload.optionId ?? null;
+      return oid ?? null;
     }
     default:
       return null;

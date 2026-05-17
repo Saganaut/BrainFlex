@@ -20,7 +20,6 @@ const KIND_LABELS: Record<ElementKind, string> = {
   McqQuestion: "Multiple Choice",
   TextQuestion: "Text Answer",
   NumberQuestion: "Number Answer",
-  ImageChoiceQuestion: "Image Choice",
   RankingQuestion: "Ranking",
   ScalesQuestion: "Scales",
   QAndAQuestion: "Q & A",

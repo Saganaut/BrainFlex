@@ -1,5 +1,7 @@
 package cephadex.brainflex.controller;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
@@ -8,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,24 +39,27 @@ public class OrganizationController {
         this.userService = userService;
     }
 
-    /** Returns the caller's current organization, or 404 if they have none. */
-    @GetMapping("/me")
+    /** Returns every organization the caller belongs to (possibly empty). */
+    @GetMapping("/mine")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OrganizationDTO.OrganizationResponse> getMyOrg(Authentication authentication) {
+    public ResponseEntity<List<OrganizationDTO.OrganizationResponse>> listMyOrgs(Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
         if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         User user = userOpt.get();
-        if (user.getOrganizationId() == null) return ResponseEntity.notFound().build();
+        List<String> ids = user.getOrganizationIds();
+        if (ids == null || ids.isEmpty()) return ResponseEntity.ok(List.of());
 
-        return organizationRepository.findById(user.getOrganizationId())
-                .map(org -> ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(org)))
-                .orElse(ResponseEntity.notFound().build());
+        List<OrganizationDTO.OrganizationResponse> response =
+                organizationRepository.findAllById(ids).stream()
+                        .map(OrganizationDTO.OrganizationResponse::new)
+                        .toList();
+        return ResponseEntity.ok(response);
     }
 
     /**
-     * Creates a new organization and sets the caller as its owner and first member.
-     * A user who already belongs to an org must leave it first.
+     * Creates a new organization and adds the caller as its owner. Users may
+     * belong to multiple orgs simultaneously, so no "leave first" check.
      */
     @PostMapping
     @PreAuthorize("hasRole('USER')")
@@ -63,21 +69,17 @@ public class OrganizationController {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
         if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        User user = userOpt.get();
-        if (user.getOrganizationId() != null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "You are already a member of an organization. Leave it first.");
-        }
         if (request.name() == null || request.name().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization name is required");
         }
 
+        User user = userOpt.get();
         Organization org = new Organization();
         org.setName(request.name().strip());
         org.setOwnerId(user.getId());
         Organization saved = organizationRepository.save(org);
 
-        user.setOrganizationId(saved.getId());
+        addMembership(user, saved.getId());
         userRepository.save(user);
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -85,8 +87,8 @@ public class OrganizationController {
     }
 
     /**
-     * Joins an existing organization by its id.
-     * A user who already belongs to an org must leave it first.
+     * Adds the caller to an existing organization by id. Idempotent if the
+     * caller is already a member.
      */
     @PostMapping("/join")
     @PreAuthorize("hasRole('USER')")
@@ -96,37 +98,54 @@ public class OrganizationController {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
         if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
-        User user = userOpt.get();
-        if (user.getOrganizationId() != null) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "You are already a member of an organization. Leave it first.");
+        if (request.organizationId() == null || request.organizationId().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization ID is required");
         }
 
         Organization org = organizationRepository.findById(request.organizationId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Organization not found"));
 
-        user.setOrganizationId(org.getId());
-        userRepository.save(user);
+        User user = userOpt.get();
+        if (addMembership(user, org.getId())) {
+            userRepository.save(user);
+        }
 
         return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(org));
     }
 
-    /** Removes the caller from their current organization. */
-    @DeleteMapping("/me/leave")
+    /** Removes the caller from a specific organization they belong to. */
+    @DeleteMapping("/{id}/leave")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> leaveOrg(Authentication authentication) {
+    public ResponseEntity<Void> leaveOrg(@PathVariable String id, Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
         if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         User user = userOpt.get();
-        if (user.getOrganizationId() == null) {
+        List<String> ids = user.getOrganizationIds();
+        if (ids == null || !ids.contains(id)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "You are not a member of any organization");
+                    "You are not a member of this organization");
         }
 
-        user.setOrganizationId(null);
+        ids.remove(id);
         userRepository.save(user);
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * Inserts {@code orgId} into the user's memberships if not already present.
+     * Mutates the user in place; the caller is responsible for persisting.
+     * Returns true when a change was made.
+     */
+    private static boolean addMembership(User user, String orgId) {
+        List<String> ids = user.getOrganizationIds();
+        if (ids == null) {
+            ids = new ArrayList<>();
+            user.setOrganizationIds(ids);
+        }
+        if (ids.contains(orgId)) return false;
+        ids.add(orgId);
+        return true;
     }
 }

@@ -6,7 +6,7 @@ import { useCurrentUser } from "../../hooks/useCurrentUser";
 // import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
 import { ActionCard } from "@/components/Common/Cards/ActionCard";
 // import { Btn } from "@/components/Common/Buttons/Btn";
-// import { Input } from "@/components/Common/Input/Input";
+// import { Input } from "@/components/Common/Input/Input/Input";
 // import { extractErrorMessage } from "../../utils/utils";
 import styles from "./MainPage.module.css";
 

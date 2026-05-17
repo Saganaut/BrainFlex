@@ -1,7 +1,8 @@
 // File upload component with drag-and-drop support and multi-file selection
-import React, { useRef, useState, useCallback } from "react";
-import styles from "./Input.module.css";
-import { IconBtn } from "../Buttons/IconBtn";
+import shared from "../Input.module.css";
+import styles from "./FileUpload.module.css";
+import { useFileUpload } from "./useFileUpload";
+import { IconBtn } from "../../Buttons/IconBtn";
 
 interface FileUploadProps {
   label?: string;
@@ -11,49 +12,24 @@ interface FileUploadProps {
   onChange?: (files: File[]) => void;
 }
 
-const FileUpload: React.FC<FileUploadProps> = ({
+const FileUpload = ({
   label,
   accept,
   errorMessage,
   infoMessage,
   onChange,
-}) => {
-  const [files, setFiles] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const addFiles = useCallback(
-    (incoming: FileList | null) => {
-      if (!incoming) return;
-      const next = [...files, ...Array.from(incoming)];
-      setFiles(next);
-      onChange?.(next);
-    },
-    [files, onChange],
-  );
-
-  const removeFile = (index: number) => {
-    const next = files.filter((_, i) => i !== index);
-    setFiles(next);
-    onChange?.(next);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragging(false);
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    addFiles(e.dataTransfer.files);
-  };
+}: FileUploadProps) => {
+  const {
+    files,
+    isDragging,
+    inputRef,
+    addFiles,
+    removeFile,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    openPicker,
+  } = useFileUpload({ onChange });
 
   return (
     <div className={styles.fileUploadContainer}>
@@ -62,18 +38,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
         className={[styles.dropZone, isDragging && styles.dragging]
           .filter(Boolean)
           .join(" ")}
-        onClick={() => {
-          inputRef.current?.click();
-        }}
+        onClick={openPicker}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         role='button'
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            inputRef.current?.click();
-          }
+          if (e.key === "Enter") openPicker();
         }}>
         <input
           ref={inputRef}
@@ -112,8 +84,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
       {(errorMessage != null || infoMessage != null) && (
         <span
           className={[
-            styles.inputInfoMessage,
-            errorMessage && styles.errorMessage,
+            shared.inputInfoMessage,
+            styles.message,
+            errorMessage && shared.errorMessage,
           ]
             .filter(Boolean)
             .join(" ")}>

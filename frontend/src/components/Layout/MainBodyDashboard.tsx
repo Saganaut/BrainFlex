@@ -3,10 +3,13 @@ import styles from "./Layout.module.css";
 
 interface MainBodyDashboardProps {
   children: ReactNode;
+  className: string;
 }
 
-const MainBodyDashboard = ({ children }: MainBodyDashboardProps) => {
-  return <div className={`${styles.mainBodyDashboard} `}>{children}</div>;
+const MainBodyDashboard = ({ children, className }: MainBodyDashboardProps) => {
+  return (
+    <div className={`${styles.mainBodyDashboard} ${className}`}>{children}</div>
+  );
 };
 
 export { MainBodyDashboard };

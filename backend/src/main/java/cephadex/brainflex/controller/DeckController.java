@@ -30,8 +30,10 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.dto.CreateDeckRequest;
 import cephadex.brainflex.dto.DeckDTO;
 import cephadex.brainflex.dto.UpdateDeckRequest;
+import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.service.DeckImageHydrationService;
 import cephadex.brainflex.service.DeckService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
@@ -42,10 +44,15 @@ public class DeckController {
 
     private final DeckService deckService;
     private final UserService userService;
+    private final DeckImageHydrationService deckImageHydrationService;
 
-    public DeckController(DeckService deckService, UserService userService) {
+    public DeckController(
+            DeckService deckService,
+            UserService userService,
+            DeckImageHydrationService deckImageHydrationService) {
         this.deckService = deckService;
         this.userService = userService;
+        this.deckImageHydrationService = deckImageHydrationService;
     }
 
     /** All public decks. Used by the create-showcase template picker. */
@@ -65,7 +72,9 @@ public class DeckController {
     @GetMapping("/{id}")
     public DeckDTO getDeck(@PathVariable String id, Authentication authentication) {
         Optional<User> caller = userService.resolveRegisteredUser(authentication);
-        return new DeckDTO(deckService.getViewable(caller, id));
+        Deck deck = deckService.getViewable(caller, id);
+        deckImageHydrationService.hydrate(deck);
+        return new DeckDTO(deck);
     }
 
     @PreAuthorize("hasRole('USER')")

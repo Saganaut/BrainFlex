@@ -42,7 +42,10 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
   const sharedQuestionDefaults = {
     id,
     prompt: "",
+    title: "",
     pointValue: 0,
+    scored: true,
+    survey: false,
     bestAnswerMode: false,
     bestAnswerBonus: 0,
     displaySeconds: 0,
@@ -57,6 +60,8 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         slideKind: "CONTENT",
         title: "New slide",
         body: "",
+        scored: false,
+        survey: false,
         displaySeconds: 0,
         mediaPosition: "NONE",
       };
@@ -88,8 +93,6 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         tolerance: 0,
         decimalPlaces: 0,
       };
-    case "ImageChoiceQuestion":
-      return { kind: "ImageChoiceQuestion", ...sharedQuestionDefaults };
     case "RankingQuestion":
       return { kind: "RankingQuestion", ...sharedQuestionDefaults };
     case "ScalesQuestion":
@@ -104,6 +107,8 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
       return {
         kind: "QAndAQuestion",
         ...sharedQuestionDefaults,
+        scored: false,
+        survey: true,
         maxSubmissionsPerPlayer: 0,
         allowVoting: false,
         autoApprove: false,

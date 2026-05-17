@@ -56,6 +56,31 @@
   }
 }
 
+/* Inner wrapper around the title + body. The view-transition name is on this
+   element (not on .drawer) so that opening/closing the drawer keeps using the
+   slide-in keyframe above, and only panel-to-panel swaps — which run inside
+   document.startViewTransition() — produce a crossfade. */
+.panelContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  view-transition-name: right-drawer-panel;
+}
+
+::view-transition-old(right-drawer-panel),
+::view-transition-new(right-drawer-panel) {
+  animation-duration: var(--duration-base);
+  animation-timing-function: var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(right-drawer-panel),
+  ::view-transition-new(right-drawer-panel) {
+    animation-duration: 0.01ms;
+  }
+}
+
 .drawerHeader {
   display: flex;
   align-items: center;

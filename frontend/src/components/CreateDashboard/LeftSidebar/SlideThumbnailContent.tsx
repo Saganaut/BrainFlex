@@ -2,7 +2,7 @@ import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/s
 import React from "react";
 import styles from "./LeftSidebarContent.module.css";
 import { SlideTypeGraphic } from "@/components/Common/Slides/SlideTypeGraphics/SlideTypeGraphic";
-import { RichTextDisplay } from "@/components/Common/Input/RichTextDisplay";
+import { RichTextDisplay } from "@/components/Common/Input/RichTextDisplay/RichTextDisplay";
 interface SlideThumbnailContentProps {
   slideType?: ElementKind;
   title: string;

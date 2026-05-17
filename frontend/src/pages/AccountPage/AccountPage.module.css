@@ -29,14 +29,6 @@
   margin: 0;
 }
 
-.avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: var(--radius-full);
-  border: 2px solid var(--border-default);
-  object-fit: cover;
-}
-
 .checkboxLabel {
   display: flex;
   align-items: center;
@@ -67,7 +59,7 @@
   font-size: var(--font-size-sm);
 }
 
-.dangerButton {
+.dangerBtn {
   background-color: var(--border-error);
   color: var(--text-on-brand);
   border: none;
@@ -76,31 +68,6 @@
   &:hover {
     background-color: var(--text-error);
   }
-}
-
-.confirmBox {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.confirmActions {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.fileInputHidden {
-  display: none;
-}
-
-.uploadButton {
-  align-self: flex-start;
-}
-
-.uploadHint {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
 }
 
 .loading {

@@ -13,9 +13,9 @@ import {
 import type { DeckDto } from "../../store/BrainFlexApi";
 import { ActionCard } from "@/components/Common/Cards/ActionCard";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import { Input } from "@/components/Common/Input/Input";
-import { Checkbox } from "@/components/Common/Input/Checkbox";
-import { RadioGroup } from "@/components/Common/Input/RadioGroup";
+import { Input } from "@/components/Common/Input/Input/Input";
+import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
+import { RadioGroup } from "@/components/Common/Input/RadioGroup/RadioGroup";
 import { SelectableTile } from "@/components/Common/SelectableTile/SelectableTile";
 import { extractErrorMessage } from "../../utils/utils";
 import { resolveDeckCover } from "../../utils/deckImages";

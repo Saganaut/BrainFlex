@@ -14,6 +14,19 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    updateImage: build.mutation<UpdateImageApiResponse, UpdateImageApiArg>({
+      query: (queryArg) => ({
+        url: `/api/gallery/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateGalleryImageRequest,
+      }),
+    }),
+    deleteImage: build.mutation<DeleteImageApiResponse, DeleteImageApiArg>({
+      query: (queryArg) => ({
+        url: `/api/gallery/${queryArg.id}`,
+        method: "DELETE",
+      }),
+    }),
     getDeck: build.query<GetDeckApiResponse, GetDeckApiArg>({
       query: (queryArg) => ({ url: `/api/decks/${queryArg.id}` }),
     }),
@@ -122,6 +135,21 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.joinOrganizationRequest,
       }),
     }),
+    listImages: build.query<ListImagesApiResponse, ListImagesApiArg>({
+      query: () => ({ url: `/api/gallery` }),
+    }),
+    uploadImage: build.mutation<UploadImageApiResponse, UploadImageApiArg>({
+      query: (queryArg) => ({
+        url: `/api/gallery`,
+        method: "POST",
+        body: queryArg.body,
+        params: {
+          name: queryArg.name,
+          tags: queryArg.tags,
+          organizationId: queryArg.organizationId,
+        },
+      }),
+    }),
     listDecks: build.query<ListDecksApiResponse, ListDecksApiArg>({
       query: () => ({ url: `/api/decks` }),
     }),
@@ -228,8 +256,8 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/showcases/join/${queryArg.inviteToken}`,
       }),
     }),
-    getMyOrg: build.query<GetMyOrgApiResponse, GetMyOrgApiArg>({
-      query: () => ({ url: `/api/organizations/me` }),
+    listMyOrgs: build.query<ListMyOrgsApiResponse, ListMyOrgsApiArg>({
+      query: () => ({ url: `/api/organizations/mine` }),
     }),
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
@@ -253,7 +281,10 @@ const injectedRtkApi = api.injectEndpoints({
       }),
     }),
     leaveOrg: build.mutation<LeaveOrgApiResponse, LeaveOrgApiArg>({
-      query: () => ({ url: `/api/organizations/me/leave`, method: "DELETE" }),
+      query: (queryArg) => ({
+        url: `/api/organizations/${queryArg.id}/leave`,
+        method: "DELETE",
+      }),
     }),
   }),
   overrideExisting: false,
@@ -266,6 +297,15 @@ export type UpdateThemeApiArg = {
 };
 export type DeleteThemeApiResponse = unknown;
 export type DeleteThemeApiArg = {
+  id: string;
+};
+export type UpdateImageApiResponse = /** status 200 OK */ GalleryImageResponse;
+export type UpdateImageApiArg = {
+  id: string;
+  updateGalleryImageRequest: UpdateGalleryImageRequest;
+};
+export type DeleteImageApiResponse = unknown;
+export type DeleteImageApiArg = {
   id: string;
 };
 export type GetDeckApiResponse = /** status 200 OK */ DeckDto;
@@ -287,7 +327,6 @@ export type UpdateElementApiArg = {
   elementId: string;
   body:
     | GridQuestion
-    | ImageChoiceQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -346,6 +385,17 @@ export type JoinOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type JoinOrgApiArg = {
   joinOrganizationRequest: JoinOrganizationRequest;
 };
+export type ListImagesApiResponse = /** status 200 OK */ GalleryImageResponse[];
+export type ListImagesApiArg = void;
+export type UploadImageApiResponse = /** status 200 OK */ GalleryImageResponse;
+export type UploadImageApiArg = {
+  name?: string;
+  tags?: string;
+  organizationId?: string;
+  body: {
+    image: Blob;
+  };
+};
 export type ListDecksApiResponse = /** status 200 OK */ DeckDto[];
 export type ListDecksApiArg = void;
 export type CreateDeckApiResponse = /** status 200 OK */ DeckDto;
@@ -357,7 +407,6 @@ export type AddElementApiArg = {
   id: string;
   body:
     | GridQuestion
-    | ImageChoiceQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -420,8 +469,8 @@ export type GetByInviteTokenApiResponse = /** status 200 OK */ ShowcaseDto;
 export type GetByInviteTokenApiArg = {
   inviteToken: string;
 };
-export type GetMyOrgApiResponse = /** status 200 OK */ OrganizationResponse;
-export type GetMyOrgApiArg = void;
+export type ListMyOrgsApiResponse = /** status 200 OK */ OrganizationResponse[];
+export type ListMyOrgsApiArg = void;
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
 export type ListMyDecksApiResponse = /** status 200 OK */ DeckDto[];
@@ -434,7 +483,9 @@ export type LoginApiArg = {
   guestId?: string;
 };
 export type LeaveOrgApiResponse = unknown;
-export type LeaveOrgApiArg = void;
+export type LeaveOrgApiArg = {
+  id: string;
+};
 export type ThemeResponse = {
   id?: string;
   name?: string;
@@ -452,6 +503,20 @@ export type UpdateThemeRequest = {
   huePrimary?: number;
   hueAccent?: number;
   mode?: string;
+  organizationId?: string;
+};
+export type GalleryImageResponse = {
+  id?: string;
+  name?: string;
+  ownerId?: string;
+  organizationId?: string;
+  tags?: string[];
+  imageUrl?: string;
+  createdAt?: string;
+};
+export type UpdateGalleryImageRequest = {
+  name?: string;
+  tags?: string[];
   organizationId?: string;
 };
 export type ShowcaseSettings = {
@@ -476,6 +541,12 @@ export type GridQuestion = {
   kind: "GridQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     rows?: number;
     cols?: number;
@@ -484,7 +555,12 @@ export type GridQuestion = {
     multipleCorrect?: boolean;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -498,38 +574,31 @@ export type GridQuestion = {
 export type McqOption = {
   id?: string;
   text?: string;
+  galleryImageId?: string;
   imageUrl?: string;
+  color?: string;
 };
-export type ImageChoiceQuestion = {
-  kind: "ImageChoiceQuestion";
-} & DeckElementBase & {
-    id?: string;
-    prompt?: string;
-    options?: McqOption[];
-    correctOptionId?: string;
-    pointValue?: number;
-    difficulty?: "EASY" | "MEDIUM" | "HARD";
-    bestAnswerMode?: boolean;
-    bestAnswerBonus?: number;
-    explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
-    videoUrl?: string;
-    audioUrl?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-  };
 export type McqQuestion = {
   kind: "McqQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     options?: McqOption[];
     correctOptionIds?: string[];
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -544,6 +613,12 @@ export type NumberQuestion = {
   kind: "NumberQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     correctValue?: number;
     tolerance?: number;
@@ -551,7 +626,12 @@ export type NumberQuestion = {
     decimalPlaces?: number;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -566,6 +646,12 @@ export type PlaceOnImageQuestion = {
   kind: "PlaceOnImageQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     targetImageUrl?: string;
     correctX?: number;
@@ -574,7 +660,12 @@ export type PlaceOnImageQuestion = {
     scoring?: "BINARY" | "LINEAR";
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -589,13 +680,24 @@ export type QAndAQuestion = {
   kind: "QAndAQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     maxSubmissionsPerPlayer?: number;
     allowVoting?: boolean;
     autoApprove?: boolean;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -615,13 +717,24 @@ export type RankingQuestion = {
   kind: "RankingQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     items?: RankingItem[];
     correctOrder?: string[];
     scoring?: "EXACT" | "PARTIAL";
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -640,17 +753,27 @@ export type ScalesQuestion = {
   kind: "ScalesQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     statements?: ScaleStatement[];
     scaleMin?: number;
     scaleMax?: number;
     minLabel?: string;
     maxLabel?: string;
-    scored?: boolean;
     correctRatings?: number[];
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -666,8 +789,17 @@ export type Slide = {
 } & DeckElementBase & {
     id?: string;
     slideKind?: "TITLE" | "SECTION" | "CALLOUT" | "CONTENT" | "END";
+    publicKey?: string;
+    privateKey?: string;
     title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     body?: string;
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     displaySeconds?: number;
     speakerNotes?: string;
     backgroundImageUrl?: string;
@@ -680,13 +812,24 @@ export type TextQuestion = {
   kind: "TextQuestion";
 } & DeckElementBase & {
     id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
     prompt?: string;
     correctAnswer?: string;
     acceptedVariants?: string[];
     caseSensitive?: boolean;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
     bestAnswerBonus?: number;
     explanation?: string;
     displaySeconds?: number;
@@ -715,7 +858,6 @@ export type DeckDto = {
   elementCount?: number;
   elements?: (
     | GridQuestion
-    | ImageChoiceQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -767,7 +909,7 @@ export type RegisteredUser = {
   stats?: PlayerStats;
   membership?: Membership;
   newsletter?: boolean;
-  organizationId?: string;
+  organizationIds?: string[];
   activeThemeId?: string;
   lastLogin?: string;
   createdAt?: string;
@@ -799,7 +941,6 @@ export type ShowcaseDto = {
   themeId?: string;
   deckSnapshot?: (
     | GridQuestion
-    | ImageChoiceQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -879,7 +1020,6 @@ export type GuestLoginRequest = {
 export type UpdateProfileRequest = {
   pictureUrl?: string;
   newsletter?: boolean;
-  organizationId?: string;
   activeThemeId?: string;
 };
 export type PlayerPlacement = {
@@ -899,15 +1039,10 @@ export type GridAnswer = {
 } & AnswerPayloadBase & {
     selectedCellIndexes?: number[];
   };
-export type ImageChoiceAnswer = {
-  kind: "ImageChoiceAnswer";
-} & AnswerPayloadBase & {
-    optionId?: string;
-  };
 export type McqAnswer = {
   kind: "McqAnswer";
 } & AnswerPayloadBase & {
-    optionId?: string;
+    optionIds?: string[];
   };
 export type NumberAnswer = {
   kind: "NumberAnswer";
@@ -945,7 +1080,6 @@ export type PlayerRoundDetail = {
   userName?: string;
   payload?:
     | GridAnswer
-    | ImageChoiceAnswer
     | McqAnswer
     | NumberAnswer
     | PlaceOnImageAnswer
@@ -960,7 +1094,6 @@ export type RoundReview = {
   round?: number;
   element?:
     | GridQuestion
-    | ImageChoiceQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -997,6 +1130,8 @@ export type UserDto = GuestUser | RegisteredUser;
 export const {
   useUpdateThemeMutation,
   useDeleteThemeMutation,
+  useUpdateImageMutation,
+  useDeleteImageMutation,
   useGetDeckQuery,
   useLazyGetDeckQuery,
   useUpdateDeckMutation,
@@ -1014,6 +1149,9 @@ export const {
   useJoinByRoomCodeMutation,
   useCreateOrgMutation,
   useJoinOrgMutation,
+  useListImagesQuery,
+  useLazyListImagesQuery,
+  useUploadImageMutation,
   useListDecksQuery,
   useLazyListDecksQuery,
   useCreateDeckMutation,
@@ -1037,8 +1175,8 @@ export const {
   useLazyGetResultsQuery,
   useGetByInviteTokenQuery,
   useLazyGetByInviteTokenQuery,
-  useGetMyOrgQuery,
-  useLazyGetMyOrgQuery,
+  useListMyOrgsQuery,
+  useLazyListMyOrgsQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
   useListMyDecksQuery,

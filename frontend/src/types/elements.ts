@@ -6,7 +6,6 @@
 // the literal types here must match those exact strings.
 import type {
   GridQuestion,
-  ImageChoiceQuestion,
   McqAnswer,
   McqOption,
   McqQuestion,
@@ -31,10 +30,6 @@ export interface NumberAnswer {
   kind: "NumberAnswer";
   value?: number;
 }
-export interface ImageChoiceAnswer {
-  kind: "ImageChoiceAnswer";
-  optionId?: string;
-}
 export interface GridAnswer {
   kind: "GridAnswer";
   selectedCellIndexes?: number[];
@@ -53,7 +48,6 @@ export type DeckElement =
   | McqQuestion
   | TextQuestion
   | NumberQuestion
-  | ImageChoiceQuestion
   | RankingQuestion
   | ScalesQuestion
   | QAndAQuestion
@@ -64,7 +58,6 @@ export type AnswerPayload =
   | McqAnswer
   | TextAnswer
   | NumberAnswer
-  | ImageChoiceAnswer
   | RankingAnswer
   | ScalesAnswer
   | GridAnswer
@@ -78,7 +71,6 @@ export type {
   McqQuestion,
   TextQuestion,
   NumberQuestion,
-  ImageChoiceQuestion,
   RankingQuestion,
   ScalesQuestion,
   QAndAQuestion,

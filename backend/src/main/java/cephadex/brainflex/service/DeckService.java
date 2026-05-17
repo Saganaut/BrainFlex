@@ -25,6 +25,9 @@ import cephadex.brainflex.dto.UpdateDeckRequest;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.ImageChoiceQuestion;
+import cephadex.brainflex.model.element.McqOption;
+import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.repository.DeckRepository;
@@ -69,8 +72,9 @@ public class DeckService {
         User user = caller.orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to view this deck"));
         if (visibility == DeckVisibility.ORG) {
-            if (deck.getOrganizationId() != null
-                    && deck.getOrganizationId().equals(user.getOrganizationId())) {
+            String deckOrgId = deck.getOrganizationId();
+            var memberships = user.getOrganizationIds();
+            if (deckOrgId != null && memberships != null && memberships.contains(deckOrgId)) {
                 return deck;
             }
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Deck is restricted to its organization");
@@ -155,6 +159,7 @@ public class DeckService {
      */
     public Deck addElement(String deckId, User caller, DeckElement incoming) {
         Deck deck = requireOwned(deckId, caller);
+        validateOptionImages(incoming);
         DeckElement withId = ensureElementId(incoming);
         deck.getElements().add(withId);
         deck.setUpdatedAt(LocalDateTime.now());
@@ -166,6 +171,7 @@ public class DeckService {
      */
     public Deck updateElement(String deckId, String elementId, User caller, DeckElement incoming) {
         Deck deck = requireOwned(deckId, caller);
+        validateOptionImages(incoming);
         int idx = indexOfElement(deck, elementId);
         // Preserve the id even if the client omits it on update.
         DeckElement withId = ensureElementId(incoming);
@@ -176,6 +182,30 @@ public class DeckService {
         deck.getElements().set(idx, withId);
         deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
+    }
+
+    /**
+     * `McqOption.galleryImageId` and `McqOption.imageUrl` are mutually exclusive
+     * on write — the renderer treats `galleryImageId` as the source of truth
+     * (hydrated at read time) and `imageUrl` as the external/paste-link path.
+     * Carrying both is a smell that we'd silently resolve one direction or the
+     * other; reject it at the boundary instead.
+     */
+    private static void validateOptionImages(DeckElement element) {
+        List<McqOption> options = switch (element) {
+            case McqQuestion q -> q.options();
+            case ImageChoiceQuestion q -> q.options();
+            default -> null;
+        };
+        if (options == null) return;
+        for (McqOption option : options) {
+            boolean hasGallery = option.galleryImageId() != null && !option.galleryImageId().isBlank();
+            boolean hasUrl = option.imageUrl() != null && !option.imageUrl().isBlank();
+            if (hasGallery && hasUrl) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Option may set either galleryImageId or imageUrl, not both");
+            }
+        }
     }
 
     public Deck deleteElement(String deckId, String elementId, User caller) {

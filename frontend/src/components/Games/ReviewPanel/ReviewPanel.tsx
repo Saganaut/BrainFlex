@@ -2,7 +2,7 @@
  * Post-showcase review. Paginates through every element played and renders
  * per-kind summaries:
  *   SLIDE     — title + body (no answers to aggregate)
- *   MCQ / IMAGE_CHOICE — horizontal bar chart of option-id counts
+ *   MCQ       — horizontal bar chart of option-id counts
  *   TEXT      — frequency list of unique submissions
  *   NUMBER    — list of submitted values sorted by frequency
  *   other     — just the totals + a per-player breakdown
@@ -156,21 +156,18 @@ const bodyFor = (e: DeckElement): string | undefined => {
 const renderAggregate = (round: RoundReview, element: DeckElement) => {
   const answers: PlayerRoundDetail[] = round.playerAnswers ?? [];
   switch (element.kind) {
-    case "McqQuestion":
-    case "ImageChoiceQuestion": {
+    case "McqQuestion": {
       const options = element.options ?? [];
       const counts = new Map<string, number>();
       for (const a of answers) {
         const p = a.payload;
-        if ((p?.kind === "McqAnswer" || p?.kind === "ImageChoiceAnswer") && p.optionId) {
-          counts.set(p.optionId, (counts.get(p.optionId) ?? 0) + 1);
+        if (p?.kind === "McqAnswer") {
+          for (const oid of p.optionIds ?? []) {
+            counts.set(oid, (counts.get(oid) ?? 0) + 1);
+          }
         }
       }
-      // MCQs have a list of correct ids; ImageChoice still has a single one.
-      const correctIds =
-        element.kind === "McqQuestion"
-          ? new Set(element.correctOptionIds ?? [])
-          : new Set(element.correctOptionId ? [element.correctOptionId] : []);
+      const correctIds = new Set(element.correctOptionIds ?? []);
       const bars: BarChartItem[] = options.map((o) => ({
         label: o.text ?? "",
         value: counts.get(o.id ?? "") ?? 0,
@@ -250,13 +247,13 @@ const renderSubmission = (
       return payload.text ?? "(empty)";
     case "NumberAnswer":
       return payload.value !== undefined ? String(payload.value) : "(empty)";
-    case "McqAnswer":
-    case "ImageChoiceAnswer": {
-      if (element && (element.kind === "McqQuestion" || element.kind === "ImageChoiceQuestion")) {
-        const opt = element.options?.find((o) => o.id === payload.optionId);
-        return opt?.text ?? payload.optionId ?? "(unknown)";
+    case "McqAnswer": {
+      const oid = payload.optionIds?.[0];
+      if (element?.kind === "McqQuestion") {
+        const opt = element.options?.find((o) => o.id === oid);
+        return opt?.text ?? oid ?? "(unknown)";
       }
-      return payload.optionId ?? "(unknown)";
+      return oid ?? "(unknown)";
     }
     default:
       return `(${payload.kind})`;

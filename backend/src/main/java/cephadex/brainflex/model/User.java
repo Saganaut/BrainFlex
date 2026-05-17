@@ -1,6 +1,8 @@
 package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
@@ -36,8 +38,8 @@ public class User {
     private Boolean isClosed;
     private LocalDateTime closedAt;
 
-    /** The organization this user belongs to (nullable). */
-    private String organizationId;
+    /** Organizations this user belongs to. Empty list = personal-only. */
+    private List<String> organizationIds = new ArrayList<>();
 
     /** The id of the user's currently active custom Theme (nullable). */
     private String activeThemeId;

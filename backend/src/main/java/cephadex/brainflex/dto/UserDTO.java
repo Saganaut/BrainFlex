@@ -1,6 +1,7 @@
 package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import cephadex.brainflex.model.Membership;
 import cephadex.brainflex.model.PlayerStats;
@@ -48,7 +49,7 @@ public sealed interface UserDTO {
             PlayerStats stats,
             Membership membership,
             Boolean newsletter,
-            String organizationId,
+            List<String> organizationIds,
             String activeThemeId,
             LocalDateTime lastLogin,
             LocalDateTime createdAt)
@@ -65,7 +66,7 @@ public sealed interface UserDTO {
                     user.getStats(),
                     user.getMembership(),
                     user.getNewsletter(),
-                    user.getOrganizationId(),
+                    user.getOrganizationIds() == null ? List.of() : List.copyOf(user.getOrganizationIds()),
                     user.getActiveThemeId(),
                     user.getLastLogin(),
                     user.getCreatedAt());

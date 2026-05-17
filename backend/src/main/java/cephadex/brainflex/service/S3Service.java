@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import cephadex.brainflex.config.S3Properties;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -64,6 +65,40 @@ public class S3Service {
                         .build(),
                 RequestBody.fromBytes(imageBytes));
         return generatePresignedUrl(key);
+    }
+
+    /** Returns the deterministic S3 key for a gallery image. Exposed so the
+     *  controller can persist the key alongside the presigned URL — the URL
+     *  expires, the key doesn't, so re-reads can refresh the URL on demand. */
+    public String galleryImageKey(String imageId) {
+        return "gallery-images/" + imageId + "/image.webp";
+    }
+
+    public String uploadGalleryImage(String imageId, byte[] imageBytes) {
+        String key = galleryImageKey(imageId);
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(props.bucket())
+                        .key(key)
+                        .contentType("image/webp")
+                        .build(),
+                RequestBody.fromBytes(imageBytes));
+        return generatePresignedUrl(key);
+    }
+
+    /** Re-generates a presigned GET URL for a previously uploaded key. Used
+     *  when listing gallery images: the stored URL has likely expired since
+     *  upload time, but the key is stable. */
+    public String refreshPresignedUrl(String key) {
+        return generatePresignedUrl(key);
+    }
+
+    public void deleteObject(String key) {
+        s3Client.deleteObject(
+                DeleteObjectRequest.builder()
+                        .bucket(props.bucket())
+                        .key(key)
+                        .build());
     }
 
     private String generatePresignedUrl(String key) {

@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+// Account settings dashboard. Tabs split unrelated concerns (profile, theme,
+// organizations, danger zone) so the page doesn't grow into a single long
+// scrolling form as we add settings.
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   useCloseAccountMutation,
@@ -10,12 +13,18 @@ import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { apiBaseUrl } from "../../store/emptyApi";
 import { ThemeSection } from "./ThemeSection";
 import { OrgSection } from "./OrgSection";
+import { GallerySection } from "./GallerySection";
 import styles from "./AccountPage.module.css";
 import { Btn } from "@components/Common/Buttons/Btn";
-import { Checkbox } from "@/components/Common/Input/Checkbox";
+import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
+import { Tabs } from "@/components/Common/Tabs/Tabs";
+import { FileUpload } from "@/components/Common/Input/FileUpload/FileUpload";
+import { Avatar } from "@/components/Common/Avatar/Avatar";
+import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
+import { validateImageFile } from "@/utils/imageValidation";
+import { extractErrorMessage } from "@/utils/utils";
 
-const MAX_FILE_SIZE = 1024 * 1024;
-const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+type Tab = "profile" | "theme" | "gallery" | "organizations" | "danger";
 
 const AccountPage = () => {
   const userState = useCurrentUser();
@@ -25,7 +34,8 @@ const AccountPage = () => {
   const registeredUser =
     userState.state === "registered" ? userState.user : null;
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("profile");
+
   const [pictureSuccess, setPictureSuccess] = useState(false);
   const [pictureError, setPictureError] = useState<string | null>(null);
 
@@ -37,13 +47,13 @@ const AccountPage = () => {
   const newsletter = pendingNewsletter ?? registeredUser?.newsletter ?? false;
   const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
-  const [closeConfirm, setCloseConfirm] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
 
   const [updateProfile] = useUpdateProfileMutation();
   const [uploadProfileImage, { isLoading: isUploading }] =
     useUploadProfileImageMutation();
   const [closeAccount, { isLoading: isClosing }] = useCloseAccountMutation();
+  const confirm = useConfirm();
 
   useEffect(() => {
     if (userState.state !== "loading" && userState.state !== "registered") {
@@ -55,27 +65,21 @@ const AccountPage = () => {
     return <div className={styles.loading}>Loading...</div>;
   if (userState.state !== "registered") return null;
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  // FileUpload returns the full accumulated list each change; treat the most
+  // recent entry as the chosen file so re-picking replaces the previous one.
+  const handleFiles = async (files: File[]) => {
+    const file = files.at(-1);
     if (!file) return;
 
     setPictureError(null);
     setPictureSuccess(false);
 
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      setPictureError(
-        "Invalid file type. Please upload a JPEG, PNG, WebP, or GIF.",
-      );
-      return;
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      setPictureError("Image is too large. Maximum size is 1 MB.");
+    const validationError = validateImageFile(file, "avatar");
+    if (validationError) {
+      setPictureError(validationError);
       return;
     }
 
-    // Build FormData so fetchBaseQuery sends multipart/form-data with the
-    // correct boundary instead of JSON-serializing the body.
     const formData = new FormData();
     formData.append("image", file);
 
@@ -86,11 +90,7 @@ const AccountPage = () => {
       setPictureSuccess(true);
       await refetch();
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === "object" && "data" in err
-          ? String(err.data)
-          : null;
-      setPictureError(msg ?? "Upload failed. Please try again.");
+      setPictureError(extractErrorMessage(err, "Upload failed. Please try again."));
     }
   };
 
@@ -102,13 +102,20 @@ const AccountPage = () => {
         updateProfileRequest: { newsletter: checked },
       }).unwrap();
       setNewsletterSuccess(true);
-      setPendingNewsletter(null); // revert to server value (which now matches)
+      setPendingNewsletter(null);
     } catch {
-      setPendingNewsletter(null); // revert optimistic update on failure
+      setPendingNewsletter(null);
     }
   };
 
   const handleCloseAccount = async () => {
+    const ok = await confirm({
+      title: "Close account",
+      message: "Are you sure? This cannot be undone.",
+      confirmLabel: "Close my account",
+      variant: "danger",
+    });
+    if (!ok) return;
     setCloseError(null);
     try {
       await closeAccount().unwrap();
@@ -122,41 +129,31 @@ const AccountPage = () => {
     }
   };
 
-  return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>Account Settings</h1>
-
+  const profilePanel = (
+    <>
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Profile Picture</h2>
-        {registeredUser?.pictureUrl && (
-          <img
-            src={registeredUser.pictureUrl}
-            alt='Profile picture'
-            className={styles.avatar}
-          />
-        )}
-        <input
-          ref={fileInputRef}
-          type='file'
-          accept='image/jpeg,image/png,image/webp,image/gif'
-          onChange={(e) => {
-            void handleFileChange(e);
-          }}
-          className={styles.fileInputHidden}
-          aria-label='Upload profile picture'
+        <Avatar
+          src={registeredUser?.pictureUrl}
+          name={registeredUser?.userName ?? registeredUser?.name}
+          alt='Profile picture'
+          size='xl'
         />
-        <Btn
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}>
-          {isUploading ? "Uploading..." : "Upload new photo"}
-        </Btn>
-        <p className={styles.uploadHint}>
-          JPEG, PNG, WebP or GIF · max 1 MB · resized to 500×500
-        </p>
+        <FileUpload
+          accept='image/jpeg,image/png,image/webp,image/gif'
+          onChange={(files) => {
+            void handleFiles(files);
+          }}
+          infoMessage={
+            isUploading
+              ? "Uploading..."
+              : "JPEG, PNG, WebP or GIF · max 1 MB · resized to 500×500"
+          }
+          errorMessage={pictureError ?? undefined}
+        />
         {pictureSuccess && (
           <p className={styles.success}>Profile picture updated.</p>
         )}
-        {pictureError && <p className={styles.error}>{pictureError}</p>}
       </section>
 
       <section className={styles.section}>
@@ -174,46 +171,48 @@ const AccountPage = () => {
           <p className={styles.success}>Preference saved.</p>
         )}
       </section>
+    </>
+  );
 
-      <ThemeSection />
+  const dangerPanel = (
+    <section className={`${styles.section} ${styles.dangerSection}`}>
+      <h2 className={styles.sectionTitle}>Close Account</h2>
+      <p className={styles.dangerText}>
+        Closing your account is permanent. Your account will be deactivated and
+        you will be logged out.
+      </p>
+      <Btn
+        className={styles.dangerBtn}
+        onClick={() => void handleCloseAccount()}
+        disabled={isClosing}>
+        {isClosing ? "Closing..." : "Close my account"}
+      </Btn>
+      {closeError && <p className={styles.error}>{closeError}</p>}
+    </section>
+  );
 
-      <OrgSection />
+  return (
+    <div className={styles.page}>
+      <h1 className={styles.title}>Account Settings</h1>
 
-      <section className={`${styles.section} ${styles.dangerSection}`}>
-        <h2 className={styles.sectionTitle}>Close Account</h2>
-        <p className={styles.dangerText}>
-          Closing your account is permanent. Your account will be deactivated
-          and you will be logged out.
-        </p>
-        {!closeConfirm ? (
-          <Btn
-            className={styles.dangerBtn}
-            onClick={() => {
-              setCloseConfirm(true);
-            }}>
-            Close my account
-          </Btn>
-        ) : (
-          <div className={styles.confirmBox}>
-            <p>Are you sure? This cannot be undone.</p>
-            <div className={styles.confirmActions}>
-              <Btn
-                className={styles.dangerBtn}
-                onClick={() => void handleCloseAccount()}
-                disabled={isClosing}>
-                {isClosing ? "Closing..." : "Yes, close my account"}
-              </Btn>
-              <Btn
-                onClick={() => {
-                  setCloseConfirm(false);
-                }}>
-                Cancel
-              </Btn>
-            </div>
-          </div>
-        )}
-        {closeError && <p className={styles.error}>{closeError}</p>}
-      </section>
+      <Tabs
+        ariaLabel='Account settings'
+        value={activeTab}
+        onChange={(id) => {
+          setActiveTab(id as Tab);
+        }}
+        items={[
+          { id: "profile", label: "Profile", panel: profilePanel },
+          { id: "theme", label: "Theme", panel: <ThemeSection /> },
+          { id: "gallery", label: "Gallery", panel: <GallerySection /> },
+          {
+            id: "organizations",
+            label: "Organizations",
+            panel: <OrgSection />,
+          },
+          { id: "danger", label: "Danger zone", panel: dangerPanel },
+        ]}
+      />
     </div>
   );
 };

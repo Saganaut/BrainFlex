@@ -9,6 +9,7 @@
  * spec. Replace the corresponding *Panel sub-components when we have copy.
  */
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import {
   PencilIcon,
   PaintBrushIcon,
@@ -16,6 +17,7 @@ import {
   ShareIcon,
 } from "@heroicons/react/24/outline";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
+import { ThemePanel } from "./ThemePanel";
 import styles from "./RightSidebarContent.module.css";
 
 type PanelKey = "edit" | "theme" | "participants" | "sharing";
@@ -37,38 +39,55 @@ const PlaceholderPanel = ({ description }: { description: string }) => (
 const RightSidebarContent = () => {
   const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
 
+  const setPanel = (next: PanelKey | null) => {
+    const isSwap =
+      openPanel !== null && next !== null && openPanel !== next;
+    if (isSwap && typeof document.startViewTransition === "function") {
+      document.startViewTransition(() => {
+        // flushSync is required inside startViewTransition so React commits
+        // the state change before the browser snapshots the "after" frame.
+        // eslint-disable-next-line react-dom/no-flush-sync
+        flushSync(() => {
+          setOpenPanel(next);
+        });
+      });
+    } else {
+      setOpenPanel(next);
+    }
+  };
+
   const toggle = (key: PanelKey) => {
-    setOpenPanel((prev) => (prev === key ? null : key));
+    setPanel(openPanel === key ? null : key);
   };
 
   return (
     <div className={styles.rightSidebarContent}>
       {openPanel !== null && (
         <aside className={styles.drawer} aria-label={PANEL_TITLES[openPanel]}>
-          <div className={styles.drawerHeader}>
-            <h3 className={styles.drawerTitle}>{PANEL_TITLES[openPanel]}</h3>
-            <IconBtn
-              type='close'
-              size='sm'
-              aria-label='Close panel'
-              onClick={() => {
-                setOpenPanel(null);
-              }}
-            />
-          </div>
-          <div className={styles.drawerBody}>
-            {openPanel === "edit" && (
-              <PlaceholderPanel description='Per-slide layout, animation, transition, and template options will live here.' />
-            )}
-            {openPanel === "theme" && (
-              <PlaceholderPanel description='Pick a color palette, background, and font set for this deck.' />
-            )}
-            {openPanel === "participants" && (
-              <PlaceholderPanel description='Roster of who has joined plus per-participant moderation actions.' />
-            )}
-            {openPanel === "sharing" && (
-              <PlaceholderPanel description='Visibility, invite links, and per-org access controls for this deck.' />
-            )}
+          <div className={styles.panelContent} key={openPanel}>
+            <div className={styles.drawerHeader}>
+              <h3 className={styles.drawerTitle}>{PANEL_TITLES[openPanel]}</h3>
+              <IconBtn
+                type='close'
+                size='sm'
+                aria-label='Close panel'
+                onClick={() => {
+                  setPanel(null);
+                }}
+              />
+            </div>
+            <div className={styles.drawerBody}>
+              {openPanel === "edit" && (
+                <PlaceholderPanel description='Per-slide layout, animation, transition, and template options will live here.' />
+              )}
+              {openPanel === "theme" && <ThemePanel />}
+              {openPanel === "participants" && (
+                <PlaceholderPanel description='Roster of who has joined plus per-participant moderation actions.' />
+              )}
+              {openPanel === "sharing" && (
+                <PlaceholderPanel description='Visibility, invite links, and per-org access controls for this deck.' />
+              )}
+            </div>
           </div>
         </aside>
       )}

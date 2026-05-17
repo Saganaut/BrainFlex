@@ -1,104 +1,35 @@
 // Theme settings section: preset themes, custom themes, and theme editor.
-// Handles activating themes (applies hues immediately) and CRUD for custom themes.
+// Activation, deletion, and the editor-modal launcher all flow through
+// useThemePicker so the deck-editor sidebar can reuse the exact same behavior.
 import { useState } from "react";
-import type { ThemeResponse } from "../../store/BrainFlexApi";
-import {
-  useDeleteThemeMutation,
-  useGetCurrentUserQuery,
-  useListThemesQuery,
-  useUpdateProfileMutation,
-} from "../../store/BrainFlexApi";
-import { useTheme } from "../../hooks/useTheme";
-import { useCurrentUser } from "../../hooks/useCurrentUser";
-import { themePresets } from "../DesignSystemPage/data";
+import { useThemePicker } from "../../hooks/useThemePicker";
 import { ThemeCard } from "./ThemeCard";
-import { ThemeEditor } from "./ThemeEditor";
 import styles from "./ThemeSection.module.css";
 import accountStyles from "./AccountPage.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 
 const ThemeSection = () => {
-  const userState = useCurrentUser();
-  const { refetch: refetchUser } = useGetCurrentUserQuery();
-  const registeredUser =
-    userState.state === "registered" ? userState.user : null;
-
-  const { data: themes = [], refetch: refetchThemes } = useListThemesQuery(
-    undefined,
-    { skip: !registeredUser },
-  );
-
-  const [updateProfile] = useUpdateProfileMutation();
-  const [deleteTheme] = useDeleteThemeMutation();
-
   const {
-    setTheme: applyMode,
-    setHuePrimary,
-    setHueAccent,
-    resetHues,
-    customTheme,
-  } = useTheme();
+    presets,
+    themes,
+    activeThemeId,
+    customPresetActive,
+    userId,
+    activatePreset,
+    activateCustom,
+    deleteCustom,
+    openEditor,
+  } = useThemePicker();
 
-  const [editing, setEditing] = useState<ThemeResponse | null | "new">(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const activeThemeId = registeredUser?.activeThemeId;
-  const userId = registeredUser?.id;
-  const organizationId = registeredUser?.organizationId ?? undefined;
-
-  const handleActivatePreset = async (preset: {
-    label: string;
-    huePrimary: number;
-    hueAccent: number;
-  }) => {
-    if (preset.label === "Brand") {
-      resetHues();
-    } else {
-      setHuePrimary(preset.huePrimary);
-      setHueAccent(preset.hueAccent);
-    }
-    // Clear any custom active theme when switching to a preset
-    await updateProfile({
-      updateProfileRequest: { activeThemeId: "" },
-    }).unwrap();
-    await refetchUser();
-  };
-
-  const handleActivateCustom = async (theme: ThemeResponse) => {
-    if (!theme.id) return;
-    setHuePrimary(theme.huePrimary ?? 260);
-    setHueAccent(theme.hueAccent ?? 25);
-    if (theme.mode === "light" || theme.mode === "dark") {
-      applyMode(theme.mode);
-    }
-    await updateProfile({
-      updateProfileRequest: { activeThemeId: theme.id },
-    }).unwrap();
-    await refetchUser();
-  };
-
-  const handleDelete = async (theme: ThemeResponse) => {
-    if (!theme.id) return;
+  const handleDelete = async (theme: Parameters<typeof deleteCustom>[0]) => {
     setDeleteError(null);
     try {
-      await deleteTheme({ id: theme.id }).unwrap();
-      // If the deleted theme was active, clear it and revert to brand defaults
-      if (activeThemeId === theme.id) {
-        await updateProfile({
-          updateProfileRequest: { activeThemeId: "" },
-        }).unwrap();
-        resetHues();
-        await refetchUser();
-      }
-      await refetchThemes();
+      await deleteCustom(theme);
     } catch {
       setDeleteError("Failed to delete theme.");
     }
-  };
-
-  const handleSaved = async () => {
-    setEditing(null);
-    await refetchThemes();
   };
 
   return (
@@ -108,29 +39,16 @@ const ThemeSection = () => {
         <Btn
           type='button'
           onClick={() => {
-            setEditing("new");
+            openEditor();
           }}>
           + New theme
         </Btn>
       </div>
 
-      {editing != null && (
-        <ThemeEditor
-          existing={editing === "new" ? undefined : editing}
-          organizationId={organizationId}
-          onSaved={() => {
-            void handleSaved();
-          }}
-          onCancel={() => {
-            setEditing(null);
-          }}
-        />
-      )}
-
       <div>
         <p className={styles.subsectionTitle}>Presets</p>
         <div className={styles.themeGrid}>
-          {themePresets.map((preset) => (
+          {presets.map((preset) => (
             <div
               key={preset.label}
               className={`${styles.card} ${!activeThemeId && styles.cardActive}`}>
@@ -152,7 +70,7 @@ const ThemeSection = () => {
                 <p className={styles.cardName}>{preset.label}</p>
                 <div className={styles.cardMeta}>
                   {!activeThemeId &&
-                    !customTheme &&
+                    !customPresetActive &&
                     preset.label === "Brand" && (
                       <span className={`${styles.badge} ${styles.badgeActive}`}>
                         Active
@@ -165,7 +83,7 @@ const ThemeSection = () => {
                   type='button'
                   className={`${styles.cardActionBtn} ${styles.cardActionBtnPrimary}`}
                   onClick={() => {
-                    void handleActivatePreset(preset);
+                    void activatePreset(preset);
                   }}>
                   Activate
                 </Btn>
@@ -191,12 +109,12 @@ const ThemeSection = () => {
                   theme.ownerId !== userId
                 }
                 onActivate={(t) => {
-                  void handleActivateCustom(t);
+                  void activateCustom(t);
                 }}
                 onEdit={
                   theme.ownerId === userId
                     ? (t) => {
-                        setEditing(t);
+                        openEditor(t);
                       }
                     : undefined
                 }

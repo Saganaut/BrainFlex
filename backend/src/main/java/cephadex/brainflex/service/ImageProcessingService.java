@@ -46,6 +46,12 @@ public class ImageProcessingService {
         return process(file, MAX_BACKGROUND_BYTES, MAX_BACKGROUND_DIMENSION, ALLOWED_TYPES_NO_GIF, "5 MB");
     }
 
+    /** Gallery: max 5 MB, max 2000px on longest side, JPEG/PNG/WebP → WebP.
+     *  Shares the background tier intentionally — same use-case (slide content). */
+    public byte[] validateAndProcessGalleryImage(MultipartFile file) throws IOException {
+        return process(file, MAX_BACKGROUND_BYTES, MAX_BACKGROUND_DIMENSION, ALLOWED_TYPES_NO_GIF, "5 MB");
+    }
+
     private byte[] process(MultipartFile file, long maxBytes, int maxDimension,
             Set<String> allowedTypes, String limitLabel) throws IOException {
         if (file.isEmpty()) {

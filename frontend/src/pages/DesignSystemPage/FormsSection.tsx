@@ -6,7 +6,7 @@ import { NumberInput } from "../../components/Common/Input/NumberInput/NumberInp
 import { TextArea } from "../../components/Common/Input/TextArea/TextArea";
 import { Checkbox } from "../../components/Common/Input/Checkbox/Checkbox";
 import { RadioGroup } from "../../components/Common/Input/RadioGroup/RadioGroup";
-import { HuePicker } from "../../components/Common/Input/HuePicker/HuePicker";
+import { ColorPicker } from "../../components/Common/Input/ColorPicker/ColorPicker";
 import { RichTextInput } from "../../components/Common/Input/RichTextInput/RichTextInput";
 import { Toggle } from "../../components/Common/Input/Toggle/Toggle";
 import { Dropdown } from "../../components/Common/Input/Dropdown/Dropdown";
@@ -238,9 +238,9 @@ const FormsSection = () => {
             />
           </div>
 
-          <h4>Hue Picker</h4>
+          <h4>Color Picker</h4>
           <div className={styles.formHueRow}>
-            <HuePicker label='Color' value={hue} onChange={setHue} />
+            <ColorPicker label='Color' value={hue} onChange={setHue} />
           </div>
 
           <h4>Rich Text Input</h4>

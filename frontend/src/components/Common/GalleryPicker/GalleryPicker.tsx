@@ -1,18 +1,13 @@
 // Modal body that lets a slide-editor caller pick an image from the user's
 // gallery (their own uploads plus anything shared with their orgs). Includes
 // an inline upload form so authors can add a new image without leaving the
-// editor. Click a thumbnail → onPick({ galleryImageId, imageUrl }) fires
-// (the caller is responsible for closing the modal).
-//
-// The gallery id is the stable reference callers should persist; the URL is
-// the freshly-signed presigned URL for immediate render. See
-// `useGalleryPicker` and the mutual-exclusion rule in DeckService for why
-// callers must not persist both together.
+// editor. Click a thumbnail → onPick(image) fires with a fully-populated
+// internal Image (the caller is responsible for closing the modal).
 //
 // Heavier management (rename / re-tag / delete) lives on the Gallery tab of
 // the Account page so this surface stays a quick browse-and-pick.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useListMyOrgsQuery } from "@/store/BrainFlexApi";
+import { useListMyOrgsQuery, type Image } from "@/store/BrainFlexApi";
 import {
   useListGalleryImagesQuery,
   useUploadGalleryImageMutation,
@@ -24,16 +19,12 @@ import { Input } from "@/components/Common/Input/Input/Input";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
 import { EmptyState } from "@/components/Common/EmptyState/EmptyState";
 import { IMAGE_TIERS, validateImageFile } from "@/utils/imageValidation";
+import { internalImage } from "@/utils/image";
 import { extractErrorMessage } from "@/utils/utils";
 import styles from "./GalleryPicker.module.css";
 
-interface PickedImage {
-  galleryImageId?: string;
-  imageUrl: string;
-}
-
 interface GalleryPickerProps {
-  onPick: (picked: PickedImage) => void;
+  onPick: (image: Image) => void;
   onClose: () => void;
 }
 
@@ -126,8 +117,8 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
       setUploadTags("");
       setUploadOrgId("");
       setUploadMode(false);
-      if (created.imageUrl) {
-        onPick({ galleryImageId: created.id, imageUrl: created.imageUrl });
+      if (created.id && created.imageUrl) {
+        onPick(internalImage(created.id, created.imageUrl));
       }
     } catch (err: unknown) {
       setUploadError(extractErrorMessage(err, "Upload failed. Please try again."));
@@ -142,8 +133,8 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
         key={img.id}
         className={styles.tile}
         onClick={() => {
-          if (img.imageUrl) {
-            onPick({ galleryImageId: img.id, imageUrl: img.imageUrl });
+          if (img.id && img.imageUrl) {
+            onPick(internalImage(img.id, img.imageUrl));
           }
         }}>
         {img.imageUrl ? (

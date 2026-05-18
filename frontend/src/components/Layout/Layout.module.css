@@ -47,7 +47,6 @@
 }
 
 .canvasHeader {
-  border: 1px dashed white;
   height: var(--navbar-height);
 
   &.isCollapsed {

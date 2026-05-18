@@ -18,47 +18,39 @@
  * Question-level concerns (prompt, addOption) live on
  * `useMcqQuestionEditor`, used by the parent.
  *
- * --- Image field: gallery vs URL ----------------------------------------
- *
- * McqOption stores two mutually-exclusive image references (validated on
- * save in `DeckService.validateOptionImages`):
- *   - `galleryImageId` — the stable reference to a `gallery_images` doc.
- *     The presigned `imageUrl` is computed at read time by
- *     DeckImageHydrationService, so authors who pick from the gallery get
- *     URLs that never go stale.
- *   - `imageUrl` — externally-hosted URL pasted by the author. Used
- *     verbatim; no hydration.
- *
- * The picker callback hands us BOTH the gallery id and a freshly-signed
- * URL. We commit `{ galleryImageId, imageUrl: undefined }` to the backend
- * (only the id is persisted), and concurrently write the picked URL into
- * the `getDeck` cache optimistically so the editor sees the new image
- * immediately. The cache-merge layer in `apiEnhancements.ts` preserves
- * that URL when the mutation response arrives (it would otherwise carry
- * `imageUrl: null` and flash the image away).
- *
- * Pasting a URL takes the opposite path: schedule a commit with
- * `{ galleryImageId: undefined, imageUrl: <typed> }`, which the backend
- * persists as-is.
+ * Image field: every option carries a single `Image` ({ useExternalImg,
+ * internalImgId, imgUrl }). The gallery picker returns a complete Image and
+ * we hand it straight to the editor. Pasted URLs become external Images.
+ * The backend strips `imgUrl` on write for internal images and rehydrates
+ * it on read, so there's nothing to sanitize client-side.
  */
 import { useEffect, useRef, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
+import { useSortable } from "@dnd-kit/react/sortable";
 import {
   BrainFlex,
   type McqOption as McqOptionType,
 } from "@/store/BrainFlexApi";
 import { useAppDispatch } from "@/store/hooks";
-import { Input } from "@/components/Common/Input/Input/Input";
+import { TextArea } from "@/components/Common/Input/TextArea/TextArea";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
-import { Toggle } from "@/components/Common/Input/Toggle/Toggle";
 
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
 import { useTheme } from "@/hooks/useTheme";
+import { useFitText } from "@/hooks/useFitText";
+import {
+  displayUrl,
+  emptyImage,
+  externalImage,
+  isImageEmpty,
+} from "@/utils/image";
 import { useMcqOptionEditor } from "../useElementEditor";
 import styles from "./McqOptionEditable.module.css";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
+import { EllipsisVerticalIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import PurpleCheckIcon from "@/assets/common/PurpleCheckIcon.svg";
 import { ProgressBar } from "@/components/Common/ProgressBar/ProgressBar";
 import { EditOptionToolbar } from "./EditOptionToolbar";
+import { Container } from "@/components/Containers/Container";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -78,16 +70,36 @@ interface McqOptionEditableProps {
    *  values come from `useMcqOptionEditor` (deck cache), so this prop
    *  serves purely as the lookup key. */
   option: McqOptionType;
+  /** Position in the parent's option list. Forwarded to @dnd-kit's
+   *  `useSortable` so the parent's DragDropProvider can reorder. */
+  sortIndex: number;
+  addOption: () => void;
+  canAddOption: boolean;
 }
+
+/** The paste-URL input only shows external URLs; gallery picks leave it blank. */
+const pasteUrlOf = (image: McqOptionType["image"]): string =>
+  image?.useExternalImg ? (image.imgUrl ?? "") : "";
 
 const McqOptionEditable = ({
   option: initialOption,
+  sortIndex,
+  canAddOption,
+  addOption,
 }: McqOptionEditableProps) => {
   const optionId = initialOption.id;
   const { deckId } = routeApi.useParams();
   const dispatch = useAppDispatch();
   const openPicker = useGalleryPicker();
   const { huePrimary } = useTheme();
+
+  // dnd-kit sortable: id must be stable per option so DragDropProvider can
+  // identify the source on drop. The parent (McqSlideContent) wraps the grid
+  // in a DragDropProvider and routes the drop to `handleOptionDragEnd`.
+  const { ref: sortableRef, isDragging } = useSortable({
+    id: optionId ?? "",
+    index: sortIndex,
+  });
 
   const {
     option,
@@ -108,15 +120,28 @@ const McqOptionEditable = ({
   // Color uses a debounced commit while dragging; no separate local mirror
   // is needed because the native <input type="color"> owns the swatch DOM.
   const [text, setText] = useState(option?.text ?? "");
-  const [pasteUrl, setPasteUrl] = useState(
-    option?.galleryImageId ? "" : (option?.imageUrl ?? ""),
-  );
+  const [pasteUrl, setPasteUrl] = useState(() => pasteUrlOf(option?.image));
+
+  // Auto-shrink the option text so it fits inside the bounded card
+  // (the grid caps row height at `--mcq-option-max-h`). Below 11px the
+  // hook stops shrinking and the card clips — at that point the author
+  // has way too much text in an answer option anyway.
+  const fitRef = useFitText<HTMLTextAreaElement>(text, {
+    minPx: 11,
+    maxPx: 18,
+  });
 
   // Popover open state. Dismissed on outside pointerdown / Escape so the
-  // popover behaves like the rest of the app's floating surfaces (HuePicker,
-  // Dropdown).
+  // popover behaves like the rest of the app's floating surfaces (Dropdown).
   const [popoverOpen, setPopoverOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Combine @dnd-kit's sortable ref with our local cardRef (used by the
+  // outside-click detector below). Same pattern as SlideThumbnail.
+  const setCardRef = (node: HTMLDivElement | null) => {
+    cardRef.current = node;
+    if (typeof sortableRef === "function") sortableRef(node);
+  };
 
   useEffect(() => {
     if (!popoverOpen) return;
@@ -139,7 +164,7 @@ const McqOptionEditable = ({
   if (option && syncedFromId !== option.id) {
     markSynced(option.id);
     setText(option.text ?? "");
-    setPasteUrl(option.galleryImageId ? "" : (option.imageUrl ?? ""));
+    setPasteUrl(pasteUrlOf(option.image));
   }
 
   if (!option || !optionId) {
@@ -153,18 +178,18 @@ const McqOptionEditable = ({
     schedule({ ...option, text: next });
   };
 
-  /** Pick from the gallery: persist only `galleryImageId`, write the
-   *  freshly-signed URL into the local cache optimistically so the editor
-   *  sees the new image without waiting for the round trip. The cache-
-   *  merge layer in apiEnhancements then preserves that URL when the
-   *  mutation response (which carries `imageUrl: null`) lands.
+  /** Pick from the gallery: write the picker-supplied Image directly into
+   *  both the optimistic cache and the persisted record. The backend will
+   *  drop `imgUrl` on save and rehydrate it on read, but the cache write
+   *  keeps the freshly-signed URL on screen until the mutation response
+   *  (already hydrated by the controller) lands.
    *  Closes the popover up front — the gallery modal takes over, and the
    *  outside-click handler would otherwise close it as soon as the modal
    *  swallows pointer events. */
   const handlePickFromGallery = () => {
     flush();
     setPopoverOpen(false);
-    openPicker(({ galleryImageId, imageUrl }) => {
+    openPicker((image) => {
       if (!parent?.id) return;
 
       // Optimistic cache write: keyed lookup into the right deck/element/option.
@@ -175,50 +200,26 @@ const McqOptionEditable = ({
           if (el?.kind !== "McqQuestion") return;
           const opt = el.options?.find((o) => o.id === optionId);
           if (!opt) return;
-          opt.galleryImageId = galleryImageId;
-          opt.imageUrl = imageUrl;
+          opt.image = image;
         }),
       );
 
-      // Persisted write: galleryImageId only. The backend rejects writes
-      // that set both fields (mutual exclusion in DeckService). Build the
-      // option field-by-field rather than spreading + clearing imageUrl:
-      // `option` already carries a hydrated presigned URL (apiEnhancements
-      // re-merges it onto every mutation response), and that URL leaks
-      // through the spread before the JSON.stringify of `imageUrl: undefined`
-      // can drop it.
-      commit({
-        id: option.id,
-        text: option.text,
-        color: option.color,
-        galleryImageId,
-      });
+      // Persisted write: the same Image. The paste-URL input also clears
+      // because the option is now internal.
+      setPasteUrl("");
+      commit({ ...option, image });
     });
   };
 
   const handlePasteUrlChange = (next: string) => {
     setPasteUrl(next);
-    // Explicit construction so a stale `galleryImageId` on `option` (carried
-    // from a prior gallery pick) can't leak through alongside the new URL —
-    // the backend's mutual-exclusion validator rejects writes that set both.
-    schedule({
-      id: option.id,
-      text: option.text,
-      color: option.color,
-      imageUrl: next,
-    });
+    schedule({ ...option, image: externalImage(next) });
   };
 
   const handleClearImage = () => {
     flush();
     setPasteUrl("");
-    // Explicit construction so neither image field carries through from
-    // `option` — same reasoning as above.
-    commit({
-      id: option.id,
-      text: option.text,
-      color: option.color,
-    });
+    commit({ ...option, image: emptyImage() });
   };
 
   const handleColorChange = (next: string) => {
@@ -233,8 +234,9 @@ const McqOptionEditable = ({
 
   // --- derived display state ------------------------------------------
 
-  const previewUrl = option.imageUrl ?? "";
-  const hasImage = previewUrl.trim() !== "" || !!option.galleryImageId;
+  const previewUrl = option.image?.imgUrl ?? "";
+  const hasImage = !isImageEmpty(option.image);
+  const thumbnailSrc = displayUrl(option.image, optionId, 200, 200, false);
   const inputIdBase = `mcq-opt-${optionId}`;
   const displayIndex = index >= 0 ? index + 1 : 0;
   // Theme-derived default; only applied when the author hasn't overridden
@@ -253,84 +255,121 @@ const McqOptionEditable = ({
   };
 
   return (
-    <div
-      ref={cardRef}
-      className={`${styles.card} ${isCorrect ? styles.cardCorrect : ""}`}
-      onClick={handleCardClick}>
-      <div className={styles.topRow}>
-        <div>
-          <span className={styles.indexPill}>{displayIndex}</span>
+    <Container ref={setCardRef} name='McqOptionCard'>
+      <div
+        className={`${styles.card} ${isCorrect ? styles.cardCorrect : ""} ${isDragging ? styles.isDragging : ""}`}
+        onClick={handleCardClick}>
+        <div className={styles.topRow}>
+          <div className={styles.textColumn}>
+            <span className={styles.indexPill}>{displayIndex}</span>
+            <div
+              className={styles.interactiveZone}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}>
+              <TextArea
+                isBordered={false}
+                id={`${inputIdBase}-text`}
+                fullWidth
+                autoGrow={false}
+                ref={fitRef}
+                rows={1}
+                value={text}
+                placeholder='Type the option…'
+                onChange={(e) => {
+                  handleTextChange(e.target.value);
+                }}
+                onBlur={flush}
+              />
+            </div>
+          </div>
           <div
-            className={styles.interactiveZone}
-            onClick={(e) => {
-              e.stopPropagation();
-            }}>
-            <Input
-              isBordered={false}
-              type='text'
-              id={`${inputIdBase}-text`}
-              fullWidth
-              value={text}
-              placeholder='Type the option…'
-              onChange={(e) => {
-                handleTextChange(e.target.value);
-              }}
-              onBlur={flush}
-            />
+            className={styles.imgThumbnail}
+            style={thumbnailSrc ? {} : { backgroundColor: color }}>
+            {thumbnailSrc && <img src={thumbnailSrc} alt='' />}
           </div>
         </div>
-        <div className={styles.imgThumbnail}>
-          <img src={option.imageUrl ?? option.galleryImageId} />
-        </div>
-      </div>
 
-      <ProgressBar value={100} color={color} />
-      <div className={styles.footer}>
-        <div
-          className={[styles.interactiveZone, styles.correctToggle].join(" ")}
-          onClick={(e) => {
-            e.stopPropagation();
-          }}>
-          <Toggle
-            label={isCorrect ? "Correct" : "Wrong"}
-            id={`mcq-correct-${optionId}`}
-            checked={isCorrect}
-            onChange={() => {
+        <ProgressBar value={100} color={color} />
+        <div className={styles.footer}>
+          <button
+            type='button'
+            className={[styles.interactiveZone, styles.correctBtn].join(" ")}
+            aria-label={isCorrect ? "Mark as wrong" : "Mark as correct"}
+            aria-pressed={isCorrect}
+            onClick={(e) => {
+              e.stopPropagation();
               toggleCorrect();
+            }}>
+            {isCorrect ? (
+              <img
+                src={PurpleCheckIcon}
+                alt=''
+                className={styles.correctIcon}
+              />
+            ) : (
+              <XMarkIcon className={styles.wrongIcon} />
+            )}
+          </button>
+          <IconBtn
+            variant='ghost'
+            size='xs'
+            icon={<EllipsisVerticalIcon />}
+            aria-label={`Edit option ${displayIndex.toString()}`}
+            aria-expanded={popoverOpen}
+            aria-haspopup='dialog'
+            onClick={(e) => {
+              e.stopPropagation();
+              setPopoverOpen((o) => !o);
             }}
           />
-        </div>{" "}
-        <IconBtn
-          type='default'
-          size='xs'
-          icon={<EllipsisVerticalIcon />}
-          aria-label={`Edit option ${displayIndex.toString()}`}
-          aria-expanded={popoverOpen}
-          aria-haspopup='dialog'
-          onClick={(e) => {
-            e.stopPropagation();
-            setPopoverOpen((o) => !o);
-          }}
-        />
-      </div>
-      {popoverOpen && (
-        <EditOptionToolbar
-          canRemove={canRemove}
-          pasteUrl={pasteUrl}
-          handlePickFromGallery={handlePickFromGallery}
-          hasImage={hasImage}
-          handleRemove={handleRemove}
-          handleClearImage={handleClearImage}
-          handleColorChange={handleColorChange}
-          handlePasteUrlChange={handlePasteUrlChange}
-          displayIndex={displayIndex}
-          previewUrl={previewUrl}
-          option={option}
-          inputIdBase={inputIdBase}
-          flush={flush}
-        />
-      )}
-    </div>
+        </div>
+        {popoverOpen && (
+          <EditOptionToolbar
+            canRemove={canRemove}
+            pasteUrl={pasteUrl}
+            handlePickFromGallery={handlePickFromGallery}
+            hasImage={hasImage}
+            handleRemove={handleRemove}
+            handleClearImage={handleClearImage}
+            handleColorChange={handleColorChange}
+            handlePasteUrlChange={handlePasteUrlChange}
+            handleClose={() => {
+              setPopoverOpen(false);
+            }}
+            displayIndex={displayIndex}
+            previewUrl={previewUrl}
+            color={color}
+            inputIdBase={inputIdBase}
+            flush={flush}
+          />
+        )}
+        {canAddOption && (
+          <div className={styles.canAddBtn}>
+            <IconBtn
+              size='sm'
+              shape='round'
+              variant='info'
+              onClick={addOption}
+              disabled={!canAddOption}
+              icon={
+                <svg
+                  width='100pt'
+                  height='100pt'
+                  version='1.1'
+                  viewBox='0 0 100 100'
+                  xmlns='http://www.w3.org/2000/svg'>
+                  <path
+                    d='m50 26.699c-1.3906 0-2.5195 1.1289-2.5195 2.5195v18.262h-18.262c-1.3906 0-2.5195 1.1289-2.5195 2.5195s1.1289 2.5195 2.5195 2.5195h18.262v18.262c0 1.3906 1.1289 2.5195 2.5195 2.5195s2.5195-1.1289 2.5195-2.5195v-18.262h18.262c1.3906 0 2.5195-1.1289 2.5195-2.5195s-1.1289-2.5195-2.5195-2.5195h-18.262v-18.262c0-1.3906-1.1289-2.5195-2.5195-2.5195z'
+                    fill='green'
+                  />
+                </svg>
+              }
+            />
+          </div>
+        )}
+      </div>{" "}
+    </Container>
   );
 };
 

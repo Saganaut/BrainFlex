@@ -13,10 +13,11 @@
   flex-direction: column;
   border-top-left-radius: var(--radius-lg);
   border-top-right-radius: var(--radius-lg);
-  background-color: var(--bg-primary);
-  overflow: hidden;
+  background-color: var(--bg-surface);
+  border: var(--border-size-lg) solid var(--edge-surface);
+  border-bottom: none;
   z-index: 2;
-  transition: box-shadow var(--duration-base, 200ms) var(--ease-out, ease-out);
+  overflow: clip;
 
   .header {
     display: grid;
@@ -30,6 +31,7 @@
     text-align: center;
     color: var(--text-primary);
     transition: background-color var(--duration-fast, 150ms) ease-out;
+    border-bottom-color: var(--border-subtle);
   }
 
   .header:hover {
@@ -74,12 +76,24 @@
   .body {
     max-height: 0;
     overflow: hidden;
-    transition: max-height var(--duration-base, 200ms) var(--ease-out, ease-out);
+    transition: max-height var(--duration-base) ease-in-out;
+
+    /* stylelint-disable-next-line selector-class-pattern, selector-pseudo-class-no-unknown  */
+    .bodyInner :global(.ProseMirror) {
+      transition: min-height var(--duration-base) ease-in-out;
+      min-height: 0;
+      padding-left: var(--space-4);
+    }
   }
 
   &.open .body {
     max-height: 50vh;
-    overflow-y: auto;
+
+    /* stylelint-disable-next-line selector-class-pattern, selector-pseudo-class-no-unknown  */
+    .bodyInner :global(.ProseMirror) {
+      min-height: 12rem;
+      padding-left: var(--space-4);
+    }
   }
 
   .bodyInner {
@@ -100,10 +114,6 @@
    class. Bump the min-height and add a left indent so the editor feels like
    a roomy notes area rather than a single-line input. */
   /* stylelint-disable-next-line selector-class-pattern, selector-pseudo-class-no-unknown  */
-  .bodyInner :global(.ProseMirror) {
-    min-height: 12rem;
-    padding-left: var(--space-4);
-  }
 
   .emptyState {
     margin: 0;

@@ -25,7 +25,7 @@
 .dropZone {
   width: 300px;
   min-height: 100px;
-  border: 2px dashed var(--border-default);
+  border: var(--border-size-sm) dashed var(--border-default);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -74,7 +74,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border-subtle);
+  border: var(--border-size-sm) solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background-color: var(--bg-surface);
 }

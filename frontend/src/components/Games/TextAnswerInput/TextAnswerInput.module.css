@@ -38,11 +38,11 @@
 .correct {
   background: var(--green-200);
   color: var(--green-700);
-  border: 1px solid var(--green-500);
+  border: var(--border-size-sm) solid var(--green-500);
 }
 
 .wrong {
   background: var(--red-200);
   color: var(--red-700);
-  border: 1px solid var(--red-500);
+  border: var(--border-size-sm) solid var(--red-500);
 }

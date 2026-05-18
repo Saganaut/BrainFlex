@@ -47,8 +47,19 @@ input[type="radio"] {
     width: 100%;
   }
 
+  /* When a child input opts out of auto-grow (TextArea with
+     `autoGrow={false}`), the inputContainer fills its parent's height
+     so the field can size to a bounded slot rather than its content.
+     Pairs with the `padding-bottom: 0` override so the field actually
+     hits 100%. Hosts that want info/error messages below should keep
+     `autoGrow` on the default. */
+  &:has([data-auto-grow="false"]) {
+    height: 100%;
+    padding-bottom: 0;
+  }
+
   input {
-    border: 2px solid var(--border-color, var(--border-default));
+    border: var(--border-size-sm) solid var(--border-color, var(--border-default));
     border-radius: var(--radius-md);
 
     &.noBorders {

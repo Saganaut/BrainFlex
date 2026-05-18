@@ -13,21 +13,48 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-3);
+  padding: var(--space-2);
   border-radius: var(--radius-md);
-  background-color: var(--bg-canvas);
+  background-color: var(--bg-surface-raised);
   cursor: pointer;
+
+  /* Fill the grid cell so every card in the row has the same height,
+     bounded by `--mcq-option-max-h` on the grid. `min-height: 0` lets
+     inner descendants actually respect bounded heights. `overflow:
+     hidden` clips the rare case where text falls below the font-size
+     floor inside `useFitText`. */
+  height: 100%;
+  min-height: 0;
   transition:
     border-color var(--duration-fast, 150ms) ease-out,
-    background-color var(--duration-fast, 150ms) ease-out,
-    box-shadow var(--duration-fast, 150ms) ease-out;
+    background-color var(--duration-fast, 150ms) ease-out;
+
+  .canAddBtn {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    top: 35%;
+    z-index: 200;
+    right: 0;
+    transform: translateX(50%);
+    transition: opacity var(--duration-base) ease-in-out;
+  }
 
   &:hover {
     border-color: var(--border-default);
+
+    .canAddBtn {
+      opacity: 1;
+      visibility: visible;
+    }
   }
 
   &.cardCorrect {
     background-color: var(--bg-primary);
+  }
+
+  &.isDragging {
+    opacity: 0.6;
   }
 
   .footer {
@@ -39,21 +66,94 @@
 }
 
 /* Zones the card-click handler is NOT supposed to fire under. The text input
-   and the "Correct" toggle handle their own focus + state, so we restore the
-   default cursor (instead of the card's pointer) and the children's onClick
-   stops propagation on the wrapping div. */
+   and the correct/wrong button handle their own focus + state, so we restore
+   the default cursor (instead of the card's pointer) and the children's
+   onClick stops propagation on the wrapping element. */
 .interactiveZone {
   cursor: auto;
 }
 
-.correctToggle {
-  width: fit-content;
+/* Replaces the old Toggle: a chrome-less square button that shows a purple
+   check when the option is marked correct, an X otherwise. Click toggles. */
+.correctBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-muted);
+
+  &:hover {
+    color: var(--action-hover);
+  }
+}
+
+.correctIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.wrongIcon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .topRow {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: stretch;
+  gap: var(--space-2);
+
+  /* Fill the card's remaining vertical space so the bounded textarea
+     inside `.textColumn` has a real height to fit into. */
+  flex: 1;
+  min-height: 0;
+
+  .textColumn {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+
+    /* The interactiveZone that wraps the TextArea takes the remaining
+       vertical space inside the column so the textarea (which sets
+       `height: 100%` via its `noAutoGrow` mode) has a bounded slot to
+       fill. The same class is also used on the correct/wrong button in
+       the footer — that one is sized intrinsically, so scope this
+       rule to the text-column descendant only. */
+    .interactiveZone {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+    }
+  }
+
+  .imgThumbnail {
+    display: flex;
+    align-items: end;
+
+    img {
+      border-radius: var(--radius-md);
+      overflow: clip;
+      height: 100%;
+      aspect-ratio: 1;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      display: block;
+
+      @container (width <= 300px) {
+        /* height: 50px; */
+      }
+    }
+  }
 }
 
 .indexPill {
@@ -64,7 +164,6 @@
   height: 1.5rem;
   padding: 0 var(--space-2);
   border-radius: var(--radius-full);
-  background-color: var(--bg-canvas);
   font-size: var(--font-size-xs);
   font-weight: 700;
   color: var(--text-primary);
@@ -94,73 +193,18 @@
   }
 }
 
-/* Small clickable preview that opens the gallery picker. Mirrors a
-   PopoverButton's footprint (28px) so the toolbar row reads as a single
-   line of equal-height controls. */
-.imageThumb {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-canvas);
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  color: var(--text-muted);
-  font-size: var(--font-size-base);
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color var(--duration-fast, 150ms) ease-out;
+/* Top row of the popover: option label on the left, close button on the
+   right. PopoverRow already provides display:flex + align-items:center, so
+   we only need to stretch + justify-between. */
+.popoverHeader {
+  justify-content: space-between;
+  width: 100%;
 }
 
-.imageThumb:hover {
-  border-color: var(--action-hover);
-}
-
-.imageThumbEmpty {
-  background-color: var(--bg-canvas);
-}
-
-.colorSwatch {
-  appearance: none;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  cursor: pointer;
-}
-
-/* stylelint-disable selector-pseudo-element-no-unknown */
-.colorSwatch::-webkit-color-swatch-wrapper {
-  padding: 0;
-}
-
-.colorSwatch::-webkit-color-swatch {
-  border: none;
-  border-radius: var(--radius-sm);
-}
-/* stylelint-enable */
-
-.popoverUrlInput {
-  flex: 1;
-  min-width: 150px;
-  height: 28px;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  background-color: var(--bg-canvas);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-}
-
-.popoverUrlInput:focus {
-  outline: none;
-  border-color: var(--border-focus);
+/* Image-thumbnail trigger inside the toolbar. Renders on top of an IconBtn
+   xs/ghost frame; this class only adds the hairline border so the empty +
+   filled states still read as a thumbnail well. The background-image is
+   set inline by the consumer when an image is present. */
+.imageThumbBtn {
+  border: var(--border-size-sm) solid var(--edge-surface);
 }

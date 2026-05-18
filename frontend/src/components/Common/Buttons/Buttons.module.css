@@ -1,8 +1,12 @@
-/* Btn — owns its variant / size / mode classes. The base .btn declares the     */
+/* Btn — every variant is a nested rule. The base .btn declares the         */
 
-/* canonical component vars (--padding, --radius, --font-size, --color, …) so   */
+/* canonical component vars (--padding, --radius, --font-size, --color, …)   */
 
-/* nested modifier classes only need to override the vars they care about.      */
+/* and the .primary fallback values. Other variants override only the slots  */
+
+/* they care about. See STYLE-RULES.md "Named button + icon-button variants" */
+
+/* for the catalog.                                                          */
 .btn {
   --padding: var(--p-md);
   --radius: var(--radius-lg);
@@ -24,16 +28,54 @@
   font-size: var(--font-size);
   color: var(--color);
   background-color: var(--background-color);
+  border: var(--border-size-sm) solid transparent;
   transition:
     background-color 300ms ease-in-out,
-    color 300ms ease-in-out;
+    color 300ms ease-in-out,
+    border-color 300ms ease-in-out;
 
   &:hover {
     color: var(--action-hover);
   }
 
   /* ─── Variants ─────────────────────────────────────────────── */
-  &.error {
+
+  /* primary / filled — the base look. filled is an explicit alias.          */
+  &.primary,
+  &.filled {
+    --color: var(--text-primary);
+    --background-color: var(--bg-secondary);
+    --border-color: transparent;
+  }
+
+  &.ghost {
+    --color: var(--text-primary);
+    --background-color: transparent;
+    --border-color: transparent;
+  }
+
+  &.bordered {
+    --color: var(--text-primary);
+    --background-color: transparent;
+    --border-color: var(--text-primary);
+
+    border-color: var(--border-color);
+  }
+
+  /* close — no semantic meaning on text buttons; renders as primary so the  */
+
+  /* component is forgiving if a caller passes it by mistake.                */
+  &.close {
+    --color: var(--text-primary);
+    --background-color: var(--bg-secondary);
+    --border-color: transparent;
+  }
+
+  /* error / delete — destructive treatment. delete is an explicit alias for */
+
+  /* error so call sites can read more semantically ("Delete user").          */
+  &.error,
+  &.delete {
     --color: var(--text-error);
     --background-color: var(--bg-error);
     --border-color: var(--border-error);
@@ -65,6 +107,7 @@
 
   /* Status variants derive hover via oklch from whatever the modifier set. */
   &.error:hover,
+  &.delete:hover,
   &.success:hover,
   &.warning:hover,
   &.info:hover {
@@ -93,10 +136,10 @@
   }
 
   &.sm {
-    --padding: var(--p-pill-sm);
+    --padding: 0;
     --font-size: var(--font-size-xs);
     --radius: var(--radius-md);
-    --gap: var(--space-2);
+    --gap: 0;
     --min-height: 1.75rem;
   }
 
@@ -116,18 +159,7 @@
     --min-height: 3.75rem;
   }
 
-  /* ─── Modes ─────────────────────────────────────────────────── */
-  &.outline {
-    --background-color: transparent;
-    --border-color: var(--color, currentcolor);
-  }
-
-  &.ghost {
-    --background-color: transparent;
-    --border-color: transparent;
-  }
-
-  /* ─── Shape (component-local concept, not part of the modifier set) ── */
+  /* ─── Shape (component-local concept, not part of the variant set) ── */
   &.pill {
     border-radius: var(--radius-full);
   }
@@ -148,7 +180,7 @@
   width: 22px;
   height: 22px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
+  border: var(--border-size-sm) solid var(--border-subtle);
   cursor: pointer;
   padding: 0;
   transition: transform var(--duration-fast, 150ms) ease-out;
@@ -158,18 +190,16 @@
   }
 }
 
-/* IconBtn — same variant/size/mode pattern as .btn, but IconBtn-tuned        */
+/* IconBtn — same variant set as .btn, but tuned for square / round icon     */
 
-/* dimensions (height/width) live in the size classes. Component-specific     */
+/* buttons. The size classes set --height and --width too, and the avatar    */
 
-/* concepts (close / avatar / bordered / withBackground / round / pill /      */
-
-/* isCollapsed) stay as additional module classes.                            */
+/* shape gets its own padding / border-width treatment.                      */
 .iconBtn {
   --padding: var(--p-xs);
   --radius: var(--radius-md);
-  --color: var(--border-default);
-  --background-color: var(--bg-surface);
+  --color: var(--text-primary);
+  --background-color: var(--bg-secondary);
   --border-color: transparent;
   --height: 56px;
   --width: 56px;
@@ -179,12 +209,12 @@
   padding: var(--padding);
   border-radius: var(--radius);
   color: var(--color);
+  background-color: var(--background-color);
+  border: var(--border-size-sm) solid transparent;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
   cursor: pointer;
-  background: transparent;
   overflow: hidden;
   transition:
     background-color 300ms ease-in-out,
@@ -208,8 +238,40 @@
     transition: transform 300ms ease-in-out;
   }
 
-  /* ─── Variants — color only; bg/border kick in only with withBackground ── */
-  &.error {
+  /* ─── Variants ─────────────────────────────────────────────── */
+
+  /* primary / filled — the base filled look.                              */
+  &.primary,
+  &.filled {
+    --color: var(--text-primary);
+    --background-color: var(--bg-secondary);
+    --border-color: transparent;
+  }
+
+  &.ghost {
+    --color: var(--text-primary);
+    --background-color: transparent;
+    --border-color: transparent;
+  }
+
+  &.bordered {
+    --color: var(--text-primary);
+    --background-color: transparent;
+    --border-color: var(--text-primary);
+
+    border-color: var(--border-color);
+  }
+
+  /* close — transparent X-mark button; rendered icon is XMarkIcon.        */
+  &.close {
+    --color: var(--text-primary);
+    --background-color: transparent;
+    --border-color: transparent;
+  }
+
+  /* error / delete — destructive treatment. delete is an explicit alias.  */
+  &.error,
+  &.delete {
     --color: var(--text-error);
     --background-color: var(--bg-error);
     --border-color: var(--border-error);
@@ -239,6 +301,27 @@
     --border-color: var(--border-brand);
   }
 
+  /* Status / filled variants get the action-hover swap on the bg.         */
+  &.primary:hover,
+  &.filled:hover,
+  &.error:hover,
+  &.delete:hover,
+  &.success:hover,
+  &.warning:hover,
+  &.info:hover,
+  &.brand:hover {
+    background-color: var(--action-hover);
+    color: var(--bg-surface);
+  }
+
+  &.bordered:hover {
+    border-color: var(--action-hover);
+  }
+
+  &:hover {
+    color: var(--action-hover);
+  }
+
   /* ─── Sizes — IconBtn tunes height/width too ───────────────────── */
   &.xs {
     --height: 28px;
@@ -249,7 +332,7 @@
   &.sm {
     --height: 36px;
     --width: 36px;
-    --padding: var(--p-xs);
+    --padding: 0;
   }
 
   &.md {
@@ -264,16 +347,7 @@
     --padding: var(--p-md);
   }
 
-  /* ─── Component-local shapes / modes ───────────────────────────── */
-  &.withBackground {
-    background-color: var(--background-color);
-
-    &:hover {
-      background-color: var(--action-hover);
-      color: var(--bg-surface);
-    }
-  }
-
+  /* ─── Component-local shapes ───────────────────────────── */
   &.round,
   &.avatar {
     border-radius: var(--radius-full);
@@ -283,29 +357,13 @@
     }
   }
 
-  &.bordered {
-    border: 2px solid var(--border-color, var(--color, var(--border-default)));
-
-    &:hover {
-      border-color: var(--action-hover);
-    }
-  }
-
   &.avatar {
     padding: 0;
-    border-width: 3px;
-  }
-
-  &:hover {
-    color: var(--action-hover);
+    border-width: var(--border-size-md);
   }
 
   &.isCollapsed {
     transform: rotate(180deg);
-  }
-
-  &.close:hover {
-    color: var(--action-hover);
   }
 
   &:disabled,

@@ -18,7 +18,7 @@ import styles from "./ThemeSection.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
 import { FileUpload } from "@/components/Common/Input/FileUpload/FileUpload";
-import { HuePicker } from "@/components/Common/Input/HuePicker/HuePicker";
+import { ColorPicker } from "@/components/Common/Input/ColorPicker/ColorPicker";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { RadioGroup } from "@/components/Common/Input/RadioGroup/RadioGroup";
 import { extractErrorMessage } from "@/utils/utils";
@@ -192,8 +192,8 @@ const ThemeEditor = ({
       />
 
       <div className={styles.fieldGroup}>
-        <HuePicker label='Primary' value={huePrimary} onChange={setHuePrimary} />
-        <HuePicker label='Accent' value={hueAccent} onChange={setHueAccent} />
+        <ColorPicker label='Primary' value={huePrimary} onChange={setHuePrimary} />
+        <ColorPicker label='Accent' value={hueAccent} onChange={setHueAccent} />
       </div>
 
       <RadioGroup

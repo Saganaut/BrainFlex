@@ -3,7 +3,7 @@
   align-items: flex-start;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--red-500);
+  border: var(--border-size-sm) solid var(--red-500);
   background: var(--red-200);
   color: var(--red-700);
   border-radius: var(--radius-md);

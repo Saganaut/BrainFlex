@@ -4,7 +4,7 @@
 
 .leaderboard {
   display: flex;
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   flex-direction: column;
   width: fit-content;
   border-radius: var(--radius-lg);

@@ -1,6 +1,6 @@
 .header {
   padding: var(--space-4) var(--space-6);
-  border-bottom: 1px solid var(--border-brand);
+  border-bottom: var(--border-size-sm) solid var(--border-brand);
   display: flex;
   flex-direction: row;
   align-items: center;

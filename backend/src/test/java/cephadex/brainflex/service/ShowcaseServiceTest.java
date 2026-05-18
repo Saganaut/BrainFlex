@@ -65,6 +65,7 @@ class ShowcaseServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private ShowcaseCacheService showcaseCache;
     @Mock private AuthorizationService authorizationService;
+    @Mock private DeckImageHydrationService deckImageHydrationService;
     @Mock private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
@@ -99,8 +100,8 @@ class ShowcaseServiceTest {
         List<DeckElement> els = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             String id = "el-" + i;
-            McqOption a = new McqOption(id + "-a", "A", null, null, null);
-            McqOption b = new McqOption(id + "-b", "B", null, null, null);
+            McqOption a = new McqOption(id + "-a", "A", null, null);
+            McqOption b = new McqOption(id + "-b", "B", null, null);
             els.add(new McqQuestion(
                     id, "pub_" + id, "prv_" + id, "Prompt " + i, null,
                     "Prompt " + i, List.of(a, b), List.of(a.id()),
@@ -492,8 +493,8 @@ class ShowcaseServiceTest {
 
     /** A best-answer-mode MCQ whose correct option is {id}-a. */
     private static McqQuestion bestAnswerMcq(String id, int bonus) {
-        McqOption a = new McqOption(id + "-a", "A", null, null, null);
-        McqOption b = new McqOption(id + "-b", "B", null, null, null);
+        McqOption a = new McqOption(id + "-a", "A", null, null);
+        McqOption b = new McqOption(id + "-b", "B", null, null);
         return new McqQuestion(
                 id, "pub_" + id, "prv_" + id, "Prompt", null,
                 "Prompt", List.of(a, b), List.of(a.id()),

@@ -24,7 +24,7 @@ const WsErrorBanner = () => {
         {error.message}
       </span>
       <IconBtn
-        type='close'
+        variant='close'
         size='sm'
         onClick={() => {
           dispatch(clearWsError());

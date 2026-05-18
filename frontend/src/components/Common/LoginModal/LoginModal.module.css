@@ -28,7 +28,7 @@
   width: 100%;
   padding: var(--space-3) var(--space-4);
   background-color: var(--bg-canvas);
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: var(--font-mono);

@@ -7,11 +7,9 @@
 .navContainer {
   --color: var(--text-primary);
   --background-color: transparent;
-  --border-color: transparent;
   --color-hover: var(--action-hover);
   --color-muted: oklch(from var(--color) l c h / 40%);
   --background-color-hover: var(--background-color);
-  --border-color-hover: var(--action-hover);
   --padding: var(--space-2);
   --radius: var(--radius-md);
 
@@ -22,7 +20,6 @@
   gap: var(--gap-lg);
   padding: var(--padding);
   align-items: center;
-  border: none;
   border-radius: var(--radius);
 
   a {
@@ -40,7 +37,6 @@
   &:hover {
     color: var(--color-hover);
     background-color: var(--background-color-hover);
-    border-color: var(--border-color-hover);
   }
 
   &:disabled,
@@ -111,12 +107,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--gap-sm);
-  border-top: 1px solid var(--border-subtle);
+  border-top: var(--border-size-sm) solid var(--border-subtle);
 }
 
 .guestInput {
   padding: var(--space-2) var(--space-2);
-  border: 1px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
   background: var(--bg-canvas);

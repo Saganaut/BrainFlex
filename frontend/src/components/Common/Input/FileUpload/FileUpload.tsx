@@ -69,7 +69,7 @@ const FileUpload = ({
               <span className={styles.fileName}>{file.name}</span>
 
               <IconBtn
-                type='close'
+                variant='close'
                 size='xs'
                 className={styles.removeFile}
                 onClick={() => {

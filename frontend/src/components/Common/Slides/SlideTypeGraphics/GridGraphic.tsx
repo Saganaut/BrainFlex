@@ -2,63 +2,61 @@
 // with three highlighted cells, evoking "select cells on a grid".
 const GridGraphic = () => {
   return (
-    <div>
-      <svg
-        width='70'
-        height='70'
-        viewBox='0 0 70 70'
-        fill='none'
-        xmlns='http://www.w3.org/2000/svg'>
-        <rect
-          x='6'
-          y='6'
-          width='58'
-          height='58'
-          rx='4'
-          fill='#54FFF1'
-          opacity='0.35'
-        />
-        <rect x='10' y='10' width='14' height='14' rx='2' fill='#6019FF' />
-        <rect x='46' y='28' width='14' height='14' rx='2' fill='#6019FF' />
-        <rect x='28' y='46' width='14' height='14' rx='2' fill='#6019FF' />
-        <line
-          x1='26'
-          y1='8'
-          x2='26'
-          y2='62'
-          stroke='#54FFF1'
-          strokeWidth='1.5'
-          opacity='0.8'
-        />
-        <line
-          x1='44'
-          y1='8'
-          x2='44'
-          y2='62'
-          stroke='#54FFF1'
-          strokeWidth='1.5'
-          opacity='0.8'
-        />
-        <line
-          x1='8'
-          y1='26'
-          x2='62'
-          y2='26'
-          stroke='#54FFF1'
-          strokeWidth='1.5'
-          opacity='0.8'
-        />
-        <line
-          x1='8'
-          y1='44'
-          x2='62'
-          y2='44'
-          stroke='#54FFF1'
-          strokeWidth='1.5'
-          opacity='0.8'
-        />
-      </svg>
-    </div>
+    <svg
+      width='70'
+      height='70'
+      viewBox='0 0 70 70'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'>
+      <rect
+        x='6'
+        y='6'
+        width='58'
+        height='58'
+        rx='4'
+        fill='#54FFF1'
+        opacity='0.35'
+      />
+      <rect x='10' y='10' width='14' height='14' rx='2' fill='#6019FF' />
+      <rect x='46' y='28' width='14' height='14' rx='2' fill='#6019FF' />
+      <rect x='28' y='46' width='14' height='14' rx='2' fill='#6019FF' />
+      <line
+        x1='26'
+        y1='8'
+        x2='26'
+        y2='62'
+        stroke='#54FFF1'
+        strokeWidth='1.5'
+        opacity='0.8'
+      />
+      <line
+        x1='44'
+        y1='8'
+        x2='44'
+        y2='62'
+        stroke='#54FFF1'
+        strokeWidth='1.5'
+        opacity='0.8'
+      />
+      <line
+        x1='8'
+        y1='26'
+        x2='62'
+        y2='26'
+        stroke='#54FFF1'
+        strokeWidth='1.5'
+        opacity='0.8'
+      />
+      <line
+        x1='8'
+        y1='44'
+        x2='62'
+        y2='44'
+        stroke='#54FFF1'
+        strokeWidth='1.5'
+        opacity='0.8'
+      />
+    </svg>
   );
 };
 

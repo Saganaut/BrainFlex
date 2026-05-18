@@ -3,7 +3,7 @@
 }
 
 .playerInfo {
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-lg);
   display: flex;
   flex-direction: column;
@@ -36,7 +36,7 @@
   div {
     img {
       border-radius: var(--radius-full);
-      border: 2px solid var(--border-default);
+      border: var(--border-size-sm) solid var(--border-default);
     }
   }
 

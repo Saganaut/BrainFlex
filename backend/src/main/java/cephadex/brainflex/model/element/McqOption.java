@@ -5,26 +5,21 @@
  * by index — so the editor / runtime can reorder options freely without
  * touching the `correctOptionIds` reference on the parent question.
  *
- * Image sources are mutually exclusive (validated on save in DeckService):
- *   - `galleryImageId` references a GalleryImage in the gallery_images
- *     collection; on read, DeckImageHydrationService refreshes `imageUrl`
- *     into a fresh presigned URL so the renderer always has one URL to use.
- *   - `imageUrl` holds an externally-hosted URL (paste-link, picsum
- *     placeholder, etc.); it is rendered as-is.
- * At most one may be set on a write; both null means "no image".
+ * `image` carries an optional thumbnail. When `image.useExternalImg=false`
+ * the backend rehydrates `image.imgUrl` from S3 on every read; clients render
+ * `image.imgUrl` directly. See `Image` for the full contract.
  */
 package cephadex.brainflex.model.element;
 
 public record McqOption(
         String id,
         String text,
-        String galleryImageId,
-        String imageUrl,
+        Image image,
         String color
 ) {
 
-    /** Returns a copy with `imageUrl` replaced — used by the read-time hydrator. */
-    public McqOption withImageUrl(String url) {
-        return new McqOption(id, text, galleryImageId, url, color);
+    /** Returns a copy with `image` replaced — used by the read-time hydrator. */
+    public McqOption withImage(Image image) {
+        return new McqOption(id, text, image, color);
     }
 }

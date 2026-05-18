@@ -51,7 +51,7 @@
   width: 100%;
   max-width: 480px;
   padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
+  border: var(--border-size-sm) solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--bg-surface);
 }

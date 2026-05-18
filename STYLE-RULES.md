@@ -18,11 +18,11 @@ Short rules. See `frontend/STYLES.md` for the full explanation, examples, and mi
 
 ## Component variable manifest
 
-Every variantizable component exposes a manifest of local CSS vars and reads from them. Modifiers in `tokens.css` flip those vars.
+Every variantizable component exposes a manifest of local CSS vars and reads from them. Variant classes nested inside the base component class flip those vars.
 
-- **Color slots:** `--color`, `--background-color`, `--border-color` (flipped by `[data-variant]`).
-- **Layout slots:** `--padding`, `--gap`, `--radius`, optionally `--height` / `--width` / `--border-width` (flipped by `[data-size]`).
-- **Typography slots:** `--font-size`, optionally `--font-weight` / `--line-height` (flipped by `[data-size]`).
+- **Color slots:** `--color`, `--background-color`, `--border-color` (flipped by variant).
+- **Layout slots:** `--padding`, `--gap`, `--radius`, optionally `--height` / `--width` / `--border-width` (flipped by size).
+- **Typography slots:** `--font-size`, optionally `--font-weight` / `--line-height` (flipped by size).
 - **State slot:** `--opacity`.
 
 Components opt into only the slots they need.
@@ -45,26 +45,104 @@ Components opt into only the slots they need.
   }
   ```
 
-- Why: `.btn` and `[data-variant="error"]` have equal specificity. Component CSS imports after `tokens.css`, so a local declaration would always win. The fallback pattern means the component never declares the var — modifiers set it; otherwise the fallback applies.
+- Why: `.btn` and `.btn.error` have equal specificity. Component CSS imports after `tokens.css`, so a local declaration would always win. The fallback pattern means the component never declares the var — variant classes set it; otherwise the fallback applies.
+
+## Named text + background combinations
+
+Every legal pairing of text role with a background. Anything not on this list is outside the system. Tokens live in `frontend/src/tokens.css`; the live catalog is at `/design-system` → Tokens → "Text + background combinations".
+
+### Neutral surfaces
+
+| Name                          | Background             | Text               | Edge (optional)         |
+| ----------------------------- | ---------------------- | ------------------ | ----------------------- |
+| Heading on canvas             | `--bg-canvas`          | `--text-primary`   | `--edge-canvas`         |
+| Body on canvas                | `--bg-canvas`          | `--text-secondary` | `--edge-canvas`         |
+| Link on canvas                | `--bg-canvas`          | `--text-accent`    | `--edge-canvas`         |
+| Heading on surface            | `--bg-surface`         | `--text-primary`   | `--edge-surface`        |
+| Body on surface               | `--bg-surface`         | `--text-secondary` | `--edge-surface`        |
+| Link on surface               | `--bg-surface`         | `--text-accent`    | `--edge-surface`        |
+| Heading on surface-raised     | `--bg-surface-raised`  | `--text-primary`   | `--edge-surface-raised` |
+| Body on surface-raised        | `--bg-surface-raised`  | `--text-secondary` | `--edge-surface-raised` |
+| Link on surface-raised        | `--bg-surface-raised`  | `--text-accent`    | `--edge-surface-raised` |
+| Heading on sibling            | `--bg-secondary`       | `--text-primary`   | `--edge-secondary`      |
+| Body on sibling               | `--bg-secondary`       | `--text-secondary` | `--edge-secondary`      |
+| Link on sibling               | `--bg-secondary`       | `--text-accent`    | `--edge-secondary`      |
+| Heading on subtle             | `--bg-subtle`          | `--text-primary`   | `--edge-subtle`         |
+| Body on subtle                | `--bg-subtle`          | `--text-secondary` | `--edge-subtle`         |
+| Link on subtle                | `--bg-subtle`          | `--text-accent`    | `--edge-subtle`         |
+
+### Brand surfaces
+
+| Name              | Background      | Text              | Edge             |
+| ----------------- | --------------- | ----------------- | ---------------- |
+| Primary action    | `--bg-primary`  | `--text-on-brand` | `--edge-primary` |
+| Brand fill        | `--bg-brand`    | `--text-on-brand` | `--edge-brand`   |
+
+### Inverted surfaces
+
+Inverted surfaces are for anchored chrome (top nav, sidebar, hero) — not for content. Inverted text must pair with an inverted bg.
+
+| Name                            | Background              | Text                        |
+| ------------------------------- | ----------------------- | --------------------------- |
+| Heading on inverted canvas      | `--bg-canvas-inverted`  | `--text-primary-inverted`   |
+| Body on inverted canvas         | `--bg-canvas-inverted`  | `--text-secondary-inverted` |
+| Link on inverted canvas         | `--bg-canvas-inverted`  | `--text-accent-inverted`    |
+| Heading on inverted surface     | `--bg-surface-inverted` | `--text-primary-inverted`   |
+| Body on inverted surface        | `--bg-surface-inverted` | `--text-secondary-inverted` |
+| Link on inverted surface        | `--bg-surface-inverted` | `--text-accent-inverted`    |
+| Heading on inverted primary     | `--bg-primary-inverted` | `--text-primary-inverted`   |
+| Body on inverted primary        | `--bg-primary-inverted` | `--text-secondary-inverted` |
+| Link on inverted primary        | `--bg-primary-inverted` | `--text-accent-inverted`    |
+
+### Status surfaces
+
+Status colors mean exactly one thing: feedback about an operation. Never decorative.
+
+| Name           | Background     | Text             | Border             |
+| -------------- | -------------- | ---------------- | ------------------ |
+| Error notice   | `--bg-error`   | `--text-error`   | `--border-error`   |
+| Success notice | `--bg-success` | `--text-success` | `--border-success` |
+| Warning notice | `--bg-warning` | `--text-warning` | `--border-warning` |
+| Info notice    | `--bg-info`    | `--text-info`    | `--border-info`    |
+
+## Named button + icon-button variants
+
+A single `variant` prop on `Btn` and `IconBtn` (from `components/Common/Buttons/BtnTypes.ts`) names every legal color/style combination. Default is `primary`. The live catalog is at `/design-system` → Common → "Action combinations".
+
+| Variant     | Btn behavior                                       | IconBtn behavior                                  |
+| ----------- | -------------------------------------------------- | ------------------------------------------------- |
+| `primary`   | Filled neutral CTA: `--bg-secondary` + `--text-primary` | Filled neutral: `--bg-secondary` + `--text-primary`  |
+| `ghost`     | Transparent bg + border, `--text-primary`          | Transparent bg + border, `--text-primary`         |
+| `bordered`  | Transparent bg, 2px `--text-primary` border + text | Transparent bg, 2px `--text-primary` border + icon |
+| `filled`    | Synonym for `primary`                              | Filled neutral (same as `primary`)                |
+| `close`     | Not applicable                                     | Transparent X-mark (renders `XMarkIcon`)          |
+| `error`     | Destructive filled: `--bg-error` + `--text-error`  | Filled: `--bg-error` + `--text-error`             |
+| `delete`    | Semantic alias for `error`                         | Semantic alias for `error`                        |
+| `success`   | Filled: `--bg-success` + `--text-success`          | Filled: `--bg-success` + `--text-success`         |
+| `warning`   | Filled: `--bg-warning` + `--text-warning`          | Filled: `--bg-warning` + `--text-warning`         |
+| `info`      | Filled: `--bg-info` + `--text-info`                | Filled: `--bg-info` + `--text-info`               |
+| `brand`     | Filled: `--bg-brand` + `--text-on-brand`           | Filled: `--bg-brand` + `--text-on-brand`          |
+
+`error` is also called **destructive** in design discussions and aliased as `delete` for call-site clarity — all three render identically.
+
+Each variant is implemented as a nested rule under `.btn` / `.iconBtn` in `Buttons.module.css`. Variants flip the component-local `--color` / `--background-color` / `--border-color` slots; sizes and shapes compose on top.
 
 ## Modifier vocabulary
 
-Apply modifiers as `data-*` attributes on the element. Type them with the shared `BtnVariant` / `BtnSize` / `BtnMode` aliases from `components/Common/Buttons/BtnTypes.ts`.
+Sizes and shapes compose with the variant:
 
-- `data-variant` — `default | error | success | warning | info | brand`. Sets the color triple from matched semantic tokens (guaranteed contrast).
-- `data-size` — `xs | sm | md | lg`. Sets padding, font size, radius, gap.
-- `data-mode` — `outline | ghost`. Composes with `data-variant`; flips background/border without touching color.
-- Native state — use `:disabled`, `:hover`, `[aria-pressed]`, `[aria-selected]`, etc. Don't invent state classes.
+- `size` — `xs | sm | md | lg`. Sets padding, font size, radius, gap. Default `md`.
+- `shape` — `default | round | pill | avatar` (avatar is IconBtn-only). Default `default`.
 
-Component-local concepts (shape, slot positioning, hover-color sextet) stay as module classes — they're not portable, so they don't belong in the global modifier set.
+Native interactive state stays on platform pseudo-classes (`:disabled`, `:hover`, `:focus-visible`, `[aria-pressed]`, `[aria-selected]`). Don't invent state classes.
 
 ## When to do what
 
-1. Recolor → `data-variant`.
-2. Resize → `data-size`.
-3. Fill / outline / ghost → `data-mode`.
+1. Recolor / change emphasis → `variant`.
+2. Resize → `size`.
+3. Round / pill / avatar shape → `shape`.
 4. Native interactive state → platform pseudo-class / aria attribute.
-5. Component-specific layout (pill shape, custom slot) → a module class on the component.
+5. Component-specific layout (slot positioning, custom spacing) → a module class on the component.
 
 If a change doesn't fit any of those, raise it before inventing a one-off pattern.
 

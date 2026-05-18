@@ -1,24 +1,64 @@
-// Thin wrapper that renders the right decorative icon for a given
-// `DeckElement["kind"]`. Callers should prefer this over reaching into the
-// `slideTypeGraphics` map directly — it keeps lookup logic in one place.
-// Size scale mirrors IconBtn (xs/sm/md/lg) so the two render consistently
-// wherever they sit side by side.
-import type { BtnSize } from "@/components/Common/Buttons/BtnTypes";
+// Wrappers that render the right decorative icon for a given
+// `DeckElement["kind"]`. Use these rather than reaching into `slideTypeGraphics`
+// directly so kind-lookup stays in one place.
+//
+// `SlideTypeGraphic` — default. Returns an `IconBtn` carrying the graphic, so
+// the icon is itself the click target (e.g. in toolbars / pickers). Accepts the
+// usual IconBtn modifiers.
+//
+// `SlideTypeGraphicSvg` — bare svg inside a sizing wrapper. Use in purely
+// decorative spots, or anywhere the icon already sits inside a clickable
+// ancestor and rendering a nested <button> would be wrong.
+import type { ButtonHTMLAttributes } from "react";
+import type {
+  BtnShape,
+  BtnSize,
+  BtnVariant,
+} from "@/components/Common/Buttons/BtnTypes";
+import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { slideTypeGraphics, type ElementKind } from "./slideTypeGraphics";
 import styles from "./SlideTypeGraphic.module.css";
 
-interface SlideTypeGraphicProps {
+interface SlideTypeGraphicProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
   kind: ElementKind;
   size?: BtnSize;
+  variant?: BtnVariant;
+  shape?: BtnShape;
 }
 
-const SlideTypeGraphic = ({ kind, size = "md" }: SlideTypeGraphicProps) => {
+const SlideTypeGraphic = ({
+  kind,
+  size = "md",
+  variant = "ghost",
+  ...rest
+}: SlideTypeGraphicProps) => {
   const Graphic = slideTypeGraphics[kind];
   return (
-    <div className={[styles.wrapper, styles[size]].join(" ")}>
-      <Graphic />
-    </div>
+    <IconBtn icon={<Graphic />} size={size} variant={variant} {...rest} />
   );
 };
 
-export { SlideTypeGraphic };
+interface SlideTypeGraphicSvgProps {
+  kind: ElementKind;
+  size?: BtnSize;
+  className?: string;
+}
+
+const SlideTypeGraphicSvg = ({
+  kind,
+  size = "md",
+  className,
+}: SlideTypeGraphicSvgProps) => {
+  const Graphic = slideTypeGraphics[kind];
+  return (
+    <span
+      className={[styles.wrapper, styles[size], className]
+        .filter(Boolean)
+        .join(" ")}>
+      <Graphic />
+    </span>
+  );
+};
+
+export { SlideTypeGraphic, SlideTypeGraphicSvg };

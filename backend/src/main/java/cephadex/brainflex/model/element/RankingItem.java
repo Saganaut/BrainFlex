@@ -7,6 +7,10 @@ package cephadex.brainflex.model.element;
 public record RankingItem(
         String id,
         String label,
-        String imageUrl
+        Image image
 ) {
+
+    public RankingItem withImage(Image image) {
+        return new RankingItem(id, label, image);
+    }
 }

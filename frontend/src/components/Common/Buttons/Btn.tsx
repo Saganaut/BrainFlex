@@ -1,14 +1,14 @@
-// Primary button. Variant / size / mode flow through className composition,
-// not data-* attributes — each modifier class lives in Buttons.module.css and
-// overrides a subset of the component's CSS vars (--padding, --color, etc.).
+// Primary button. The `variant` prop is the single axis controlling color +
+// fill / outline / ghost — see BtnTypes.ts and STYLE-RULES.md "Named button
+// + icon-button variants". Each variant maps to a nested rule under .btn in
+// Buttons.module.css.
 import type { ReactNode } from "react";
-import type { BtnVariant, BtnSize, BtnShape, BtnMode } from "./BtnTypes";
+import type { BtnVariant, BtnSize, BtnShape } from "./BtnTypes";
 import styles from "./Buttons.module.css";
 
 interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: BtnVariant;
   size?: BtnSize;
-  mode?: BtnMode;
   shape?: BtnShape;
   icon?: ReactNode;
   iconPosition?: "left" | "right";
@@ -17,9 +17,8 @@ interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const Btn = ({
-  variant = "default",
+  variant = "primary",
   size = "md",
-  mode,
   shape = "default",
   disabled = false,
   type = "button",
@@ -38,9 +37,8 @@ const Btn = ({
       {...rest}
       className={[
         styles.btn,
-        variant !== "default" && styles[variant],
+        styles[variant],
         styles[size],
-        mode && styles[mode],
         shape !== "default" && styles[shape],
         className,
       ]

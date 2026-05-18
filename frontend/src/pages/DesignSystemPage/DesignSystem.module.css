@@ -1,7 +1,9 @@
 .container {
   padding: var(--p-lg);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-6);
+  width: 100%;
   max-width: var(--max-screen-width);
   margin: 0 auto;
 
@@ -126,20 +128,38 @@
   gap: var(--gap-sm);
   padding: var(--space-3);
   border-radius: var(--radius-lg);
-  border: 1px solid rgb(0 0 0 / 8%);
+  border: var(--border-size-sm) solid rgb(0 0 0 / 8%);
   background: var(--bg-canvas);
 }
 
 .colorBox {
   height: 72px;
   border-radius: var(--radius-md);
-  border: 1px solid rgb(0 0 0 / 8%);
+  border: var(--border-size-sm) solid rgb(0 0 0 / 8%);
 }
 
 .colorToken {
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
   word-break: break-all;
+}
+
+.tokensGroups {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.tokensGroup {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.tokensGroupLabel {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .tokensContainer {
@@ -155,7 +175,6 @@
   padding: var(--space-3);
   border-radius: var(--radius-md);
   background: var(--bg-surface-raised);
-  border: 1px solid var(--border-subtle);
   align-items: center;
 }
 
@@ -173,12 +192,68 @@
   width: 96px;
   height: 48px;
   border-radius: var(--radius-md);
+}
+
+.tokenSampleText {
+  width: 96px;
+  height: 48px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-on-brand);
-  border: 1px solid var(--border-subtle);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  background: var(--bg-canvas);
+}
+
+.tokenSampleBorder {
+  width: 96px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--bg-canvas);
+  border-width: var(--border-size-sm);
+  border-style: solid;
+}
+
+/* ─── Hierarchy demo ─────────────────────────────────────────────────────── */
+
+.hierarchyDemo {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-3);
+}
+
+.hierarchyNest {
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.hierarchyTag {
+  font-family: var(--font-mono);
   font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.hierarchyTextStack {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.hierarchyBrandPanel {
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.hierarchyInvertedPanel {
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: var(--space-3);
 }
 
 /* ─── Experiment palettes ─────────────────────────────────────────────────── */
@@ -228,7 +303,7 @@
   width: 100%;
   height: 56px;
   border-radius: var(--radius-md);
-  border: 1px solid rgb(0 0 0 / 8%);
+  border: var(--border-size-sm) solid rgb(0 0 0 / 8%);
 }
 
 .experimentShadeNumber {
@@ -256,7 +331,7 @@
   align-items: center;
   gap: var(--space-3);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--border-subtle);
+  border-top: var(--border-size-sm) solid var(--border-subtle);
   flex-wrap: wrap;
 }
 
@@ -281,4 +356,212 @@
   margin-right: var(--space-1);
   vertical-align: middle;
   flex-shrink: 0;
+}
+
+/* ─── Rulebook section ────────────────────────────────────────────────────── */
+
+.combinationGroup {
+  display: grid;
+  gap: var(--space-3);
+  padding-bottom: var(--space-6);
+
+  .combinationGroupTitle {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0;
+  }
+
+  .combinationGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-3);
+  }
+
+  .combinationCard {
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: grid;
+    gap: var(--space-2);
+    min-height: 110px;
+
+    .combinationName {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .combinationTokens {
+      font-size: var(--font-size-xs);
+      font-family: var(--font-mono);
+      line-height: 1.4;
+    }
+  }
+
+  .combinationActionCard {
+    background: var(--bg-surface);
+    border: var(--border-size-sm) solid var(--edge-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    display: grid;
+    gap: var(--space-3);
+    min-height: 160px;
+    align-content: start;
+
+    .combinationActionSlot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      min-height: 56px;
+    }
+
+    .combinationName {
+      font-size: var(--font-size-md);
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .combinationTokens {
+      font-size: var(--font-size-xs);
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+  }
+}
+
+.ruleBody {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+
+  .ruleStatement {
+    font-size: var(--font-size-md);
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .ruleTokens {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    align-items: center;
+
+    .ruleTokensLabel {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+    }
+
+    .ruleTokenChip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-family: var(--font-mono);
+      font-size: var(--font-size-xs);
+      padding: var(--space-1) var(--space-2);
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      border: var(--border-size-sm) solid var(--edge-surface);
+
+      .ruleTokenChipSwatch {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: var(--font-size-xs);
+        flex-shrink: 0;
+        border: var(--border-size-sm) solid var(--edge-canvas);
+      }
+    }
+  }
+
+  .ruleExampleHeading {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-top: var(--space-2);
+  }
+
+  .ruleExamples {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+
+    .ruleExample {
+      display: grid;
+      gap: var(--space-2);
+
+      .ruleExampleLabel {
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+
+        &.ruleExampleLabelDo {
+          color: var(--text-success);
+        }
+
+        &.ruleExampleLabelDont {
+          color: var(--text-error);
+        }
+      }
+
+      .ruleExamplePanel {
+        border: var(--border-size-sm) solid var(--edge-canvas);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        background: var(--bg-canvas);
+        min-height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+  }
+
+  .ruleNotes {
+    margin: 0;
+    padding-left: var(--space-5);
+    display: grid;
+    gap: var(--space-1);
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+
+    li::marker {
+      color: var(--text-error);
+    }
+  }
+
+  .ruleCodeBlock {
+    margin: 0;
+    padding: var(--space-3);
+    background: var(--bg-subtle);
+    border: var(--border-size-sm) solid var(--edge-subtle);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: var(--font-size-xs);
+    color: var(--text-primary);
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  @media (width <= 768px) {
+    .ruleExamples {
+      grid-template-columns: 1fr;
+    }
+  }
 }

@@ -63,6 +63,7 @@ import cephadex.brainflex.model.ShowcaseSettings;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.enums.GameMode;
 import cephadex.brainflex.model.enums.GameStatus;
@@ -89,6 +90,7 @@ public class ShowcaseService {
     private final SimpMessagingTemplate messagingTemplate;
     private final ShowcaseCacheService showcaseCache;
     private final AuthorizationService authorizationService;
+    private final DeckImageHydrationService deckImageHydrationService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private final ConcurrentHashMap<String, Object> roundLocks = new ConcurrentHashMap<>();
@@ -101,6 +103,7 @@ public class ShowcaseService {
             UserRepository userRepository,
             ShowcaseCacheService showcaseCache,
             AuthorizationService authorizationService,
+            DeckImageHydrationService deckImageHydrationService,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.showcaseRepository = showcaseRepository;
         this.deckRepository = deckRepository;
@@ -108,6 +111,7 @@ public class ShowcaseService {
         this.userRepository = userRepository;
         this.showcaseCache = showcaseCache;
         this.authorizationService = authorizationService;
+        this.deckImageHydrationService = deckImageHydrationService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -121,6 +125,12 @@ public class ShowcaseService {
     public Showcase createShowcase(User host, CreateShowcaseRequest request) {
         Deck deck = deckRepository.findById(request.deckId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found"));
+
+        // Bake presigned URLs into the snapshot we're about to freeze, so the
+        // session's elements + cover/background carry renderable URLs (gallery
+        // internalImgId references would otherwise have imgUrl=null on the
+        // persisted deck).
+        deckImageHydrationService.hydrate(deck);
 
         List<DeckElement> elements = deck.getElements();
         if (elements == null || elements.isEmpty()) {
@@ -159,8 +169,8 @@ public class ShowcaseService {
         session.setHostUserId(host.getId());
         session.setDeckId(request.deckId());
         session.setDeckSnapshot(snapshot);
-        session.setDeckCoverImageUrl(deck.getCoverImageUrl());
-        session.setDeckBackgroundImageUrl(deck.getBackgroundImageUrl());
+        session.setDeckCoverImageUrl(urlOf(deck.getCover()));
+        session.setDeckBackgroundImageUrl(urlOf(deck.getBackground()));
         session.setThemeId(deck.getThemeId());
         session.setSettings(settings);
         session.setRoomCode(generateUniqueRoomCode());
@@ -923,5 +933,9 @@ public class ShowcaseService {
         for (int i = 0; i < ROOM_CODE_LENGTH; i++)
             sb.append(ROOM_CODE_CHARS.charAt(secureRandom.nextInt(ROOM_CODE_CHARS.length())));
         return sb.toString();
+    }
+
+    private static String urlOf(Image image) {
+        return image == null ? null : image.imgUrl();
     }
 }

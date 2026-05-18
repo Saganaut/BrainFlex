@@ -58,7 +58,7 @@ const DeckGrid = ({
           key={deck.id}
           media={
             <img
-              src={resolveDeckCover(deck.coverImageUrl, deck.id)}
+              src={resolveDeckCover(deck.cover?.imgUrl, deck.id)}
               alt=''
               loading='lazy'
             />

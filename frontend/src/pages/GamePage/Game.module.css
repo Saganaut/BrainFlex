@@ -45,7 +45,7 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-subtle);
+  border: var(--border-size-sm) solid var(--border-subtle);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   cursor: pointer;
@@ -63,7 +63,7 @@
 }
 
 .moreOptions {
-  border-top: 1px solid var(--border-subtle);
+  border-top: var(--border-size-sm) solid var(--border-subtle);
   padding-top: var(--space-3);
 }
 
@@ -172,7 +172,7 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-6);
-  border: 2px dashed var(--border-subtle);
+  border: var(--border-size-sm) dashed var(--border-subtle);
   border-radius: var(--radius-md);
 }
 
@@ -183,7 +183,7 @@
   gap: var(--space-3);
   padding: var(--space-8);
   text-align: center;
-  border: 2px dashed var(--border-subtle);
+  border: var(--border-size-sm) dashed var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--bg-surface);
 }

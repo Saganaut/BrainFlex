@@ -71,9 +71,9 @@ public sealed interface DeckElement
     String speakerNotes();
 
     /** Element-level background image override; falls back to deck-level. */
-    String backgroundImageUrl();
+    Image background();
 
-    String imageUrl();
+    Image image();
 
     String videoUrl(); // YouTube link (v1)
 

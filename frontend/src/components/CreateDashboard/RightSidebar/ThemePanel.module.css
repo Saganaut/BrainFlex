@@ -35,7 +35,7 @@
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   background: transparent;
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--edge-canvas);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: var(--font-size-sm);
@@ -63,7 +63,7 @@
   border-radius: var(--radius-sm);
   overflow: hidden;
   flex-shrink: 0;
-  border: 1px solid var(--border-subtle);
+  border: var(--border-size-sm) solid var(--border-subtle);
 }
 
 .swatchPrimary {

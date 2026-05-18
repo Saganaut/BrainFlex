@@ -128,9 +128,8 @@ const RankingSlideContent = () => {
               />
             </div>
             <IconBtn
-              type='default'
+              variant='bordered'
               size='xs'
-              bordered
               icon={<MinusIcon />}
               aria-label={`Remove item ${(idx + 1).toString()}`}
               disabled={items.length <= MIN_ITEMS}

@@ -9,7 +9,7 @@
   gap: var(--space-2);
   padding: var(--space-2);
   background-color: var(--bg-surface);
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
 }
@@ -28,7 +28,7 @@
   min-width: 28px;
   height: 28px;
   padding: 0 var(--space-2);
-  border: 1px solid transparent;
+  border: var(--border-size-sm) solid transparent;
   border-radius: var(--radius-sm);
   background-color: transparent;
   color: var(--text-primary);

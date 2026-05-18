@@ -84,7 +84,7 @@ public class DeckController {
             Authentication authentication) {
         User caller = resolveUser(authentication);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new DeckDTO(deckService.createDeck(caller, request)));
+                .body(hydrateAndWrap(deckService.createDeck(caller, request)));
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -94,7 +94,7 @@ public class DeckController {
             @Valid @RequestBody UpdateDeckRequest request,
             Authentication authentication) {
         User caller = resolveUser(authentication);
-        return new DeckDTO(deckService.updateDeck(id, caller, request));
+        return hydrateAndWrap(deckService.updateDeck(id, caller, request));
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -121,7 +121,7 @@ public class DeckController {
             Authentication authentication) {
         User caller = resolveUser(authentication);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new DeckDTO(deckService.addElement(id, caller, element)));
+                .body(hydrateAndWrap(deckService.addElement(id, caller, element)));
     }
 
     /** Replace an element by id. */
@@ -133,7 +133,7 @@ public class DeckController {
             @RequestBody DeckElement element,
             Authentication authentication) {
         User caller = resolveUser(authentication);
-        return new DeckDTO(deckService.updateElement(id, elementId, caller, element));
+        return hydrateAndWrap(deckService.updateElement(id, elementId, caller, element));
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -143,7 +143,7 @@ public class DeckController {
             @PathVariable String elementId,
             Authentication authentication) {
         User caller = resolveUser(authentication);
-        return new DeckDTO(deckService.deleteElement(id, elementId, caller));
+        return hydrateAndWrap(deckService.deleteElement(id, elementId, caller));
     }
 
     /** Move an element to a new position within the deck. ?to=<index> */
@@ -155,7 +155,35 @@ public class DeckController {
             @RequestParam("to") int to,
             Authentication authentication) {
         User caller = resolveUser(authentication);
-        return new DeckDTO(deckService.moveElement(id, elementId, to, caller));
+        return hydrateAndWrap(deckService.moveElement(id, elementId, to, caller));
+    }
+
+    /**
+     * Move one option inside an MCQ question to a new index. ?to=<index>
+     * Avoids re-sending the entire McqQuestion just to reorder its options.
+     */
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/elements/{elementId}/options/{optionId}/move")
+    public DeckDTO moveMcqOption(
+            @PathVariable String id,
+            @PathVariable String elementId,
+            @PathVariable String optionId,
+            @RequestParam("to") int to,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        return hydrateAndWrap(
+                deckService.moveMcqOption(id, elementId, optionId, to, caller));
+    }
+
+    /**
+     * Run every mutation response through the same hydration pipeline that
+     * `getDeck` uses, so the client receives presigned `imgUrl` values on
+     * internal images instead of nulls. Without this the editor would have to
+     * carry old hydrated URLs forward in its cache.
+     */
+    private DeckDTO hydrateAndWrap(Deck deck) {
+        deckImageHydrationService.hydrate(deck);
+        return new DeckDTO(deck);
     }
 
     private User resolveUser(Authentication authentication) {

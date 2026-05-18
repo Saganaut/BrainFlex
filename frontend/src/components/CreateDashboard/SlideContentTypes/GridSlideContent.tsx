@@ -5,10 +5,11 @@
  * cells. `correctCellIndexes` is the set of correct cell indexes (row-major).
  * `multipleCorrect` toggles single-pick vs. multi-pick on the player side.
  *
- * The backing image is a Lorem Picsum placeholder for now — the real picker
- * lands with the media library. The cell-selection UI (visual grid overlay)
- * is TODO; we expose the raw "correct cell indexes" field as a comma list so
- * the question is at least authorable until the visual editor ships.
+ * The cell-selection UI (visual grid overlay) is TODO; we expose the raw
+ * "correct cell indexes" field as a comma list so the question is at least
+ * authorable until the visual editor ships. The backing image is a single
+ * unified `Image` — gallery picker hands back a complete value and pasted
+ * URLs become external images.
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
@@ -19,14 +20,12 @@ import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useElementEditor } from "./useElementEditor";
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
-import type { GridQuestion } from "@/store/BrainFlexApi";
+import type { GridQuestion, Image } from "@/store/BrainFlexApi";
+import { displayUrl, externalImage } from "@/utils/image";
 import styles from "./SlideContentTypes.module.css";
 
 const isGrid = (e: { kind: string }): e is GridQuestion =>
   e.kind === "GridQuestion";
-
-const placeholderImageUrl = (seed: string) =>
-  `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
 
 const indexesToInput = (idxs: number[] | undefined) => (idxs ?? []).join(", ");
 const inputToIndexes = (raw: string) =>
@@ -34,6 +33,10 @@ const inputToIndexes = (raw: string) =>
     .split(",")
     .map((s) => Number(s.trim()))
     .filter((n) => Number.isFinite(n) && n >= 0);
+
+/** The paste-URL input only shows external URLs; gallery picks leave it blank. */
+const pasteUrlOf = (image: Image | undefined): string =>
+  image?.useExternalImg ? (image.imgUrl ?? "") : "";
 
 const GridSlideContent = () => {
   const { element, schedule, flush, commit, syncedFromId, markSynced } =
@@ -43,8 +46,8 @@ const GridSlideContent = () => {
   const [prompt, setPrompt] = useState(element?.prompt ?? "");
   const [rows, setRows] = useState<number>(element?.rows ?? 3);
   const [cols, setCols] = useState<number>(element?.cols ?? 3);
-  const [backingImageUrl, setBackingImageUrl] = useState<string>(
-    element?.cells?.backingImageUrl ?? "",
+  const [pasteUrl, setPasteUrl] = useState<string>(() =>
+    pasteUrlOf(element?.cells?.backingImage),
   );
   const [correctText, setCorrectText] = useState(() =>
     indexesToInput(element?.correctCellIndexes),
@@ -58,7 +61,7 @@ const GridSlideContent = () => {
     setPrompt(element.prompt ?? "");
     setRows(element.rows ?? 3);
     setCols(element.cols ?? 3);
-    setBackingImageUrl(element.cells?.backingImageUrl ?? "");
+    setPasteUrl(pasteUrlOf(element.cells?.backingImage));
     setCorrectText(indexesToInput(element.correctCellIndexes));
     setMultipleCorrect(element.multipleCorrect ?? false);
   }
@@ -76,18 +79,13 @@ const GridSlideContent = () => {
     prompt,
     rows,
     cols,
-    cells: {
-      ...element.cells,
-      backingImageUrl: backingImageUrl || undefined,
-    },
     correctCellIndexes: inputToIndexes(correctText),
     multipleCorrect,
     ...overrides,
   });
 
   const seed = element.id ?? "grid";
-  const imgSrc =
-    backingImageUrl.trim() !== "" ? backingImageUrl : placeholderImageUrl(seed);
+  const imgSrc = displayUrl(element.cells?.backingImage, seed, 640, 360);
 
   return (
     <SlideContentWrapper
@@ -152,16 +150,16 @@ const GridSlideContent = () => {
                 id={`grid-image-${element.id ?? ""}`}
                 type='text'
                 fullWidth
-                value={backingImageUrl}
+                value={pasteUrl}
                 placeholder='https://…'
                 onChange={(e) => {
                   const next = e.target.value;
-                  setBackingImageUrl(next);
+                  setPasteUrl(next);
                   schedule(
                     buildPatch({
                       cells: {
                         ...element.cells,
-                        backingImageUrl: next || undefined,
+                        backingImage: externalImage(next),
                       },
                     }),
                   );
@@ -173,11 +171,11 @@ const GridSlideContent = () => {
               size='sm'
               onClick={() => {
                 flush();
-                openPicker((url) => {
-                  setBackingImageUrl(url);
+                openPicker((image) => {
+                  setPasteUrl("");
                   commit(
                     buildPatch({
-                      cells: { ...element.cells, backingImageUrl: url },
+                      cells: { ...element.cells, backingImage: image },
                     }),
                   );
                 });

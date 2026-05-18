@@ -1,5 +1,5 @@
 .board {
-  border: 1px solid var(--border-subtle);
+  border: var(--border-size-sm) solid var(--border-subtle);
   border-radius: var(--radius-md);
   background: var(--bg-surface);
   overflow: hidden;
@@ -9,7 +9,7 @@
 .title {
   font-size: var(--font-size-sm);
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: var(--border-size-sm) solid var(--border-subtle);
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -55,7 +55,7 @@
 .guest {
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  border: 1px solid var(--border-subtle);
+  border: var(--border-size-sm) solid var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-1);
 }
@@ -92,7 +92,7 @@
 .offlineLabel {
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
-  border: 1px dashed var(--border-subtle);
+  border: var(--border-size-sm) dashed var(--border-subtle);
   border-radius: var(--radius-sm);
   padding: 0 var(--space-1);
   text-transform: lowercase;

@@ -244,31 +244,83 @@ export const colorPalette = [
   },
 ];
 
-export const semanticTokens = [
-  "--bg-canvas",
-  "--bg-surface",
-  "--bg-surface-raised",
-  "--bg-subtle",
-  "--bg-brand",
-  "--text-primary",
-  "--text-secondary",
-  "--text-muted",
-  "--text-on-brand",
-  "--text-error",
-  "--text-success",
-  "--text-warning",
-  "--text-info",
-  "--border-default",
-  "--border-subtle",
-  "--border-focus",
-  "--border-brand",
-  "--action-hover",
-  "--action-active",
-  "--action-disabled",
-  "--status-success",
-  "--status-warning",
-  "--status-error",
-  "--status-info",
+export interface SemanticTokenGroup {
+  label: string;
+  tokens: string[];
+}
+
+export const semanticTokenGroups: SemanticTokenGroup[] = [
+  {
+    label: "Backgrounds",
+    tokens: [
+      "--bg-canvas",
+      "--bg-surface",
+      "--bg-surface-raised",
+      "--bg-secondary",
+      "--bg-subtle",
+      "--bg-primary",
+      "--bg-brand",
+      "--bg-disabled",
+    ],
+  },
+  {
+    label: "Inverted backgrounds",
+    tokens: [
+      "--bg-canvas-inverted",
+      "--bg-surface-inverted",
+      "--bg-primary-inverted",
+    ],
+  },
+  {
+    label: "Background — status",
+    tokens: ["--bg-error", "--bg-success", "--bg-warning", "--bg-info"],
+  },
+  {
+    label: "Text",
+    tokens: [
+      "--text-primary",
+      "--text-secondary",
+      "--text-muted",
+      "--text-accent",
+      "--text-on-brand",
+      "--text-disabled",
+    ],
+  },
+  {
+    label: "Inverted text",
+    tokens: [
+      "--text-primary-inverted",
+      "--text-secondary-inverted",
+      "--text-accent-inverted",
+    ],
+  },
+  {
+    label: "Text — status",
+    tokens: ["--text-error", "--text-success", "--text-warning", "--text-info"],
+  },
+  {
+    label: "Borders",
+    tokens: [
+      "--border-default",
+      "--border-subtle",
+      "--border-focus",
+      "--border-brand",
+      "--border-disabled",
+    ],
+  },
+  {
+    label: "Borders — status",
+    tokens: [
+      "--border-success",
+      "--border-warning",
+      "--border-error",
+      "--border-info",
+    ],
+  },
+  {
+    label: "Actions",
+    tokens: ["--action-hover", "--action-active", "--action-disabled"],
+  },
 ];
 
 export const playersData: ScoreBoardProps = {

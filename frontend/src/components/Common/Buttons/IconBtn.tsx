@@ -1,32 +1,29 @@
-// Icon-only button. Variant + size flow through className composition (see
-// Buttons.module.css for the modifier classes). Component-specific concepts —
-// close / avatar / round / pill / bordered / withBackground — stay as module
-// classes too. "close" renders an XMarkIcon; "avatar" and "default" render the
-// passed icon.
+// Icon-only button. The `variant` prop is the single axis controlling color
+// + fill / outline / ghost — see BtnTypes.ts and STYLE-RULES.md "Named
+// button + icon-button variants". Each variant maps to a nested rule under
+// .iconBtn in Buttons.module.css. variant="close" renders an XMarkIcon and
+// ignores the `icon` prop. shape="avatar" gives the round photo treatment
+// (zero padding, thicker border, image clipping).
 import React, { type ReactNode } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { BtnShape, BtnSize, BtnVariant } from "./BtnTypes";
 import styles from "./Buttons.module.css";
 
-interface IconBtnProps
-  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "type"> {
-  type: "close" | "default" | "avatar";
+interface IconBtnProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  "type"
+> {
+  variant?: BtnVariant;
   icon?: ReactNode;
   size?: BtnSize;
-  variant?: BtnVariant;
   shape?: BtnShape;
-  bordered?: boolean;
-  backgroundColor?: boolean;
 }
 
 const IconBtn = ({
-  type,
+  variant = "primary",
   icon,
   size = "md",
-  variant = "default",
   shape = "default",
-  bordered = false,
-  backgroundColor = false,
   disabled = false,
   onClick,
   className,
@@ -40,17 +37,14 @@ const IconBtn = ({
       {...rest}
       className={[
         styles.iconBtn,
-        variant !== "default" && styles[variant],
+        styles[variant],
         styles[size],
-        type !== "default" && styles[type],
         shape !== "default" && styles[shape],
-        bordered && styles.bordered,
-        backgroundColor && styles.withBackground,
         className,
       ]
         .filter(Boolean)
         .join(" ")}>
-      {type === "close" ? <XMarkIcon /> : icon}
+      {variant === "close" ? <XMarkIcon /> : icon}
     </button>
   );
 };

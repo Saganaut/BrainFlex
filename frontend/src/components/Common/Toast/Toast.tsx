@@ -27,7 +27,7 @@ const Toast = ({ id, message, variant, duration, onDismiss }: ToastProps) => {
       <span className={styles.message}>{message}</span>
       <div className={styles.closeBtn}>
         <IconBtn
-          type='close'
+          variant='close'
           size='xs'
           className={styles.dismiss}
           aria-label='Dismiss notification'

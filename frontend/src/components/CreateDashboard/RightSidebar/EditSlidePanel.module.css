@@ -1,0 +1,28 @@
+/* Vertical form layout for the deck-editor's "edit" drawer. Mirrors the
+   spacing rhythm of ThemePanel so the two panels feel like one rail. */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.heading {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.empty {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}

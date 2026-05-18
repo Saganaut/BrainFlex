@@ -19,15 +19,14 @@
  *
  * MCQ rules enforced via the hooks:
  *   - `MIN_MCQ_OPTIONS`–`MAX_MCQ_OPTIONS` bound the option count.
- *   - Zero correct answers is allowed but flagged by `EditorWarning`
+ *   - Zero correct answers is allowed but flagged
  *     because the slide isn't scoreable in that state.
  */
 import { useState } from "react";
+import { DragDropProvider } from "@dnd-kit/react";
 import { SlideContentWrapper } from "../SlideContentWrapper";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
-import { Btn } from "@/components/Common/Buttons/Btn";
 import { useMcqQuestionEditor } from "../useElementEditor";
-import { EditorWarning } from "../EditorWarning";
 import { McqOptionEditable } from "./McqOptionEditable";
 import styles from "./McqSlideContent.module.css";
 
@@ -40,6 +39,7 @@ const McqSlideContent = () => {
     markSynced,
     canAddOption,
     addOption,
+    handleOptionDragEnd,
   } = useMcqQuestionEditor();
 
   // Only the prompt needs a local mirror — typing should feel responsive
@@ -73,10 +73,10 @@ const McqSlideContent = () => {
     <SlideContentWrapper
       footer={
         !hasCorrectAnswer ? (
-          <EditorWarning>
+          <p>
             Not setting a correct answer means this slide is not scoreable in a
             game showcase.
-          </EditorWarning>
+          </p>
         ) : null
       }>
       <div className={styles.slideHeader}>
@@ -92,21 +92,23 @@ const McqSlideContent = () => {
           onBlur={flush}
         />
       </div>
-      <div className={styles.optionsHeader}>
-        <Btn size='sm' onClick={addOption} disabled={!canAddOption}>
-          + Add option
-        </Btn>
-      </div>
-
       <div
         className={styles.optionsRow}
         style={{ "--cols": columns } as React.CSSProperties}>
-        {options.map((option, idx) => (
-          <McqOptionEditable
-            key={option.id ?? `__no-id-${idx.toString()}`}
-            option={option}
-          />
-        ))}
+        <DragDropProvider
+          onDragEnd={(event) => {
+            handleOptionDragEnd(event);
+          }}>
+          {options.map((option, idx) => (
+            <McqOptionEditable
+              key={option.id ?? `__no-id-${idx.toString()}`}
+              option={option}
+              sortIndex={idx}
+              addOption={addOption}
+              canAddOption={canAddOption}
+            />
+          ))}
+        </DragDropProvider>
       </div>
     </SlideContentWrapper>
   );

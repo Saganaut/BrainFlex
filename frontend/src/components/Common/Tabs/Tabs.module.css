@@ -12,7 +12,7 @@
 }
 
 .underline {
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: var(--border-size-sm) solid var(--border-subtle);
 }
 
 .pill {
@@ -50,7 +50,7 @@
 }
 
 .underline .tab {
-  border-bottom: 2px solid transparent;
+  border-bottom: var(--border-size-sm) solid transparent;
   border-radius: 0;
   margin-bottom: -1px;
 }
@@ -71,6 +71,11 @@
 
 .tab:hover:not(:disabled) {
   color: var(--text-primary);
+}
+
+.panel {
+  width: 100%;
+  min-width: 0;
 }
 
 .panel:focus-visible {

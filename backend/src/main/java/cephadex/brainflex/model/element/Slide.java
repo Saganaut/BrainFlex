@@ -5,14 +5,25 @@
  *
  * Inherits `bestAnswerMode` / `bestAnswerTitle` / `bestAnswerBonus` defaults
  * from the interface — slides are never eligible for best-answer voting.
+ *
+ * The trailing block of audience/display options (resultsDisplayType through
+ * participantInformation) is shared with the rest of the deck-element family
+ * conceptually but only declared here for now; other kinds will inherit the
+ * same controls in a follow-up once the UI surfaces them everywhere. New
+ * boolean / int fields are declared as primitives, so every payload from the
+ * frontend must include defaults (Jackson cannot deserialize null into a
+ * primitive — see useCreateDashboard.buildNewElement).
  */
 package cephadex.brainflex.model.element;
 
 import java.util.Map;
 
 import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.enums.JoinType;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.ResponseMode;
+import cephadex.brainflex.model.enums.ResultsDisplayType;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 import cephadex.brainflex.model.enums.SlideKind;
 
 public record Slide(
@@ -30,11 +41,21 @@ public record Slide(
         // shared chrome
         int displaySeconds,
         String speakerNotes,
-        String backgroundImageUrl,
-        String imageUrl,
+        Image background,
+        Image image,
         String videoUrl,
         String audioUrl,
-        MediaPosition mediaPosition
+        MediaPosition mediaPosition,
+        // audience / display options (first "Edit slide" tab in the deck editor)
+        ResultsDisplayType resultsDisplayType,
+        boolean multipleSelectionsEnabled,
+        int selectionsPerParticipant,
+        boolean showResultsAsPercentage,
+        JoinType joinType,
+        boolean showJoinInformation,
+        ShowResponsesMode showResponses,
+        String heading,
+        Map<String, Object> participantInformation   // TipTap/ProseMirror rich-text doc
 ) implements DeckElement {
 
     @Override

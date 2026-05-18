@@ -50,7 +50,7 @@ const Modal = ({
             {title}
           </h2>
         )}
-        <IconBtn type='close' aria-label='Close modal' onClick={onClose} />
+        <IconBtn variant='close' aria-label='Close modal' onClick={onClose} />
       </div>
       <div className={style.content}>{children}</div>
     </dialog>

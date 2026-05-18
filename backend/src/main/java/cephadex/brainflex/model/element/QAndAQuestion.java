@@ -40,8 +40,8 @@ public record QAndAQuestion(
         // shared chrome
         int displaySeconds,
         String speakerNotes,
-        String backgroundImageUrl,
-        String imageUrl,
+        Image background,
+        Image image,
         String videoUrl,
         String audioUrl,
         MediaPosition mediaPosition

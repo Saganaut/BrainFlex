@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-full);
   background-color: var(--bg-canvas);
   color: var(--text-primary);

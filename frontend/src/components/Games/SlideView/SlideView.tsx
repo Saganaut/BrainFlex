@@ -26,8 +26,8 @@ const SlideView = ({ slide, round, totalRounds, timeRemaining }: SlideViewProps)
         )}
       </div>
 
-      {slide.imageUrl && (
-        <img src={slide.imageUrl} alt='' className={styles.image} />
+      {slide.image?.imgUrl && (
+        <img src={slide.image.imgUrl} alt='' className={styles.image} />
       )}
 
       {slide.title && <h2 className={styles.title}>{slide.title}</h2>}

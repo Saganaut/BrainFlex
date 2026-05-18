@@ -199,9 +199,8 @@ const ScalesSlideContent = () => {
               />
             </div>
             <IconBtn
-              type='default'
+              variant='bordered'
               size='xs'
-              bordered
               icon={<MinusIcon />}
               aria-label={`Remove statement ${(idx + 1).toString()}`}
               disabled={statements.length <= MIN_STATEMENTS}

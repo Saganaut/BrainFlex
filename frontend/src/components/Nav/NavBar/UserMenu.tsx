@@ -43,11 +43,9 @@ const UserMenu = () => {
     <DropdownMenu
       trigger={(toggle) => (
         <IconBtn
-          type='avatar'
           className={styles.avatarBtn}
-          shape='round'
-          bordered={true}
-          backgroundColor={true}
+          shape='avatar'
+          variant='filled'
           size='md'
           aria-label='User menu'
           icon={avatarContent()}

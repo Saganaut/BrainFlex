@@ -9,7 +9,7 @@
 .header {
   margin-bottom: var(--space-12);
   padding-bottom: var(--space-8);
-  border-bottom: 1px solid var(--border-default);
+  border-bottom: var(--border-size-sm) solid var(--border-default);
 }
 
 .eyebrow {
@@ -92,7 +92,7 @@
   text-decoration: none;
   display: block;
   padding: var(--space-1) var(--space-2);
-  border-left: 2px solid var(--border-subtle);
+  border-left: var(--border-size-sm) solid var(--border-subtle);
   transition: all var(--duration-fast);
 }
 
@@ -113,7 +113,7 @@
 .section {
   scroll-margin-top: var(--space-8);
   padding-bottom: var(--space-8);
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: var(--border-size-sm) solid var(--border-subtle);
 }
 
 .section:last-child {
@@ -146,6 +146,6 @@
   .toc {
     position: static;
     padding-bottom: var(--space-6);
-    border-bottom: 1px solid var(--border-default);
+    border-bottom: var(--border-size-sm) solid var(--border-default);
   }
 }

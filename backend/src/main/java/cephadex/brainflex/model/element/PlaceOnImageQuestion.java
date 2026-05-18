@@ -25,7 +25,7 @@ public record PlaceOnImageQuestion(
         String title,
         Map<String, Object> styledTitle,
         String prompt,
-        String targetImageUrl,
+        Image targetImage,
         double correctX,               // 0..1
         double correctY,               // 0..1
         double tolerance,              // 0..1
@@ -45,8 +45,8 @@ public record PlaceOnImageQuestion(
         // shared chrome
         int displaySeconds,
         String speakerNotes,
-        String backgroundImageUrl,
-        String imageUrl,
+        Image background,
+        Image image,
         String videoUrl,
         String audioUrl,
         MediaPosition mediaPosition

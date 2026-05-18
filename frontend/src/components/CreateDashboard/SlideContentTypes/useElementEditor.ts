@@ -19,13 +19,18 @@
  */
 import { useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
+import { isSortable } from "@dnd-kit/dom/sortable";
+import type { DragEndEvent } from "@dnd-kit/dom";
 import {
+  BrainFlex,
   useGetDeckQuery,
+  useMoveMcqOptionMutation,
   useUpdateElementMutation,
   type DeckDto,
   type McqOption,
   type McqQuestion,
 } from "@/store/BrainFlexApi";
+import { useAppDispatch } from "@/store/hooks";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 
 type DeckElement = NonNullable<DeckDto["elements"]>[number];
@@ -38,37 +43,6 @@ const MAX_MCQ_OPTIONS = 6;
 
 const isMcqQuestion = (e: DeckElement): e is McqQuestion =>
   e.kind === "McqQuestion";
-
-/**
- * Strip the hydrated presigned `imageUrl` from any gallery-backed option
- * before we PUT the element back. `apiEnhancements.preserveGalleryUrls`
- * keeps that URL on cached options so the editor doesn't flash on every
- * mutation, but the backend's `validateOptionImages` rejects any write
- * that carries both `galleryImageId` and `imageUrl` on the same option.
- * Without this, editing option B fails because option A in the same
- * question still has both fields set in the cache.
- */
-const sanitizeOptionsForCommit = (options: McqOption[]): McqOption[] =>
-  options.map((opt) =>
-    opt.galleryImageId && opt.imageUrl
-      ? {
-          id: opt.id,
-          text: opt.text,
-          color: opt.color,
-          galleryImageId: opt.galleryImageId,
-        }
-      : opt,
-  );
-
-const sanitizeElementForCommit = <T extends DeckElement>(element: T): T => {
-  if (element.kind === "McqQuestion") {
-    return {
-      ...element,
-      options: sanitizeOptionsForCommit(element.options ?? []),
-    };
-  }
-  return element;
-};
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -105,7 +79,7 @@ const useElementEditor = <T extends DeckElement>(
     void updateElement({
       id: deckId,
       elementId: element.id,
-      body: sanitizeElementForCommit(patch),
+      body: patch,
     })
       .unwrap()
       .catch((err: unknown) => {
@@ -314,9 +288,15 @@ interface McqQuestionEditorApi {
   canAddOption: boolean;
   /** Append a blank option. Silent no-op at the max bound. */
   addOption: () => void;
+  /** Sortable drop handler — reorders the option list and persists via the
+   *  dedicated `moveMcqOption` endpoint (no whole-element write). */
+  handleOptionDragEnd: (event: DragEndEvent) => void;
 }
 
 const useMcqQuestionEditor = (delay = 500): McqQuestionEditorApi => {
+  const { deckId } = routeApi.useParams();
+  const dispatch = useAppDispatch();
+  const [moveMcqOption] = useMoveMcqOptionMutation();
   const {
     element: question,
     schedule,
@@ -344,6 +324,49 @@ const useMcqQuestionEditor = (delay = 500): McqQuestionEditorApi => {
     commit({ ...question, options: nextOptions });
   };
 
+  /**
+   * Mirror of `useCreateDashboard.handleDragEnd` but for MCQ options. The
+   * source carries the @dnd-kit-tracked indices; we splice the option list
+   * in the deck cache for instant UI feedback, then call the dedicated
+   * `moveMcqOption` endpoint so the server only sees the reorder (not a
+   * full McqQuestion rewrite). Any pending debounced text edit is flushed
+   * first so this reorder doesn't race a stale option-text save.
+   */
+  const handleOptionDragEnd = (event: DragEndEvent) => {
+    if (!question?.id) return;
+    const { source } = event.operation;
+    if (!isSortable(source)) return;
+    const { initialIndex, index } = source;
+    if (initialIndex === index) return;
+    const options = question.options ?? [];
+    const moved = options[initialIndex];
+    if (!moved.id) return;
+    const movedId = moved.id;
+    const elementId = question.id;
+
+    flush();
+
+    dispatch(
+      BrainFlex.util.updateQueryData("getDeck", { id: deckId }, (draft) => {
+        const el = draft.elements?.find((e) => e.id === elementId);
+        if (el?.kind !== "McqQuestion" || !el.options) return;
+        const [item] = el.options.splice(initialIndex, 1);
+        el.options.splice(index, 0, item);
+      }),
+    );
+
+    void moveMcqOption({
+      id: deckId,
+      elementId,
+      optionId: movedId,
+      to: index,
+    })
+      .unwrap()
+      .catch((err: unknown) => {
+        console.error("Failed to move MCQ option", err);
+      });
+  };
+
   return {
     question,
     schedulePrompt,
@@ -352,6 +375,7 @@ const useMcqQuestionEditor = (delay = 500): McqQuestionEditorApi => {
     markSynced,
     canAddOption,
     addOption,
+    handleOptionDragEnd,
   };
 };
 

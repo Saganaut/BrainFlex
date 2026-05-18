@@ -1,5 +1,5 @@
 // Unit tests for the Btn component — covers rendering, interaction, and prop-driven
-// className behavior. Variant / size / mode each map to a class in
+// className behavior. Variant / size / shape each map to a class in
 // Buttons.module.css; the tests assert that class presence is the styling contract.
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -91,19 +91,24 @@ describe("Btn", () => {
   });
 
   describe("modifier classes", () => {
-    it("does not add a variant class for the default variant", () => {
+    it("defaults to the primary variant class", () => {
       render(<Btn>Default</Btn>);
-      const className = screen.getByRole("button").className;
-      expect(className).not.toContain("error");
-      expect(className).not.toContain("success");
-      expect(className).not.toContain("warning");
-      expect(className).not.toContain("info");
-      expect(className).not.toContain("brand");
+      expect(screen.getByRole("button").className).toContain("primary");
     });
 
     it("applies the given variant as a class", () => {
       render(<Btn variant='error'>Error</Btn>);
       expect(screen.getByRole("button").className).toContain("error");
+    });
+
+    it("applies ghost as a variant class", () => {
+      render(<Btn variant='ghost'>Ghost</Btn>);
+      expect(screen.getByRole("button").className).toContain("ghost");
+    });
+
+    it("applies bordered as a variant class", () => {
+      render(<Btn variant='bordered'>Outline</Btn>);
+      expect(screen.getByRole("button").className).toContain("bordered");
     });
 
     it("defaults to the md size class", () => {
@@ -114,18 +119,6 @@ describe("Btn", () => {
     it("applies the given size as a class", () => {
       render(<Btn size='lg'>Large</Btn>);
       expect(screen.getByRole("button").className).toContain("lg");
-    });
-
-    it("applies the given mode as a class", () => {
-      render(<Btn mode='outline'>Outline</Btn>);
-      expect(screen.getByRole("button").className).toContain("outline");
-    });
-
-    it("does not add a mode class by default", () => {
-      render(<Btn>Default</Btn>);
-      const className = screen.getByRole("button").className;
-      expect(className).not.toContain("outline");
-      expect(className).not.toContain("ghost");
     });
   });
 

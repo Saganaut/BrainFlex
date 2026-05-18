@@ -3,7 +3,7 @@
 // ripple instantly through every semantic token on the page.
 import { useTheme } from "../../hooks/useTheme";
 import { Btn } from "../../components/Common/Buttons/Btn";
-import { HuePicker } from "../../components/Common/Input/HuePicker/HuePicker";
+import { ColorPicker } from "../../components/Common/Input/ColorPicker/ColorPicker";
 import { themePresets } from "./data";
 import styles from "./DesignSystem.module.css";
 
@@ -14,12 +14,12 @@ const ThemePicker = () => {
   return (
     <>
       <div className={styles.hueControls}>
-        <HuePicker
+        <ColorPicker
           label='Primary'
           value={huePrimary}
           onChange={setHuePrimary}
         />
-        <HuePicker label='Accent' value={hueAccent} onChange={setHueAccent} />
+        <ColorPicker label='Accent' value={hueAccent} onChange={setHueAccent} />
       </div>
       <div className={styles.presetsRow}>
         <span className={styles.presetsLabel}>Presets</span>

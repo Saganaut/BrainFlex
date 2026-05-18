@@ -18,6 +18,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { ThemePanel } from "./ThemePanel";
+import { EditSlidePanel } from "./EditSlidePanel";
 import styles from "./RightSidebarContent.module.css";
 import { RightSidebar } from "@/components/Layout/RightSidebar";
 
@@ -68,7 +69,7 @@ const RightSidebarContent = () => {
             <div className={styles.drawerHeader}>
               <h3 className={styles.drawerTitle}>{PANEL_TITLES[openPanel]}</h3>
               <IconBtn
-                type='close'
+                variant='close'
                 size='sm'
                 aria-label='Close panel'
                 onClick={() => {
@@ -77,9 +78,7 @@ const RightSidebarContent = () => {
               />
             </div>
             <div className={styles.drawerBody}>
-              {openPanel === "edit" && (
-                <PlaceholderPanel description='Per-slide layout, animation, transition, and template options will live here.' />
-              )}
+              {openPanel === "edit" && <EditSlidePanel />}
               {openPanel === "theme" && <ThemePanel />}
               {openPanel === "participants" && (
                 <PlaceholderPanel description='Roster of who has joined plus per-participant moderation actions.' />
@@ -94,9 +93,8 @@ const RightSidebarContent = () => {
 
       <div className={styles.iconStrip} role='toolbar' aria-label='Deck panels'>
         <IconBtn
-          type='default'
+          variant='bordered'
           shape='round'
-          bordered
           size='md'
           aria-label={PANEL_TITLES.edit}
           aria-pressed={openPanel === "edit"}
@@ -107,9 +105,8 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          type='default'
+          variant='bordered'
           shape='round'
-          bordered
           size='md'
           aria-label={PANEL_TITLES.theme}
           aria-pressed={openPanel === "theme"}
@@ -120,9 +117,8 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          type='default'
+          variant='bordered'
           shape='round'
-          bordered
           size='md'
           aria-label={PANEL_TITLES.participants}
           aria-pressed={openPanel === "participants"}
@@ -133,9 +129,8 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          type='default'
+          variant='bordered'
           shape='round'
-          bordered
           size='md'
           aria-label={PANEL_TITLES.sharing}
           aria-pressed={openPanel === "sharing"}

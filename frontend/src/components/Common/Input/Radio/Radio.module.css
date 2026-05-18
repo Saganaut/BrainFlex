@@ -44,7 +44,7 @@
   flex-shrink: 0;
   width: 18px;
   height: 18px;
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-full);
   background-color: transparent;
   display: flex;

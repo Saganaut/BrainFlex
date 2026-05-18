@@ -47,6 +47,7 @@ import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
+import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
@@ -61,10 +62,13 @@ import cephadex.brainflex.model.element.TextQuestion;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
+import cephadex.brainflex.model.enums.JoinType;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.PlaceScoring;
 import cephadex.brainflex.model.enums.RankingScoring;
 import cephadex.brainflex.model.enums.ResponseMode;
+import cephadex.brainflex.model.enums.ResultsDisplayType;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 import cephadex.brainflex.model.enums.SlideKind;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
@@ -528,7 +532,7 @@ public class SampleDataSeeder {
                 pub("rr-place-1"), prv("rr-place-1"),
                 "Click roughly where Edoras would be on this map of Rohan.", null,
                 "Click roughly where Edoras would be on this map of Rohan.",
-                "https://picsum.photos/seed/middle-earth-rohan/1200/800",
+                Image.external("https://picsum.photos/seed/middle-earth-rohan/1200/800"),
                 0.5, 0.5, 0.1,
                 PlaceScoring.LINEAR,
                 200, Difficulty.MEDIUM,
@@ -592,14 +596,14 @@ public class SampleDataSeeder {
                 100, Difficulty.EASY));
 
         List<McqOption> pipes = List.of(
-                new McqOption("pipe-leaf", "Old Toby (pipe-weed)", null,
-                        "https://picsum.photos/seed/lotr-pipe-toby/400/300", null),
-                new McqOption("pipe-mug", "A mug of ale at the Green Dragon", null,
-                        "https://picsum.photos/seed/lotr-green-dragon/400/300", null),
-                new McqOption("pipe-mathom", "A mathom shelved in the Mathom-house", null,
-                        "https://picsum.photos/seed/lotr-mathom/400/300", null),
-                new McqOption("pipe-pony", "A Brandywine pony", null,
-                        "https://picsum.photos/seed/lotr-pony/400/300", null));
+                new McqOption("pipe-leaf", "Old Toby (pipe-weed)",
+                        Image.external("https://picsum.photos/seed/lotr-pipe-toby/400/300"), null),
+                new McqOption("pipe-mug", "A mug of ale at the Green Dragon",
+                        Image.external("https://picsum.photos/seed/lotr-green-dragon/400/300"), null),
+                new McqOption("pipe-mathom", "A mathom shelved in the Mathom-house",
+                        Image.external("https://picsum.photos/seed/lotr-mathom/400/300"), null),
+                new McqOption("pipe-pony", "A Brandywine pony",
+                        Image.external("https://picsum.photos/seed/lotr-pony/400/300"), null));
         els.add(new McqQuestion("sf-img-1",
                 pub("sf-img-1"), prv("sf-img-1"),
                 "Which of these would you find Gandalf enjoying outside Bag End?", null,
@@ -636,8 +640,8 @@ public class SampleDataSeeder {
         deck.setTags(tags);
         deck.setVisibility(DeckVisibility.PRIVATE);
         deck.setRecommendedPreset(DeckPreset.GAME);
-        deck.setCoverImageUrl("https://picsum.photos/seed/" + seedSlug + "/480/280");
-        deck.setBackgroundImageUrl("https://picsum.photos/seed/" + seedSlug + "-bg/1600/1000");
+        deck.setCover(Image.external("https://picsum.photos/seed/" + seedSlug + "/480/280"));
+        deck.setBackground(Image.external("https://picsum.photos/seed/" + seedSlug + "-bg/1600/1000"));
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
         return deck;
@@ -649,20 +653,26 @@ public class SampleDataSeeder {
     private static Slide titleSlide(String id, String title, String body) {
         return new Slide(id, SlideKind.TITLE, pub(id), prv(id), title, null, body,
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                6, null, null, null, null, null, MediaPosition.NONE);
+                6, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.DEFAULT, false, 1, false,
+                JoinType.INSTRUCTIONS_BAR, true, ShowResponsesMode.INSTANT,
+                null, null);
     }
 
     private static Slide endSlide(String id, String title, String body) {
         return new Slide(id, SlideKind.END, pub(id), prv(id), title, null, body,
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                8, null, null, null, null, null, MediaPosition.NONE);
+                8, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.DEFAULT, false, 1, false,
+                JoinType.INSTRUCTIONS_BAR, true, ShowResponsesMode.INSTANT,
+                null, null);
     }
 
     private static McqQuestion mcq(String id, String prompt, List<String> options, int correctIndex,
                                    int pointValue, Difficulty difficulty) {
         List<McqOption> opts = new ArrayList<>();
         for (int i = 0; i < options.size(); i++) {
-            opts.add(new McqOption(id + "-opt-" + i, options.get(i), null, null, null));
+            opts.add(new McqOption(id + "-opt-" + i, options.get(i), null, null));
         }
         return new McqQuestion(id, pub(id), prv(id), prompt, null,
                 prompt, opts, List.of(opts.get(correctIndex).id()),
@@ -693,8 +703,8 @@ public class SampleDataSeeder {
         deck.setSystem(true);
         deck.setVisibility(DeckVisibility.PUBLIC);
         deck.setRecommendedPreset(DeckPreset.GAME);
-        deck.setCoverImageUrl("https://picsum.photos/seed/brainflex-welcome-tour/480/280");
-        deck.setBackgroundImageUrl("https://picsum.photos/seed/brainflex-welcome-tour-bg/1600/1000");
+        deck.setCover(Image.external("https://picsum.photos/seed/brainflex-welcome-tour/480/280"));
+        deck.setBackground(Image.external("https://picsum.photos/seed/brainflex-welcome-tour-bg/1600/1000"));
         deck.setEstimatedDurationMinutes(8);
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
@@ -712,20 +722,27 @@ public class SampleDataSeeder {
                 "Welcome to BrainFlex", null,
                 "A quick tour through every kind of element a deck can contain. Press the screen to begin.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                6, null, null, null, null, null, MediaPosition.NONE));
+                6, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.DEFAULT, false, 1, false,
+                JoinType.QR_CODE, true, ShowResponsesMode.INSTANT,
+                "Join the tour",
+                null));
 
         els.add(new Slide("wt-s-2", SlideKind.SECTION,
                 pub("wt-s-2"), prv("wt-s-2"),
                 "Trivia round", null,
                 "Multiple choice, then free-text, then a number guess.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE));
+                4, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.DEFAULT, false, 1, false,
+                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
+                null, null));
 
         List<McqOption> mcqOpts = List.of(
-                new McqOption("mars-opt-1", "Venus", null, null, null),
-                new McqOption("mars-opt-2", "Jupiter", null, null, null),
-                new McqOption("mars-opt-3", "Mars", null, null, null),
-                new McqOption("mars-opt-4", "Saturn", null, null, null));
+                new McqOption("mars-opt-1", "Venus", null, null),
+                new McqOption("mars-opt-2", "Jupiter", null, null),
+                new McqOption("mars-opt-3", "Mars", null, null),
+                new McqOption("mars-opt-4", "Saturn", null, null));
         els.add(new McqQuestion("wt-mcq-1",
                 pub("wt-mcq-1"), prv("wt-mcq-1"),
                 "Which planet is known as the Red Planet?", null,
@@ -761,7 +778,10 @@ public class SampleDataSeeder {
                 "Order and rate", null,
                 "Drag to reorder, then rate some statements.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE));
+                4, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.HISTOGRAM, true, 3, true,
+                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
+                null, null));
 
         List<RankingItem> planets = List.of(
                 new RankingItem("planet-mercury", "Mercury", null),
@@ -800,7 +820,10 @@ public class SampleDataSeeder {
                 "Audience interaction", null,
                 "Vote on the funniest answer, then ask anything.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE));
+                4, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.PIE_CHART, false, 1, true,
+                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.ON_CLICK,
+                null, null));
 
         els.add(new TextQuestion("wt-best-1",
                 pub("wt-best-1"), prv("wt-best-1"),
@@ -830,7 +853,10 @@ public class SampleDataSeeder {
                 "Visual round", null,
                 "Tap cells, place a pin, pick an image.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE));
+                4, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.DEFAULT, false, 1, false,
+                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
+                null, null));
 
         els.add(new GridQuestion("wt-grid-1",
                 pub("wt-grid-1"), prv("wt-grid-1"),
@@ -849,7 +875,7 @@ public class SampleDataSeeder {
                 pub("wt-place-1"), prv("wt-place-1"),
                 "Click roughly where Italy would be on this map.", null,
                 "Click roughly where Italy would be on this map.",
-                "https://picsum.photos/seed/brainflex-welcome-map/1200/800",
+                Image.external("https://picsum.photos/seed/brainflex-welcome-map/1200/800"),
                 0.55, 0.42, 0.08,
                 PlaceScoring.LINEAR,
                 200, Difficulty.MEDIUM,
@@ -858,14 +884,14 @@ public class SampleDataSeeder {
                 25, null, null, null, null, null, MediaPosition.NONE));
 
         List<McqOption> landmarks = List.of(
-                new McqOption("lm-eiffel", "Eiffel Tower", null,
-                        "https://picsum.photos/seed/landmark-eiffel/400/300", null),
-                new McqOption("lm-pisa", "Leaning Tower of Pisa", null,
-                        "https://picsum.photos/seed/landmark-pisa/400/300", null),
-                new McqOption("lm-bigben", "Big Ben", null,
-                        "https://picsum.photos/seed/landmark-bigben/400/300", null),
-                new McqOption("lm-statue", "Statue of Liberty", null,
-                        "https://picsum.photos/seed/landmark-statue/400/300", null));
+                new McqOption("lm-eiffel", "Eiffel Tower",
+                        Image.external("https://picsum.photos/seed/landmark-eiffel/400/300"), null),
+                new McqOption("lm-pisa", "Leaning Tower of Pisa",
+                        Image.external("https://picsum.photos/seed/landmark-pisa/400/300"), null),
+                new McqOption("lm-bigben", "Big Ben",
+                        Image.external("https://picsum.photos/seed/landmark-bigben/400/300"), null),
+                new McqOption("lm-statue", "Statue of Liberty",
+                        Image.external("https://picsum.photos/seed/landmark-statue/400/300"), null));
         els.add(new McqQuestion("wt-img-1",
                 pub("wt-img-1"), prv("wt-img-1"),
                 "Which of these is the Eiffel Tower?", null,
@@ -881,7 +907,10 @@ public class SampleDataSeeder {
                 "Thanks for playing!", null,
                 "That's every element type. Now go build your own deck.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                8, null, null, null, null, null, MediaPosition.NONE));
+                8, null, null, null, null, null, MediaPosition.NONE,
+                ResultsDisplayType.DEFAULT, false, 1, false,
+                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.PRIVATE,
+                null, null));
 
         deck.setElements(els);
         return deck;
@@ -896,8 +925,8 @@ public class SampleDataSeeder {
         deck.setSystem(true);
         deck.setVisibility(DeckVisibility.PUBLIC);
         deck.setRecommendedPreset(DeckPreset.GAME);
-        deck.setCoverImageUrl("https://picsum.photos/seed/brainflex-general-knowledge/480/280");
-        deck.setBackgroundImageUrl("https://picsum.photos/seed/brainflex-general-knowledge-bg/1600/1000");
+        deck.setCover(Image.external("https://picsum.photos/seed/brainflex-general-knowledge/480/280"));
+        deck.setBackground(Image.external("https://picsum.photos/seed/brainflex-general-knowledge-bg/1600/1000"));
         deck.setEstimatedDurationMinutes(6);
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());

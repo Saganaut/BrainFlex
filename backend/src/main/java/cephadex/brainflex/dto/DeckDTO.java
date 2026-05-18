@@ -11,6 +11,7 @@ import java.util.List;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.ShowcaseSettings;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 
@@ -24,8 +25,8 @@ public record DeckDTO(
         boolean isSystem,
         DeckVisibility visibility,
         DeckPreset recommendedPreset,
-        String coverImageUrl,
-        String backgroundImageUrl,
+        Image cover,
+        Image background,
         String themeId,
         ShowcaseSettings defaultSettings,
         Integer estimatedDurationMinutes,
@@ -46,8 +47,8 @@ public record DeckDTO(
                 deck.isSystem(),
                 deck.getVisibility(),
                 deck.getRecommendedPreset(),
-                deck.getCoverImageUrl(),
-                deck.getBackgroundImageUrl(),
+                deck.getCover(),
+                deck.getBackground(),
                 deck.getThemeId(),
                 deck.getDefaultSettings(),
                 deck.getEstimatedDurationMinutes(),

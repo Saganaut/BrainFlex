@@ -67,7 +67,7 @@ const DeckCard = ({
         void navigate({ to: `/decks/${deck.id}/edit` });
       }}>
       <img
-        src={resolveDeckCover(deck.coverImageUrl, deck.id)}
+        src={resolveDeckCover(deck.cover?.imgUrl, deck.id)}
         alt=''
         className={styles.cardCover}
         loading='lazy'

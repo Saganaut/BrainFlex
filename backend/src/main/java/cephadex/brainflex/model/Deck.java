@@ -13,6 +13,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import lombok.Data;
@@ -37,8 +38,8 @@ public class Deck {
     private DeckPreset recommendedPreset = DeckPreset.GAME;
 
     // Presentation chrome
-    private String coverImageUrl; // thumbnail tile
-    private String backgroundImageUrl; // applied during play (cascades to elements)
+    private Image cover; // thumbnail tile
+    private Image background; // applied during play (cascades to elements)
     private String themeId; // optional link to a saved Theme
 
     // Content — order matters; the runtime walks elements in this order.

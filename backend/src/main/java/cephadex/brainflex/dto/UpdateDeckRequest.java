@@ -1,12 +1,13 @@
 /**
  * Request body for PUT /api/decks/{id}. Null fields leave the deck unchanged;
- * non-null fields are patched. Image URLs use the empty string to clear
- * (versus null = leave alone).
+ * non-null fields are patched. To clear an image, send an `Image` with a
+ * blank/null `imgUrl` (or use `Image.empty()` on the client side).
  */
 package cephadex.brainflex.dto;
 
 import java.util.List;
 
+import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import jakarta.validation.constraints.Size;
@@ -17,8 +18,8 @@ public record UpdateDeckRequest(
         List<@Size(max = 50) String> tags,
         DeckVisibility visibility,
         DeckPreset recommendedPreset,
-        @Size(max = 2000) String coverImageUrl,
-        @Size(max = 2000) String backgroundImageUrl,
+        Image cover,
+        Image background,
         String themeId,
         Integer estimatedDurationMinutes) {
 }

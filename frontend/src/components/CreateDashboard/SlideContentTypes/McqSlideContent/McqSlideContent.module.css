@@ -22,10 +22,17 @@
   color: var(--text-secondary);
 }
 
+/* Cards stretch to the same height per row, capped at
+   `--mcq-option-max-h` so a runaway long option can't blow up the
+   layout. Inside each card, `useFitText` shrinks the option text to
+   fit; below the font floor the card clips. */
 .optionsRow {
   --cols: 2;
 
   display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
+  grid-auto-rows: minmax(0, 12rem);
   gap: var(--space-3);
+  align-items: start;
+  max-height: 80%;
 }

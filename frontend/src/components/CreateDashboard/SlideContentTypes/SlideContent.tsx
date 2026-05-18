@@ -67,7 +67,6 @@ const SlideContent = () => {
     <SlideContentWrapper
       title='Slide'
       description='A non-interactive screen — title, content, callout, or end card.'>
-
       <Dropdown
         label='Slide kind'
         id={`slide-kind-${element.id ?? ""}`}

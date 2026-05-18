@@ -7,6 +7,7 @@ package cephadex.brainflex.dto;
 
 import java.util.List;
 
+import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import jakarta.validation.constraints.NotBlank;
@@ -22,8 +23,8 @@ public record CreateDeckRequest(
         List<@Size(max = 50) String> tags,
         DeckVisibility visibility,        // null → PRIVATE
         DeckPreset recommendedPreset,     // null → GAME
-        @Size(max = 2000) String coverImageUrl,
-        @Size(max = 2000) String backgroundImageUrl,
+        Image cover,
+        Image background,
         String themeId,
         Integer estimatedDurationMinutes) {
 }

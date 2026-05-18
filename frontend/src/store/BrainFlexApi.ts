@@ -167,6 +167,18 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    moveMcqOption: build.mutation<
+      MoveMcqOptionApiResponse,
+      MoveMcqOptionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/elements/${queryArg.elementId}/options/${queryArg.optionId}/move`,
+        method: "POST",
+        params: {
+          to: queryArg.to,
+        },
+      }),
+    }),
     moveElement: build.mutation<MoveElementApiResponse, MoveElementApiArg>({
       query: (queryArg) => ({
         url: `/api/decks/${queryArg.id}/elements/${queryArg.elementId}/move`,
@@ -416,6 +428,13 @@ export type AddElementApiArg = {
     | Slide
     | TextQuestion;
 };
+export type MoveMcqOptionApiResponse = /** status 200 OK */ DeckDto;
+export type MoveMcqOptionApiArg = {
+  id: string;
+  elementId: string;
+  optionId: string;
+  to: number;
+};
 export type MoveElementApiResponse = /** status 200 OK */ DeckDto;
 export type MoveElementApiArg = {
   id: string;
@@ -519,6 +538,12 @@ export type UpdateGalleryImageRequest = {
   tags?: string[];
   organizationId?: string;
 };
+export type Image = {
+  useExternalImg?: boolean;
+  internalImgId?: string;
+  imgUrl?: string;
+  blank?: boolean;
+};
 export type ShowcaseSettings = {
   maxPlayers?: number;
   totalRounds?: number;
@@ -535,7 +560,7 @@ export type DeckElementBase = {
 };
 export type GridCellsConfig = {
   labels?: string[];
-  backingImageUrl?: string;
+  backingImage?: Image;
 };
 export type GridQuestion = {
   kind: "GridQuestion";
@@ -565,8 +590,8 @@ export type GridQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -574,8 +599,7 @@ export type GridQuestion = {
 export type McqOption = {
   id?: string;
   text?: string;
-  galleryImageId?: string;
-  imageUrl?: string;
+  image?: Image;
   color?: string;
 };
 export type McqQuestion = {
@@ -603,8 +627,8 @@ export type McqQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -636,8 +660,8 @@ export type NumberQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -653,7 +677,7 @@ export type PlaceOnImageQuestion = {
       [key: string]: object;
     };
     prompt?: string;
-    targetImageUrl?: string;
+    targetImage?: Image;
     correctX?: number;
     correctY?: number;
     tolerance?: number;
@@ -670,8 +694,8 @@ export type PlaceOnImageQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -702,8 +726,8 @@ export type QAndAQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -711,7 +735,7 @@ export type QAndAQuestion = {
 export type RankingItem = {
   id?: string;
   label?: string;
-  imageUrl?: string;
+  image?: Image;
 };
 export type RankingQuestion = {
   kind: "RankingQuestion";
@@ -739,8 +763,8 @@ export type RankingQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -778,8 +802,8 @@ export type ScalesQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -802,11 +826,26 @@ export type Slide = {
     responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    // Hand-edited in lockstep with backend Slide.java additions until
+    // `npm run generate-api` runs against a backend that exposes them. Mirror
+    // the comment in McqQuestion.correctOptionIds — these fields are stable and
+    // a fresh codegen will land them in the same shape.
+    resultsDisplayType?: "DEFAULT" | "HISTOGRAM" | "PIE_CHART";
+    multipleSelectionsEnabled?: boolean;
+    selectionsPerParticipant?: number;
+    showResultsAsPercentage?: boolean;
+    joinType?: "INSTRUCTIONS_BAR" | "QR_CODE";
+    showJoinInformation?: boolean;
+    showResponses?: "INSTANT" | "ON_CLICK" | "PRIVATE";
+    heading?: string;
+    participantInformation?: {
+      [key: string]: object;
+    };
   };
 export type TextQuestion = {
   kind: "TextQuestion";
@@ -834,8 +873,8 @@ export type TextQuestion = {
     explanation?: string;
     displaySeconds?: number;
     speakerNotes?: string;
-    backgroundImageUrl?: string;
-    imageUrl?: string;
+    background?: Image;
+    image?: Image;
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
@@ -850,8 +889,8 @@ export type DeckDto = {
   isSystem?: boolean;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
-  coverImageUrl?: string;
-  backgroundImageUrl?: string;
+  cover?: Image;
+  background?: Image;
   themeId?: string;
   defaultSettings?: ShowcaseSettings;
   estimatedDurationMinutes?: number;
@@ -877,8 +916,8 @@ export type UpdateDeckRequest = {
   tags?: string[];
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
-  coverImageUrl?: string;
-  backgroundImageUrl?: string;
+  cover?: Image;
+  background?: Image;
   themeId?: string;
   estimatedDurationMinutes?: number;
 };
@@ -998,8 +1037,8 @@ export type CreateDeckRequest = {
   tags?: string[];
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
-  coverImageUrl?: string;
-  backgroundImageUrl?: string;
+  cover?: Image;
+  background?: Image;
   themeId?: string;
   estimatedDurationMinutes?: number;
 };
@@ -1156,6 +1195,7 @@ export const {
   useLazyListDecksQuery,
   useCreateDeckMutation,
   useAddElementMutation,
+  useMoveMcqOptionMutation,
   useMoveElementMutation,
   useRegisterMutation,
   useGuestLoginMutation,

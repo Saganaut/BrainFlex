@@ -29,11 +29,11 @@ const ConfirmDialog = ({
   <div className={styles.body}>
     <div className={styles.message}>{message}</div>
     <div className={styles.actions}>
-      <Btn mode='ghost' onClick={onCancel}>
+      <Btn variant='ghost' onClick={onCancel}>
         {cancelLabel}
       </Btn>
       <Btn
-        variant={variant === "danger" ? "error" : "default"}
+        variant={variant === "danger" ? "error" : "primary"}
         onClick={onConfirm}>
         {confirmLabel}
       </Btn>

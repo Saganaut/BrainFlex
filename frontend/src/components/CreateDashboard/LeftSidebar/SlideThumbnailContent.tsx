@@ -1,7 +1,7 @@
 import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 import React from "react";
 import styles from "./LeftSidebarContent.module.css";
-import { SlideTypeGraphic } from "@/components/Common/Slides/SlideTypeGraphics/SlideTypeGraphic";
+import { SlideTypeGraphicSvg } from "@/components/Common/Slides/SlideTypeGraphics/SlideTypeGraphic";
 import { RichTextDisplay } from "@/components/Common/Input/RichTextDisplay/RichTextDisplay";
 interface SlideThumbnailContentProps {
   slideType?: ElementKind;
@@ -14,7 +14,11 @@ const SlideThumbnailContent: React.FC<SlideThumbnailContentProps> = ({
 }) => {
   return (
     <div className={styles.slideThumbnailContent}>
-      {slideType ? <SlideTypeGraphic kind={slideType} /> : "Error. No graphic"}
+      {slideType ? (
+        <SlideTypeGraphicSvg kind={slideType} />
+      ) : (
+        "Error. No graphic"
+      )}
       <div>
         {" "}
         <RichTextDisplay value={title} maxLength={10} styled={false} />

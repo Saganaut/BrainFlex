@@ -11,6 +11,13 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
+  /* Reserve the vertical-scrollbar gutter even when content fits in the     */
+
+  /* viewport, so pages (and tab switches inside one page) don't reflow as   */
+
+  /* the scrollbar appears/disappears. */
+  scrollbar-gutter: stable;
+
   @media (width < 1024px) {
     font-size: var(--font-size-base);
   }
@@ -26,6 +33,8 @@ body {
 
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-subtle) transparent;
 }
 
 #root {
@@ -113,4 +122,36 @@ input {
   &:hover {
     border-color: var(--action-hover);
   }
+}
+
+/* Default scrollbar styling — applies to every scrollable surface. */
+
+/* Firefox */
+
+*:hover {
+  scrollbar-color: var(--action-hover) transparent;
+}
+
+/* WebKit / Blink */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-subtle);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--action-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
 }

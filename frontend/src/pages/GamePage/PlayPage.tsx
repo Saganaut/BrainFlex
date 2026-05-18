@@ -211,7 +211,7 @@ const PlayPage = () => {
               pointValue:
                 "pointValue" in element ? (element.pointValue ?? 0) : 0,
               timeLimit: questionCardTimeLimit,
-              imageUrl: element.imageUrl,
+              imageUrl: element.image?.imgUrl,
             }}
             round={game.round}
             totalRounds={game.totalRounds}

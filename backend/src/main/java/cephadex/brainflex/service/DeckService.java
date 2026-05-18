@@ -7,6 +7,11 @@
  *
  * All mutation methods enforce ownership; system decks (`isSystem=true`) and decks
  * owned by another user are off-limits.
+ *
+ * Image writes are normalized through DeckImageMapper: for any internal image
+ * (`useExternalImg=false`) the transport-only `imgUrl` is dropped before save,
+ * because the read-time hydrator always regenerates it. External images pass
+ * through unchanged.
  */
 package cephadex.brainflex.service;
 
@@ -25,6 +30,7 @@ import cephadex.brainflex.dto.UpdateDeckRequest;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.enums.DeckPreset;
@@ -103,8 +109,8 @@ public class DeckService {
         deck.setTags(request.tags() == null ? new ArrayList<>() : request.tags());
         deck.setVisibility(request.visibility() == null ? DeckVisibility.PRIVATE : request.visibility());
         deck.setRecommendedPreset(request.recommendedPreset() == null ? DeckPreset.GAME : request.recommendedPreset());
-        deck.setCoverImageUrl(request.coverImageUrl());
-        deck.setBackgroundImageUrl(request.backgroundImageUrl());
+        deck.setCover(normalizeImage(request.cover()));
+        deck.setBackground(normalizeImage(request.background()));
         deck.setThemeId(request.themeId());
         deck.setEstimatedDurationMinutes(request.estimatedDurationMinutes());
         deck.setSystem(false);
@@ -127,12 +133,11 @@ public class DeckService {
             deck.setVisibility(request.visibility());
         if (request.recommendedPreset() != null)
             deck.setRecommendedPreset(request.recommendedPreset());
-        // empty string clears; null leaves alone
-        if (request.coverImageUrl() != null) {
-            deck.setCoverImageUrl(request.coverImageUrl().isEmpty() ? null : request.coverImageUrl());
+        if (request.cover() != null) {
+            deck.setCover(normalizeImage(request.cover()));
         }
-        if (request.backgroundImageUrl() != null) {
-            deck.setBackgroundImageUrl(request.backgroundImageUrl().isEmpty() ? null : request.backgroundImageUrl());
+        if (request.background() != null) {
+            deck.setBackground(normalizeImage(request.background()));
         }
         if (request.themeId() != null) {
             deck.setThemeId(request.themeId().isEmpty() ? null : request.themeId());
@@ -158,9 +163,9 @@ public class DeckService {
      */
     public Deck addElement(String deckId, User caller, DeckElement incoming) {
         Deck deck = requireOwned(deckId, caller);
-        validateOptionImages(incoming);
         DeckElement withId = ensureElementId(incoming);
-        deck.getElements().add(withId);
+        DeckElement normalized = DeckImageMapper.mapElement(withId, DeckService::stripTransportUrl);
+        deck.getElements().add(normalized);
         deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
     }
@@ -170,40 +175,13 @@ public class DeckService {
      */
     public Deck updateElement(String deckId, String elementId, User caller, DeckElement incoming) {
         Deck deck = requireOwned(deckId, caller);
-        validateOptionImages(incoming);
         int idx = indexOfElement(deck, elementId);
         // Preserve the id even if the client omits it on update.
         DeckElement withId = ensureElementId(incoming);
-        if (!elementId.equals(withId.id())) {
-            // Different ids — caller is trying to swap one element for another; treat as
-            // PUT semantics.
-        }
-        deck.getElements().set(idx, withId);
+        DeckElement normalized = DeckImageMapper.mapElement(withId, DeckService::stripTransportUrl);
+        deck.getElements().set(idx, normalized);
         deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
-    }
-
-    /**
-     * `McqOption.galleryImageId` and `McqOption.imageUrl` are mutually exclusive
-     * on write — the renderer treats `galleryImageId` as the source of truth
-     * (hydrated at read time) and `imageUrl` as the external/paste-link path.
-     * Carrying both is a smell that we'd silently resolve one direction or the
-     * other; reject it at the boundary instead.
-     */
-    private static void validateOptionImages(DeckElement element) {
-        List<McqOption> options = switch (element) {
-            case McqQuestion q -> q.options();
-            default -> null;
-        };
-        if (options == null) return;
-        for (McqOption option : options) {
-            boolean hasGallery = option.galleryImageId() != null && !option.galleryImageId().isBlank();
-            boolean hasUrl = option.imageUrl() != null && !option.imageUrl().isBlank();
-            if (hasGallery && hasUrl) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                        "Option may set either galleryImageId or imageUrl, not both");
-            }
-        }
     }
 
     public Deck deleteElement(String deckId, String elementId, User caller) {
@@ -230,7 +208,61 @@ public class DeckService {
         return deckRepository.save(deck);
     }
 
+    /**
+     * Move one option inside an MCQ question to position `targetIndex` (clamped to
+     * the option-list size). The targeted element must be an `McqQuestion`; any
+     * other kind throws 400. `correctOptionIds` is untouched — option ids are the
+     * scoring key, so reordering never affects which options are correct.
+     */
+    public Deck moveMcqOption(
+            String deckId, String elementId, String optionId, int targetIndex, User caller) {
+        Deck deck = requireOwned(deckId, caller);
+        int elementIdx = indexOfElement(deck, elementId);
+        DeckElement element = deck.getElements().get(elementIdx);
+        if (!(element instanceof McqQuestion mcq)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Element is not an MCQ question");
+        }
+        List<McqOption> options = new ArrayList<>(
+                mcq.options() == null ? List.of() : mcq.options());
+        int currentIdx = -1;
+        for (int i = 0; i < options.size(); i++) {
+            if (optionId.equals(options.get(i).id())) {
+                currentIdx = i;
+                break;
+            }
+        }
+        if (currentIdx < 0) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Option not in this question");
+        }
+        int clamped = Math.max(0, Math.min(targetIndex, options.size() - 1));
+        if (currentIdx == clamped)
+            return deck;
+        McqOption moved = options.remove(currentIdx);
+        options.add(clamped, moved);
+        deck.getElements().set(elementIdx, DeckElementCloner.withOptions(mcq, options));
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
+    }
+
     // ---- Helpers ----
+
+    /**
+     * For internal images the `imgUrl` is a transient transport field that the
+     * hydrator regenerates on read — never persist whatever the client sent
+     * for it. External images are passed through untouched.
+     */
+    private static Image stripTransportUrl(Image image) {
+        if (image.useExternalImg()) return image;
+        return image.withImgUrl(null);
+    }
+
+    /** Same rule for top-level Deck.cover / Deck.background. */
+    private static Image normalizeImage(Image image) {
+        if (image == null) return null;
+        return stripTransportUrl(image);
+    }
 
     private Deck requireOwned(String deckId, User caller) {
         return authorizationService.requireDeckEditable(deckId, caller);

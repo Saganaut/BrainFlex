@@ -177,17 +177,44 @@
 
   --bg-canvas: var(--white-100);
   --bg-surface: var(--concrete-300);
-  --bg-primary: var(--violet-500);
+  --bg-surface-raised: var(--white-100);
   --bg-secondary: var(--violet-100);
+  --bg-subtle: var(--concrete-400);
+  --bg-primary: var(--violet-500);
+  --bg-brand: var(--violet-700);
   --bg-canvas-inverted: var(--tolopea-900);
   --bg-surface-inverted: var(--ultraviolet-800);
   --bg-primary-inverted: var(--ultraviolet-800);
   --bg-display-only: #fff;
-
-  /* --bg-surface-raised: var(--mariana-blue);
-  --bg-subtle: var(--mariana-blue);
-  --bg-brand: var(--electric-violet); */
   --bg-disabled: var(--white-700);
+
+  /** Edge Tokens — hairline outline paired to each bg, used when you want a */
+
+  /* subtle border that visually belongs to the fill. Darker in light mode,  */
+
+  /* lighter in dark mode, automatic via --edge-tint. Distinct from the      */
+
+  /* --border-* roles (which carry semantic meaning: subtle/default/focus/   */
+
+  /* brand/status). Reach for --edge-* when you just need "the line that     */
+
+  /* matches this surface."                                                  */
+  --edge-tint: black;
+  --edge-canvas: color-mix(in oklab, var(--bg-canvas) 92%, var(--edge-tint));
+  --edge-surface: color-mix(in oklab, var(--bg-surface) 92%, var(--edge-tint));
+  --edge-surface-raised: color-mix(
+    in oklab,
+    var(--bg-surface-raised) 92%,
+    var(--edge-tint)
+  );
+  --edge-subtle: color-mix(in oklab, var(--bg-subtle) 92%, var(--edge-tint));
+  --edge-secondary: color-mix(
+    in oklab,
+    var(--bg-secondary) 92%,
+    var(--edge-tint)
+  );
+  --edge-primary: color-mix(in oklab, var(--bg-primary) 92%, var(--edge-tint));
+  --edge-brand: color-mix(in oklab, var(--bg-brand) 92%, var(--edge-tint));
 
   /** Text Variants **/
 
@@ -210,9 +237,9 @@
 
   /** Text States — fixed **/
   --text-error: oklch(45% 0.2 25deg);
-  --text-success: oklch(60% 0.13 170deg);
-  --text-warning: oklch(82% 0.19 90deg);
-  --text-info: oklch(62% 0.13 260deg);
+  --text-success: oklch(45% 0.11 170deg);
+  --text-warning: oklch(45% 0.13 90deg);
+  --text-info: oklch(45% 0.13 260deg);
   --text-disabled: var(--grey-300);
 
   /** Borders **/
@@ -335,6 +362,11 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
 
+  /* ---- Border Sizes ---- */
+  --border-size-sm: 2px;
+  --border-size-md: 4px;
+  --border-size-lg: 6px;
+
   /* --- Elevation & Shadows--- */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 5%);
   --shadow-md:
@@ -374,17 +406,23 @@
   /** Background Variants **/
   --bg-canvas: var(--tolopea-900);
   --bg-surface: var(--ultraviolet-800);
-  --bg-primary: var(--violet-500);
+  --bg-surface-raised: var(--violet-700);
   --bg-secondary: var(--ultraviolet-800);
+  --bg-subtle: var(--ultraviolet-700);
+  --bg-primary: var(--violet-500);
+  --bg-brand: var(--violet-400);
   --bg-canvas-inverted: var(--white-100);
   --bg-surface-inverted: var(--concrete-300);
   --bg-primary-inverted: var(--violet-100);
   --bg-display-only: #000;
-
-  /* --bg-surface-raised: var(--mariana-blue);
-  --bg-subtle: var(--mariana-blue);
-  --bg-brand: var(--electric-violet); */
   --bg-disabled: var(--white-700);
+
+  /* In dark mode, edges lighten the bg rather than darken it. The --edge-*  */
+
+  /* definitions in :root reference var(--edge-tint), so flipping this one   */
+
+  /* value recomputes every edge token automatically.                        */
+  --edge-tint: white;
 
   /** Background States — same as light mode **/
   --bg-error: oklch(93% 0.2 25deg);
@@ -406,10 +444,10 @@
   --text-accent-inverted: var(--cyan-700);
 
   /** Text States — fixed **/
-  --text-error: oklch(52% 0.2 25deg);
-  --text-success: oklch(49% 0.11 170deg);
-  --text-warning: oklch(72% 0.16 85deg);
-  --text-info: oklch(51% 0.11 260deg);
+  --text-error: oklch(45% 0.2 25deg);
+  --text-success: oklch(45% 0.11 170deg);
+  --text-warning: oklch(45% 0.13 90deg);
+  --text-info: oklch(45% 0.13 260deg);
   --text-disabled: var(--white-600);
 
   /** Borders **/

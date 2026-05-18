@@ -17,7 +17,7 @@
   padding: var(--p-md);
   flex-direction: column;
   gap: var(--gap-sm);
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-md);
 
   div {

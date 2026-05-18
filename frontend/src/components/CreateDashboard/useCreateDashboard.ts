@@ -64,6 +64,13 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         survey: false,
         displaySeconds: 0,
         mediaPosition: "NONE",
+        resultsDisplayType: "DEFAULT",
+        multipleSelectionsEnabled: false,
+        selectionsPerParticipant: 1,
+        showResultsAsPercentage: false,
+        joinType: "INSTRUCTIONS_BAR",
+        showJoinInformation: true,
+        showResponses: "INSTANT",
       };
     case "McqQuestion":
       return {

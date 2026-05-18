@@ -61,7 +61,7 @@
   font-weight: 700;
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-md);
-  border: 2px solid var(--red-500);
+  border: var(--border-size-sm) solid var(--red-500);
   background: var(--red-500);
   color: var(--bg-canvas);
   text-decoration: none;
@@ -79,7 +79,7 @@
   font-weight: 700;
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-md);
-  border: 2px solid var(--border-default);
+  border: var(--border-size-sm) solid var(--border-default);
   background: transparent;
   color: var(--text-primary);
   cursor: pointer;

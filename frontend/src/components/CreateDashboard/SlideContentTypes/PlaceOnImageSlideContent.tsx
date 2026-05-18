@@ -6,9 +6,8 @@
  * fields are normalised 0–1, so the same question works at any rendered
  * image size.
  *
- * Image upload is TODO (waiting on the media library). For now we use a
- * Lorem Picsum placeholder, a plain URL field, and the (x, y, tolerance)
- * numeric knobs.
+ * The target image is a unified `Image` — gallery picker hands back a
+ * complete value and pasted URLs become external images.
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
@@ -18,14 +17,16 @@ import { NumberInput } from "@/components/Common/Input/NumberInput/NumberInput";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useElementEditor } from "./useElementEditor";
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
-import type { PlaceOnImageQuestion } from "@/store/BrainFlexApi";
+import type { Image, PlaceOnImageQuestion } from "@/store/BrainFlexApi";
+import { displayUrl, externalImage } from "@/utils/image";
 import styles from "./SlideContentTypes.module.css";
 
 const isPlaceOnImage = (e: { kind: string }): e is PlaceOnImageQuestion =>
   e.kind === "PlaceOnImageQuestion";
 
-const placeholderImageUrl = (seed: string) =>
-  `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/360`;
+/** The paste-URL input only shows external URLs; gallery picks leave it blank. */
+const pasteUrlOf = (image: Image | undefined): string =>
+  image?.useExternalImg ? (image.imgUrl ?? "") : "";
 
 const PlaceOnImageSlideContent = () => {
   const { element, schedule, flush, commit, syncedFromId, markSynced } =
@@ -33,9 +34,7 @@ const PlaceOnImageSlideContent = () => {
   const openPicker = useGalleryPicker();
 
   const [prompt, setPrompt] = useState(element?.prompt ?? "");
-  const [targetImageUrl, setTargetImageUrl] = useState(
-    element?.targetImageUrl ?? "",
-  );
+  const [pasteUrl, setPasteUrl] = useState(() => pasteUrlOf(element?.targetImage));
   const [correctX, setCorrectX] = useState<number>(element?.correctX ?? 0.5);
   const [correctY, setCorrectY] = useState<number>(element?.correctY ?? 0.5);
   const [tolerance, setTolerance] = useState<number>(
@@ -45,7 +44,7 @@ const PlaceOnImageSlideContent = () => {
   if (element && syncedFromId !== element.id) {
     markSynced(element.id);
     setPrompt(element.prompt ?? "");
-    setTargetImageUrl(element.targetImageUrl ?? "");
+    setPasteUrl(pasteUrlOf(element.targetImage));
     setCorrectX(element.correctX ?? 0.5);
     setCorrectY(element.correctY ?? 0.5);
     setTolerance(element.tolerance ?? 0.1);
@@ -64,17 +63,13 @@ const PlaceOnImageSlideContent = () => {
   ): PlaceOnImageQuestion => ({
     ...element,
     prompt,
-    targetImageUrl,
     correctX,
     correctY,
     tolerance,
     ...overrides,
   });
 
-  const imgSrc =
-    targetImageUrl.trim() !== ""
-      ? targetImageUrl
-      : placeholderImageUrl(element.id ?? "place");
+  const imgSrc = displayUrl(element.targetImage, element.id ?? "place", 640, 360);
 
   return (
     <SlideContentWrapper
@@ -102,12 +97,12 @@ const PlaceOnImageSlideContent = () => {
                 id={`place-image-${element.id ?? ""}`}
                 type='text'
                 fullWidth
-                value={targetImageUrl}
+                value={pasteUrl}
                 placeholder='https://…'
                 onChange={(e) => {
                   const next = e.target.value;
-                  setTargetImageUrl(next);
-                  schedule(buildPatch({ targetImageUrl: next }));
+                  setPasteUrl(next);
+                  schedule(buildPatch({ targetImage: externalImage(next) }));
                 }}
                 onBlur={flush}
               />
@@ -116,9 +111,9 @@ const PlaceOnImageSlideContent = () => {
               size='sm'
               onClick={() => {
                 flush();
-                openPicker((url) => {
-                  setTargetImageUrl(url);
-                  commit(buildPatch({ targetImageUrl: url }));
+                openPicker((image) => {
+                  setPasteUrl("");
+                  commit(buildPatch({ targetImage: image }));
                 });
               }}>
               Gallery

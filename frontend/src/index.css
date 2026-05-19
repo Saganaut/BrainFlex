@@ -10,17 +10,6 @@
   text-rendering: optimizelegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* Reserve the vertical-scrollbar gutter even when content fits in the     */
-
-  /* viewport, so pages (and tab switches inside one page) don't reflow as   */
-
-  /* the scrollbar appears/disappears. */
-  scrollbar-gutter: stable;
-
-  @media (width < 1024px) {
-    font-size: var(--font-size-base);
-  }
 }
 
 body {
@@ -87,8 +76,8 @@ button {
   border: none;
   background-color: transparent;
   transition:
-    color 300ms ease-in-out,
-    border-color 300ms ease-in-out;
+    color var(--duration-base) ease-in-out,
+    border-color var(--duration-base) ease-in-out;
 }
 
 code,
@@ -116,12 +105,8 @@ input {
   padding: var(--p-sm);
   background-color: transparent;
   transition:
-    color 300ms ease-in-out,
-    border-color 300ms ease-in-out;
-
-  &:hover {
-    border-color: var(--action-hover);
-  }
+    color var(--duration-base) ease-in-out,
+    border-color var(--duration-base) ease-in-out;
 }
 
 /* Default scrollbar styling — applies to every scrollable surface. */

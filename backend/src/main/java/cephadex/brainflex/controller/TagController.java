@@ -34,6 +34,11 @@ import cephadex.brainflex.service.TagService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
 
+// Any signed-in user can create a tag (so authors can type custom tags /
+// subjects into the deck editor), but the `curated` flag is admin-only —
+// non-admins always create non-curated tags regardless of what the request
+// body says. Curating an existing tag is still done by an admin via PUT.
+
 @RestController
 @RequestMapping("/api/tags")
 public class TagController {
@@ -89,8 +94,18 @@ public class TagController {
     public ResponseEntity<TagDTO.TagResponse> createTag(
             @Valid @RequestBody TagDTO.CreateTagRequest request,
             Authentication authentication) {
-        requireAdmin(authentication);
-        Tag created = tagService.create(request);
+        User caller = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
+        TagDTO.CreateTagRequest sanitized = adminProperties.isAdmin(caller)
+                ? request
+                : new TagDTO.CreateTagRequest(
+                        request.id(),
+                        request.displayName(),
+                        request.parentTagId(),
+                        request.description(),
+                        request.iconUrl(),
+                        false);
+        Tag created = tagService.create(sanitized);
         return ResponseEntity.status(HttpStatus.CREATED).body(new TagDTO.TagResponse(created));
     }
 

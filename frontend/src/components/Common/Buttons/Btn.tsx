@@ -1,13 +1,17 @@
-// Primary button. The `variant` prop is the single axis controlling color +
-// fill / outline / ghost — see BtnTypes.ts and STYLE-RULES.md "Named button
-// + icon-button variants". Each variant maps to a nested rule under .btn in
-// Buttons.module.css.
+// Primary button. Two orthogonal style axes:
+//   - `variant` picks the color slot (primary, secondary, brand, info,
+//     error, success, warning, disabled).
+//   - `fill` picks how the color renders (default = filled, bordered =
+//     filled + border, ghost = text-only).
+// Both map to nested rules under .btn in Buttons.module.css; see
+// BtnTypes.ts and STYLE-RULES.md "Named button + icon-button variants".
 import type { ReactNode } from "react";
-import type { BtnVariant, BtnSize, BtnShape } from "./BtnTypes";
+import type { BtnVariant, BtnFill, BtnSize, BtnShape } from "./BtnTypes";
 import styles from "./Buttons.module.css";
 
 interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: BtnVariant;
+  fill?: BtnFill;
   size?: BtnSize;
   shape?: BtnShape;
   icon?: ReactNode;
@@ -18,6 +22,7 @@ interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Btn = ({
   variant = "primary",
+  fill = "default",
   size = "md",
   shape = "default",
   disabled = false,
@@ -38,6 +43,7 @@ const Btn = ({
       className={[
         styles.btn,
         styles[variant],
+        styles[fill],
         styles[size],
         shape !== "default" && styles[shape],
         className,

@@ -1,22 +1,24 @@
-// Shared type unions for Btn / IconBtn props. Each variant value corresponds
-// to a nested className in Buttons.module.css (e.g. variant="error" →
-// .btn.error). The variant is the single axis that controls color + fill /
-// outline / ghost style. See STYLE-RULES.md "Named button + icon-button
-// variants" for the full catalog and the /design-system page for live demos.
+// Shared type unions for Btn / IconBtn. Two orthogonal axes:
+//   - BtnVariant picks the color slot (text + fill + border tokens).
+//   - BtnFill picks how that color is rendered: filled (default), filled
+//     with a matching border (bordered), or transparent text-only (ghost).
+// Any color × any fill is legal — e.g. error+ghost is a red text-only
+// destructive control. Each value maps to a nested className in
+// Buttons.module.css; see STYLE-RULES.md "Named button + icon-button
+// variants" for the catalog and /design-system for live demos.
 
 export type BtnSize = "xs" | "sm" | "md" | "lg";
 
 export type BtnVariant =
   | "primary"
-  | "ghost"
-  | "bordered"
-  | "filled"
-  | "close"
+  | "secondary"
+  | "brand"
+  | "info"
   | "error"
-  | "delete"
   | "success"
   | "warning"
-  | "info"
-  | "brand";
+  | "disabled";
+
+export type BtnFill = "default" | "bordered" | "ghost";
 
 export type BtnShape = "default" | "round" | "pill" | "avatar";

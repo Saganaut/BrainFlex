@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { NavBar } from "../components/Nav/NavBar/NavBar";
 import { LayoutProvider } from "../context/LayoutProvider";
@@ -8,8 +8,13 @@ import { NotFoundPage } from "../pages/ErrorPage/ErrorPage";
 import { AuthPromptBridge } from "../components/Common/LoginModal/AuthPromptBridge";
 import { Layout } from "@/components/Layout/Layout";
 import { MainHeader } from "@/components/Layout/MainHeader";
+import type { CurrentUserState } from "@/hooks/useCurrentUser";
 
-export const Route = createRootRoute({
+export interface RouterContext {
+  auth: CurrentUserState;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: () => (
     <LayoutProvider>
       <ToastProvider>

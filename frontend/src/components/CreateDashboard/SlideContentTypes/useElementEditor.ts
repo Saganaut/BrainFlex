@@ -31,6 +31,7 @@ import {
   type McqQuestion,
 } from "@/store/BrainFlexApi";
 import { useAppDispatch } from "@/store/hooks";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 
 type DeckElement = NonNullable<DeckDto["elements"]>[number];
@@ -61,6 +62,11 @@ const useElementEditor = <T extends DeckElement>(
 ): ElementEditorApi<T> => {
   const { deckId } = routeApi.useParams();
   const { questionId } = routeApi.useSearch();
+  const currentUser = useCurrentUser();
+  const currentUserId =
+    currentUser.state === "registered" || currentUser.state === "guest"
+      ? currentUser.user.id
+      : undefined;
 
   const { element } = useGetDeckQuery(
     { id: deckId },
@@ -74,12 +80,22 @@ const useElementEditor = <T extends DeckElement>(
 
   const [updateElement] = useUpdateElementMutation();
 
+  // Optimistic provenance stamp (chunk 10b). The backend overwrites these on
+  // save, but stamping client-side gives the in-flight cache patch the right
+  // version + author for the editor's "last edited by" footer to render
+  // immediately. `version` bumps off whatever the patch carries, which is
+  // built from the cached element above.
   const commit = (patch: T) => {
     if (!element?.id) return;
+    const stampedPatch: T = {
+      ...patch,
+      lastEditedByUserId: currentUserId,
+      version: (patch.version ?? 0) + 1,
+    };
     void updateElement({
       id: deckId,
       elementId: element.id,
-      body: patch,
+      body: stampedPatch,
     })
       .unwrap()
       .catch((err: unknown) => {

@@ -135,7 +135,7 @@ const AddToCollectionModal = ({ deckId, onClose }: AddToCollectionModalProps) =>
           <Btn
             size='sm'
             type='button'
-            variant='ghost'
+            fill='ghost'
             onClick={() => {
               setShowCreate(false);
               setNewName("");
@@ -146,7 +146,7 @@ const AddToCollectionModal = ({ deckId, onClose }: AddToCollectionModalProps) =>
       ) : (
         <Btn
           size='sm'
-          variant='ghost'
+          fill='ghost'
           onClick={() => {
             setShowCreate(true);
           }}>
@@ -155,7 +155,7 @@ const AddToCollectionModal = ({ deckId, onClose }: AddToCollectionModalProps) =>
       )}
 
       <div className={styles.footer}>
-        <Btn variant='ghost' onClick={onClose}>
+        <Btn fill='ghost' onClick={onClose}>
           Done
         </Btn>
       </div>

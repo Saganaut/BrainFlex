@@ -25,6 +25,7 @@ import {
   type ExploreDecksApiArg,
   type ListCommentsApiArg,
   type ListMyFavoritesApiArg,
+  type ListRatingsApiArg,
   type ListRepliesApiArg,
 } from "./BrainFlexApi";
 import type { RootState } from "./store";
@@ -39,7 +40,11 @@ const syncDeckCache = async (arg: { id: string }, api: CacheSyncApi) => {
   try {
     const { data } = await api.queryFulfilled;
     api.dispatch(
-      BrainFlex.util.upsertQueryData("getDeck", { id: arg.id }, data as DeckDto),
+      BrainFlex.util.upsertQueryData(
+        "getDeck",
+        { id: arg.id },
+        data as DeckDto,
+      ),
     );
   } catch {
     // Mutation rejected — leave the cache untouched; the failing component
@@ -126,22 +131,18 @@ const optimisticReorderCollectionDecks = async (
 ) => {
   const nextOrder = arg.reorderCollectionDecksRequest.deckIds;
   const patch = api.dispatch(
-    BrainFlex.util.updateQueryData(
-      "getCollection",
-      { id: arg.id },
-      (draft) => {
-        draft.deckIds = [...nextOrder];
-        if (draft.decks) {
-          const byId = new Map(draft.decks.map((d) => [d.id ?? "", d]));
-          const reordered: typeof draft.decks = [];
-          for (const id of nextOrder) {
-            const deck = byId.get(id);
-            if (deck) reordered.push(deck);
-          }
-          draft.decks = reordered;
+    BrainFlex.util.updateQueryData("getCollection", { id: arg.id }, (draft) => {
+      draft.deckIds = [...nextOrder];
+      if (draft.decks) {
+        const byId = new Map(draft.decks.map((d) => [d.id ?? "", d]));
+        const reordered: typeof draft.decks = [];
+        for (const id of nextOrder) {
+          const deck = byId.get(id);
+          if (deck) reordered.push(deck);
         }
-      },
-    ),
+        draft.decks = reordered;
+      }
+    }),
   ) as { undo: () => void };
   try {
     await api.queryFulfilled;
@@ -192,8 +193,9 @@ const upsertCollaboratorRow = async (
         "listCollaborators",
         { id: deckId },
         (draft) => {
-          const idx = draft.findIndex((r) => r.userId === next.userId
-            && next.userId != null);
+          const idx = draft.findIndex(
+            (r) => r.userId === next.userId && next.userId != null,
+          );
           if (idx >= 0) draft[idx] = next;
           else draft.push(next);
         },
@@ -247,9 +249,7 @@ const optimisticToggleFavorite = async (
     }),
   );
 
-  const patchListInPlace = (
-    endpointName: "listDecks" | "listMyDecks",
-  ) => {
+  const patchListInPlace = (endpointName: "listDecks" | "listMyDecks") => {
     patch(
       BrainFlex.util.updateQueryData(endpointName, undefined, (draft) => {
         for (const deck of draft) {
@@ -262,9 +262,11 @@ const optimisticToggleFavorite = async (
   patchListInPlace("listMyDecks");
 
   const queries =
-    (api.getState() as unknown as {
-      api?: { queries?: Record<string, ApiQueryEntry | undefined> };
-    }).api?.queries ?? {};
+    (
+      api.getState() as unknown as {
+        api?: { queries?: Record<string, ApiQueryEntry | undefined> };
+      }
+    ).api?.queries ?? {};
 
   for (const entry of Object.values(queries)) {
     if (!entry?.endpointName) continue;
@@ -337,9 +339,11 @@ const optimisticToggleCommentUpvote = async (
   api: CacheSyncApi,
 ) => {
   const queries =
-    (api.getState() as unknown as {
-      api?: { queries?: Record<string, ApiQueryEntry | undefined> };
-    }).api?.queries ?? {};
+    (
+      api.getState() as unknown as {
+        api?: { queries?: Record<string, ApiQueryEntry | undefined> };
+      }
+    ).api?.queries ?? {};
 
   // First pass: find a cached copy so we know which way the toggle should go.
   // The endpoint is idempotent on the server, but the optimistic flip needs a
@@ -348,12 +352,17 @@ const optimisticToggleCommentUpvote = async (
   let nextUpvoted: boolean | null = null;
   for (const entry of Object.values(queries)) {
     if (!entry?.endpointName) continue;
-    if (entry.endpointName !== "listComments"
-        && entry.endpointName !== "listReplies") continue;
+    if (
+      entry.endpointName !== "listComments" &&
+      entry.endpointName !== "listReplies"
+    )
+      continue;
     const cacheKey = `${entry.endpointName}(${JSON.stringify(entry.originalArgs ?? null)})`;
     const cached = (
       api.getState() as unknown as {
-        api?: { queries?: Record<string, { data?: { items?: DeckCommentDto[] } }> };
+        api?: {
+          queries?: Record<string, { data?: { items?: DeckCommentDto[] } }>;
+        };
       }
     ).api?.queries?.[cacheKey]?.data;
     const items = cached?.items ?? [];
@@ -382,12 +391,16 @@ const optimisticToggleCommentUpvote = async (
         if (queryArg.id !== arg.deckId) continue;
         patches.push(
           api.dispatch(
-            BrainFlex.util.updateQueryData("listComments", queryArg, (draft) => {
-              if (!draft.items) return;
-              for (const row of draft.items) {
-                if (row.id === arg.commentId) flipRow(row, target);
-              }
-            }),
+            BrainFlex.util.updateQueryData(
+              "listComments",
+              queryArg,
+              (draft) => {
+                if (!draft.items) return;
+                for (const row of draft.items) {
+                  if (row.id === arg.commentId) flipRow(row, target);
+                }
+              },
+            ),
           ) as { undo: () => void },
         );
       } else if (entry.endpointName === "listReplies") {
@@ -456,6 +469,82 @@ const optimisticToggleCommentUpvote = async (
   }
 };
 
+/**
+ * Optimistic deck rating. The user clicks a star → we flip `getDeck.myRating`
+ * immediately so the StarRating widget fills in without waiting for the round
+ * trip. On fulfill we refetch `getDeck` (so `averageRating` / `ratingCount`
+ * pick up the new aggregate) and any materialized `listRatings` page (so the
+ * histogram + review list re-render with the new row). On reject we undo.
+ *
+ * `rateDeck` only returns the persisted row, not the deck aggregate — that's
+ * why we refetch instead of splicing the response in.
+ */
+const refetchRatingViews = (deckId: string, api: CacheSyncApi) => {
+  api.dispatch(
+    BrainFlex.endpoints.getDeck.initiate(
+      { id: deckId },
+      { subscribe: false, forceRefetch: true },
+    ),
+  );
+  const queries =
+    (
+      api.getState() as unknown as {
+        api?: { queries?: Record<string, ApiQueryEntry | undefined> };
+      }
+    ).api?.queries ?? {};
+  for (const entry of Object.values(queries)) {
+    if (entry?.endpointName !== "listRatings") continue;
+    const queryArg = (entry.originalArgs ?? {}) as ListRatingsApiArg;
+    if (queryArg.id !== deckId) continue;
+    api.dispatch(
+      BrainFlex.endpoints.listRatings.initiate(queryArg, {
+        subscribe: false,
+        forceRefetch: true,
+      }),
+    );
+  }
+};
+
+const optimisticRateDeck = async (
+  arg: { id: string; rateDeckRequest: { stars?: number; review?: string } },
+  api: CacheSyncApi,
+) => {
+  const nextStars = arg.rateDeckRequest.stars;
+  const patches: { undo: () => void }[] = [];
+  if (nextStars != null) {
+    patches.push(
+      api.dispatch(
+        BrainFlex.util.updateQueryData("getDeck", { id: arg.id }, (draft) => {
+          draft.myRating = nextStars;
+        }),
+      ) as { undo: () => void },
+    );
+  }
+  try {
+    await api.queryFulfilled;
+    refetchRatingViews(arg.id, api);
+  } catch {
+    for (const p of patches) p.undo();
+  }
+};
+
+const optimisticDeleteMyRating = async (
+  arg: { id: string },
+  api: CacheSyncApi,
+) => {
+  const patch = api.dispatch(
+    BrainFlex.util.updateQueryData("getDeck", { id: arg.id }, (draft) => {
+      draft.myRating = undefined;
+    }),
+  ) as { undo: () => void };
+  try {
+    await api.queryFulfilled;
+    refetchRatingViews(arg.id, api);
+  } catch {
+    patch.undo();
+  }
+};
+
 BrainFlex.enhanceEndpoints({
   endpoints: {
     addElement: {
@@ -518,6 +607,12 @@ BrainFlex.enhanceEndpoints({
     },
     toggleCommentUpvote: {
       onQueryStarted: (arg, api) => optimisticToggleCommentUpvote(arg, api),
+    },
+    rateDeck: {
+      onQueryStarted: (arg, api) => optimisticRateDeck(arg, api),
+    },
+    deleteMyRating: {
+      onQueryStarted: (arg, api) => optimisticDeleteMyRating(arg, api),
     },
     transferOwnership: {
       onQueryStarted: async (arg, api) => {

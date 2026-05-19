@@ -1,18 +1,51 @@
 // MainPage: the app's entry point. Prompts users to create a game, create a poll,
 // or join an existing session with a room code. Per GAMES.md, this is the quick-start
 // surface — no customization shown up front; deeper options live behind the actions.
-// import { useState } from "react";
+import { useEffect, useRef } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-// import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
+import { useRequireLogin } from "@/hooks/useRequireLogin";
+import { Route as IndexRoute } from "../../routes/index";
 import { ActionCard } from "@/components/Common/Cards/ActionCard";
-// import { Btn } from "@/components/Common/Buttons/Btn";
-// import { Input } from "@/components/Common/Input/Input/Input";
-// import { extractErrorMessage } from "../../utils/utils";
 import styles from "./MainPage.module.css";
 
 const MainPage = () => {
   const userState = useCurrentUser();
   const isRegistered = userState.state === "registered";
+
+  // When the /_authenticated layout redirects an unauthenticated user here,
+  // it sets `?authPrompt=true&returnUrl=<original>`. Surface the sign-in
+  // modal pre-loaded with the original destination, then strip the params
+  // so a refresh or back-nav doesn't reopen it.
+  const { authPrompt, returnUrl } = IndexRoute.useSearch();
+  const { openLoginModal } = useRequireLogin();
+  const navigate = useNavigate();
+  const hasPromptedRef = useRef(false);
+
+  useEffect(() => {
+    if (!authPrompt) return;
+    if (isRegistered) return;
+    if (userState.state === "loading") return;
+    if (hasPromptedRef.current) return;
+    hasPromptedRef.current = true;
+
+    openLoginModal({
+      returnUrl,
+      message: "Sign in to continue to that page.",
+    });
+    void navigate({
+      to: "/",
+      search: { authPrompt: undefined, returnUrl: undefined },
+      replace: true,
+    });
+  }, [
+    authPrompt,
+    returnUrl,
+    isRegistered,
+    userState.state,
+    openLoginModal,
+    navigate,
+  ]);
 
   // const [code, setCode] = useState("");
   // const [joinByRoomCode, { isLoading: joining, error: joinError }] =

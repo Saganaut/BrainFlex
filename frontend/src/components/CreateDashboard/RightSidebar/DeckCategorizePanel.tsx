@@ -1,17 +1,16 @@
 // Deck-level metadata panel for the right-sidebar inspector. Owns the
-// subject-tag dropdown (single curated root) and the multi-select tag picker
-// that drives Explore discoverability. Edits commit through `updateDeck` —
-// the apiEnhancements layer keeps the cached deck in sync, so the rest of
-// the editor sees the change immediately.
+// subject-tag picker (single-select, creatable) and the multi-select tag
+// picker that drives Explore discoverability — both let authors type a
+// custom tag/subject and mint it on the fly via POST /api/tags. Edits
+// commit through `updateDeck`; the apiEnhancements layer keeps the cached
+// deck in sync, so the rest of the editor sees the change immediately.
 import { getRouteApi } from "@tanstack/react-router";
-import { useMemo } from "react";
 import {
   useGetDeckQuery,
-  useListTagsQuery,
   useUpdateDeckMutation,
 } from "@/store/BrainFlexApi";
 import { TagPicker } from "@/components/Common/TagPicker/TagPicker";
-import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
+import { ElementTagsSection } from "./EditSlideSections/ElementTagsSection";
 import styles from "./EditSlidePanel.module.css";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
@@ -19,16 +18,7 @@ const routeApi = getRouteApi("/decks/$deckId/edit");
 const DeckCategorizePanel = () => {
   const { deckId } = routeApi.useParams();
   const { data: deck } = useGetDeckQuery({ id: deckId });
-  const { data: curated = [] } = useListTagsQuery({ curated: true });
   const [updateDeck] = useUpdateDeckMutation();
-
-  const subjectOptions = useMemo(
-    () =>
-      curated
-        .filter((tag) => tag.id != null)
-        .map((tag) => ({ value: tag.id ?? "", label: tag.displayName ?? "" })),
-    [curated],
-  );
 
   if (!deck) {
     return (
@@ -56,27 +46,30 @@ const DeckCategorizePanel = () => {
     <div className={styles.panel}>
       <section className={styles.section}>
         <h4 className={styles.heading}>Subject</h4>
-        <Dropdown
-          options={subjectOptions}
-          value={subjectTagId != null ? [subjectTagId] : []}
+        <TagPicker
+          singleSelect
+          creatable
+          value={subjectTagId != null && subjectTagId !== "" ? [subjectTagId] : []}
           onChange={(values) => {
             commit({ subjectTagId: values[0] ?? "" });
           }}
-          searchable
-          placeholder='Pick a primary subject…'
+          placeholder='Pick or type a subject…'
         />
       </section>
 
       <section className={styles.section}>
-        <h4 className={styles.heading}>Tags</h4>
+        <h4 className={styles.heading}>Deck tags</h4>
         <TagPicker
+          creatable
           value={tagIds}
           onChange={(next) => {
             commit({ tagIds: next });
           }}
-          placeholder='Search and add tags…'
+          placeholder='Search, add, or create tags…'
         />
       </section>
+
+      <ElementTagsSection />
     </div>
   );
 };

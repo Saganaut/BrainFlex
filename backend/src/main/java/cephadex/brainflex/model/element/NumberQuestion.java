@@ -10,6 +10,8 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import cephadex.brainflex.model.enums.Difficulty;
@@ -51,7 +53,17 @@ public record NumberQuestion(
         // per-kind ergonomics (chunk 10)
         Double minValue,
         Double maxValue,
-        boolean allowNegative
+        boolean allowNegative,
+        // shared metadata (chunk 10b)
+        String createdByUserId,
+        String lastEditedByUserId,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        List<String> tagIds,
+        String mediaCaption,
+        String altText,
+        boolean reactionsEnabled,
+        Integer version
 ) implements DeckElement {
 
     @Override

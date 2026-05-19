@@ -20,6 +20,7 @@ import {
   PhotoIcon,
   PuzzlePieceIcon,
   RocketLaunchIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import styles from "./DesignSystem.module.css";
 import { Accordion } from "../../components/Containers/Accordion";
@@ -224,15 +225,28 @@ const CommonTab = () => {
           <Accordion titleBar='Buttons'>
             <div className={styles.buttonGroup}>
               <Btn>Primary</Btn>
-              <Btn variant='ghost'>Ghost</Btn>
-              <Btn variant='bordered'>Bordered</Btn>
-              <Btn variant='filled'>Filled</Btn>
+              <Btn variant='secondary'>Secondary</Btn>
+              <Btn variant='brand'>Brand</Btn>
+              <Btn variant='info'>Info</Btn>
               <Btn variant='error'>Error</Btn>
               <Btn variant='success'>Success</Btn>
               <Btn variant='warning'>Warning</Btn>
-              <Btn variant='info'>Info</Btn>
-              <Btn variant='brand'>Brand</Btn>
-              <Btn disabled>Disabled</Btn>
+              <Btn variant='disabled'>Disabled (variant)</Btn>
+              <Btn disabled>Disabled (state)</Btn>
+            </div>
+            <div className={styles.buttonGroup}>
+              <Btn fill='default'>Default fill</Btn>
+              <Btn fill='bordered'>Bordered fill</Btn>
+              <Btn fill='ghost'>Ghost fill</Btn>
+              <Btn variant='error' fill='bordered'>
+                error + bordered
+              </Btn>
+              <Btn variant='error' fill='ghost'>
+                error + ghost
+              </Btn>
+              <Btn variant='brand' fill='ghost'>
+                brand + ghost
+              </Btn>
             </div>
             <div className={styles.buttonGroup}>
               <Btn size='sm'>Primary sm</Btn>
@@ -404,13 +418,12 @@ const CommonTab = () => {
           <Accordion titleBar='Icon Buttons'>
             <div className={styles.iconBtnSection}>
               <div className={styles.iconBtnRow}>
-                <span className={styles.iconBtnRowLabel}>Variant</span>
+                <span className={styles.iconBtnRowLabel}>Fill</span>
                 <div className={styles.iconBtnGroup}>
-                  <IconBtn variant='primary' icon={<BellIcon />} />
-                  <IconBtn variant='ghost' icon={<BellIcon />} />
-                  <IconBtn variant='bordered' icon={<BellIcon />} />
-                  <IconBtn variant='filled' icon={<BellIcon />} />
-                  <IconBtn variant='close' />
+                  <IconBtn fill='default' icon={<BellIcon />} />
+                  <IconBtn fill='bordered' icon={<BellIcon />} />
+                  <IconBtn fill='ghost' icon={<BellIcon />} />
+                  <IconBtn fill='ghost' icon={<XMarkIcon />} />
                 </div>
               </div>
               <div className={styles.iconBtnRow}>
@@ -443,9 +456,9 @@ const CommonTab = () => {
               <div className={styles.iconBtnRow}>
                 <span className={styles.iconBtnRowLabel}>Disabled</span>
                 <div className={styles.iconBtnGroup}>
-                  <IconBtn variant='ghost' icon={<BellIcon />} disabled />
-                  <IconBtn variant='filled' icon={<TrashIcon />} disabled />
-                  <IconBtn variant='close' disabled />
+                  <IconBtn fill='ghost' icon={<BellIcon />} disabled />
+                  <IconBtn icon={<TrashIcon />} disabled />
+                  <IconBtn fill='ghost' icon={<XMarkIcon />} disabled />
                 </div>
               </div>
             </div>
@@ -476,7 +489,7 @@ const CommonTab = () => {
                 position='bottom-left'
                 trigger={(toggle) => (
                   <IconBtn
-                    variant='ghost'
+                    fill='ghost'
                     icon={<EllipsisVerticalIcon />}
                     onClick={toggle}
                     aria-label='Open menu'
@@ -731,7 +744,7 @@ const CommonTab = () => {
               </Tooltip>
               <Tooltip label='Delete forever'>
                 <IconBtn
-                  variant='ghost'
+                  fill='ghost'
                   icon={<TrashIcon />}
                   aria-label='Delete'
                 />

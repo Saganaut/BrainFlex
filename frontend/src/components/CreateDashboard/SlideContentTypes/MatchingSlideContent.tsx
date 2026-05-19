@@ -204,7 +204,7 @@ const MatchingSlideContent = () => {
               />
             </div>
             <IconBtn
-              variant='bordered'
+              fill='bordered'
               size='xs'
               icon={<MinusIcon />}
               aria-label={`Remove pair ${(idx + 1).toString()}`}

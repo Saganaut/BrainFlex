@@ -29,7 +29,7 @@ const ConfirmDialog = ({
   <div className={styles.body}>
     <div className={styles.message}>{message}</div>
     <div className={styles.actions}>
-      <Btn variant='ghost' onClick={onCancel}>
+      <Btn fill='ghost' onClick={onCancel}>
         {cancelLabel}
       </Btn>
       <Btn

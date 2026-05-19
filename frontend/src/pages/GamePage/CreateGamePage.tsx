@@ -4,7 +4,6 @@
 // Auto: AI question generation (stubbed; backend not yet implemented).
 import { useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useCurrentUser } from "../../hooks/useCurrentUser";
 import {
   useCreateShowcaseMutation,
   useListDecksQuery,
@@ -269,36 +268,19 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const CreateGamePage = () => {
+  // Gated by /_authenticated — caller is always a registered user here.
   const navigate = useNavigate();
-  const userState = useCurrentUser();
-  const isRegistered = userState.state === "registered";
 
   const [mode, setMode] = useState<Mode>("template");
   const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
   const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
 
   const { data: allDecks = [], isLoading: loadingPublic } = useListDecksQuery();
-  const { data: myDecks = [], isLoading: loadingMine } = useListMyDecksQuery(
-    undefined,
-    { skip: !isRegistered },
-  );
+  const { data: myDecks = [], isLoading: loadingMine } = useListMyDecksQuery();
   const systemDecks = allDecks.filter((p) => p.isSystem);
 
   const [createGame, { isLoading: creating, error: createError }] =
     useCreateShowcaseMutation();
-
-  if (userState.state !== "loading" && !isRegistered) {
-    return (
-      <div className={styles.page}>
-        <p className={styles.authMsg}>
-          You must be signed in to create a game.
-        </p>
-        <Link to='/' className={styles.backLink} viewTransition>
-          Back to home
-        </Link>
-      </div>
-    );
-  }
 
   const startGame = async (
     deckId: string,

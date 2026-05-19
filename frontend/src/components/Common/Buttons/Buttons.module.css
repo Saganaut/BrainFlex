@@ -1,19 +1,23 @@
-/* Btn — every variant is a nested rule. The base .btn declares the         */
+/* Btn — two orthogonal axes drive the look:                                 */
 
-/* canonical component vars (--padding, --radius, --font-size, --color, …)   */
+/*   - variant: color slot — picks --color / --bg-fill / --border-fill.       */
 
-/* and the .primary fallback values. Other variants override only the slots  */
+/*   - fill: how those slots are applied — default keeps bg + transparent     */
 
-/* they care about. See STYLE-RULES.md "Named button + icon-button variants" */
+/*     border, bordered keeps bg + adds the border color, ghost makes both    */
 
-/* for the catalog.                                                          */
+/*     transparent (text/icon only).                                          */
+
+/* See STYLE-RULES.md "Named button + icon-button variants" for the catalog.  */
 .btn {
   --padding: var(--p-md);
   --radius: var(--radius-lg);
   --font-size: var(--font-size-md);
   --color: var(--text-primary);
-  --background-color: var(--bg-secondary);
-  --border-color: currentcolor;
+  --bg-fill: var(--bg-secondary);
+  --border-fill: var(--text-primary);
+  --background-color: var(--bg-fill);
+  --border-color: transparent;
   --gap: var(--space-2);
   --min-height: 2.5rem;
 
@@ -28,86 +32,84 @@
   font-size: var(--font-size);
   color: var(--color);
   background-color: var(--background-color);
-  border: var(--border-size-sm) solid transparent;
+  border: var(--border-size-sm) solid var(--border-color);
   transition:
     background-color var(--duration-base) ease-in-out,
     color var(--duration-base) ease-in-out,
     border-color var(--duration-base) ease-in-out;
 
-  &:hover {
-    color: var(--action-hover);
-  }
-
-  /* ─── Variants ─────────────────────────────────────────────── */
-
-  /* primary / filled — the base look. filled is an explicit alias.          */
-  &.primary,
-  &.filled {
+  /* ─── Variants (color slot) ────────────────────────────────── */
+  &.primary {
     --color: var(--text-primary);
-    --background-color: var(--bg-secondary);
-    --border-color: transparent;
+    --bg-fill: var(--bg-secondary);
+    --border-fill: var(--text-primary);
   }
 
-  &.ghost {
-    --color: var(--text-primary);
-    --background-color: transparent;
-    --border-color: transparent;
-  }
-
-  &.bordered {
-    --color: var(--text-primary);
-    --background-color: transparent;
-    --border-color: var(--text-primary);
-
-    border-color: var(--border-color);
-  }
-
-  /* close — no semantic meaning on text buttons; renders as primary so the  */
-
-  /* component is forgiving if a caller passes it by mistake.                */
-  &.close {
-    --color: var(--text-primary);
-    --background-color: var(--bg-secondary);
-    --border-color: transparent;
-  }
-
-  /* error / delete — destructive treatment. delete is an explicit alias for */
-
-  /* error so call sites can read more semantically ("Delete user").          */
-  &.error,
-  &.delete {
-    --color: var(--text-error);
-    --background-color: var(--bg-error);
-    --border-color: var(--border-error);
-  }
-
-  &.success {
-    --color: var(--text-success);
-    --background-color: var(--bg-success);
-    --border-color: var(--border-success);
-  }
-
-  &.warning {
-    --color: var(--text-warning);
-    --background-color: var(--bg-warning);
-    --border-color: var(--border-warning);
-  }
-
-  &.info {
-    --color: var(--text-info);
-    --background-color: var(--bg-info);
-    --border-color: var(--border-info);
+  &.secondary {
+    --color: var(--text-secondary);
+    --bg-fill: var(--bg-subtle);
+    --border-fill: var(--text-secondary);
   }
 
   &.brand {
     --color: var(--text-on-brand);
-    --background-color: var(--bg-brand);
-    --border-color: var(--border-brand);
+    --bg-fill: var(--bg-brand);
+    --border-fill: var(--border-brand);
   }
 
-  /* Status variants derive hover via oklch from whatever the modifier set. */
+  &.info {
+    --color: var(--text-info);
+    --bg-fill: var(--bg-info);
+    --border-fill: var(--border-info);
+  }
+
+  &.error {
+    --color: var(--text-error);
+    --bg-fill: var(--bg-error);
+    --border-fill: var(--border-error);
+  }
+
+  &.success {
+    --color: var(--text-success);
+    --bg-fill: var(--bg-success);
+    --border-fill: var(--border-success);
+  }
+
+  &.warning {
+    --color: var(--text-warning);
+    --bg-fill: var(--bg-warning);
+    --border-fill: var(--border-warning);
+  }
+
+  &.disabled {
+    --color: var(--text-disabled);
+    --bg-fill: var(--bg-disabled);
+    --border-fill: var(--border-disabled);
+  }
+
+  /* ─── Fills (background + border treatment) ─────────────────── */
+
+  /* default fill is implicit — bg from variant, transparent border.         */
+
+  &.bordered {
+    --border-color: var(--border-fill);
+  }
+
+  &.ghost {
+    --background-color: transparent;
+    --border-color: transparent;
+  }
+
+  /* ─── Hover ─────────────────────────────────────────────────── */
+
+  /* Neutral variants shift text color to action-hover; status variants get  */
+
+  /* an oklch shift on text / bg / border so the colors stay related.         */
+  &:hover {
+    color: var(--action-hover);
+  }
+
   &.error:hover,
-  &.delete:hover,
   &.success:hover,
   &.warning:hover,
   &.info:hover {
@@ -118,6 +120,14 @@
     border-color: oklch(
       from var(--border-color) calc(l - 0.1) calc(c + 0.02) h
     );
+  }
+
+  &.disabled,
+  &.disabled:hover {
+    color: var(--color);
+    background-color: var(--background-color);
+    border-color: var(--border-color);
+    pointer-events: none;
   }
 
   /* ─── Sizes ─────────────────────────────────────────────────── */
@@ -136,7 +146,7 @@
   }
 
   &.sm {
-    --padding: 0;
+    --padding: var(--p-pill-xs);
     --font-size: var(--font-size-xs);
     --radius: var(--radius-md);
     --gap: 0;
@@ -190,7 +200,7 @@
   }
 }
 
-/* IconBtn — same variant set as .btn, but tuned for square / round icon     */
+/* IconBtn — same two-axis system as .btn, tuned for square / round icon     */
 
 /* buttons. The size classes set --height and --width too, and the avatar    */
 
@@ -199,7 +209,9 @@
   --padding: var(--p-xs);
   --radius: var(--radius-md);
   --color: var(--text-primary);
-  --background-color: var(--bg-secondary);
+  --bg-fill: var(--bg-secondary);
+  --border-fill: var(--text-primary);
+  --background-color: var(--bg-fill);
   --border-color: transparent;
   --height: 56px;
   --width: 56px;
@@ -210,7 +222,7 @@
   border-radius: var(--radius);
   color: var(--color);
   background-color: var(--background-color);
-  border: var(--border-size-sm) solid transparent;
+  border: var(--border-size-sm) solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -238,78 +250,82 @@
     transition: transform var(--duration-base) ease-in-out;
   }
 
-  /* ─── Variants ─────────────────────────────────────────────── */
-
-  /* primary / filled — the base filled look.                              */
-  &.primary,
-  &.filled {
+  /* ─── Variants (color slot) ────────────────────────────────── */
+  &.primary {
     --color: var(--text-primary);
-    --background-color: var(--bg-secondary);
-    --border-color: transparent;
+    --bg-fill: var(--bg-secondary);
+    --border-fill: var(--text-primary);
   }
 
-  &.ghost {
-    --color: var(--text-primary);
-    --background-color: transparent;
-    --border-color: transparent;
-  }
-
-  &.bordered {
-    --color: var(--text-primary);
-    --background-color: transparent;
-    --border-color: var(--text-primary);
-
-    border-color: var(--border-color);
-  }
-
-  /* close — transparent X-mark button; rendered icon is XMarkIcon.        */
-  &.close {
-    --color: var(--text-primary);
-    --background-color: transparent;
-    --border-color: transparent;
-  }
-
-  /* error / delete — destructive treatment. delete is an explicit alias.  */
-  &.error,
-  &.delete {
-    --color: var(--text-error);
-    --background-color: var(--bg-error);
-    --border-color: var(--border-error);
-  }
-
-  &.success {
-    --color: var(--text-success);
-    --background-color: var(--bg-success);
-    --border-color: var(--border-success);
-  }
-
-  &.warning {
-    --color: var(--text-warning);
-    --background-color: var(--bg-warning);
-    --border-color: var(--border-warning);
-  }
-
-  &.info {
-    --color: var(--text-info);
-    --background-color: var(--bg-info);
-    --border-color: var(--border-info);
+  &.secondary {
+    --color: var(--text-secondary);
+    --bg-fill: var(--bg-subtle);
+    --border-fill: var(--text-secondary);
   }
 
   &.brand {
     --color: var(--text-on-brand);
-    --background-color: var(--bg-brand);
-    --border-color: var(--border-brand);
+    --bg-fill: var(--bg-brand);
+    --border-fill: var(--border-brand);
   }
 
-  /* Status / filled variants get the action-hover swap on the bg.         */
-  &.primary:hover,
-  &.filled:hover,
-  &.error:hover,
-  &.delete:hover,
-  &.success:hover,
-  &.warning:hover,
-  &.info:hover,
-  &.brand:hover {
+  &.info {
+    --color: var(--text-info);
+    --bg-fill: var(--bg-info);
+    --border-fill: var(--border-info);
+  }
+
+  &.error {
+    --color: var(--text-error);
+    --bg-fill: var(--bg-error);
+    --border-fill: var(--border-error);
+  }
+
+  &.success {
+    --color: var(--text-success);
+    --bg-fill: var(--bg-success);
+    --border-fill: var(--border-success);
+  }
+
+  &.warning {
+    --color: var(--text-warning);
+    --bg-fill: var(--bg-warning);
+    --border-fill: var(--border-warning);
+  }
+
+  &.disabled {
+    --color: var(--text-disabled);
+    --bg-fill: var(--bg-disabled);
+    --border-fill: var(--border-disabled);
+  }
+
+  /* ─── Fills ─────────────────────────────────────────────────── */
+  &.bordered {
+    --border-color: var(--border-fill);
+  }
+
+  &.ghost {
+    --background-color: transparent;
+    --border-color: transparent;
+  }
+
+  /* ─── Disabled (platform state — declared early so its specificity      */
+
+  /* doesn't have to leapfrog the :not() hover rule below).                 */
+  &:disabled,
+  &.isDisabled,
+  &.isDisabled:hover,
+  &:disabled:hover {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* ─── Hover ─────────────────────────────────────────────────── */
+
+  /* Filled icon buttons swap to action-hover on the bg + invert the icon    */
+
+  /* color for contrast; ghost / bordered just shift color (and border).      */
+  &:not(.ghost, .disabled):hover {
     background-color: var(--action-hover);
     color: var(--bg-surface);
   }
@@ -318,7 +334,7 @@
     border-color: var(--action-hover);
   }
 
-  &:hover {
+  &.ghost:hover {
     color: var(--action-hover);
   }
 
@@ -326,13 +342,13 @@
   &.xs {
     --height: 28px;
     --width: 28px;
-    --padding: 0;
+    --padding: var(--space-1);
   }
 
   &.sm {
     --height: 36px;
     --width: 36px;
-    --padding: 0;
+    --padding: var(--space-2);
   }
 
   &.md {
@@ -364,13 +380,5 @@
 
   &.isCollapsed {
     transform: rotate(180deg);
-  }
-
-  &:disabled,
-  &.isDisabled,
-  &.isDisabled:hover,
-  &:disabled:hover {
-    opacity: 0.3;
-    pointer-events: none;
   }
 }

@@ -2,21 +2,23 @@
 // in Modal.module.css that tints the dialog frame. Inner header / content keep
 // their own surface tokens, so changing variant retints frame + edges only.
 import { useEffect, useRef, type ReactNode } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import style from "./Modal.module.css";
 import { IconBtn } from "../Buttons/IconBtn";
-import type { BtnVariant } from "../Buttons/BtnTypes";
+
+type ModalVariant = "error" | "success" | "warning" | "info" | "brand";
 
 interface ModalProps {
   children: ReactNode;
   title?: string;
-  variant?: BtnVariant;
+  variant?: ModalVariant;
   onClose: () => void;
 }
 
 const Modal = ({
   children,
   title,
-  variant = "default",
+  variant,
   onClose,
 }: ModalProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -41,7 +43,7 @@ const Modal = ({
       onClick={handleClick}
       aria-labelledby={title ? "modal-title" : undefined}
       aria-modal='true'
-      className={[style.modal, variant !== "default" && style[variant]]
+      className={[style.modal, variant && style[variant]]
         .filter(Boolean)
         .join(" ")}>
       <div className={style.header}>
@@ -50,7 +52,12 @@ const Modal = ({
             {title}
           </h2>
         )}
-        <IconBtn variant='close' aria-label='Close modal' onClick={onClose} />
+        <IconBtn
+          fill='ghost'
+          icon={<XMarkIcon />}
+          aria-label='Close modal'
+          onClick={onClose}
+        />
       </div>
       <div className={style.content}>{children}</div>
     </dialog>

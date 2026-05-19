@@ -1,8 +1,7 @@
 // Account settings dashboard. Tabs split unrelated concerns (profile, theme,
 // organizations, danger zone) so the page doesn't grow into a single long
 // scrolling form as we add settings.
-import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import {
   useCloseAccountMutation,
   useGetCurrentUserQuery,
@@ -27,9 +26,10 @@ import { extractErrorMessage } from "@/utils/utils";
 type Tab = "profile" | "theme" | "gallery" | "organizations" | "danger";
 
 const AccountPage = () => {
+  // The /_authenticated layout route guarantees userState.state === "registered"
+  // by the time this component renders — it redirects everyone else home.
   const userState = useCurrentUser();
   const { refetch } = useGetCurrentUserQuery();
-  const navigate = useNavigate();
 
   const registeredUser =
     userState.state === "registered" ? userState.user : null;
@@ -55,15 +55,7 @@ const AccountPage = () => {
   const [closeAccount, { isLoading: isClosing }] = useCloseAccountMutation();
   const confirm = useConfirm();
 
-  useEffect(() => {
-    if (userState.state !== "loading" && userState.state !== "registered") {
-      void navigate({ to: "/" });
-    }
-  }, [userState.state, navigate]);
-
-  if (userState.state === "loading")
-    return <div className={styles.loading}>Loading...</div>;
-  if (userState.state !== "registered") return null;
+  if (!registeredUser) return null;
 
   // FileUpload returns the full accumulated list each change; treat the most
   // recent entry as the chosen file so re-picking replaces the previous one.
@@ -134,8 +126,8 @@ const AccountPage = () => {
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Profile Picture</h2>
         <Avatar
-          src={registeredUser?.pictureUrl}
-          name={registeredUser?.userName ?? registeredUser?.name}
+          src={registeredUser.pictureUrl}
+          name={registeredUser.userName ?? registeredUser.name}
           alt='Profile picture'
           size='xl'
         />

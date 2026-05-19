@@ -4,7 +4,6 @@
 // in apiEnhancements.ts.
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useListMyFavoritesQuery } from "@/store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
@@ -14,27 +13,17 @@ import styles from "./FavoritesPage.module.css";
 const PAGE_SIZE = 24;
 
 const FavoritesPage = () => {
-  const userState = useCurrentUser();
-  const isRegistered = userState.state === "registered";
+  // Gated by /_authenticated — caller is always a registered user here.
   const [page, setPage] = useState(0);
 
   const { data, isFetching } = useListMyFavoritesQuery(
     { page, size: PAGE_SIZE },
-    { skip: !isRegistered, refetchOnMountOrArgChange: true },
+    { refetchOnMountOrArgChange: true },
   );
 
   const items = data?.items ?? [];
   const total = data?.totalElements ?? 0;
   const hasMore = data?.hasMore ?? false;
-
-  if (!isRegistered) {
-    return (
-      <div className={styles.page}>
-        <h1 className={styles.title}>Favorites</h1>
-        <p className={styles.empty}>Sign in to see your favorited decks.</p>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.page}>

@@ -101,14 +101,30 @@ describe("Btn", () => {
       expect(screen.getByRole("button").className).toContain("error");
     });
 
-    it("applies ghost as a variant class", () => {
-      render(<Btn variant='ghost'>Ghost</Btn>);
+    it("applies ghost as a fill class", () => {
+      render(<Btn fill='ghost'>Ghost</Btn>);
       expect(screen.getByRole("button").className).toContain("ghost");
     });
 
-    it("applies bordered as a variant class", () => {
-      render(<Btn variant='bordered'>Outline</Btn>);
+    it("applies bordered as a fill class", () => {
+      render(<Btn fill='bordered'>Outline</Btn>);
       expect(screen.getByRole("button").className).toContain("bordered");
+    });
+
+    it("defaults to the default fill class", () => {
+      render(<Btn>Default fill</Btn>);
+      expect(screen.getByRole("button").className).toContain("default");
+    });
+
+    it("combines variant and fill independently", () => {
+      render(
+        <Btn variant='error' fill='ghost'>
+          Ghost error
+        </Btn>,
+      );
+      const className = screen.getByRole("button").className;
+      expect(className).toContain("error");
+      expect(className).toContain("ghost");
     });
 
     it("defaults to the md size class", () => {

@@ -7,6 +7,8 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,7 +48,17 @@ public record GridQuestion(
         Image image,
         String videoUrl,
         String audioUrl,
-        MediaPosition mediaPosition
+        MediaPosition mediaPosition,
+        // shared metadata (chunk 10b)
+        String createdByUserId,
+        String lastEditedByUserId,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        List<String> tagIds,
+        String mediaCaption,
+        String altText,
+        boolean reactionsEnabled,
+        Integer version
 ) implements DeckElement {
 
     @Override

@@ -16,6 +16,8 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import cephadex.brainflex.model.enums.ElementKind;
@@ -57,7 +59,17 @@ public record Slide(
         String heading,
         Map<String, Object> participantInformation,  // TipTap/ProseMirror rich-text doc
         // per-kind ergonomics (chunk 10)
-        Integer autoAdvanceSeconds                   // null = host advances manually; n = auto-next after n seconds
+        Integer autoAdvanceSeconds,                  // null = host advances manually; n = auto-next after n seconds
+        // shared metadata (chunk 10b)
+        String createdByUserId,
+        String lastEditedByUserId,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        List<String> tagIds,
+        String mediaCaption,
+        String altText,
+        boolean reactionsEnabled,
+        Integer version
 ) implements DeckElement {
 
     @Override

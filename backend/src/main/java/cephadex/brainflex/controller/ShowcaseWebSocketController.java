@@ -19,6 +19,9 @@
  *   /app/showcase/{roomCode}/vote
  *   /app/showcase/{roomCode}/nextRound
  *   /app/showcase/{roomCode}/leave
+ *   /app/showcase/{roomCode}/reaction       — audience emoji burst
+ *   /app/showcase/{roomCode}/chat           — audience chat message
+ *   /app/showcase/{roomCode}/chat/moderate  — host hides one message
  */
 package cephadex.brainflex.controller;
 
@@ -38,6 +41,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.AnswerSubmitRequest;
 import cephadex.brainflex.dto.BootPlayerRequest;
+import cephadex.brainflex.dto.ChatSendRequest;
+import cephadex.brainflex.dto.ModerateChatRequest;
+import cephadex.brainflex.dto.ReactionSendRequest;
 import cephadex.brainflex.dto.ShowcaseErrorMessage;
 import cephadex.brainflex.dto.VoteSubmitRequest;
 import cephadex.brainflex.service.ShowcaseService;
@@ -117,6 +123,33 @@ public class ShowcaseWebSocketController {
             @DestinationVariable String roomCode,
             Principal principal) {
         showcaseService.endShowcaseEarly(roomCode, principal.getName());
+    }
+
+    /** Audience emoji burst; broadcast to /topic/showcase/{roomCode}/reaction. */
+    @MessageMapping("/showcase/{roomCode}/reaction")
+    public void sendReaction(
+            @DestinationVariable String roomCode,
+            @Payload ReactionSendRequest request,
+            Principal principal) {
+        showcaseService.acceptReaction(roomCode, request, principal.getName());
+    }
+
+    /** Audience chat message; broadcast to /topic/showcase/{roomCode}/chat. */
+    @MessageMapping("/showcase/{roomCode}/chat")
+    public void sendChat(
+            @DestinationVariable String roomCode,
+            @Payload ChatSendRequest request,
+            Principal principal) {
+        showcaseService.acceptChat(roomCode, request, principal.getName());
+    }
+
+    /** Host moderates (hides) one chat message; rebroadcast on /topic/showcase/{roomCode}/chat. */
+    @MessageMapping("/showcase/{roomCode}/chat/moderate")
+    public void moderateChat(
+            @DestinationVariable String roomCode,
+            @Payload ModerateChatRequest request,
+            Principal principal) {
+        showcaseService.moderateChatMessage(roomCode, request.messageId(), principal.getName());
     }
 
     /**

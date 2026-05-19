@@ -13,7 +13,7 @@
 // oklch(0.65 0.18 H). We parse hue out of either format for the picker
 // and always write back oklch so storage normalizes over time.
 import { useEffect, useRef, useState } from "react";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import type { HexColor } from "@uiw/color-convert";
 
@@ -106,7 +106,7 @@ const EditOptionToolbar = ({
         ariaLabel={`Option ${displayIndex.toString()} settings`}>
         <PopoverRow className={styles.popoverHeader}>
           <IconBtn
-            variant='ghost'
+            fill='ghost'
             size='xs'
             className={styles.imageThumbBtn}
             style={
@@ -124,7 +124,7 @@ const EditOptionToolbar = ({
             icon={hasImage ? undefined : <PlusIcon />}
           />
           {hasImage && (
-            <Btn variant='ghost' size='xs' onClick={handleClearImage}>
+            <Btn fill='ghost' size='xs' onClick={handleClearImage}>
               Clear
             </Btn>
           )}
@@ -135,7 +135,7 @@ const EditOptionToolbar = ({
               recognize the trigger and let its own onClick toggle state. */}
           <div ref={colorTriggerRef} className={styles.colorThumbWrap}>
             <IconBtn
-              variant='ghost'
+              fill='ghost'
               size='xs'
               className={styles.colorThumbBtn}
               style={{ backgroundColor: resolvedHex }}
@@ -151,7 +151,7 @@ const EditOptionToolbar = ({
           <PopoverDivider />
 
           <IconBtn
-            variant='ghost'
+            fill='ghost'
             size='xs'
             aria-label={`Remove option ${displayIndex.toString()}`}
             disabled={!canRemove}
@@ -161,7 +161,8 @@ const EditOptionToolbar = ({
           <PopoverDivider />
 
           <IconBtn
-            variant='close'
+            fill='ghost'
+            icon={<XMarkIcon />}
             size='xs'
             aria-label='Close'
             onClick={handleClose}

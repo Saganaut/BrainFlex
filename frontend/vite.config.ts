@@ -15,6 +15,9 @@ export default defineConfig({
   css: {
     devSourcemap: true,
   },
+  resolve: {
+    tsconfigPaths: true,
+  },
   plugins: [
     tanstackRouter({
       target: "react",
@@ -27,8 +30,5 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./src/test-setup.ts"],
-  },
-  resolve: {
-    tsconfigPaths: true,
   },
 });

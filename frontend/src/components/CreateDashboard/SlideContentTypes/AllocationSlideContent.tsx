@@ -191,7 +191,7 @@ const AllocationSlideContent = () => {
               />
             </div>
             <IconBtn
-              variant='bordered'
+              fill='bordered'
               size='xs'
               icon={<MinusIcon />}
               aria-label={`Remove option ${(idx + 1).toString()}`}

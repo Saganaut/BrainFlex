@@ -234,7 +234,7 @@ const ShareDeckModal = ({
                   {canManageRow && row.userId != null && (
                     <Btn
                       size='sm'
-                      variant='ghost'
+                      fill='ghost'
                       onClick={() => {
                         void handleTransfer(row);
                       }}
@@ -266,7 +266,7 @@ const ShareDeckModal = ({
       )}
 
       <div className={styles.footer}>
-        <Btn variant='ghost' onClick={onClose}>
+        <Btn fill='ghost' onClick={onClose}>
           Done
         </Btn>
       </div>

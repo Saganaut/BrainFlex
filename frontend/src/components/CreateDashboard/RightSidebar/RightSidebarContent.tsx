@@ -18,6 +18,7 @@ import {
   TagIcon,
   StarIcon,
   ChatBubbleLeftRightIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { ThemePanel } from "./ThemePanel";
@@ -25,8 +26,10 @@ import { EditSlidePanel } from "./EditSlidePanel";
 import { DeckCategorizePanel } from "./DeckCategorizePanel";
 import { DeckReviewsPanel } from "./DeckReviewsPanel";
 import { DeckDiscussionPanel } from "./DeckDiscussionPanel";
+import { ParticipantsPanel } from "./ParticipantsPanel";
 import styles from "./RightSidebarContent.module.css";
 import { RightSidebar } from "@/components/Layout/RightSidebar";
+import { useFullScreen } from "@/context/useFullScreen";
 
 type PanelKey =
   | "edit"
@@ -56,6 +59,7 @@ const PlaceholderPanel = ({ description }: { description: string }) => (
 
 const RightSidebarContent = () => {
   const [openPanel, setOpenPanel] = useState<PanelKey | null>(null);
+  const { isFullScreen } = useFullScreen();
 
   const setPanel = (next: PanelKey | null) => {
     const isSwap = openPanel !== null && next !== null && openPanel !== next;
@@ -78,14 +82,16 @@ const RightSidebarContent = () => {
   };
 
   return (
-    <RightSidebar className={styles.rightSidebarContent}>
+    <RightSidebar
+      className={`${styles.rightSidebarContent} ${isFullScreen ? styles.isCollapsed : ""}`}>
       {openPanel !== null && (
         <aside className={styles.drawer} aria-label={PANEL_TITLES[openPanel]}>
           <div className={styles.panelContent} key={openPanel}>
             <div className={styles.drawerHeader}>
               <h3 className={styles.drawerTitle}>{PANEL_TITLES[openPanel]}</h3>
               <IconBtn
-                variant='close'
+                fill='ghost'
+                icon={<XMarkIcon />}
                 size='sm'
                 aria-label='Close panel'
                 onClick={() => {
@@ -99,9 +105,7 @@ const RightSidebarContent = () => {
               {openPanel === "categorize" && <DeckCategorizePanel />}
               {openPanel === "reviews" && <DeckReviewsPanel />}
               {openPanel === "discussion" && <DeckDiscussionPanel />}
-              {openPanel === "participants" && (
-                <PlaceholderPanel description='Roster of who has joined plus per-participant moderation actions.' />
-              )}
+              {openPanel === "participants" && <ParticipantsPanel />}
               {openPanel === "sharing" && (
                 <PlaceholderPanel description='Visibility, invite links, and per-org access controls for this deck.' />
               )}
@@ -112,7 +116,7 @@ const RightSidebarContent = () => {
 
       <div className={styles.iconStrip} role='toolbar' aria-label='Deck panels'>
         <IconBtn
-          variant='bordered'
+          fill='bordered'
           shape='round'
           size='md'
           aria-label={PANEL_TITLES.edit}
@@ -124,7 +128,7 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          variant='bordered'
+          fill='bordered'
           shape='round'
           size='md'
           aria-label={PANEL_TITLES.theme}
@@ -136,7 +140,7 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          variant='bordered'
+          fill='bordered'
           shape='round'
           size='md'
           aria-label={PANEL_TITLES.categorize}
@@ -148,7 +152,7 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          variant='bordered'
+          fill='bordered'
           shape='round'
           size='md'
           aria-label={PANEL_TITLES.reviews}
@@ -160,7 +164,7 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          variant='bordered'
+          fill='bordered'
           shape='round'
           size='md'
           aria-label={PANEL_TITLES.discussion}
@@ -172,7 +176,7 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          variant='bordered'
+          fill='bordered'
           shape='round'
           size='md'
           aria-label={PANEL_TITLES.participants}
@@ -184,7 +188,7 @@ const RightSidebarContent = () => {
           }}
         />
         <IconBtn
-          variant='bordered'
+          fill='bordered'
           shape='round'
           size='md'
           aria-label={PANEL_TITLES.sharing}

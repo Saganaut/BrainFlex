@@ -413,7 +413,7 @@ const CommentEditor = ({
         autoFocus
       />
       <div className={styles.editorActions}>
-        <Btn size='sm' shape='pill' variant='ghost' onClick={onCancel}>
+        <Btn size='sm' shape='pill' fill='ghost' onClick={onCancel}>
           Cancel
         </Btn>
         <Btn

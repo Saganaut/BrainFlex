@@ -296,7 +296,7 @@ const McqOptionEditable = ({
         <ProgressBar value={100} color={color} />
         <div className={styles.footer}>
           <IconBtn
-            variant='ghost'
+            fill='ghost'
             className={[styles.interactiveZone, styles.correctBtn].join(" ")}
             aria-label={isCorrect ? "Mark as wrong" : "Mark as correct"}
             aria-pressed={isCorrect}
@@ -308,7 +308,7 @@ const McqOptionEditable = ({
           />
 
           <IconBtn
-            variant='ghost'
+            fill='ghost'
             size='xs'
             icon={<EllipsisVerticalIcon />}
             aria-label={`Edit option ${displayIndex.toString()}`}

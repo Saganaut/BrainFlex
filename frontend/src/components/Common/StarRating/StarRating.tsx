@@ -78,7 +78,6 @@ const StarRating = ({
   // Solid overlay width as a percentage of the full row; clipping makes the
   // partial fill render correctly even when individual stars don't perfectly
   // line up with whole-number values.
-  const fillPercent = (safeValue / 5) * 100;
 
   return (
     <div
@@ -91,33 +90,30 @@ const StarRating = ({
       onKeyDown={isInput ? handleKeyDown : undefined}>
       <div className={styles.stars} aria-hidden={!isInput}>
         <div className={styles.outlineRow}>
-          {STARS.map((n) => (
-            <StarOutline key={`o-${groupId}-${n}`} className={styles.icon} />
-          ))}
+          {STARS.map((n, index) =>
+            index + 1 > safeValue ? (
+              <StarOutline key={`o-${groupId}-${n}`} className={styles.icon} />
+            ) : (
+              <StarSolid key={`s-${groupId}-${n}`} className={styles.icon} />
+            ),
+          )}
+
+          {isInput && (
+            <div className={styles.hitRow}>
+              {STARS.map((n) => (
+                <button
+                  key={`h-${groupId}-${n}`}
+                  type='button'
+                  role='radio'
+                  aria-checked={Math.round(safeValue) === n}
+                  aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
+                  className={styles.hit}
+                  onClick={() => onChange?.(n)}
+                />
+              ))}
+            </div>
+          )}
         </div>
-        <div
-          className={styles.solidRow}
-          style={{ width: `${fillPercent}%` }}
-          aria-hidden='true'>
-          {STARS.map((n) => (
-            <StarSolid key={`s-${groupId}-${n}`} className={styles.icon} />
-          ))}
-        </div>
-        {isInput && (
-          <div className={styles.hitRow}>
-            {STARS.map((n) => (
-              <button
-                key={`h-${groupId}-${n}`}
-                type='button'
-                role='radio'
-                aria-checked={Math.round(safeValue) === n}
-                aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
-                className={styles.hit}
-                onClick={() => onChange?.(n)}
-              />
-            ))}
-          </div>
-        )}
       </div>
       {showValue && safeValue > 0 && (
         <span className={styles.value}>

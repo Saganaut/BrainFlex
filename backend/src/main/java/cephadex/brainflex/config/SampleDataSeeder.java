@@ -450,7 +450,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Four hobbits, two men, an elf, a dwarf, and a wizard.",
-                15, null, null, null, null, null, MediaPosition.NONE));
+                15, null, null, null, null, null, MediaPosition.NONE,
+                null, null, true,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(mcq("ftd-mcq-2", "Who breaks the Fellowship by attempting to take the Ring from Frodo?",
                 List.of("Aragorn", "Legolas", "Boromir", "Pippin"), 2,
@@ -493,7 +496,9 @@ public class SampleDataSeeder {
                 0, Difficulty.EASY,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                30, null, null, null, null, null, MediaPosition.NONE));
+                30, null, null, null, null, null, MediaPosition.NONE,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new QAndAQuestion("sb-qanda-1",
                 pub("sb-qanda-1"), prv("sb-qanda-1"),
@@ -504,7 +509,10 @@ public class SampleDataSeeder {
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
                 45, "Pin the best ones to share.",
-                null, null, null, null, MediaPosition.NONE));
+                null, null, null, null, MediaPosition.NONE,
+                false, 0,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(endSlide("sb-s-end", "Mind your taters.",
                 "PO-TA-TOES. Boil 'em, mash 'em, stick 'em in a stew."));
@@ -548,7 +556,10 @@ public class SampleDataSeeder {
                 250, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "An Age ends with a great war or sundering.",
-                25, null, null, null, null, null, MediaPosition.NONE));
+                25, null, null, null, null, null, MediaPosition.NONE,
+                true,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new GridQuestion("al-grid-1",
                 pub("al-grid-1"), prv("al-grid-1"),
@@ -562,7 +573,9 @@ public class SampleDataSeeder {
                 300, Difficulty.HARD,
                 true, false, 3, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Valar are the greater powers; Sauron, Gandalf, and Saruman are all Maiar.",
-                30, null, null, null, null, null, MediaPosition.NONE));
+                30, null, null, null, null, null, MediaPosition.NONE,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(endSlide("al-s-end", "Even the wise cannot see all ends.",
                 "Thank you for studying with us."));
@@ -600,7 +613,9 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Lorem Picsum placeholder until a real map ships.",
-                25, null, null, null, null, null, MediaPosition.NONE));
+                25, null, null, null, null, null, MediaPosition.NONE,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(endSlide("rr-s-end", "Forth Eorlingas!",
                 "Ride now, ride now! Ride to ruin and the world's ending!"));
@@ -674,7 +689,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Old Toby is from the Southfarthing — Gandalf's favorite.",
-                20, null, null, null, null, null, MediaPosition.NONE));
+                20, null, null, null, null, null, MediaPosition.NONE,
+                true, false, 0,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new NumberQuestion("sf-num-1",
                 pub("sf-num-1"), prv("sf-num-1"),
@@ -684,7 +702,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "His eleventy-first birthday.",
-                15, null, null, null, null, null, MediaPosition.NONE));
+                15, null, null, null, null, null, MediaPosition.NONE,
+                null, null, true,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(endSlide("sf-s-end", "Don't keep them waiting.",
                 "It's a dangerous business, going out your door."));
@@ -722,13 +743,27 @@ public class SampleDataSeeder {
     private static String pub(String id) { return "pub_" + id; }
     private static String prv(String id) { return "prv_" + id; }
 
+    // Shared-metadata block (chunk 10b) appended to every seeded element.
+    // Seeds carry null user ids (system credit), null timestamps (the document
+    // load path stamps them on first save), empty tagIds, reactions on, v1.
+    private static final String SEED_USER = null;
+    private static final LocalDateTime SEED_TIME = null;
+    private static final List<String> SEED_TAGS = List.of();
+    private static final String SEED_CAPTION = null;
+    private static final String SEED_ALT = null;
+    private static final boolean SEED_REACTIONS = true;
+    private static final Integer SEED_VERSION = 1;
+
     private static Slide titleSlide(String id, String title, String body) {
         return new Slide(id, SlideKind.TITLE, pub(id), prv(id), title, null, body,
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 6, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, true, ShowResponsesMode.INSTANT,
-                null, null);
+                null, null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
     }
 
     private static Slide endSlide(String id, String title, String body) {
@@ -737,7 +772,10 @@ public class SampleDataSeeder {
                 8, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, true, ShowResponsesMode.INSTANT,
-                null, null);
+                null, null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
     }
 
     private static McqQuestion mcq(String id, String prompt, List<String> options, int correctIndex,
@@ -751,7 +789,10 @@ public class SampleDataSeeder {
                 pointValue, difficulty,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE);
+                15, null, null, null, null, null, MediaPosition.NONE,
+                true, false, 0,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
     }
 
     private static TextQuestion textQ(String id, String prompt, String correct,
@@ -761,7 +802,10 @@ public class SampleDataSeeder {
                 pointValue, difficulty,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                20, null, null, null, null, null, MediaPosition.NONE);
+                20, null, null, null, null, null, MediaPosition.NONE,
+                80, true, false, 1,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
     }
 
     // ---------- system decks (preserved from the old startup seeder) ------
@@ -805,7 +849,10 @@ public class SampleDataSeeder {
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.QR_CODE, true, ShowResponsesMode.INSTANT,
                 "Join the tour",
-                null));
+                null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new Slide("wt-s-2", SlideKind.SECTION,
                 pub("wt-s-2"), prv("wt-s-2"),
@@ -815,7 +862,10 @@ public class SampleDataSeeder {
                 4, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
-                null, null));
+                null, null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         List<McqOption> mcqOpts = List.of(
                 new McqOption("mars-opt-1", "Venus", null, null),
@@ -830,7 +880,10 @@ public class SampleDataSeeder {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Mars looks red because of iron oxide (rust) on its surface.",
-                15, null, null, null, null, null, MediaPosition.NONE));
+                15, null, null, null, null, null, MediaPosition.NONE,
+                true, false, 0,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new TextQuestion("wt-text-1",
                 pub("wt-text-1"), prv("wt-text-1"),
@@ -840,7 +893,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Paris has been France's capital since 987 AD.",
-                15, null, null, null, null, null, MediaPosition.NONE));
+                15, null, null, null, null, null, MediaPosition.NONE,
+                80, true, false, 1,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new NumberQuestion("wt-num-1",
                 pub("wt-num-1"), prv("wt-num-1"),
@@ -850,7 +906,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Pluto was reclassified as a dwarf planet in 2006.",
-                15, null, null, null, null, null, MediaPosition.NONE));
+                15, null, null, null, null, null, MediaPosition.NONE,
+                null, null, true,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new Slide("wt-s-3", SlideKind.SECTION,
                 pub("wt-s-3"), prv("wt-s-3"),
@@ -860,7 +919,10 @@ public class SampleDataSeeder {
                 4, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.HISTOGRAM, true, 3, true,
                 JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
-                null, null));
+                null, null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         List<RankingItem> planets = List.of(
                 new RankingItem("planet-mercury", "Mercury", null),
@@ -877,7 +939,10 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Distance order from the Sun outward.",
-                20, null, null, null, null, null, MediaPosition.NONE));
+                20, null, null, null, null, null, MediaPosition.NONE,
+                true,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         List<ScaleStatement> features = List.of(
                 new ScaleStatement("feat-realtime", "Real-time multiplayer gameplay"),
@@ -892,7 +957,9 @@ public class SampleDataSeeder {
                 0, Difficulty.EASY,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                25, null, null, null, null, null, MediaPosition.NONE));
+                25, null, null, null, null, null, MediaPosition.NONE,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new Slide("wt-s-4", SlideKind.SECTION,
                 pub("wt-s-4"), prv("wt-s-4"),
@@ -902,7 +969,10 @@ public class SampleDataSeeder {
                 4, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.PIE_CHART, false, 1, true,
                 JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.ON_CLICK,
-                null, null));
+                null, null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new TextQuestion("wt-best-1",
                 pub("wt-best-1"), prv("wt-best-1"),
@@ -914,7 +984,10 @@ public class SampleDataSeeder {
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 true, "Which one-word theme is the most creative?", 100,
                 "Best Answer mode — players vote on the most creative response.",
-                30, null, null, null, null, null, MediaPosition.NONE));
+                30, null, null, null, null, null, MediaPosition.NONE,
+                80, true, false, 1,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new QAndAQuestion("wt-qanda-1",
                 pub("wt-qanda-1"), prv("wt-qanda-1"),
@@ -925,7 +998,10 @@ public class SampleDataSeeder {
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
                 45, "Audience asks freely; you pin the ones you want to address.",
-                null, null, null, null, MediaPosition.NONE));
+                null, null, null, null, MediaPosition.NONE,
+                false, 0,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new Slide("wt-s-5", SlideKind.SECTION,
                 pub("wt-s-5"), prv("wt-s-5"),
@@ -935,7 +1011,10 @@ public class SampleDataSeeder {
                 4, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
-                null, null));
+                null, null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new GridQuestion("wt-grid-1",
                 pub("wt-grid-1"), prv("wt-grid-1"),
@@ -948,7 +1027,9 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, 4, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Primes: 2, 3, 5, 7.",
-                20, null, null, null, null, null, MediaPosition.NONE));
+                20, null, null, null, null, null, MediaPosition.NONE,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new PlaceOnImageQuestion("wt-place-1",
                 pub("wt-place-1"), prv("wt-place-1"),
@@ -960,7 +1041,9 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Lorem Picsum stands in for a real map until we wire one up.",
-                25, null, null, null, null, null, MediaPosition.NONE));
+                25, null, null, null, null, null, MediaPosition.NONE,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         List<McqOption> landmarks = List.of(
                 new McqOption("lm-eiffel", "Eiffel Tower",
@@ -979,7 +1062,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "MCQ option carries images.",
-                20, null, null, null, null, null, MediaPosition.NONE));
+                20, null, null, null, null, null, MediaPosition.NONE,
+                true, false, 0,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         els.add(new Slide("wt-s-end", SlideKind.END,
                 pub("wt-s-end"), prv("wt-s-end"),
@@ -989,7 +1075,10 @@ public class SampleDataSeeder {
                 8, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.PRIVATE,
-                null, null));
+                null, null,
+                null,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         deck.setElements(els);
         return deck;
@@ -1040,7 +1129,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE));
+                15, null, null, null, null, null, MediaPosition.NONE,
+                80, true, false, 1,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
         els.add(new TextQuestion("gk-7",
                 pub("gk-7"), prv("gk-7"),
                 "Who wrote the play 'Hamlet'?", null,
@@ -1049,7 +1141,10 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                20, null, null, null, null, null, MediaPosition.NONE));
+                20, null, null, null, null, null, MediaPosition.NONE,
+                80, true, false, 1,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
         els.add(new NumberQuestion("gk-8",
                 pub("gk-8"), prv("gk-8"),
                 "How many planets are in our solar system?", null,
@@ -1058,7 +1153,10 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE));
+                15, null, null, null, null, null, MediaPosition.NONE,
+                null, null, true,
+                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
+                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
         deck.setElements(els);
         return deck;

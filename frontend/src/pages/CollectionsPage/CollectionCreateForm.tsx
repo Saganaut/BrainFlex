@@ -69,7 +69,7 @@ const CollectionCreateForm = ({ onCancel, onCreated }: CollectionCreateFormProps
         fullWidth
       />
       <div className={styles.actions}>
-        <Btn type='button' variant='ghost' onClick={onCancel}>
+        <Btn type='button' fill='ghost' onClick={onCancel}>
           Cancel
         </Btn>
         <Btn type='submit' disabled={!canSubmit}>

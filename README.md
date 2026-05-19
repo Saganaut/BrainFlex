@@ -4,6 +4,10 @@
 
 ## Goal is to create a paired down version of the a previous project while learning new technologies (MongoDb, Java, Spring Boot)
 
+### Documentation
+
+All project docs live under [`z-docs/`](z-docs/README.md). Start there for conventions, infrastructure notes, feature design docs, and the parity roadmap. The repo root keeps only this `README.md`, [`AGENTS.md`](AGENTS.md), and `CLAUDE.md` (which just `@`-includes `AGENTS.md`).
+
 ### BACKEND
 
 - JAVA - Spring Boot

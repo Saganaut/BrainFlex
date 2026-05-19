@@ -51,29 +51,33 @@ brainflex/
 
 ## Documentation
 
-All project documentation other than the top-level `README.md` lives in **`z-docs/`** at the repo root. When you need background on conventions, infrastructure, or supplemental rules — or when you need to add new documentation — go there first.
+All project documentation other than the top-level `README.md` lives in **`z-docs/`** at the repo root, organized into category folders each with their own `README.md` signpost. When you need background on conventions, infrastructure, or supplemental rules — or when you need to add new documentation — start at [`z-docs/README.md`](z-docs/README.md).
 
-Current contents (subject to growth):
+Top-level category folders (subject to growth):
 
-| File / dir                        | Purpose                                                                |
-| --------------------------------- | ---------------------------------------------------------------------- |
-| `z-docs/RULES.md`                 | **Signpost only** — index into the topic-specific rule files below     |
-| `z-docs/rules/GENERAL-RULES.md`   | Cross-cutting project rules (consistency, env vars, git, etc.)         |
-| `z-docs/rules/BACKEND-RULES.md`   | Java / Spring Boot conventions and testing rules                       |
-| `z-docs/rules/FRONTEND-RULES.md`  | React / TypeScript conventions and testing rules                       |
-| `z-docs/rules/STYLE-RULES.md`     | CSS modules, tokens, and design-system styling rules                   |
-| `z-docs/rules/ICONS-RULES.md`     | Icon/SVG naming, folder, and import conventions                        |
-| `z-docs/INFRASTRUCTURE.md`        | Infrastructure notes (Docker, MongoDB, Redis, deployment)              |
-| `z-docs/membership.md`            | Organization membership semantics and flows                            |
-| `z-docs/NOTES.MD`                 | Working notes / scratchpad                                             |
+| Folder                        | Purpose                                                                |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| `z-docs/rules/`               | Coding conventions per layer — start at [`rules/README.md`](z-docs/rules/README.md) |
+| `z-docs/infrastructure/`      | Docker, MongoDB, Redis, Garage/S3, deployment notes                    |
+| `z-docs/features/`            | Per-feature design docs (auth, games, membership, …)                   |
+| `z-docs/to-do/`               | Mentimeter/Kahoot parity roadmap (20 numbered chunks) + general TODO list |
+| `z-docs/notes/`               | Working notes and reference snippets                                   |
+| `z-docs/decisions/`           | Architecture Decision Records (ADRs)                                   |
+| `z-docs/runbooks/`            | Operational procedures (seeding, secret rotation, recovery)            |
+| `z-docs/skills/`              | Claude Code skills for this repo                                       |
+| `z-docs/archive/`             | Deprecated / superseded docs kept for history                          |
+| `z-docs/glossary.md`          | Domain terms (deck, element, showcase, organization, theme, slide, MCQ, …) |
+
+**Reachability is enforced.** `tools/doc-lint.js` walks the link graph from the root `README.md` and fails on any `.md` file that isn't reachable via a chain of standard markdown links. Always link new docs from the appropriate folder's `README.md` so they stay visible.
 
 **Conventions:**
 
-- New design documents, rule docs, architecture notes, and any other long-form documentation belong in `z-docs/` — not at the repo root.
-- The repo root keeps only `README.md`, `AGENTS.md`, and `CLAUDE.md` as top-level docs.
-- All rule files (`*-RULES.md`) live under `z-docs/rules/`. `z-docs/RULES.md` is just the index.
-- Inside rule files, cross-references use the `@FILENAME.md` syntax (e.g. `@BACKEND-RULES.md`); resolution is relative to `z-docs/rules/`.
-- Keep filenames kebab-case or SCREAMING-KEBAB for rule docs (matching existing convention).
+- New design documents, rule docs, architecture notes, and any other long-form documentation belong in `z-docs/<category>/` — not at the repo root.
+- The repo root keeps only `README.md`, `AGENTS.md`, and `CLAUDE.md` as top-level docs. Per-directory READMEs (`backend/README.MD`, `frontend/README.md`, `tools/README.md`, etc.) stay next to their code and are linked from `z-docs/infrastructure/README.md`.
+- All rule files (`*-RULES.md`) live under `z-docs/rules/`. `z-docs/rules/README.md` is the index.
+- Cross-references use **standard markdown links** (e.g. `[BACKEND-RULES](BACKEND-RULES.md)`) so the doc-lint chain catches them. The old `@FILENAME.md` convention has been retired — the linter's regex doesn't see it.
+- Keep filenames kebab-case or SCREAMING-KEBAB for rule docs (matching existing convention). New non-rule docs in `z-docs/` should be lowercase kebab-case.
+- `memory/` (Claude Code auto-memory) is excluded from the linter; it stores agent state, not project docs.
 
 ---
 
@@ -180,7 +184,7 @@ App-level fullscreen state lives in `LayoutProvider` (`frontend/src/context/Layo
 - Two top-level lanes: `assets/icons/<category>/` for monochrome UI icons, `assets/images/<category>/` for multi-color illustrations / mascots / brand artwork. Filenames are kebab-case.
 - Import pattern (the only pattern): `import TrashIcon from "@/assets/icons/action/trash.svg?react"` → render as `<TrashIcon className={...} />`. Don't `<img src=...>` SVGs and don't write inline `<svg>` markup for new artwork.
 - `@heroicons/react` is still installed but is a **placeholder** — designer-shipped icons replace heroicon usages one site at a time.
-- Full naming + folder + workflow rules are in **[`ICONS_RULES.md`](../ICONS_RULES.md)** at the repo root.
+- Full naming + folder + workflow rules are in **[`ICONS-RULES.md`](z-docs/rules/ICONS-RULES.md)**.
 
 **Deck editor (`/decks/$deckId/view`):**
 

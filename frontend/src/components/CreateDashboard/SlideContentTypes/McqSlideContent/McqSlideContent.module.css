@@ -7,14 +7,6 @@
   display: flex;
   align-items: center;
   justify-content: start;
-  border: 1px dashed yellow;
-}
-
-.titleField {
-  div {
-    width: 100%;
-    min-height: 60px;
-  }
 }
 
 .optionsHeader {

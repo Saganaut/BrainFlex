@@ -1,4 +1,5 @@
 // File upload component with drag-and-drop support and multi-file selection
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import shared from "../Input.module.css";
 import styles from "./FileUpload.module.css";
 import { useFileUpload } from "./useFileUpload";
@@ -69,7 +70,8 @@ const FileUpload = ({
               <span className={styles.fileName}>{file.name}</span>
 
               <IconBtn
-                variant='close'
+                fill='ghost'
+                icon={<XMarkIcon />}
                 size='xs'
                 className={styles.removeFile}
                 onClick={() => {

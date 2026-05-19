@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -28,13 +29,18 @@ public class PresenceService {
 
     private final ConcurrentHashMap<String, Integer> sessionCount = new ConcurrentHashMap<>();
     private final SimpMessagingTemplate messagingTemplate;
+    private final ShowcaseService showcaseService;
 
-    public PresenceService(SimpMessagingTemplate messagingTemplate) {
+    public PresenceService(SimpMessagingTemplate messagingTemplate,
+                           @Lazy ShowcaseService showcaseService) {
         this.messagingTemplate = messagingTemplate;
+        this.showcaseService = showcaseService;
     }
 
     /**
-     * Register a new WebSocket session for this user; broadcasts on 0→1 transition.
+     * Register a new WebSocket session for this user; broadcasts on 0→1 transition
+     * and tells the showcase layer to flip the player's disconnected flag back
+     * to false on reconnect.
      */
     public void onConnect(String userId) {
         if (userId == null)
@@ -43,12 +49,15 @@ public class PresenceService {
         if (next == 1) {
             log.debug("Presence: {} online", userId);
             broadcast(userId, true);
+            // Chunk 13 — keep ShowcasePlayer.disconnected / lastSeenAt in sync.
+            showcaseService.markPlayerPresence(userId, true);
         }
     }
 
     /**
      * Drop a WebSocket session for this user; broadcasts on last-session → 0
-     * transition.
+     * transition and tells the showcase layer to flip the player's
+     * disconnected flag to true.
      */
     public void onDisconnect(String userId) {
         if (userId == null)
@@ -58,6 +67,8 @@ public class PresenceService {
             sessionCount.remove(userId);
             log.debug("Presence: {} offline", userId);
             broadcast(userId, false);
+            // Chunk 13 — keep ShowcasePlayer.disconnected / lastSeenAt in sync.
+            showcaseService.markPlayerPresence(userId, false);
         }
     }
 

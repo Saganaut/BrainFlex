@@ -391,8 +391,17 @@ public class DeckService {
         Deck deck = requireOwned(deckId, caller);
         DeckElement withId = ensureElementId(incoming);
         DeckElement normalized = DeckImageMapper.mapElement(withId, DeckService::stripTransportUrl);
-        deck.getElements().add(normalized);
-        deck.setUpdatedAt(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        // Backend is the authority for provenance — overwrite whatever the
+        // client sent so a misbehaving payload can't lie about createdBy.
+        DeckElement stamped = DeckElementCloner.withMetadata(
+                normalized,
+                caller.getId(), caller.getId(), now, now,
+                tagIdsOrEmpty(normalized.tagIds()),
+                normalized.mediaCaption(), normalized.altText(),
+                normalized.reactionsEnabled(), 1);
+        deck.getElements().add(stamped);
+        deck.setUpdatedAt(now);
         return deckRepository.save(deck);
     }
 
@@ -405,9 +414,31 @@ public class DeckService {
         // Preserve the id even if the client omits it on update.
         DeckElement withId = ensureElementId(incoming);
         DeckElement normalized = DeckImageMapper.mapElement(withId, DeckService::stripTransportUrl);
-        deck.getElements().set(idx, normalized);
-        deck.setUpdatedAt(LocalDateTime.now());
+        DeckElement existing = deck.getElements().get(idx);
+        LocalDateTime now = LocalDateTime.now();
+        // Preserve original creator + createdAt; bump version off the stored
+        // record so concurrent edits land at sequential versions even if the
+        // client lagged behind by one.
+        String createdBy = existing.createdByUserId() != null
+                ? existing.createdByUserId()
+                : caller.getId();
+        LocalDateTime createdAt = existing.createdAt() != null
+                ? existing.createdAt()
+                : now;
+        Integer nextVersion = (existing.version() == null ? 0 : existing.version()) + 1;
+        DeckElement stamped = DeckElementCloner.withMetadata(
+                normalized,
+                createdBy, caller.getId(), createdAt, now,
+                tagIdsOrEmpty(normalized.tagIds()),
+                normalized.mediaCaption(), normalized.altText(),
+                normalized.reactionsEnabled(), nextVersion);
+        deck.getElements().set(idx, stamped);
+        deck.setUpdatedAt(now);
         return deckRepository.save(deck);
+    }
+
+    private static List<String> tagIdsOrEmpty(List<String> tagIds) {
+        return tagIds == null ? List.of() : tagIds;
     }
 
     public Deck deleteElement(String deckId, String elementId, User caller) {

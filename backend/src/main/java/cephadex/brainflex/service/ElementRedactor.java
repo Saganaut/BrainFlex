@@ -44,7 +44,10 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case TextQuestion q -> new TextQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(),
@@ -56,7 +59,10 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case NumberQuestion q -> new NumberQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(),
@@ -68,7 +74,10 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.minValue(), q.maxValue(), q.allowNegative(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case RankingQuestion q -> new RankingQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.items(),
@@ -79,7 +88,10 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.shuffleItemsForPresentation(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case ScalesQuestion q -> new ScalesQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.statements(),
@@ -90,7 +102,9 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case QAndAQuestion q -> q; // no answer key to hide
             case GridQuestion q -> new GridQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
@@ -102,7 +116,9 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.targetImage(),
@@ -114,7 +130,9 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case WordCloudQuestion q -> q; // survey: no answer key to hide
             case AllocationQuestion q -> q; // survey: no answer key to hide
             case MatchingQuestion q -> redactMatching(q);
@@ -145,7 +163,9 @@ public final class ElementRedactor {
                 q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                 null,        // explanation
                 q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
     }
 
     /**

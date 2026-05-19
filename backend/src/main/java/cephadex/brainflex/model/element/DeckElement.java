@@ -22,6 +22,8 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -125,5 +127,57 @@ public sealed interface DeckElement
 
     default int bestAnswerBonus() {
         return 0;
+    }
+
+    // ---- Provenance + shared metadata (chunk 10b) ----
+    //
+    // Declared as default methods returning safe values; every record declares
+    // these as record components, so the generated accessor overrides the
+    // default. Kept on the interface so future kinds get a working baseline
+    // and callers can read them off any DeckElement without a kind switch.
+
+    /** User who first authored this element. Set by the backend on add; null for system seeds. */
+    default String createdByUserId() {
+        return null;
+    }
+
+    /** User who most recently edited this element. Stamped server-side on every update. */
+    default String lastEditedByUserId() {
+        return null;
+    }
+
+    /** Timestamp the element was first added to the deck. Stamped server-side. */
+    default LocalDateTime createdAt() {
+        return null;
+    }
+
+    /** Timestamp of the most recent edit. Stamped server-side on every update. */
+    default LocalDateTime updatedAt() {
+        return null;
+    }
+
+    /** Per-element tag references (independent of the deck's tagIds). Empty by default. */
+    default List<String> tagIds() {
+        return List.of();
+    }
+
+    /** Caption shown beneath the media slot — author-controlled. */
+    default String mediaCaption() {
+        return null;
+    }
+
+    /** Accessibility text for the media slot. */
+    default String altText() {
+        return null;
+    }
+
+    /** When false, audience emoji reactions are suppressed for this element. */
+    default boolean reactionsEnabled() {
+        return true;
+    }
+
+    /** Bumped on every server-side save. Clients use it to detect stale edits. */
+    default Integer version() {
+        return 1;
     }
 }

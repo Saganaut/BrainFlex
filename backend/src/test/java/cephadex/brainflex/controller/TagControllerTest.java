@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,16 +129,31 @@ class TagControllerTest {
     }
 
     @Test
-    void createTag_WhenNotAdmin_Returns403() throws Exception {
+    void createTag_WhenNotAdmin_ForcesCuratedFalseAndReturns201() throws Exception {
         when(adminProperties.isAdmin(callerUser)).thenReturn(false);
+        when(tagService.create(any(TagDTO.CreateTagRequest.class)))
+                .thenAnswer(inv -> {
+                    TagDTO.CreateTagRequest req = inv.getArgument(0);
+                    // The controller must pass curated=false even though the
+                    // request body asked for true.
+                    assertThat(req.curated()).isEqualTo(false);
+                    Tag tag = new Tag();
+                    tag.setId(req.id() != null ? req.id() : "frontend-tips");
+                    tag.setDisplayName(req.displayName());
+                    tag.setCurated(false);
+                    tag.setCreatedAt(LocalDateTime.now());
+                    tag.setUpdatedAt(LocalDateTime.now());
+                    return tag;
+                });
 
         TagDTO.CreateTagRequest body = new TagDTO.CreateTagRequest(
-                "history", "History", null, null, null, true);
+                null, "Frontend Tips", null, null, null, true);
 
         mockMvc.perform(post("/api/tags")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(body)))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.curated").value(false));
     }
 
     @Test

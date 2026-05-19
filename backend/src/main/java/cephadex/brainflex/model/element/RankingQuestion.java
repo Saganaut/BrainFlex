@@ -14,6 +14,7 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +55,17 @@ public record RankingQuestion(
         String audioUrl,
         MediaPosition mediaPosition,
         // per-kind ergonomics (chunk 10)
-        boolean shuffleItemsForPresentation
+        boolean shuffleItemsForPresentation,
+        // shared metadata (chunk 10b)
+        String createdByUserId,
+        String lastEditedByUserId,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        List<String> tagIds,
+        String mediaCaption,
+        String altText,
+        boolean reactionsEnabled,
+        Integer version
 ) implements DeckElement {
 
     @Override

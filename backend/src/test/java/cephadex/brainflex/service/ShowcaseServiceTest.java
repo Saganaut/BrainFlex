@@ -57,7 +57,16 @@ import cephadex.brainflex.model.enums.GameMode;
 import cephadex.brainflex.model.enums.GameStatus;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.ShowcasePhase;
+import cephadex.brainflex.dto.ChatSendRequest;
+import cephadex.brainflex.dto.TeamUpdateMessage;
+import cephadex.brainflex.dto.ReactionBroadcastMessage;
+import cephadex.brainflex.dto.ReactionSendRequest;
+import cephadex.brainflex.dto.ShowcaseChatMessageDTO;
+import cephadex.brainflex.model.Reaction;
+import cephadex.brainflex.model.ShowcaseChatMessage;
 import cephadex.brainflex.repository.DeckRepository;
+import cephadex.brainflex.repository.ReactionRepository;
+import cephadex.brainflex.repository.ShowcaseChatMessageRepository;
 import cephadex.brainflex.repository.ShowcaseRepository;
 import cephadex.brainflex.repository.ShowcaseResultRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -74,6 +83,10 @@ class ShowcaseServiceTest {
     @Mock private DeckImageHydrationService deckImageHydrationService;
     @Mock private DeckService deckService;
     @Mock private UserImageHydrator userImageHydrator;
+    @Mock private ReactionRepository reactionRepository;
+    @Mock private ShowcaseChatMessageRepository chatRepository;
+    @Mock private ShowcaseRateLimiter rateLimiter;
+    @Mock private AvatarService avatarService;
     @Mock private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     @Mock private SimpMessagingTemplate messagingTemplate;
 
@@ -117,7 +130,10 @@ class ShowcaseServiceTest {
                     100, Difficulty.EASY,
                     true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                     false, null, 0, null,
-                    15, null, null, null, null, null, MediaPosition.NONE));
+                    15, null, null, null, null, null, MediaPosition.NONE,
+                    true, false, 0,
+                    null, null, null, null, List.of(),
+                    null, null, true, 1));
         }
         return els;
     }
@@ -132,7 +148,8 @@ class ShowcaseServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         CreateShowcaseRequest request = new CreateShowcaseRequest(
-                "deck1", null, null, null, null, null, null, null, null, null);
+                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
         Showcase result = showcaseService.createShowcase(host, request);
 
         assertNotNull(result);
@@ -152,7 +169,8 @@ class ShowcaseServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         CreateShowcaseRequest request = new CreateShowcaseRequest(
-                "deck1", null, 5, 20, null, null, null, null, null, null);
+                "deck1", null, 5, 20, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
         Showcase result = showcaseService.createShowcase(host, request);
 
         assertEquals(5, result.getSettings().getTotalRounds());
@@ -165,7 +183,8 @@ class ShowcaseServiceTest {
         when(deckRepository.findById("baddeck")).thenReturn(Optional.empty());
 
         CreateShowcaseRequest request = new CreateShowcaseRequest(
-                "baddeck", null, null, null, null, null, null, null, null, null);
+                "baddeck", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> showcaseService.createShowcase(host, request));
 
@@ -180,7 +199,8 @@ class ShowcaseServiceTest {
         when(deckRepository.findById("empty")).thenReturn(Optional.of(empty));
 
         CreateShowcaseRequest request = new CreateShowcaseRequest(
-                "empty", null, null, null, null, null, null, null, null, null);
+                "empty", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null);
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> showcaseService.createShowcase(host, request));
 
@@ -655,7 +675,9 @@ class ShowcaseServiceTest {
                 false, true, null,
                 cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE);
+                15, null, null, null, null, null, MediaPosition.NONE,
+                null, null, null, null, List.of(),
+                null, null, true, 1);
     }
 
     private static Showcase wordCloudSessionWithTwoPlayers(int maxSubmissionsPerPlayer) {
@@ -686,7 +708,9 @@ class ShowcaseServiceTest {
                 false, true, null,
                 cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE);
+                15, null, null, null, null, null, MediaPosition.NONE,
+                null, null, null, null, List.of(),
+                null, null, true, 1);
     }
 
     private static PlayerAnswer answerOf(Showcase session, String userId, String elementId) {
@@ -740,6 +764,643 @@ class ShowcaseServiceTest {
                 100, Difficulty.EASY,
                 true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                 true, null, bonus, null,
-                15, null, null, null, null, null, MediaPosition.NONE);
+                15, null, null, null, null, null, MediaPosition.NONE,
+                true, false, 0,
+                null, null, null, null, List.of(),
+                null, null, true, 1);
+    }
+
+    // ---- Audience engagement (chunk 11) ----
+
+    @Test
+    void acceptReaction_OnInProgressShowcase_PersistsAndBroadcasts() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(rateLimiter.allow(any(), any(), any())).thenReturn(true);
+
+        showcaseService.acceptReaction("ABCD12", new ReactionSendRequest("👍"), "guest:p1");
+
+        verify(reactionRepository).save(any(Reaction.class));
+        verify(showcaseCache).incrementReactionCount("ABCD12", session.getDeckSnapshot().get(0).id(), "👍");
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/reaction"),
+                any(ReactionBroadcastMessage.class));
+    }
+
+    @Test
+    void acceptReaction_WhenShowcaseFlagOff_ThrowsForbidden() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        session.getSettings().setReactionsEnabled(false);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.acceptReaction("ABCD12", new ReactionSendRequest("👍"), "guest:p1"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(reactionRepository, never()).save(any());
+    }
+
+    @Test
+    void acceptReaction_WithEmojiOffAllowList_ThrowsBadRequest() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.acceptReaction("ABCD12", new ReactionSendRequest("🦄"), "guest:p1"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void acceptReaction_WhenRateLimited_ThrowsTooManyRequests() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(rateLimiter.allow(any(), any(), any())).thenReturn(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.acceptReaction("ABCD12", new ReactionSendRequest("👍"), "guest:p1"));
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, ex.getStatusCode());
+        verify(reactionRepository, never()).save(any());
+    }
+
+    @Test
+    void acceptChat_OnLobby_PersistsAndBroadcastsWithHostFlag() {
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.empty());
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        lobbySession.getPlayers().add(player("host1"));
+        when(rateLimiter.allow(any(), any(), any())).thenReturn(true);
+
+        // resolveUserId path for non-guest: principalName = googleId, returns user.id
+        host.setGoogleId("google-host");
+        when(userRepository.findByGoogleId("google-host")).thenReturn(Optional.of(host));
+
+        ShowcaseChatMessageDTO dto = showcaseService.acceptChat(
+                "ABCD12", new ChatSendRequest("hello world"), "google-host");
+
+        assertTrue(dto.fromHost());
+        assertEquals("hello world", dto.body());
+        verify(chatRepository).save(any(ShowcaseChatMessage.class));
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/chat"),
+                any(ShowcaseChatMessageDTO.class));
+    }
+
+    @Test
+    void acceptChat_TrimsAndRejectsBlankBody() {
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.empty());
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        lobbySession.getPlayers().add(player("p1"));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.acceptChat("ABCD12", new ChatSendRequest("   "), "guest:p1"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void acceptChat_RejectsBodyOver500Chars() {
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.empty());
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        lobbySession.getPlayers().add(player("p1"));
+
+        String longBody = "x".repeat(501);
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.acceptChat("ABCD12", new ChatSendRequest(longBody), "guest:p1"));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void acceptChat_WhenShowcaseFlagOff_ThrowsForbidden() {
+        lobbySession.getSettings().setChatEnabled(false);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.empty());
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.acceptChat("ABCD12", new ChatSendRequest("hi"), "guest:p1"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void moderateChatMessage_AsHost_FlipsModeratedAndBroadcasts() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        ShowcaseChatMessage row = new ShowcaseChatMessage();
+        row.setId("msg1");
+        row.setShowcaseId(session.getId());
+        row.setBody("rude message");
+        row.setAuthorUserId("p2");
+        when(chatRepository.findById("msg1")).thenReturn(Optional.of(row));
+
+        ShowcaseChatMessageDTO dto = showcaseService.moderateChatMessage("ABCD12", "msg1", "guest:p1");
+
+        assertTrue(row.isModerated());
+        assertEquals("p1", row.getModeratedByUserId());
+        assertTrue(dto.moderated());
+        assertEquals("(hidden by host)", dto.body());
+        verify(chatRepository).save(row);
+    }
+
+    @Test
+    void moderateChatMessage_AsNonHost_ThrowsForbidden() {
+        Showcase session = bestAnswerSessionWithTwoPlayers();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.moderateChatMessage("ABCD12", "msg1", "guest:p2"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    // ---- Team mode (chunk 12) ----
+
+    @Test
+    void createShowcase_WithTeamMode_SeedsDefaultTeamsAndAssignsHost() {
+        when(deckRepository.findById("deck1")).thenReturn(Optional.of(deck));
+        when(showcaseRepository.findByRoomCode(anyString())).thenReturn(Optional.empty());
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CreateShowcaseRequest request = new CreateShowcaseRequest(
+                "deck1", null, null, null, null, null, null, null, null, null, null, null,
+                Boolean.TRUE, 3, null,
+                null, null, null, null, null, null, null, null, null);
+        Showcase result = showcaseService.createShowcase(host, request);
+
+        assertTrue(result.isTeamMode());
+        assertEquals(3, result.getTeams().size());
+        // Host joined the smallest (first) team and became its captain.
+        ShowcasePlayer hostPlayer = result.getPlayers().get(0);
+        assertNotNull(hostPlayer.getTeamId());
+        cephadex.brainflex.model.Team firstTeam = result.getTeams().get(0);
+        assertEquals(hostPlayer.getTeamId(), firstTeam.getId());
+        assertEquals(1, firstTeam.getMemberCount());
+        assertEquals("host1", firstTeam.getCaptainUserId());
+    }
+
+    @Test
+    void joinShowcase_InTeamMode_AutoBalancesIntoSmallestTeam() {
+        Showcase session = teamSessionWithHostAlready();
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(session));
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        User joiner = new User();
+        joiner.setId("player2");
+        joiner.setIsGuest(false);
+
+        Showcase result = showcaseService.joinShowcase("ABCD12", joiner);
+
+        ShowcasePlayer p2 = result.getPlayers().stream()
+                .filter(p -> "player2".equals(p.getUserId())).findFirst().orElseThrow();
+        // Host is on team 0 → smallest is team 1 → p2 joins team 1.
+        assertEquals(result.getTeams().get(1).getId(), p2.getTeamId());
+        assertEquals(1, result.getTeams().get(1).getMemberCount());
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/teams"),
+                any(TeamUpdateMessage.class));
+    }
+
+    @Test
+    void joinShowcase_InManualTeamMode_RejectsMissingTeamId() {
+        Showcase session = teamSessionWithHostAlready();
+        session.setAutoBalanceTeams(false);
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(session));
+
+        User joiner = new User();
+        joiner.setId("player2");
+        joiner.setIsGuest(false);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.joinShowcase("ABCD12", joiner, null));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+    }
+
+    @Test
+    void joinShowcase_InManualTeamMode_HonorsValidTeamId() {
+        Showcase session = teamSessionWithHostAlready();
+        session.setAutoBalanceTeams(false);
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(session));
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        User joiner = new User();
+        joiner.setId("player2");
+        joiner.setIsGuest(false);
+
+        String pickTeamId = session.getTeams().get(1).getId();
+        Showcase result = showcaseService.joinShowcase("ABCD12", joiner, pickTeamId);
+
+        ShowcasePlayer p2 = result.getPlayers().stream()
+                .filter(p -> "player2".equals(p.getUserId())).findFirst().orElseThrow();
+        assertEquals(pickTeamId, p2.getTeamId());
+    }
+
+    @Test
+    void submitAnswer_InTeamMode_RecomputesTeamScoreAndBroadcasts() {
+        Showcase session = teamModeSubmitSession();
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        AnswerSubmitRequest req = new AnswerSubmitRequest(el.id(), new McqAnswer(List.of(el.id() + "-a")));
+        showcaseService.submitAnswer("ABCD12", req, "guest:p1");
+
+        ShowcasePlayer p1 = session.getPlayers().stream()
+                .filter(p -> "p1".equals(p.getUserId())).findFirst().orElseThrow();
+        cephadex.brainflex.model.Team team0 = session.getTeams().get(0);
+        // Team score equals the single member's score.
+        assertEquals(p1.getScore(), team0.getScore());
+        assertTrue(team0.getScore() > 0);
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/teams"),
+                any(TeamUpdateMessage.class));
+    }
+
+    @Test
+    void createTeam_AsHost_AppendsTeamAndBroadcasts() {
+        Showcase session = teamSessionWithHostAlready();
+        when(authorizationService.requireShowcaseHost("ABCD12", host)).thenReturn(session);
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        int before = session.getTeams().size();
+        Showcase result = showcaseService.createTeam("ABCD12", "Custom Crew", "pink", host);
+
+        assertEquals(before + 1, result.getTeams().size());
+        cephadex.brainflex.model.Team added = result.getTeams().get(result.getTeams().size() - 1);
+        assertEquals("Custom Crew", added.getName());
+        assertEquals("pink", added.getColor());
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/teams"),
+                any(TeamUpdateMessage.class));
+    }
+
+    @Test
+    void createTeam_WhenNotTeamMode_ThrowsConflict() {
+        when(authorizationService.requireShowcaseHost("ABCD12", host)).thenReturn(lobbySession);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.createTeam("ABCD12", "x", "blue", host));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void deleteTeam_ReassignsOrphanedPlayers() {
+        Showcase session = teamSessionWithHostAlready();
+        // Three teams so we can delete one and still have ≥2 remaining.
+        session.getTeams().add(makeTeam("t3", "green"));
+        ShowcasePlayer extra = player("player2");
+        extra.setTeamId(session.getTeams().get(2).getId());
+        session.getTeams().get(2).setMemberCount(1);
+        session.getTeams().get(2).setCaptainUserId("player2");
+        session.getPlayers().add(extra);
+
+        when(authorizationService.requireShowcaseHost("ABCD12", host)).thenReturn(session);
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        String removedTeamId = session.getTeams().get(2).getId();
+        Showcase result = showcaseService.deleteTeam("ABCD12", removedTeamId, host);
+
+        assertEquals(2, result.getTeams().size());
+        // player2 was on the deleted team → reassigned to one of the remaining two.
+        ShowcasePlayer p2 = result.getPlayers().stream()
+                .filter(p -> "player2".equals(p.getUserId())).findFirst().orElseThrow();
+        assertNotNull(p2.getTeamId());
+        assertFalse(removedTeamId.equals(p2.getTeamId()));
+    }
+
+    @Test
+    void deleteTeam_WhenOnlyTwoTeams_ThrowsConflict() {
+        Showcase session = teamSessionWithHostAlready();
+        when(authorizationService.requireShowcaseHost("ABCD12", host)).thenReturn(session);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.deleteTeam("ABCD12", session.getTeams().get(0).getId(), host));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void movePlayerToTeam_RelocatesAndRecomputesScores() {
+        Showcase session = teamSessionWithHostAlready();
+        // Add a second player on team 1 so we can move them to team 0.
+        ShowcasePlayer p2 = player("player2");
+        p2.setScore(70);
+        p2.setTeamId(session.getTeams().get(1).getId());
+        session.getTeams().get(1).setMemberCount(1);
+        session.getTeams().get(1).setScore(70);
+        session.getTeams().get(1).setCaptainUserId("player2");
+        session.getPlayers().add(p2);
+        // Host has a score of 30.
+        session.getPlayers().get(0).setScore(30);
+        session.getTeams().get(0).setScore(30);
+
+        when(authorizationService.requireShowcaseHost("ABCD12", host)).thenReturn(session);
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Showcase result = showcaseService.movePlayerToTeam(
+                "ABCD12", "player2", session.getTeams().get(0).getId(), host);
+
+        ShowcasePlayer movedP2 = result.getPlayers().stream()
+                .filter(p -> "player2".equals(p.getUserId())).findFirst().orElseThrow();
+        assertEquals(result.getTeams().get(0).getId(), movedP2.getTeamId());
+        assertEquals(100, result.getTeams().get(0).getScore()); // 30 + 70
+        assertEquals(0, result.getTeams().get(1).getScore());
+        assertEquals(2, result.getTeams().get(0).getMemberCount());
+        assertEquals(0, result.getTeams().get(1).getMemberCount());
+    }
+
+    @Test
+    void endGame_InTeamMode_StampsTeamIdOnEveryPlacement() {
+        Showcase session = teamModeSubmitSession();
+        session.getPlayers().get(0).setScore(120);
+        cephadex.brainflex.model.Team team0 = session.getTeams().get(0);
+        team0.setScore(120);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        // Use the public end-early path which calls endGame internally.
+        showcaseService.endShowcaseEarly("ABCD12", "guest:p1");
+
+        verify(showcaseResultRepository).save(argThat(r -> {
+            if (!(r instanceof ShowcaseResult res)) return false;
+            return res.getPlacements().stream().allMatch(pp -> pp.getTeamId() != null);
+        }));
+    }
+
+    private cephadex.brainflex.model.Team makeTeam(String id, String color) {
+        cephadex.brainflex.model.Team t = new cephadex.brainflex.model.Team();
+        t.setId(id);
+        t.setColor(color);
+        t.setName("Team " + id);
+        return t;
+    }
+
+    /** Two-team team-mode session with the host already on team 0. */
+    private Showcase teamSessionWithHostAlready() {
+        Showcase s = new Showcase();
+        s.setId("session1");
+        s.setRoomCode("ABCD12");
+        s.setHostUserId("host1");
+        s.setStatus(GameStatus.LOBBY);
+        ShowcaseSettings settings = new ShowcaseSettings();
+        settings.setTeamMode(true);
+        settings.setAutoBalanceTeams(true);
+        s.setSettings(settings);
+        s.setTeamMode(true);
+        s.setAutoBalanceTeams(true);
+
+        cephadex.brainflex.model.Team t0 = makeTeam("t1", "red");
+        cephadex.brainflex.model.Team t1 = makeTeam("t2", "blue");
+        s.setTeams(new ArrayList<>(List.of(t0, t1)));
+
+        ShowcasePlayer hostPlayer = player("host1");
+        hostPlayer.setTeamId(t0.getId());
+        t0.setMemberCount(1);
+        t0.setCaptainUserId("host1");
+        s.setPlayers(new ArrayList<>(List.of(hostPlayer)));
+        return s;
+    }
+
+    /** In-progress single-MCQ session with two teams; "p1" is on team 0. */
+    private Showcase teamModeSubmitSession() {
+        Showcase s = new Showcase();
+        s.setId("session1");
+        s.setRoomCode("ABCD12");
+        s.setHostUserId("p1");
+        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setPhase(ShowcasePhase.SUBMIT);
+        ShowcaseSettings settings = new ShowcaseSettings();
+        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setTotalRounds(1);
+        settings.setSpeedBonus(false);
+        settings.setTeamMode(true);
+        s.setSettings(settings);
+        s.setTeamMode(true);
+        s.setCurrentRound(0);
+        s.setDeckSnapshot(List.of(sampleElements(1).get(0)));
+
+        cephadex.brainflex.model.Team t0 = makeTeam("t1", "red");
+        cephadex.brainflex.model.Team t1 = makeTeam("t2", "blue");
+        s.setTeams(new ArrayList<>(List.of(t0, t1)));
+
+        ShowcasePlayer p1 = player("p1");
+        p1.setTeamId(t0.getId());
+        t0.setMemberCount(1);
+        t0.setCaptainUserId("p1");
+        s.setPlayers(new ArrayList<>(List.of(p1)));
+        return s;
+    }
+
+    // ---- Chunk 10: per-player deterministic shuffle on round start ----
+
+    @Test
+    void startGame_WithMcqShuffleEnabled_SendsPersonalizedRoundStartToEachPlayer() {
+        host.setIsGuest(true); // simplify resolveUserId path (no userRepository lookup)
+        lobbySession.setHostUserId("host1");
+
+        // First element opts into shuffleOptions (sampleElements builds with shuffleOptions=true).
+        DeckElement first = sampleElements(1).get(0);
+        lobbySession.setDeckSnapshot(List.of(first));
+
+        ShowcasePlayer p1 = player("p1");
+        p1.setPrincipalName("guest:p1");
+        ShowcasePlayer p2 = player("p2");
+        p2.setPrincipalName("guest:p2");
+        lobbySession.setPlayers(new ArrayList<>(List.of(p1, p2)));
+
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        showcaseService.startGame("ABCD12", "guest:host1");
+
+        // Canonical topic broadcast still fires for the host/audience view.
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/round"),
+                any(cephadex.brainflex.dto.RoundStartMessage.class));
+        // Each player receives a personalized RoundStartMessage on their user queue.
+        verify(messagingTemplate).convertAndSendToUser(
+                org.mockito.ArgumentMatchers.eq("guest:p1"),
+                org.mockito.ArgumentMatchers.eq("/queue/showcase/ABCD12/round"),
+                any(cephadex.brainflex.dto.RoundStartMessage.class));
+        verify(messagingTemplate).convertAndSendToUser(
+                org.mockito.ArgumentMatchers.eq("guest:p2"),
+                org.mockito.ArgumentMatchers.eq("/queue/showcase/ABCD12/round"),
+                any(cephadex.brainflex.dto.RoundStartMessage.class));
+    }
+
+    @Test
+    void startGame_WithShuffleDisabled_SkipsPerUserBroadcast() {
+        host.setIsGuest(true);
+        lobbySession.setHostUserId("host1");
+
+        // Build a non-shuffling MCQ — same shape as sampleElements but with shuffleOptions=false.
+        McqOption a = new McqOption("nos-a", "A", null, null);
+        McqOption b = new McqOption("nos-b", "B", null, null);
+        DeckElement first = new McqQuestion(
+                "nos", "pub", "priv", "Prompt", null,
+                "Prompt", List.of(a, b), List.of(a.id()),
+                100, Difficulty.EASY,
+                true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
+                false, null, 0, null,
+                15, null, null, null, null, null, MediaPosition.NONE,
+                false, false, 0, // shuffleOptions=false
+                null, null, null, null, List.of(),
+                null, null, true, 1);
+        lobbySession.setDeckSnapshot(List.of(first));
+
+        ShowcasePlayer p1 = player("p1");
+        p1.setPrincipalName("guest:p1");
+        lobbySession.setPlayers(new ArrayList<>(List.of(p1)));
+
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        showcaseService.startGame("ABCD12", "guest:host1");
+
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/round"),
+                any(cephadex.brainflex.dto.RoundStartMessage.class));
+        verify(messagingTemplate, never()).convertAndSendToUser(
+                anyString(), anyString(), any(cephadex.brainflex.dto.RoundStartMessage.class));
+    }
+
+    // ---- Chunk 13 ----
+
+    @Test
+    void createShowcase_WithCustomRoomCode_HonorsCode() {
+        when(deckRepository.findById("deck1")).thenReturn(Optional.of(deck));
+        when(showcaseRepository.findByRoomCode("PARTY1")).thenReturn(Optional.empty());
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CreateShowcaseRequest request = new CreateShowcaseRequest(
+                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                "PARTY1", null, null, null, null, null, null, null, null);
+        Showcase result = showcaseService.createShowcase(host, request);
+
+        assertEquals("PARTY1", result.getRoomCode());
+        assertEquals("PARTY1", result.getCustomRoomCode());
+    }
+
+    @Test
+    void createShowcase_WithCustomRoomCodeCollision_ThrowsConflict() {
+        when(deckRepository.findById("deck1")).thenReturn(Optional.of(deck));
+        // The collision-check path is the only call to findByRoomCode in this
+        // path; return a placeholder session to simulate "code already in use".
+        Showcase taken = new Showcase();
+        taken.setRoomCode("PARTY1");
+        when(showcaseRepository.findByRoomCode("PARTY1")).thenReturn(Optional.of(taken));
+
+        CreateShowcaseRequest request = new CreateShowcaseRequest(
+                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                "PARTY1", null, null, null, null, null, null, null, null);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.createShowcase(host, request));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void submitAnswer_PopulatesTimingAndStreakFields() {
+        Showcase session = readySession();
+        ShowcasePlayer p1 = player("p1");
+        p1.setPrincipalName("guest:p1");
+        session.setPlayers(new ArrayList<>(List.of(p1)));
+        session.setRoundStartedAt(java.time.LocalDateTime.now().minusSeconds(2));
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        AnswerSubmitRequest req = new AnswerSubmitRequest(el.id(), new McqAnswer(List.of(el.id() + "-a")));
+        showcaseService.submitAnswer("ABCD12", req, "guest:p1");
+
+        PlayerAnswer ans = p1.getAnswers().get(0);
+        assertTrue(ans.isCorrect());
+        // Roughly 2 seconds elapsed since round start.
+        assertTrue(ans.getTimeTakenMs() >= 1500L, "timeTakenMs should reflect elapsed time");
+        // Streak captured BEFORE the correct answer was applied (so 0 here).
+        assertEquals(0, ans.getStreakBeforeAnswer());
+        // After this correct answer, currentStreak should be 1, longestStreak 1.
+        assertEquals(1, p1.getCurrentStreak());
+        assertEquals(1, p1.getLongestStreak());
+        assertEquals(1.0, p1.getAccuracy(), 0.0001);
+    }
+
+    @Test
+    void submitAnswer_WrongAnswer_ResetsStreakAndDoesNotBumpLongest() {
+        Showcase session = readySession();
+        ShowcasePlayer p1 = player("p1");
+        p1.setPrincipalName("guest:p1");
+        p1.setCurrentStreak(3);
+        p1.setLongestStreak(3);
+        session.setPlayers(new ArrayList<>(List.of(p1)));
+        session.setRoundStartedAt(java.time.LocalDateTime.now());
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        // Pick the second option (B) which is not the correct one (A).
+        AnswerSubmitRequest req = new AnswerSubmitRequest(el.id(), new McqAnswer(List.of(el.id() + "-b")));
+        showcaseService.submitAnswer("ABCD12", req, "guest:p1");
+
+        PlayerAnswer ans = p1.getAnswers().get(0);
+        assertFalse(ans.isCorrect());
+        assertEquals(3, ans.getStreakBeforeAnswer());
+        assertEquals(0, p1.getCurrentStreak());
+        // Longest still 3 — we only bump it on the way up, never down.
+        assertEquals(3, p1.getLongestStreak());
+        assertEquals(0.0, p1.getAccuracy(), 0.0001);
+    }
+
+    @Test
+    void joinShowcase_WithValidAvatarKey_SetsAvatarAndDerivesColor() {
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(avatarService.has("fox-orange")).thenReturn(true);
+        when(avatarService.get("fox-orange")).thenReturn(
+                new AvatarService.AvatarPreset("fox-orange", "Fox", "/x/fox.svg", "orange"));
+
+        User newPlayer = new User();
+        newPlayer.setId("player2");
+        newPlayer.setIsGuest(false);
+
+        Showcase result = showcaseService.joinShowcase("ABCD12", newPlayer, null, "fox-orange", null);
+        ShowcasePlayer joined = result.getPlayers().stream()
+                .filter(p -> "player2".equals(p.getUserId())).findFirst().orElseThrow();
+        assertEquals("fox-orange", joined.getAvatarKey());
+        assertEquals("orange", joined.getColorTag());
+    }
+
+    @Test
+    void joinShowcase_WithUnknownAvatar_SilentlyDropsKey() {
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+        when(showcaseRepository.save(any(Showcase.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(avatarService.has("not-a-real-preset")).thenReturn(false);
+
+        User newPlayer = new User();
+        newPlayer.setId("player2");
+        newPlayer.setIsGuest(false);
+
+        Showcase result = showcaseService.joinShowcase("ABCD12", newPlayer, null, "not-a-real-preset", null);
+        ShowcasePlayer joined = result.getPlayers().stream()
+                .filter(p -> "player2".equals(p.getUserId())).findFirst().orElseThrow();
+        assertEquals(null, joined.getAvatarKey());
+    }
+
+    @Test
+    void joinShowcase_WhenRequireFullNameAndGuest_ThrowsForbidden() {
+        lobbySession.getSettings().setRequireFullName(true);
+        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
+
+        User guest = new User();
+        guest.setId("guest1");
+        guest.setIsGuest(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> showcaseService.joinShowcase("ABCD12", guest));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    /** Stripped-down session ready to accept a submit (IN_PROGRESS, 1 element). */
+    private Showcase readySession() {
+        Showcase s = new Showcase();
+        s.setId("session1");
+        s.setRoomCode("ABCD12");
+        s.setHostUserId("host1");
+        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setPhase(ShowcasePhase.SUBMIT);
+        s.setSettings(new ShowcaseSettings());
+        s.setCurrentRound(0);
+        s.setDeckSnapshot(sampleElements(1));
+        s.setPlayers(new ArrayList<>());
+        return s;
     }
 }

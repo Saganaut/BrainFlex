@@ -76,7 +76,7 @@ const DeckTile = ({
           }}>
           <Btn
             size='sm'
-            variant='ghost'
+            fill='ghost'
             onClick={() => {
               if (deck.id != null) onRemove(deck.id);
             }}>

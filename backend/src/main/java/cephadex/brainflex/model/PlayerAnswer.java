@@ -32,5 +32,20 @@ public class PlayerAnswer {
     // round result + review UIs.
     private boolean bestAnswerWinner;
 
-    // TODO: Worth adding a fastest response? or resposne time?
+    // Chunk 13 — timing + streak metadata. timeTakenMs is always populated
+    // (answeredAt - roundStartedAt, in millis) regardless of whether
+    // speedBonus is on — chunks 15 (game history) and 16 (analytics) need
+    // it. streakBeforeAnswer captures the player's currentStreak as it was
+    // immediately before this answer was scored, so the reveal can render
+    // "5x streak!" without the client doing its own walking sum.
+    // speedBonusAwarded is the bonus portion of pointsAwarded — non-zero
+    // only on correct answers when settings.speedBonus is true.
+    private long timeTakenMs;
+    private int streakBeforeAnswer;
+    private int speedBonusAwarded;
+
+    // Placeholder for a future power-up chunk. Tracked here so historical
+    // PlayerAnswer documents already carry the field once power-ups land.
+    private boolean usedPowerUp;
+    private String powerUpId;
 }

@@ -3,17 +3,26 @@ import "./index.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen.ts";
-import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { createRouter } from "@tanstack/react-router";
 import { Provider } from "react-redux";
 import { store } from "./store/store.ts";
+import { AppRouter } from "./AppRouter.tsx";
 
-const router = createRouter({ routeTree, defaultViewTransition: true });
+const router = createRouter({
+  routeTree,
+  defaultViewTransition: true,
+  context: {
+    auth: { state: "loading" },
+  },
+});
 
 declare module "@tanstack/react-router" {
   interface Register {
     router: typeof router;
   }
 }
+
+export { router };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const rootElement = document.getElementById("root")!;
@@ -23,7 +32,7 @@ if (!rootElement.innerHTML) {
   root.render(
     <React.StrictMode>
       <Provider store={store}>
-        <RouterProvider router={router} />
+        <AppRouter router={router} />
       </Provider>
     </React.StrictMode>,
   );

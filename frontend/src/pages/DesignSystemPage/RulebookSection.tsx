@@ -371,45 +371,47 @@ const Rule5ActionEmphasis = () => {
   return (
     <div className={styles.ruleBody}>
       <p className={styles.ruleStatement}>
-        Three tiers of action emphasis, plus a destructive variant.{" "}
-        <strong>Primary</strong> = filled <code>bg-primary</code> +{" "}
-        <code>text-on-brand</code> (one per view).{" "}
-        <strong>Secondary</strong> = transparent + <code>border-default</code>{" "}
-        + <code>text-primary</code> (outline mode).{" "}
-        <strong>Tertiary</strong> = text-only <code>text-accent</code> (ghost
-        mode). <strong>Destructive</strong> = same shape but using{" "}
-        <code>bg-error</code> / <code>text-error</code>.
+        Two orthogonal props govern button look:{" "}
+        <strong>variant</strong> picks the color slot (primary, secondary,
+        brand, info, error, success, warning, disabled) and{" "}
+        <strong>fill</strong> picks how that color renders —{" "}
+        <code>default</code> (bg, no border),{" "}
+        <code>bordered</code> (bg + border), or <code>ghost</code> (no bg, no
+        border). Any color × any fill is legal:{" "}
+        <code>variant=&quot;error&quot; fill=&quot;ghost&quot;</code> is a red
+        text-only destructive control.
       </p>
       <TokenChips
         tokens={[
-          "--bg-primary",
+          "--bg-secondary",
+          "--text-primary",
+          "--bg-brand",
           "--text-on-brand",
-          "--border-default",
-          "--text-accent",
           "--bg-error",
+          "--text-error",
         ]}
       />
       <div className={styles.ruleExamples}>
-        <RuleExample variant='do' label='one primary, others demoted'>
+        <RuleExample variant='do' label='one prominent action, others demoted'>
           <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-            <Btn>Save deck</Btn>
-            <Btn variant='bordered'>Cancel</Btn>
-            <Btn variant='ghost'>Learn more</Btn>
-            <Btn variant='error'>Delete</Btn>
+            <Btn variant='brand'>Save deck</Btn>
+            <Btn fill='bordered'>Cancel</Btn>
+            <Btn fill='ghost'>Learn more</Btn>
+            <Btn variant='error' fill='ghost'>Delete</Btn>
           </div>
         </RuleExample>
-        <RuleExample variant='dont' label='two primaries compete'>
+        <RuleExample variant='dont' label='two brand CTAs compete'>
           <div style={{ display: "flex", gap: "var(--space-2)", flexWrap: "wrap" }}>
-            <Btn>Save</Btn>
-            <Btn>Publish</Btn>
-            <Btn>Share</Btn>
+            <Btn variant='brand'>Save</Btn>
+            <Btn variant='brand'>Publish</Btn>
+            <Btn variant='brand'>Share</Btn>
           </div>
         </RuleExample>
       </div>
       <ul className={styles.ruleNotes}>
-        <li>Show two primary buttons in the same view — demote one to outline.</li>
-        <li>Color a primary button red to mean "danger" — use the destructive variant.</li>
-        <li>Apply <code>border-brand</code> to a button (that's for selection state).</li>
+        <li>Show two brand buttons in the same view — demote one to a quieter fill.</li>
+        <li>Color a primary button red to mean &quot;danger&quot; — use <code>variant=&quot;error&quot;</code>.</li>
+        <li>Apply <code>border-brand</code> to a button (that&apos;s for selection state).</li>
       </ul>
     </div>
   );

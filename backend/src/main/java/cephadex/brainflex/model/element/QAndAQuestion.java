@@ -15,6 +15,8 @@
  */
 package cephadex.brainflex.model.element;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import cephadex.brainflex.model.enums.Difficulty;
@@ -54,7 +56,17 @@ public record QAndAQuestion(
         MediaPosition mediaPosition,
         // per-kind ergonomics (chunk 10)
         boolean anonymousSubmissions,
-        int minVotesToShow
+        int minVotesToShow,
+        // shared metadata (chunk 10b)
+        String createdByUserId,
+        String lastEditedByUserId,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        List<String> tagIds,
+        String mediaCaption,
+        String altText,
+        boolean reactionsEnabled,
+        Integer version
 ) implements DeckElement {
 
     @Override

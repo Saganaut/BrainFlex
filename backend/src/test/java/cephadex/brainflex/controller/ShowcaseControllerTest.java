@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.server.ResponseStatusException;
@@ -99,7 +100,7 @@ class ShowcaseControllerTest {
                 when(gameService.createShowcase(any(User.class), any(CreateShowcaseRequest.class)))
                                 .thenReturn(lobbySession);
 
-                CreateShowcaseRequest request = new CreateShowcaseRequest("deck1", null, null, null, null, null, null, null, null, null);
+                CreateShowcaseRequest request = new CreateShowcaseRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/showcases")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -112,7 +113,7 @@ class ShowcaseControllerTest {
         void createGame_AsUnauthenticated_ReturnsForbidden() throws Exception {
                 when(userRepository.findByGoogleId(anyString())).thenReturn(Optional.empty());
 
-                CreateShowcaseRequest request = new CreateShowcaseRequest("deck1", null, null, null, null, null, null, null, null, null);
+                CreateShowcaseRequest request = new CreateShowcaseRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/showcases")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -130,7 +131,7 @@ class ShowcaseControllerTest {
                                 })
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
-                                                new CreateShowcaseRequest("deck1", null, null, null, null, null, null, null, null, null))))
+                                                new CreateShowcaseRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null))))
                                 .andExpect(status().isForbidden());
         }
 
@@ -163,7 +164,7 @@ class ShowcaseControllerTest {
         @Test
         void joinByRoomCode_AsRegisteredUser_ReturnsSession() throws Exception {
                 when(userRepository.findByGoogleId("user")).thenReturn(Optional.of(registeredUser));
-                when(gameService.joinShowcase("ABCD12", registeredUser)).thenReturn(lobbySession);
+                when(gameService.joinShowcase("ABCD12", registeredUser, null, null, null)).thenReturn(lobbySession);
 
                 mockMvc.perform(post("/api/showcases/ABCD12/join"))
                                 .andExpect(status().isOk())
@@ -181,7 +182,7 @@ class ShowcaseControllerTest {
         @Test
         void joinByRoomCode_WhenGameStarted_ReturnsConflict() throws Exception {
                 when(userRepository.findByGoogleId("user")).thenReturn(Optional.of(registeredUser));
-                when(gameService.joinShowcase(anyString(), any(User.class)))
+                when(gameService.joinShowcase(anyString(), any(User.class), any(), any(), any()))
                                 .thenThrow(new ResponseStatusException(
                                                 org.springframework.http.HttpStatus.CONFLICT,
                                                 "Game has already started"));
@@ -244,5 +245,41 @@ class ShowcaseControllerTest {
 
                 mockMvc.perform(get("/api/showcases/ABCD12/results"))
                                 .andExpect(status().isNotFound());
+        }
+
+        // ---- Team CRUD (chunk 12) ----
+
+        @Test
+        void createTeam_AsRegisteredUser_ReturnsCreated() throws Exception {
+                when(userRepository.findByGoogleId("user")).thenReturn(Optional.of(registeredUser));
+                when(gameService.createTeam(anyString(), anyString(), anyString(), any(User.class)))
+                                .thenReturn(lobbySession);
+
+                mockMvc.perform(post("/api/showcases/ABCD12/teams")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"name\":\"Red Lions\",\"color\":\"red\"}"))
+                                .andExpect(status().isCreated());
+        }
+
+        @Test
+        void movePlayer_AsRegisteredUser_ReturnsOk() throws Exception {
+                when(userRepository.findByGoogleId("user")).thenReturn(Optional.of(registeredUser));
+                when(gameService.movePlayerToTeam(anyString(), anyString(), anyString(), any(User.class)))
+                                .thenReturn(lobbySession);
+
+                mockMvc.perform(put("/api/showcases/ABCD12/players/user2/team")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"teamId\":\"team-1\"}"))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        void movePlayer_WithBlankTeamId_ReturnsBadRequest() throws Exception {
+                when(userRepository.findByGoogleId("user")).thenReturn(Optional.of(registeredUser));
+
+                mockMvc.perform(put("/api/showcases/ABCD12/players/user2/team")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"teamId\":\"\"}"))
+                                .andExpect(status().isBadRequest());
         }
 }

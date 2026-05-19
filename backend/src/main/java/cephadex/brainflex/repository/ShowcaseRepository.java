@@ -22,4 +22,9 @@ public interface ShowcaseRepository extends MongoRepository<Showcase, String> {
     List<Showcase> findByHostUserId(String hostUserId);
 
     List<Showcase> findByStatus(GameStatus status);
+
+    // Chunk 13 — used by PresenceService to find a player's current active
+    // game on WS connect/disconnect so the per-showcase
+    // ShowcasePlayer.disconnected flag can be flipped.
+    List<Showcase> findByStatusAndPlayersUserId(GameStatus status, String userId);
 }

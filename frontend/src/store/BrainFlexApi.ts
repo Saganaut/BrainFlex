@@ -30,6 +30,35 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/teams/${queryArg.teamId}`,
+        method: "PUT",
+        body: queryArg.teamCrudRequest,
+      }),
+    }),
+    deleteTeam: build.mutation<DeleteTeamApiResponse, DeleteTeamApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/teams/${queryArg.teamId}`,
+        method: "DELETE",
+      }),
+    }),
+    movePlayerToTeam: build.mutation<
+      MovePlayerToTeamApiResponse,
+      MovePlayerToTeamApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/players/${queryArg.userId}/team`,
+        method: "PUT",
+        body: queryArg.teamMoveRequest,
+      }),
+    }),
+    moderateChat: build.mutation<ModerateChatApiResponse, ModerateChatApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/chat/${queryArg.messageId}/moderate`,
+        method: "PUT",
+      }),
+    }),
     updateImage: build.mutation<UpdateImageApiResponse, UpdateImageApiArg>({
       query: (queryArg) => ({
         url: `/api/gallery/${queryArg.id}`,
@@ -218,6 +247,20 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.createShowcaseRequest,
       }),
     }),
+    createTeam: build.mutation<CreateTeamApiResponse, CreateTeamApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/teams`,
+        method: "POST",
+        body: queryArg.teamCrudRequest,
+      }),
+    }),
+    sendReaction: build.mutation<SendReactionApiResponse, SendReactionApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/reactions`,
+        method: "POST",
+        body: queryArg.reactionSendRequest,
+      }),
+    }),
     joinByRoomCode: build.mutation<
       JoinByRoomCodeApiResponse,
       JoinByRoomCodeApiArg
@@ -225,6 +268,23 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/showcases/${queryArg.roomCode}/join`,
         method: "POST",
+        body: queryArg.joinShowcaseRequest,
+      }),
+    }),
+    listChat: build.query<ListChatApiResponse, ListChatApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/chat`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
+    sendChat: build.mutation<SendChatApiResponse, SendChatApiArg>({
+      query: (queryArg) => ({
+        url: `/api/showcases/${queryArg.roomCode}/chat`,
+        method: "POST",
+        body: queryArg.chatSendRequest,
       }),
     }),
     createOrg: build.mutation<CreateOrgApiResponse, CreateOrgApiArg>({
@@ -567,6 +627,9 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    list: build.query<ListApiResponse, ListApiArg>({
+      query: () => ({ url: `/api/avatars` }),
+    }),
     getCurrentUser: build.query<
       GetCurrentUserApiResponse,
       GetCurrentUserApiArg
@@ -622,6 +685,29 @@ export type UpdateTagApiArg = {
 export type DeleteTagApiResponse = unknown;
 export type DeleteTagApiArg = {
   id: string;
+};
+export type UpdateTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type UpdateTeamApiArg = {
+  roomCode: string;
+  teamId: string;
+  teamCrudRequest: TeamCrudRequest;
+};
+export type DeleteTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type DeleteTeamApiArg = {
+  roomCode: string;
+  teamId: string;
+};
+export type MovePlayerToTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type MovePlayerToTeamApiArg = {
+  roomCode: string;
+  userId: string;
+  teamMoveRequest: TeamMoveRequest;
+};
+export type ModerateChatApiResponse =
+  /** status 200 OK */ ShowcaseChatMessageDto;
+export type ModerateChatApiArg = {
+  roomCode: string;
+  messageId: string;
 };
 export type UpdateImageApiResponse = /** status 200 OK */ GalleryImageResponse;
 export type UpdateImageApiArg = {
@@ -757,9 +843,31 @@ export type CreateShowcaseApiResponse = /** status 200 OK */ ShowcaseDto;
 export type CreateShowcaseApiArg = {
   createShowcaseRequest: CreateShowcaseRequest;
 };
+export type CreateTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type CreateTeamApiArg = {
+  roomCode: string;
+  teamCrudRequest: TeamCrudRequest;
+};
+export type SendReactionApiResponse = /** status 200 OK */ Reaction;
+export type SendReactionApiArg = {
+  roomCode: string;
+  reactionSendRequest: ReactionSendRequest;
+};
 export type JoinByRoomCodeApiResponse = /** status 200 OK */ ShowcaseDto;
 export type JoinByRoomCodeApiArg = {
   roomCode: string;
+  joinShowcaseRequest: JoinShowcaseRequest;
+};
+export type ListChatApiResponse = /** status 200 OK */ ShowcaseChatMessageDto[];
+export type ListChatApiArg = {
+  roomCode: string;
+  page?: number;
+  size?: number;
+};
+export type SendChatApiResponse = /** status 200 OK */ ShowcaseChatMessageDto;
+export type SendChatApiArg = {
+  roomCode: string;
+  chatSendRequest: ChatSendRequest;
 };
 export type CreateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type CreateOrgApiArg = {
@@ -984,6 +1092,8 @@ export type ListMyCollectionsApiArg = {
   page?: number;
   size?: number;
 };
+export type ListApiResponse = /** status 200 OK */ AvatarPreset[];
+export type ListApiArg = void;
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -1053,31 +1163,6 @@ export type UpdateTagRequest = {
   iconUrl?: string;
   curated?: boolean;
 };
-export type GalleryImageResponse = {
-  id?: string;
-  name?: string;
-  ownerId?: string;
-  organizationId?: string;
-  tags?: string[];
-  variants?: ImageVariant[];
-  createdAt?: string;
-};
-export type UpdateGalleryImageRequest = {
-  name?: string;
-  tags?: string[];
-  organizationId?: string;
-};
-export type ShowcaseSettings = {
-  maxPlayers?: number;
-  totalRounds?: number;
-  timePerQuestion?: number;
-  speedBonus?: boolean;
-  allowGuests?: boolean;
-  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
-  allowLateJoin?: boolean;
-  showScoresImmediately?: boolean;
-  scoringEnabled?: boolean;
-};
 export type DeckElementBase = {
   kind: string;
 };
@@ -1119,6 +1204,15 @@ export type AllocationQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type DrawingQuestion = {
   kind: "DrawingQuestion";
@@ -1154,6 +1248,15 @@ export type DrawingQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type GridCellsConfig = {
   labels?: string[];
@@ -1192,6 +1295,15 @@ export type GridQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type MatchingPair = {
   id?: string;
@@ -1230,6 +1342,15 @@ export type MatchingQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type McqQuestion = {
   kind: "McqQuestion";
@@ -1261,6 +1382,18 @@ export type McqQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    shuffleOptions?: boolean;
+    allowMultipleSelect?: boolean;
+    maxSelections?: number;
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type NumberQuestion = {
   kind: "NumberQuestion";
@@ -1294,6 +1427,18 @@ export type NumberQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    minValue?: number;
+    maxValue?: number;
+    allowNegative?: boolean;
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type PlaceOnImageQuestion = {
   kind: "PlaceOnImageQuestion";
@@ -1328,6 +1473,15 @@ export type PlaceOnImageQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type QAndAQuestion = {
   kind: "QAndAQuestion";
@@ -1360,6 +1514,17 @@ export type QAndAQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    anonymousSubmissions?: boolean;
+    minVotesToShow?: number;
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type RankingItem = {
   id?: string;
@@ -1397,6 +1562,16 @@ export type RankingQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    shuffleItemsForPresentation?: boolean;
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type ScaleStatement = {
   id?: string;
@@ -1436,6 +1611,15 @@ export type ScalesQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type Slide = {
   kind: "Slide";
@@ -1471,6 +1655,16 @@ export type Slide = {
     participantInformation?: {
       [key: string]: object;
     };
+    autoAdvanceSeconds?: number;
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type TextQuestion = {
   kind: "TextQuestion";
@@ -1503,6 +1697,19 @@ export type TextQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    maxLength?: number;
+    trimWhitespace?: boolean;
+    fuzzyMatch?: boolean;
+    fuzzyDistance?: number;
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
 export type WordCloudQuestion = {
   kind: "WordCloudQuestion";
@@ -1537,7 +1744,142 @@ export type WordCloudQuestion = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+    createdByUserId?: string;
+    lastEditedByUserId?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    tagIds?: string[];
+    mediaCaption?: string;
+    altText?: string;
+    reactionsEnabled?: boolean;
+    version?: number;
   };
+export type ShowcaseSettings = {
+  maxPlayers?: number;
+  totalRounds?: number;
+  timePerQuestion?: number;
+  speedBonus?: boolean;
+  allowGuests?: boolean;
+  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+  allowLateJoin?: boolean;
+  showScoresImmediately?: boolean;
+  scoringEnabled?: boolean;
+  reactionsEnabled?: boolean;
+  chatEnabled?: boolean;
+  teamMode?: boolean;
+  teamCount?: number;
+  autoBalanceTeams?: boolean;
+  shuffleQuestions?: boolean;
+  shuffleAnswers?: boolean;
+  autoAdvance?: boolean;
+  podiumDuration?: number;
+  lobbyCountdownSeconds?: number;
+  lobbyMusicAssetId?: string;
+  requireFullName?: boolean;
+  spectatorsAllowed?: boolean;
+};
+export type ShowcasePlayerDto = {
+  userId?: string;
+  userName?: string;
+  pictureUrl?: string;
+  isGuest?: boolean;
+  score?: number;
+  teamId?: string;
+  avatarKey?: string;
+  colorTag?: string;
+  currentStreak?: number;
+  longestStreak?: number;
+  accuracy?: number;
+  reactionsSent?: number;
+  speedBonusTotal?: number;
+  lateJoin?: boolean;
+  disconnected?: boolean;
+  lastSeenAt?: string;
+};
+export type Team = {
+  id?: string;
+  name?: string;
+  color?: string;
+  captainUserId?: string;
+  score?: number;
+  memberCount?: number;
+};
+export type ShowcaseDto = {
+  id?: string;
+  roomCode?: string;
+  inviteToken?: string;
+  status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
+  phase?: "SUBMIT" | "VOTE" | "REVEAL";
+  hostUserId?: string;
+  hostName?: string;
+  hostAvatarUrl?: string;
+  deckId?: string;
+  deckCoverImageUrl?: string;
+  deckBackgroundImageUrl?: string;
+  themeId?: string;
+  deckSnapshot?: (
+    | AllocationQuestion
+    | DrawingQuestion
+    | GridQuestion
+    | MatchingQuestion
+    | McqQuestion
+    | NumberQuestion
+    | PlaceOnImageQuestion
+    | QAndAQuestion
+    | RankingQuestion
+    | ScalesQuestion
+    | Slide
+    | TextQuestion
+    | WordCloudQuestion
+  )[];
+  settings?: ShowcaseSettings;
+  players?: ShowcasePlayerDto[];
+  teamMode?: boolean;
+  autoBalanceTeams?: boolean;
+  teams?: Team[];
+  anonymousMode?: boolean;
+  customRoomCode?: string;
+  allowReJoin?: boolean;
+  spectatorCount?: number;
+  lobbyOpenedAt?: string;
+  currentRound?: number;
+  createdAt?: string;
+  startedAt?: string;
+};
+export type TeamCrudRequest = {
+  name?: string;
+  color?: string;
+};
+export type TeamMoveRequest = {
+  teamId: string;
+};
+export type ShowcaseChatMessageDto = {
+  id?: string;
+  authorUserId?: string;
+  authorName?: string;
+  authorPictureUrl?: string;
+  fromHost?: boolean;
+  guest?: boolean;
+  body?: string;
+  sentAt?: string;
+  moderated?: boolean;
+  moderatedByUserId?: string;
+  moderatedAt?: string;
+};
+export type GalleryImageResponse = {
+  id?: string;
+  name?: string;
+  ownerId?: string;
+  organizationId?: string;
+  tags?: string[];
+  variants?: ImageVariant[];
+  createdAt?: string;
+};
+export type UpdateGalleryImageRequest = {
+  name?: string;
+  tags?: string[];
+  organizationId?: string;
+};
 export type DeckDto = {
   id?: string;
   name?: string;
@@ -1728,45 +2070,6 @@ export type CreateTagRequest = {
   iconUrl?: string;
   curated?: boolean;
 };
-export type ShowcasePlayerDto = {
-  userId?: string;
-  userName?: string;
-  pictureUrl?: string;
-  isGuest?: boolean;
-  score?: number;
-};
-export type ShowcaseDto = {
-  id?: string;
-  roomCode?: string;
-  inviteToken?: string;
-  status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
-  phase?: "SUBMIT" | "VOTE" | "REVEAL";
-  hostUserId?: string;
-  deckId?: string;
-  deckCoverImageUrl?: string;
-  deckBackgroundImageUrl?: string;
-  themeId?: string;
-  deckSnapshot?: (
-    | AllocationQuestion
-    | DrawingQuestion
-    | GridQuestion
-    | MatchingQuestion
-    | McqQuestion
-    | NumberQuestion
-    | PlaceOnImageQuestion
-    | QAndAQuestion
-    | RankingQuestion
-    | ScalesQuestion
-    | Slide
-    | TextQuestion
-    | WordCloudQuestion
-  )[];
-  settings?: ShowcaseSettings;
-  players?: ShowcasePlayerDto[];
-  currentRound?: number;
-  createdAt?: string;
-  startedAt?: string;
-};
 export type CreateShowcaseRequest = {
   deckId: string;
   gameMode?: "SIMULTANEOUS" | "TURN_BASED";
@@ -1778,6 +2081,42 @@ export type CreateShowcaseRequest = {
   allowLateJoin?: boolean;
   showScoresImmediately?: boolean;
   scoringEnabled?: boolean;
+  reactionsEnabled?: boolean;
+  chatEnabled?: boolean;
+  teamMode?: boolean;
+  teamCount?: number;
+  autoBalanceTeams?: boolean;
+  customRoomCode?: string;
+  anonymousMode?: boolean;
+  shuffleQuestions?: boolean;
+  shuffleAnswers?: boolean;
+  autoAdvance?: boolean;
+  podiumDuration?: number;
+  lobbyCountdownSeconds?: number;
+  requireFullName?: boolean;
+  spectatorsAllowed?: boolean;
+};
+export type Reaction = {
+  id?: string;
+  showcaseId?: string;
+  elementId?: string;
+  userId?: string;
+  userName?: string;
+  guest?: boolean;
+  emoji?: string;
+  offsetMs?: number;
+  sentAt?: string;
+};
+export type ReactionSendRequest = {
+  emoji: string;
+};
+export type JoinShowcaseRequest = {
+  teamId?: string;
+  avatarKey?: string;
+  colorTag?: string;
+};
+export type ChatSendRequest = {
+  body: string;
 };
 export type OrganizationPlan = {
   tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
@@ -1892,6 +2231,10 @@ export type PlayerPlacement = {
   placement?: number;
   correctAnswers?: number;
   totalQuestions?: number;
+  teamId?: string;
+  longestStreak?: number;
+  accuracy?: number;
+  reactionsSent?: number;
   guest?: boolean;
 };
 export type AnswerPayloadBase = {
@@ -2050,6 +2393,12 @@ export type DeckCollectionsPage = {
   totalElements?: number;
   hasMore?: boolean;
 };
+export type AvatarPreset = {
+  key?: string;
+  displayName?: string;
+  imageUrl?: string;
+  colorTag?: string;
+};
 export type UserDto = GuestUser | RegisteredUser;
 export const {
   useUpdateThemeMutation,
@@ -2058,6 +2407,10 @@ export const {
   useLazyGetTagQuery,
   useUpdateTagMutation,
   useDeleteTagMutation,
+  useUpdateTeamMutation,
+  useDeleteTeamMutation,
+  useMovePlayerToTeamMutation,
+  useModerateChatMutation,
   useUpdateImageMutation,
   useDeleteImageMutation,
   useGetDeckQuery,
@@ -2087,7 +2440,12 @@ export const {
   useLazyListTagsQuery,
   useCreateTagMutation,
   useCreateShowcaseMutation,
+  useCreateTeamMutation,
+  useSendReactionMutation,
   useJoinByRoomCodeMutation,
+  useListChatQuery,
+  useLazyListChatQuery,
+  useSendChatMutation,
   useCreateOrgMutation,
   useJoinOrgMutation,
   useListImagesQuery,
@@ -2152,6 +2510,8 @@ export const {
   useLazyExploreDecksQuery,
   useListMyCollectionsQuery,
   useLazyListMyCollectionsQuery,
+  useListQuery,
+  useLazyListQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

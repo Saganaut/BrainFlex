@@ -124,7 +124,8 @@ public class SecurityConfig {
                                 "/api/users/check-username",
                                 "/api/showcases/**",
                                 "/api/decks/**",
-                                "/api/collections/*").permitAll()
+                                "/api/collections/*",
+                                "/api/avatars").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {

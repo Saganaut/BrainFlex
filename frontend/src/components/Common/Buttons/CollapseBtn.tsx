@@ -14,7 +14,7 @@ interface CollapseBtnProps {
 const CollapseBtn = ({ collapse, isCollapsed }: CollapseBtnProps) => {
   return (
     <IconBtn
-      variant='ghost'
+      fill='ghost'
       size='sm'
       icon={<ChevronDownIcon />}
       className={isCollapsed ? styles.isCollapsed : undefined}

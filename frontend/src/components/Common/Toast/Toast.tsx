@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { ToastItem } from "./ToastTypes";
 import styles from "./Toast.module.css";
 import { IconBtn } from "../Buttons/IconBtn";
@@ -27,7 +28,8 @@ const Toast = ({ id, message, variant, duration, onDismiss }: ToastProps) => {
       <span className={styles.message}>{message}</span>
       <div className={styles.closeBtn}>
         <IconBtn
-          variant='close'
+          fill='ghost'
+          icon={<XMarkIcon />}
           size='xs'
           className={styles.dismiss}
           aria-label='Dismiss notification'

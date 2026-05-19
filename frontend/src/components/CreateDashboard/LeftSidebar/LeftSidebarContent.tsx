@@ -20,6 +20,7 @@ import { useModal } from "@/context/useModal";
 import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 import type { DeckDto } from "@/store/BrainFlexApi";
 import { LeftSidebar } from "@/components/Layout/LeftSidebar";
+import { useFullScreen } from "@/context/useFullScreen";
 
 export type DeckElement = NonNullable<DeckDto["elements"]>[number];
 
@@ -37,7 +38,7 @@ const LeftSidebarContent = () => {
   const { handleAddElement, handleDragEnd, elements, deckId, questionId } =
     useCreateDashboard();
   const { openModal, closeModal } = useModal();
-
+  const { isFullScreen } = useFullScreen();
   const handleNewSlideClick = () => {
     openModal({
       title: "Add a new element",
@@ -53,7 +54,8 @@ const LeftSidebarContent = () => {
   };
 
   return (
-    <LeftSidebar className={styles.leftSidebarContent}>
+    <LeftSidebar
+      className={`${styles.leftSidebarContent} ${isFullScreen ? styles.isCollapsed : ""} `}>
       <div>
         <Btn onClick={handleNewSlideClick}>New Slide</Btn>
       </div>

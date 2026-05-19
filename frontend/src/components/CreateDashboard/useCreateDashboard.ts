@@ -37,8 +37,18 @@ const routeApi = getRouteApi("/decks/$deckId/edit");
  * backend records use primitive `int`/`double`/`boolean` fields that Jackson
  * can't deserialize from null, so every primitive needs a default here. Strings
  * and complex sub-objects can be left out — only the primitives matter.
+ *
+ * Shared metadata defaults (chunk 10b): `reactionsEnabled` and `version` are
+ * primitives on every kind, so they must be sent here. createdByUserId /
+ * lastEditedByUserId / createdAt / updatedAt are stamped server-side on
+ * `addElement` regardless of what the client sends, so we leave them off.
  */
 const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
+  const sharedMetadataDefaults = {
+    tagIds: [],
+    reactionsEnabled: true,
+    version: 1,
+  };
   const sharedQuestionDefaults = {
     id,
     prompt: "",
@@ -50,6 +60,7 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
     bestAnswerBonus: 0,
     displaySeconds: 0,
     mediaPosition: "NONE" as const,
+    ...sharedMetadataDefaults,
   };
 
   switch (kind) {
@@ -71,6 +82,7 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         joinType: "INSTRUCTIONS_BAR",
         showJoinInformation: true,
         showResponses: "INSTANT",
+        ...sharedMetadataDefaults,
       };
     case "McqQuestion":
       return {
@@ -85,12 +97,20 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
           text: "",
         })),
         correctOptionIds: [],
+        // Kahoot-style defaults (chunk 10): shuffle per player, single-select.
+        shuffleOptions: true,
+        allowMultipleSelect: false,
+        maxSelections: 0,
       };
     case "TextQuestion":
       return {
         kind: "TextQuestion",
         ...sharedQuestionDefaults,
         caseSensitive: false,
+        maxLength: 80,
+        trimWhitespace: true,
+        fuzzyMatch: false,
+        fuzzyDistance: 1,
       };
     case "NumberQuestion":
       return {
@@ -99,9 +119,14 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         correctValue: 0,
         tolerance: 0,
         decimalPlaces: 0,
+        allowNegative: true,
       };
     case "RankingQuestion":
-      return { kind: "RankingQuestion", ...sharedQuestionDefaults };
+      return {
+        kind: "RankingQuestion",
+        ...sharedQuestionDefaults,
+        shuffleItemsForPresentation: true,
+      };
     case "ScalesQuestion":
       return {
         kind: "ScalesQuestion",
@@ -119,6 +144,8 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         maxSubmissionsPerPlayer: 0,
         allowVoting: false,
         autoApprove: false,
+        anonymousSubmissions: false,
+        minVotesToShow: 0,
       };
     case "GridQuestion":
       return {

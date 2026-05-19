@@ -72,7 +72,10 @@ public final class DeckImageMapper {
                     s.resultsDisplayType(), s.multipleSelectionsEnabled(),
                     s.selectionsPerParticipant(), s.showResultsAsPercentage(),
                     s.joinType(), s.showJoinInformation(), s.showResponses(),
-                    s.heading(), s.participantInformation());
+                    s.heading(), s.participantInformation(),
+                    s.autoAdvanceSeconds(),
+                    s.createdByUserId(), s.lastEditedByUserId(), s.createdAt(), s.updatedAt(),
+                    s.tagIds(), s.mediaCaption(), s.altText(), s.reactionsEnabled(), s.version());
             case McqQuestion q -> new McqQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), mapOptions(q.options(), op), q.correctOptionIds(),
@@ -81,7 +84,10 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case TextQuestion q -> new TextQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.correctAnswer(), q.acceptedVariants(), q.caseSensitive(),
@@ -90,7 +96,10 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case NumberQuestion q -> new NumberQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.correctValue(), q.tolerance(), q.unitLabel(), q.decimalPlaces(),
@@ -99,7 +108,10 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.minValue(), q.maxValue(), q.allowNegative(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case RankingQuestion q -> new RankingQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), mapItems(q.items(), op), q.correctOrder(), q.scoring(),
@@ -108,7 +120,10 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.shuffleItemsForPresentation(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case ScalesQuestion q -> new ScalesQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.statements(), q.scaleMin(), q.scaleMax(),
@@ -118,7 +133,9 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case QAndAQuestion q -> new QAndAQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.maxSubmissionsPerPlayer(), q.allowVoting(), q.autoApprove(),
@@ -127,7 +144,10 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.anonymousSubmissions(), q.minVotesToShow(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case GridQuestion q -> new GridQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.rows(), q.cols(), mapCells(q.cells(), op),
@@ -137,7 +157,9 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), applyNullable(q.targetImage(), op),
@@ -147,7 +169,9 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case WordCloudQuestion q -> new WordCloudQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), q.maxSubmissionsPerPlayer(), q.maxWordLength(),
@@ -157,7 +181,9 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case AllocationQuestion q -> new AllocationQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), mapOptions(q.options(), op),
@@ -167,7 +193,9 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case MatchingQuestion q -> new MatchingQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), mapPairs(q.pairs(), op), q.scoring(),
@@ -176,7 +204,9 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case DrawingQuestion q -> new DrawingQuestion(
                     q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
                     q.prompt(), applyNullable(q.backingImage(), op),
@@ -187,7 +217,9 @@ public final class DeckImageMapper {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
+                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
         };
     }
 

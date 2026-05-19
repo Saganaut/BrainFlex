@@ -81,16 +81,26 @@ public final class ElementScorer {
     private static Result scoreMcq(McqQuestion q, AnswerPayload payload) {
         if (!(payload instanceof McqAnswer a))
             return Result.ZERO;
-        return scoreOptionPicks(a.optionIds(), q.correctOptionIds(), q.pointValue());
+        List<String> submitted = a.optionIds();
+        if (submitted == null || submitted.isEmpty())
+            return Result.ZERO;
+        // Reject malformed payloads: single-select MCQs can't accept multi picks,
+        // and multi-select MCQs honour the per-question maxSelections cap (0 = unlimited).
+        if (!q.allowMultipleSelect() && submitted.size() > 1)
+            return Result.ZERO;
+        if (q.allowMultipleSelect() && q.maxSelections() > 0 && submitted.size() > q.maxSelections())
+            return Result.ZERO;
+        return scoreOptionPicks(submitted, q.correctOptionIds(), q.pointValue());
     }
 
     /**
      * MCQ scoring: when multiple correct ids exist the submitted set must equal
      * the correct set; otherwise (single-correct) any submitted id matching
-     * counts. Empty correct set = unscored.
+     * counts. Empty correct set = unscored. Caller has already rejected
+     * malformed submissions (multi-pick on a single-select question, over-cap).
      */
     private static Result scoreOptionPicks(List<String> submitted, List<String> correctIds, int points) {
-        if (submitted == null || submitted.isEmpty() || correctIds == null || correctIds.isEmpty())
+        if (correctIds == null || correctIds.isEmpty())
             return Result.ZERO;
         if (correctIds.size() == 1) {
             boolean correct = submitted.contains(correctIds.get(0));
@@ -104,17 +114,17 @@ public final class ElementScorer {
     private static Result scoreText(TextQuestion q, AnswerPayload payload) {
         if (!(payload instanceof TextAnswer a) || a.text() == null)
             return Result.ZERO;
-        String submitted = a.text().trim();
+        String submitted = q.trimWhitespace() ? a.text().trim() : a.text();
         if (submitted.isEmpty())
             return Result.ZERO;
 
-        if (matchesText(submitted, q.correctAnswer(), q.caseSensitive())) {
+        if (matchesText(submitted, q.correctAnswer(), q)) {
             return new Result(true, q.pointValue());
         }
         List<String> variants = q.acceptedVariants();
         if (variants != null) {
             for (String variant : variants) {
-                if (matchesText(submitted, variant, q.caseSensitive())) {
+                if (matchesText(submitted, variant, q)) {
                     return new Result(true, q.pointValue());
                 }
             }
@@ -122,16 +132,69 @@ public final class ElementScorer {
         return Result.ZERO;
     }
 
-    private static boolean matchesText(String submitted, String target, boolean caseSensitive) {
+    private static boolean matchesText(String submitted, String target, TextQuestion q) {
         if (target == null)
             return false;
-        String t = target.trim();
-        return caseSensitive ? submitted.equals(t)
-                : submitted.toLowerCase(Locale.ROOT).equals(t.toLowerCase(Locale.ROOT));
+        String t = q.trimWhitespace() ? target.trim() : target;
+        String left = q.caseSensitive() ? submitted : submitted.toLowerCase(Locale.ROOT);
+        String right = q.caseSensitive() ? t : t.toLowerCase(Locale.ROOT);
+        if (left.equals(right))
+            return true;
+        if (q.fuzzyMatch() && q.fuzzyDistance() > 0)
+            return levenshtein(left, right, q.fuzzyDistance()) <= q.fuzzyDistance();
+        return false;
+    }
+
+    /**
+     * Capped Levenshtein distance — returns `cap + 1` as soon as the running
+     * minimum exceeds `cap`, so the caller pays linear work only for plausible
+     * fuzzy matches. The cap shrinks the inner-loop band, keeping this O(n·cap)
+     * instead of O(n·m) when cap is small (the only case we care about for
+     * typo-tolerant text answers).
+     */
+    static int levenshtein(String left, String right, int cap) {
+        int n = left.length();
+        int m = right.length();
+        if (Math.abs(n - m) > cap)
+            return cap + 1;
+        if (n == 0)
+            return m;
+        if (m == 0)
+            return n;
+        int[] prev = new int[m + 1];
+        int[] curr = new int[m + 1];
+        for (int j = 0; j <= m; j++) prev[j] = j;
+        for (int i = 1; i <= n; i++) {
+            curr[0] = i;
+            int rowMin = curr[0];
+            int from = Math.max(1, i - cap);
+            int to = Math.min(m, i + cap);
+            if (from > 1) curr[from - 1] = cap + 1;
+            for (int j = from; j <= to; j++) {
+                int cost = left.charAt(i - 1) == right.charAt(j - 1) ? 0 : 1;
+                int del = prev[j] + 1;
+                int ins = curr[j - 1] + 1;
+                int sub = prev[j - 1] + cost;
+                int best = Math.min(del, Math.min(ins, sub));
+                curr[j] = best;
+                if (best < rowMin) rowMin = best;
+            }
+            if (to < m) curr[to + 1] = cap + 1;
+            if (rowMin > cap)
+                return cap + 1;
+            int[] tmp = prev;
+            prev = curr;
+            curr = tmp;
+        }
+        return prev[m];
     }
 
     private static Result scoreNumber(NumberQuestion q, AnswerPayload payload) {
         if (!(payload instanceof NumberAnswer a))
+            return Result.ZERO;
+        if (q.minValue() != null && a.value() < q.minValue())
+            return Result.ZERO;
+        if (q.maxValue() != null && a.value() > q.maxValue())
             return Result.ZERO;
         boolean correct = Math.abs(a.value() - q.correctValue()) <= q.tolerance();
         return new Result(correct, correct ? q.pointValue() : 0);

@@ -11,6 +11,7 @@
 // ancestor and rendering a nested <button> would be wrong.
 import type { ButtonHTMLAttributes } from "react";
 import type {
+  BtnFill,
   BtnShape,
   BtnSize,
   BtnVariant,
@@ -24,18 +25,19 @@ interface SlideTypeGraphicProps
   kind: ElementKind;
   size?: BtnSize;
   variant?: BtnVariant;
+  fill?: BtnFill;
   shape?: BtnShape;
 }
 
 const SlideTypeGraphic = ({
   kind,
   size = "md",
-  variant = "ghost",
+  fill = "ghost",
   ...rest
 }: SlideTypeGraphicProps) => {
   const Graphic = slideTypeGraphics[kind];
   return (
-    <IconBtn icon={<Graphic />} size={size} variant={variant} {...rest} />
+    <IconBtn icon={<Graphic />} size={size} fill={fill} {...rest} />
   );
 };
 

@@ -1,6 +1,6 @@
 # Frontend Style Rules
 
-Short rules. See `frontend/STYLES.md` for the full explanation, examples, and migration status.
+Short rules. See [frontend/STYLES.md](../../frontend/STYLES.md) for the full explanation, examples, and migration status.
 
 ## File & class structure
 
@@ -107,25 +107,34 @@ Status colors mean exactly one thing: feedback about an operation. Never decorat
 
 ## Named button + icon-button variants
 
-A single `variant` prop on `Btn` and `IconBtn` (from `components/Common/Buttons/BtnTypes.ts`) names every legal color/style combination. Default is `primary`. The live catalog is at `/design-system` → Common → "Action combinations".
+`Btn` and `IconBtn` (from `components/Common/Buttons/BtnTypes.ts`) take **two orthogonal style props**: `variant` picks the color slot and `fill` picks how that color is rendered. Any color × any fill is legal — e.g. `variant="error" fill="ghost"` is a red text-only destructive control. Defaults are `variant="primary"` and `fill="default"`. The live catalog is at `/design-system` → Common → "Action combinations".
 
-| Variant     | Btn behavior                                       | IconBtn behavior                                  |
-| ----------- | -------------------------------------------------- | ------------------------------------------------- |
-| `primary`   | Filled neutral CTA: `--bg-secondary` + `--text-primary` | Filled neutral: `--bg-secondary` + `--text-primary`  |
-| `ghost`     | Transparent bg + border, `--text-primary`          | Transparent bg + border, `--text-primary`         |
-| `bordered`  | Transparent bg, 2px `--text-primary` border + text | Transparent bg, 2px `--text-primary` border + icon |
-| `filled`    | Synonym for `primary`                              | Filled neutral (same as `primary`)                |
-| `close`     | Not applicable                                     | Transparent X-mark (renders `XMarkIcon`)          |
-| `error`     | Destructive filled: `--bg-error` + `--text-error`  | Filled: `--bg-error` + `--text-error`             |
-| `delete`    | Semantic alias for `error`                         | Semantic alias for `error`                        |
-| `success`   | Filled: `--bg-success` + `--text-success`          | Filled: `--bg-success` + `--text-success`         |
-| `warning`   | Filled: `--bg-warning` + `--text-warning`          | Filled: `--bg-warning` + `--text-warning`         |
-| `info`      | Filled: `--bg-info` + `--text-info`                | Filled: `--bg-info` + `--text-info`               |
-| `brand`     | Filled: `--bg-brand` + `--text-on-brand`           | Filled: `--bg-brand` + `--text-on-brand`          |
+### `variant` — color slot
 
-`error` is also called **destructive** in design discussions and aliased as `delete` for call-site clarity — all three render identically.
+| Variant     | Tokens                                                        |
+| ----------- | ------------------------------------------------------------- |
+| `primary`   | `--text-primary` + `--bg-secondary` (neutral workhorse CTA)   |
+| `secondary` | `--text-secondary` + `--bg-subtle` (quieter neutral)          |
+| `brand`     | `--text-on-brand` + `--bg-brand` + `--border-brand`           |
+| `info`      | `--text-info` + `--bg-info` + `--border-info`                 |
+| `error`     | `--text-error` + `--bg-error` + `--border-error`              |
+| `success`   | `--text-success` + `--bg-success` + `--border-success`        |
+| `warning`   | `--text-warning` + `--bg-warning` + `--border-warning`        |
+| `disabled`  | `--text-disabled` + `--bg-disabled` + `--border-disabled`     |
 
-Each variant is implemented as a nested rule under `.btn` / `.iconBtn` in `Buttons.module.css`. Variants flip the component-local `--color` / `--background-color` / `--border-color` slots; sizes and shapes compose on top.
+`error` is also called **destructive** in design discussions; reach for it on permanent-removal actions.
+
+### `fill` — background + border treatment
+
+| Fill       | Effect                                                                       |
+| ---------- | ---------------------------------------------------------------------------- |
+| `default`  | Background from the variant, transparent border. The standard filled look.    |
+| `bordered` | Background from the variant + the variant's matching border color.            |
+| `ghost`    | Transparent background, transparent border. Text/icon only (variant's color). |
+
+For a close (X) button on `IconBtn`, pass `XMarkIcon` as the `icon` and use `fill="ghost"`. There is no longer a `variant="close"` shortcut.
+
+Variants and fills are each implemented as a nested rule under `.btn` / `.iconBtn` in `Buttons.module.css`. Variants set the component-local `--color` / `--bg-fill` / `--border-fill` slots; fills decide whether `--background-color` and `--border-color` consume those slots or fall back to transparent. Sizes and shapes compose on top.
 
 ## Modifier vocabulary
 

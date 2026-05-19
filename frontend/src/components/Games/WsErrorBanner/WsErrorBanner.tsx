@@ -4,6 +4,7 @@
  * are fire-and-forget STOMP messages with no natural place for server feedback.
  * Hidden when there is no error. Dismiss clears the slice's wsError.
  */
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { clearWsError } from "../../../store/gameSlice";
 import { IconBtn } from "../../Common/Buttons/IconBtn";
@@ -24,7 +25,8 @@ const WsErrorBanner = () => {
         {error.message}
       </span>
       <IconBtn
-        variant='close'
+        fill='ghost'
+        icon={<XMarkIcon />}
         size='sm'
         onClick={() => {
           dispatch(clearWsError());

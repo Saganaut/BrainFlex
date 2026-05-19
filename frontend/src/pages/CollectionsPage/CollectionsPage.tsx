@@ -8,7 +8,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useModal } from "@/context/useModal";
 import {
   useListMyCollectionsQuery,
@@ -22,8 +21,7 @@ import styles from "./CollectionsPage.module.css";
 const PAGE_SIZE = 24;
 
 const CollectionsPage = () => {
-  const userState = useCurrentUser();
-  const isRegistered = userState.state === "registered";
+  // Gated by /_authenticated — caller is always a registered user here.
   const navigate = useNavigate();
   const { openModal, closeModal } = useModal();
   const confirm = useConfirm();
@@ -31,7 +29,7 @@ const CollectionsPage = () => {
   const [page, setPage] = useState(0);
   const { data, isFetching } = useListMyCollectionsQuery(
     { page, size: PAGE_SIZE },
-    { skip: !isRegistered, refetchOnMountOrArgChange: true },
+    { refetchOnMountOrArgChange: true },
   );
 
   const [deleteCollection] = useDeleteCollectionMutation();
@@ -68,17 +66,6 @@ const CollectionsPage = () => {
     if (!ok) return;
     await deleteCollection({ id }).unwrap();
   };
-
-  if (!isRegistered) {
-    return (
-      <div className={styles.page}>
-        <h1 className={styles.title}>Collections</h1>
-        <p className={styles.empty}>
-          Sign in to organize your decks into collections.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.page}>

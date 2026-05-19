@@ -29,7 +29,9 @@ class WordCloudAggregatorTest {
                 0, Difficulty.MEDIUM,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                30, null, null, null, null, null, MediaPosition.NONE);
+                30, null, null, null, null, null, MediaPosition.NONE,
+                null, null, null, null, List.of(),
+                null, null, true, 1);
     }
 
     @Test

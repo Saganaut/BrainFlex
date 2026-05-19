@@ -55,10 +55,35 @@ public class Showcase {
     private ShowcaseSettings settings = new ShowcaseSettings();
     private List<ShowcasePlayer> players = new ArrayList<>();
 
+    // Chunk 12 — team mode. `teamMode` mirrors ShowcaseSettings.teamMode for
+    // convenience (so scoring/broadcast code doesn't have to reach through
+    // settings on every round) but `settings.teamMode` remains the source of
+    // truth at create time. `teams` is empty unless team mode is on.
+    private boolean teamMode = false;
+    private boolean autoBalanceTeams = true;
+    private List<Team> teams = new ArrayList<>();
+
     private int currentRound = 0;   // index into deckSnapshot
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;
     private LocalDateTime roundStartedAt;   // timestamp current round began; speed-bonus reference
+
+    // Chunk 13 — lobby + host display additions. anonymousMode hides real names
+    // on the leaderboard and reveal (avatarKey + colorTag take over). The
+    // host* fields are denormalised so the lobby header doesn't need a User
+    // lookup on every refresh. customRoomCode is the host-typed override —
+    // active roomCode falls back to the auto-generated value when blank.
+    private boolean anonymousMode = false;
+    private String customRoomCode;
+    private String hostName;
+    private String hostAvatarUrl;
+    private boolean allowReJoin = true;
+    private int spectatorCount = 0;
+    private LocalDateTime lobbyOpenedAt = LocalDateTime.now();
+
+    // Populated by chunk 16 (Deck analytics) when a CSV/PDF report is exported
+    // off the finished session; null until then.
+    private String exportedReportUrl;
 }

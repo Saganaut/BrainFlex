@@ -380,6 +380,25 @@
     gap: var(--space-3);
   }
 
+  .combinationFillGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+  }
+
+  .combinationFillLabel {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  @media (width <= 900px) {
+    .combinationFillGrid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
   .combinationCard {
     border-radius: var(--radius-md);
     padding: var(--space-4);

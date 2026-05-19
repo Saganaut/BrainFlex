@@ -45,7 +45,7 @@ const UserMenu = () => {
         <IconBtn
           className={styles.avatarBtn}
           shape='avatar'
-          variant='filled'
+          variant='primary'
           size='md'
           aria-label='User menu'
           icon={avatarContent()}

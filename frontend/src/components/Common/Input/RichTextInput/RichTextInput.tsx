@@ -292,8 +292,7 @@ const RichTextInput = ({
       let size = maxPx;
       setStyle("font-size", `${size.toString()}px`);
       const cs = window.getComputedStyle(el);
-      const padding =
-        parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const padding = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
       const target = maxPx * 1.5 + padding;
       while (el.scrollHeight > target && size > minPx) {
         size -= stepPx;

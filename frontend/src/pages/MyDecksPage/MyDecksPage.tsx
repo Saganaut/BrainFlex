@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { StarIcon, PlayIcon } from "@heroicons/react/24/outline";
-import { useCurrentUser } from "../../hooks/useCurrentUser";
 import {
   BrainFlex,
   useListMyDecksQuery,
@@ -112,14 +111,28 @@ const DeckDiscoveryRow = ({ deck }: { deck: DeckDto }) => {
  * `addElement` call after the deck is created — that way the slide stays
  * selected and visible without a flicker between optimistic and confirmed state.
  */
+// Primitive defaults must mirror useCreateDashboard.buildNewElement — Jackson
+// cannot deserialize null into the backend's primitive boolean/int fields.
 const buildFirstSlide = (id: string): Slide => ({
   kind: "Slide",
   id,
   slideKind: "TITLE",
   title: "Untitled slide",
   body: "",
+  scored: false,
+  survey: false,
   displaySeconds: 0,
   mediaPosition: "NONE",
+  resultsDisplayType: "DEFAULT",
+  multipleSelectionsEnabled: false,
+  selectionsPerParticipant: 1,
+  showResultsAsPercentage: false,
+  joinType: "INSTRUCTIONS_BAR",
+  showJoinInformation: true,
+  showResponses: "INSTANT",
+  tagIds: [],
+  reactionsEnabled: true,
+  version: 1,
 });
 
 const buildOptimisticDeck = (
@@ -232,8 +245,7 @@ const DeckCard = ({
 };
 
 const MyDecksPage = () => {
-  const userState = useCurrentUser();
-  const isRegistered = userState.state === "registered";
+  // Gated by /_authenticated — caller is always a registered user here.
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
@@ -244,7 +256,6 @@ const MyDecksPage = () => {
     isLoading: loadingMine,
     refetch,
   } = useListMyDecksQuery(undefined, {
-    skip: !isRegistered,
     refetchOnMountOrArgChange: true,
   });
 
@@ -323,11 +334,10 @@ const MyDecksPage = () => {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>My Decks</h1>
-        {isRegistered && <Btn onClick={handleCreateDeck}>New Deck</Btn>}
+        <Btn onClick={handleCreateDeck}>New Deck</Btn>
       </div>
 
-      {isRegistered && (
-        <section className={styles.section}>
+      <section className={styles.section}>
           <div className={styles.tabs} role='tablist' aria-label='Your decks'>
             <button
               type='button'
@@ -395,8 +405,7 @@ const MyDecksPage = () => {
               ))}
             </div>
           )}
-        </section>
-      )}
+      </section>
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>System Decks</h2>

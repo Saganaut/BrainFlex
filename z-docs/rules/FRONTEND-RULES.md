@@ -2,7 +2,7 @@
 
 Rules specific to the React + TypeScript frontend under `frontend/`.
 
-> Styling and icon-specific conventions live in their own files — see @STYLE-RULES.md and @ICONS-RULES.md.
+> Styling and icon-specific conventions live in their own files — see [STYLE-RULES.md](STYLE-RULES.md) and [ICONS-RULES.md](ICONS-RULES.md).
 
 1.  **TypeScript First:** All new frontend code MUST be TypeScript, prioritizing strict typing over `any`.
 2.  **Semantic HTML/JSX & Accessibility:** Use semantic HTML/JSX elements where possible and ensure all components are built with accessibility in mind (proper ARIA attributes, keyboard navigation).

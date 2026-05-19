@@ -22,7 +22,7 @@ const Popover = ({
   <div
     className={[styles.popover, className].filter(Boolean).join(" ")}
     role={role}
-    aria-label={ariaLabel}>
+    ariaLabel={ariaLabel}>
     {children}
   </div>
 );
@@ -38,8 +38,7 @@ const PopoverRow = ({ children, className }: PopoverRowProps) => (
   </div>
 );
 
-interface PopoverButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface PopoverButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   ariaLabel: string;
   isActive?: boolean;
   // Swallow mousedown so a focused outer editor (e.g. ProseMirror) keeps its
@@ -65,7 +64,7 @@ const PopoverButton = ({
   return (
     <button
       type='button'
-      aria-label={ariaLabel}
+      ariaLabel={ariaLabel}
       aria-pressed={isActive}
       onMouseDown={handleMouseDown}
       {...rest}

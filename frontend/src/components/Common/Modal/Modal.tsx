@@ -39,7 +39,7 @@ const Modal = ({
       ref={dialogRef}
       onCancel={handleCancel}
       onClick={handleClick}
-      aria-labelledby={title ? "modal-title" : undefined}
+      ariaLabelledby={title ? "modal-title" : undefined}
       aria-modal='true'
       className={[style.modal, variant !== "default" && style[variant]]
         .filter(Boolean)
@@ -50,7 +50,7 @@ const Modal = ({
             {title}
           </h2>
         )}
-        <IconBtn variant='close' aria-label='Close modal' onClick={onClose} />
+        <IconBtn variant='close' ariaLabel='Close modal' onClick={onClose} />
       </div>
       <div className={style.content}>{children}</div>
     </dialog>

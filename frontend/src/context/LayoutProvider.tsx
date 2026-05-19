@@ -64,7 +64,7 @@ const LayoutProvider = ({ children }: { children: ReactNode }) => {
         <button
           type='button'
           className={styles.exitButton}
-          aria-label='Exit fullscreen'
+          ariaLabel='Exit fullscreen'
           onClick={exitFullScreen}>
           <ArrowsPointingInIcon className={styles.exitIcon} />
         </button>

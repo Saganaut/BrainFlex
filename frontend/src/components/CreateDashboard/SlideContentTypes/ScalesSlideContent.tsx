@@ -61,9 +61,7 @@ const ScalesSlideContent = () => {
     );
   }
 
-  const buildPatch = (
-    overrides: Partial<ScalesQuestion>,
-  ): ScalesQuestion => ({
+  const buildPatch = (overrides: Partial<ScalesQuestion>): ScalesQuestion => ({
     ...element,
     prompt,
     statements,
@@ -202,7 +200,7 @@ const ScalesSlideContent = () => {
               variant='bordered'
               size='xs'
               icon={<MinusIcon />}
-              aria-label={`Remove statement ${(idx + 1).toString()}`}
+              ariaLabel={`Remove statement ${(idx + 1).toString()}`}
               disabled={statements.length <= MIN_STATEMENTS}
               onClick={() => {
                 if (s.id) handleRemoveStatement(s.id);

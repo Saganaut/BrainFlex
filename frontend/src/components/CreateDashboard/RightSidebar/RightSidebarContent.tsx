@@ -24,12 +24,7 @@ import { DeckCategorizePanel } from "./DeckCategorizePanel";
 import styles from "./RightSidebarContent.module.css";
 import { RightSidebar } from "@/components/Layout/RightSidebar";
 
-type PanelKey =
-  | "edit"
-  | "theme"
-  | "categorize"
-  | "participants"
-  | "sharing";
+type PanelKey = "edit" | "theme" | "categorize" | "participants" | "sharing";
 
 const PANEL_TITLES: Record<PanelKey, string> = {
   edit: "Edit slide",
@@ -72,14 +67,14 @@ const RightSidebarContent = () => {
   return (
     <RightSidebar className={styles.rightSidebarContent}>
       {openPanel !== null && (
-        <aside className={styles.drawer} aria-label={PANEL_TITLES[openPanel]}>
+        <aside className={styles.drawer} ariaLabel={PANEL_TITLES[openPanel]}>
           <div className={styles.panelContent} key={openPanel}>
             <div className={styles.drawerHeader}>
               <h3 className={styles.drawerTitle}>{PANEL_TITLES[openPanel]}</h3>
               <IconBtn
                 variant='close'
                 size='sm'
-                aria-label='Close panel'
+                ariaLabel='Close panel'
                 onClick={() => {
                   setPanel(null);
                 }}
@@ -100,12 +95,12 @@ const RightSidebarContent = () => {
         </aside>
       )}
 
-      <div className={styles.iconStrip} role='toolbar' aria-label='Deck panels'>
+      <div className={styles.iconStrip} role='toolbar' ariaLabel='Deck panels'>
         <IconBtn
           variant='bordered'
           shape='round'
           size='md'
-          aria-label={PANEL_TITLES.edit}
+          ariaLabel={PANEL_TITLES.edit}
           aria-pressed={openPanel === "edit"}
           className={openPanel === "edit" ? styles.active : undefined}
           icon={<PencilIcon />}
@@ -117,7 +112,7 @@ const RightSidebarContent = () => {
           variant='bordered'
           shape='round'
           size='md'
-          aria-label={PANEL_TITLES.theme}
+          ariaLabel={PANEL_TITLES.theme}
           aria-pressed={openPanel === "theme"}
           className={openPanel === "theme" ? styles.active : undefined}
           icon={<PaintBrushIcon />}
@@ -129,7 +124,7 @@ const RightSidebarContent = () => {
           variant='bordered'
           shape='round'
           size='md'
-          aria-label={PANEL_TITLES.categorize}
+          ariaLabel={PANEL_TITLES.categorize}
           aria-pressed={openPanel === "categorize"}
           className={openPanel === "categorize" ? styles.active : undefined}
           icon={<TagIcon />}
@@ -141,7 +136,7 @@ const RightSidebarContent = () => {
           variant='bordered'
           shape='round'
           size='md'
-          aria-label={PANEL_TITLES.participants}
+          ariaLabel={PANEL_TITLES.participants}
           aria-pressed={openPanel === "participants"}
           className={openPanel === "participants" ? styles.active : undefined}
           icon={<UsersIcon />}
@@ -153,7 +148,7 @@ const RightSidebarContent = () => {
           variant='bordered'
           shape='round'
           size='md'
-          aria-label={PANEL_TITLES.sharing}
+          ariaLabel={PANEL_TITLES.sharing}
           aria-pressed={openPanel === "sharing"}
           className={openPanel === "sharing" ? styles.active : undefined}
           icon={<ShareIcon />}

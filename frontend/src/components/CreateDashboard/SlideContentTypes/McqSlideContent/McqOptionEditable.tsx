@@ -39,10 +39,11 @@ import { useGalleryPicker } from "@/hooks/useGalleryPicker";
 import { useTheme } from "@/hooks/useTheme";
 import { useFitText } from "@/hooks/useFitText";
 import {
-  displayUrl,
   emptyImage,
   externalImage,
   isImageEmpty,
+  largestUrl,
+  resolveImageUrl,
 } from "@/utils/image";
 import { useMcqOptionEditor } from "../useElementEditor";
 import styles from "./McqOptionEditable.module.css";
@@ -79,7 +80,7 @@ interface McqOptionEditableProps {
 
 /** The paste-URL input only shows external URLs; gallery picks leave it blank. */
 const pasteUrlOf = (image: McqOptionType["image"]): string =>
-  image?.useExternalImg ? (image.imgUrl ?? "") : "";
+  image?.useExternalImg ? (largestUrl(image, "") ?? "") : "";
 
 const McqOptionEditable = ({
   option: initialOption,
@@ -234,9 +235,16 @@ const McqOptionEditable = ({
 
   // --- derived display state ------------------------------------------
 
-  const previewUrl = option.image?.imgUrl ?? "";
+  const previewUrl = largestUrl(option.image, optionId) ?? "";
   const hasImage = !isImageEmpty(option.image);
-  const thumbnailSrc = displayUrl(option.image, optionId, 200, 200, false);
+  const thumbnailSrc = resolveImageUrl(
+    option.image,
+    "SM",
+    optionId,
+    200,
+    200,
+    false,
+  );
   const inputIdBase = `mcq-opt-${optionId}`;
   const displayIndex = index >= 0 ? index + 1 : 0;
   // Theme-derived default; only applied when the author hasn't overridden
@@ -295,7 +303,7 @@ const McqOptionEditable = ({
           <button
             type='button'
             className={[styles.interactiveZone, styles.correctBtn].join(" ")}
-            aria-label={isCorrect ? "Mark as wrong" : "Mark as correct"}
+            ariaLabel={isCorrect ? "Mark as wrong" : "Mark as correct"}
             aria-pressed={isCorrect}
             onClick={(e) => {
               e.stopPropagation();
@@ -315,7 +323,7 @@ const McqOptionEditable = ({
             variant='ghost'
             size='xs'
             icon={<EllipsisVerticalIcon />}
-            aria-label={`Edit option ${displayIndex.toString()}`}
+            ariaLabel={`Edit option ${displayIndex.toString()}`}
             aria-expanded={popoverOpen}
             aria-haspopup='dialog'
             onClick={(e) => {

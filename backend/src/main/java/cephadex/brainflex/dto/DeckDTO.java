@@ -48,13 +48,33 @@ public record DeckDTO(
         int playCount,
         int viewCount,
         int favoriteCount,
+        boolean isFavorited,
         double averageRating,
         int ratingCount,
+        // Caller-specific rating snapshot. {@code myRating} is null when the
+        // caller is anonymous or has not yet rated; {@code isRatedByMe} is
+        // {@code myRating != null} but stored explicitly so clients can
+        // branch on the flag without a null check on a number.
+        Integer myRating,
+        boolean isRatedByMe,
         LocalDateTime lastPlayedAt,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
 
+    /**
+     * Convenience constructor for unauthenticated reads / write responses
+     * where the caller-specific {@code isFavorited} flag is not meaningful;
+     * defaults to {@code false}.
+     */
     public DeckDTO(Deck deck) {
+        this(deck, false, null);
+    }
+
+    public DeckDTO(Deck deck, boolean isFavorited) {
+        this(deck, isFavorited, null);
+    }
+
+    public DeckDTO(Deck deck, boolean isFavorited, Integer myRating) {
         this(
                 deck.getId(),
                 deck.getName(),
@@ -85,8 +105,11 @@ public record DeckDTO(
                 deck.getPlayCount(),
                 deck.getViewCount(),
                 deck.getFavoriteCount(),
+                isFavorited,
                 deck.getAverageRating(),
                 deck.getRatingCount(),
+                myRating,
+                myRating != null,
                 deck.getLastPlayedAt(),
                 deck.getCreatedAt(),
                 deck.getUpdatedAt());

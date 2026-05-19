@@ -1,7 +1,7 @@
 /**
  * Request body for PUT /api/decks/{id}. Null fields leave the deck unchanged;
- * non-null fields are patched. To clear an image, send an `Image` with a
- * blank/null `imgUrl` (or use `Image.empty()` on the client side).
+ * non-null fields are patched. To clear an image, send `Image.empty()`
+ * (a record with no variants).
  */
 package cephadex.brainflex.dto;
 

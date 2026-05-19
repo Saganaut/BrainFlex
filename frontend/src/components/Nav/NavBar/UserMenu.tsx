@@ -47,7 +47,7 @@ const UserMenu = () => {
           shape='avatar'
           variant='filled'
           size='md'
-          aria-label='User menu'
+          ariaLabel='User menu'
           icon={avatarContent()}
           onClick={toggle}
         />

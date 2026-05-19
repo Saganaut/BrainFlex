@@ -1,11 +1,15 @@
 package cephadex.brainflex.controller;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,9 +31,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import cephadex.brainflex.model.GalleryImage;
+import cephadex.brainflex.model.StoredImageVariant;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.element.ImageSize;
+import cephadex.brainflex.model.element.ImageVariant;
 import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.service.ImageProcessingService;
+import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 import cephadex.brainflex.service.S3Service;
 import cephadex.brainflex.service.UserService;
 
@@ -61,14 +69,31 @@ class GalleryControllerTest {
         return u;
     }
 
+    private static List<StoredImageVariant> sampleStoredVariants() {
+        return List.of(
+                new StoredImageVariant(ImageSize.XS, 64, 36),
+                new StoredImageVariant(ImageSize.SM, 200, 113),
+                new StoredImageVariant(ImageSize.MD, 600, 338),
+                new StoredImageVariant(ImageSize.LG, 1200, 675),
+                new StoredImageVariant(ImageSize.XL, 2000, 1125));
+    }
+
+    private static List<ImageVariant> sampleFreshVariants() {
+        return List.of(
+                new ImageVariant(ImageSize.XS, "https://fresh/xs", 64, 36),
+                new ImageVariant(ImageSize.SM, "https://fresh/sm", 200, 113),
+                new ImageVariant(ImageSize.MD, "https://fresh/md", 600, 338),
+                new ImageVariant(ImageSize.LG, "https://fresh/lg", 1200, 675),
+                new ImageVariant(ImageSize.XL, "https://fresh/xl", 2000, 1125));
+    }
+
     private static GalleryImage image(String id, String ownerId, String orgId, String name) {
         GalleryImage img = new GalleryImage();
         img.setId(id);
         img.setOwnerId(ownerId);
         img.setOrganizationId(orgId);
         img.setName(name);
-        img.setS3Key("gallery-images/" + id + "/image.webp");
-        img.setImageUrl("https://s3/" + id);
+        img.setVariants(sampleStoredVariants());
         return img;
     }
 
@@ -81,23 +106,29 @@ class GalleryControllerTest {
         when(galleryImageRepository.findByOrganizationId("orgA")).thenReturn(List.of(
                 image("img2", "u2", "orgA", "shared"),
                 image("img1", "u1", "orgA", "own-shared-dup")));
-        when(s3Service.refreshPresignedUrl(anyString())).thenReturn("https://fresh");
+        when(s3Service.refreshGalleryImage(anyString(), anyList())).thenReturn(sampleFreshVariants());
 
         mockMvc.perform(get("/api/gallery"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value("img1"))
                 .andExpect(jsonPath("$[1].id").value("img2"))
-                .andExpect(jsonPath("$[0].imageUrl").value("https://fresh"));
+                .andExpect(jsonPath("$[0].variants.length()").value(5))
+                .andExpect(jsonPath("$[0].variants[0].size").value("XS"))
+                .andExpect(jsonPath("$[0].variants[4].url").value("https://fresh/xl"));
     }
 
     @Test
     void uploadImage_PersistsAndReturnsCreated() throws Exception {
         User u = user("u1");
         when(userService.resolveRegisteredUser(any(Authentication.class))).thenReturn(Optional.of(u));
-        when(imageProcessingService.validateAndProcessGalleryImage(any())).thenReturn(new byte[] { 1, 2 });
-        when(s3Service.galleryImageKey(anyString())).thenAnswer(inv -> "gallery-images/" + inv.getArgument(0) + "/image.webp");
-        when(s3Service.uploadGalleryImage(anyString(), any())).thenReturn("https://uploaded");
+        Map<ImageSize, ProcessedVariant> processed = new EnumMap<>(ImageSize.class);
+        for (ImageSize size : ImageSize.values()) {
+            processed.put(size, new ProcessedVariant(new byte[] { 1, 2 }, size.targetWidth(), size.targetWidth()));
+        }
+        when(imageProcessingService.processGalleryImage(any())).thenReturn(processed);
+        when(s3Service.uploadGalleryImage(anyString(), any())).thenReturn(sampleStoredVariants());
+        when(s3Service.refreshGalleryImage(anyString(), anyList())).thenReturn(sampleFreshVariants());
         when(galleryImageRepository.save(any(GalleryImage.class))).thenAnswer(inv -> inv.getArgument(0));
 
         MockMultipartFile file = new MockMultipartFile("image", "pic.png", "image/png", new byte[] { 1, 2 });
@@ -111,7 +142,8 @@ class GalleryControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("Hero shot"))
                 .andExpect(jsonPath("$.tags.length()").value(3))
-                .andExpect(jsonPath("$.imageUrl").value("https://uploaded"))
+                .andExpect(jsonPath("$.variants.length()").value(5))
+                .andExpect(jsonPath("$.variants[4].url").value("https://fresh/xl"))
                 .andExpect(jsonPath("$.ownerId").value("u1"));
     }
 
@@ -119,7 +151,9 @@ class GalleryControllerTest {
     void uploadImage_ToOrgUserNotMember_ReturnsForbidden() throws Exception {
         User u = user("u1");
         when(userService.resolveRegisteredUser(any(Authentication.class))).thenReturn(Optional.of(u));
-        when(imageProcessingService.validateAndProcessGalleryImage(any())).thenReturn(new byte[] { 1 });
+        Map<ImageSize, ProcessedVariant> processed = new EnumMap<>(ImageSize.class);
+        processed.put(ImageSize.XS, new ProcessedVariant(new byte[] { 1 }, 64, 64));
+        when(imageProcessingService.processGalleryImage(any())).thenReturn(processed);
 
         MockMultipartFile file = new MockMultipartFile("image", "pic.png", "image/png", new byte[] { 1 });
 
@@ -158,7 +192,7 @@ class GalleryControllerTest {
         mockMvc.perform(delete("/api/gallery/img1"))
                 .andExpect(status().isOk());
 
-        verify(s3Service).deleteObject("gallery-images/img1/image.webp");
+        verify(s3Service).deleteGalleryImage(eq("img1"), anyList());
         verify(galleryImageRepository).delete(img);
     }
 
@@ -172,7 +206,7 @@ class GalleryControllerTest {
         mockMvc.perform(delete("/api/gallery/img9"))
                 .andExpect(status().isForbidden());
 
-        verify(s3Service, never()).deleteObject(anyString());
+        verify(s3Service, never()).deleteGalleryImage(anyString(), anyList());
         verify(galleryImageRepository, never()).delete(any(GalleryImage.class));
     }
 }

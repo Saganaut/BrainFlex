@@ -58,7 +58,7 @@ const Dropdown = ({
               <span
                 role='button'
                 tabIndex={0}
-                aria-label={`Remove ${opt?.label ?? v}`}
+                ariaLabel={`Remove ${opt?.label ?? v}`}
                 className={styles.chipRemove}
                 onClick={(e) => {
                   removeChip(e, v);
@@ -79,8 +79,7 @@ const Dropdown = ({
     );
 
   return (
-    <div
-      className={[shared.inputContainer, shared[labelPosition]].join(" ")}>
+    <div className={[shared.inputContainer, shared[labelPosition]].join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
       <div className={styles.dropdown} ref={containerRef}>
         <Btn
@@ -119,7 +118,7 @@ const Dropdown = ({
                     setQuery(e.target.value);
                   }}
                   placeholder='Search...'
-                  aria-label='Search options'
+                  ariaLabel='Search options'
                   autoFocus
                 />
               </div>

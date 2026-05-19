@@ -99,7 +99,7 @@ const SpeakerNotesDrawer = () => {
       className={[styles.drawer, isOpen ? styles.open : ""]
         .filter(Boolean)
         .join(" ")}
-      aria-label='Speaker notes'>
+      ariaLabel='Speaker notes'>
       <button
         type='button'
         className={styles.header}
@@ -119,7 +119,7 @@ const SpeakerNotesDrawer = () => {
         className={styles.body}
         id='speaker-notes-body'
         role='region'
-        aria-label='Speaker notes editor'
+        ariaLabel='Speaker notes editor'
         aria-hidden={!isOpen}>
         <div className={styles.bodyInner}>
           {element ? (

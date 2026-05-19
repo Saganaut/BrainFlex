@@ -43,7 +43,7 @@ const MainPage = () => {
         </p>
       </header>
 
-      <section className={styles.cards} aria-label='Primary actions'>
+      <section className={styles.cards} ariaLabel='Primary actions'>
         <ActionCard
           to='/games/create'
           icon='+'
@@ -67,7 +67,7 @@ const MainPage = () => {
         />
       </section>
 
-      {/* <section className={styles.quickJoin} aria-label='Quick join'>
+      {/* <section className={styles.quickJoin} ariaLabel='Quick join'>
         <form
           className={styles.quickJoinForm}
           onSubmit={(e) => {
@@ -87,7 +87,7 @@ const MainPage = () => {
             maxLength={6}
             autoComplete='off'
             spellCheck={false}
-            aria-label='Room code'
+            ariaLabel='Room code'
           />
           <Btn
             type='submit'

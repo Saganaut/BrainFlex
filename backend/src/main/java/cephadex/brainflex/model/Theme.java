@@ -1,6 +1,8 @@
 package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -29,8 +31,13 @@ public class Theme {
     /** "light" | "dark" | "system" */
     private String mode = "system";
 
-    private String backgroundImageUrl;
-    private String logoImageUrl;
+    /** One entry per ImageSize tier (xs/sm/md/lg/xl) for the theme logo.
+     *  Empty when no logo has been uploaded. Never null. */
+    private List<StoredImageVariant> logoVariants = new ArrayList<>();
+
+    /** One entry per ImageSize tier (xs/sm/md/lg/xl) for the theme background.
+     *  Empty when no background has been uploaded. Never null. */
+    private List<StoredImageVariant> backgroundVariants = new ArrayList<>();
 
     private LocalDateTime createdAt = LocalDateTime.now();
 }

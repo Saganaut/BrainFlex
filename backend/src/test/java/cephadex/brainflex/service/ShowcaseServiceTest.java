@@ -67,6 +67,7 @@ class ShowcaseServiceTest {
     @Mock private AuthorizationService authorizationService;
     @Mock private DeckImageHydrationService deckImageHydrationService;
     @Mock private DeckService deckService;
+    @Mock private UserImageHydrator userImageHydrator;
     @Mock private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks

@@ -75,7 +75,7 @@ const FileUpload = ({
                 onClick={() => {
                   removeFile(i);
                 }}
-                aria-label={`Remove ${file.name}`}
+                ariaLabel={`Remove ${file.name}`}
               />
             </li>
           ))}

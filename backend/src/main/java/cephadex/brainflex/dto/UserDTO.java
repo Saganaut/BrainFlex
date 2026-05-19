@@ -6,6 +6,8 @@ import java.util.List;
 import cephadex.brainflex.model.Membership;
 import cephadex.brainflex.model.PlayerStats;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.element.ImageVariant;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(oneOf = { UserDTO.GuestUser.class, UserDTO.RegisteredUser.class })
@@ -20,22 +22,31 @@ public sealed interface UserDTO {
     record GuestLoginRequest(String username) {
     }
 
+    /**
+     * `pictureUrl` is kept on the wire for back-compat (small consumers like
+     * the leaderboard tile that don't care about size selection). It mirrors
+     * the largest URL in `picture.variants`, or the OAuth URL when the user
+     * hasn't uploaded their own avatar. Prefer `picture.variants` on the
+     * client when rendering at a specific size.
+     */
     record GuestUser(
             String id,
             String userName,
             Boolean isGuest,
             String pictureUrl,
+            Image picture,
             PlayerStats stats)
             implements UserDTO, View {
-        public GuestUser(User user) {
+
+        public GuestUser(User user, Image picture) {
             this(
                     String.valueOf(user.getId()),
                     user.getUserName(),
                     user.getIsGuest(),
-                    user.getPictureUrl(),
+                    largestUrl(picture, user.getPictureUrl()),
+                    picture,
                     user.getStats());
         }
-
     }
 
     record RegisteredUser(
@@ -46,6 +57,7 @@ public sealed interface UserDTO {
             Boolean isGuest,
             String googleId,
             String pictureUrl,
+            Image picture,
             PlayerStats stats,
             Membership membership,
             Boolean newsletter,
@@ -54,7 +66,8 @@ public sealed interface UserDTO {
             LocalDateTime lastLogin,
             LocalDateTime createdAt)
             implements UserDTO, View {
-        public RegisteredUser(User user) {
+
+        public RegisteredUser(User user, Image picture) {
             this(
                     String.valueOf(user.getId()),
                     user.getEmail(),
@@ -62,7 +75,8 @@ public sealed interface UserDTO {
                     user.getUserName(),
                     user.getIsGuest(),
                     user.getGoogleId(),
-                    user.getPictureUrl(),
+                    largestUrl(picture, user.getPictureUrl()),
+                    picture,
                     user.getStats(),
                     user.getMembership(),
                     user.getNewsletter(),
@@ -71,5 +85,17 @@ public sealed interface UserDTO {
                     user.getLastLogin(),
                     user.getCreatedAt());
         }
+    }
+
+    /** Largest variant URL, or the fallback (typically the OAuth URL) when
+     *  the image carries no variants. Null when both are blank. */
+    static String largestUrl(Image picture, String fallback) {
+        if (picture != null) {
+            ImageVariant largest = picture.largestVariant();
+            if (largest != null && largest.url() != null && !largest.url().isBlank()) {
+                return largest.url();
+            }
+        }
+        return fallback;
     }
 }

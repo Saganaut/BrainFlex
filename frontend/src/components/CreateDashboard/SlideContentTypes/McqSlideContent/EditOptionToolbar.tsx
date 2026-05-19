@@ -9,7 +9,7 @@
 // and always write back oklch so storage normalizes over time.
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { hexToHsva } from "@uiw/color-convert";
+import { hexToHsva, type HexColor } from "@uiw/color-convert";
 
 import {
   Popover,
@@ -17,30 +17,16 @@ import {
   PopoverDivider,
   PopoverGroupLabel,
 } from "@/components/Common/Input/Popover/Popover";
-import { ColorPicker } from "@/components/Common/Input/ColorPicker/ColorPicker";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 
 import styles from "./McqOptionEditable.module.css";
-
-const OKLCH_HUE_RX = /oklch\(\s*[\d.]+\s+[\d.]+\s+(-?[\d.]+)/;
-const HEX_RX = /^#[0-9a-fA-F]{3,8}$/;
-
-const parseHue = (color: string): number => {
-  const oklch = OKLCH_HUE_RX.exec(color);
-  if (oklch) {
-    const n = Number(oklch[1]);
-    return Math.round(((n % 360) + 360) % 360);
-  }
-  if (HEX_RX.test(color)) {
-    return Math.round(hexToHsva(color).h);
-  }
-  return 0;
-};
-
-const hueToColor = (hue: number): string =>
-  `oklch(0.65 0.18 ${hue.toString()})`;
+import {
+  ColorPoint,
+  ColorSwatch,
+} from "@/components/Common/Input/ColorPicker/ColorSwatch";
+import { hueToHex, parseHue, toHexColor } from "@/utils/color";
 
 interface EditOptionToolbarProps {
   canRemove: boolean;
@@ -76,10 +62,8 @@ const EditOptionToolbar = ({
   inputIdBase,
   flush,
 }: EditOptionToolbarProps) => {
-  const hue = parseHue(color);
-
-  const handleHuePick = (nextHue: number) => {
-    handleColorChange(hueToColor(nextHue));
+  const handleColorPick = (colorPick: HexColor) => {
+    handleColorChange(colorPick);
     flush();
   };
 
@@ -93,15 +77,7 @@ const EditOptionToolbar = ({
         role='dialog'
         ariaLabel={`Option ${displayIndex.toString()} settings`}>
         <PopoverRow className={styles.popoverHeader}>
-          <IconBtn
-            variant='close'
-            size='xs'
-            aria-label='Close'
-            onClick={handleClose}
-          />
-        </PopoverRow>
-
-        <PopoverRow>
+          <ColorPoint color={toHexColor(hueToHex(parseHue(color)))} />
           <PopoverGroupLabel>Image</PopoverGroupLabel>
           <IconBtn
             variant='ghost'
@@ -117,7 +93,7 @@ const EditOptionToolbar = ({
                   }
                 : undefined
             }
-            aria-label={hasImage ? "Change image" : "Pick image"}
+            ariaLabel={hasImage ? "Change image" : "Pick image"}
             onClick={handlePickFromGallery}
             icon={hasImage ? undefined : <PlusIcon />}
           />
@@ -126,9 +102,7 @@ const EditOptionToolbar = ({
               Clear
             </Btn>
           )}
-        </PopoverRow>
 
-        <PopoverRow>
           <PopoverGroupLabel>URL</PopoverGroupLabel>
           <Input
             id={`${inputIdBase}-url`}
@@ -141,24 +115,31 @@ const EditOptionToolbar = ({
             onBlur={flush}
             fullWidth
           />
-        </PopoverRow>
 
-        <PopoverDivider />
+          <PopoverDivider />
 
-        <PopoverRow>
-          <ColorPicker label='Color' value={hue} onChange={handleHuePick} />
-        </PopoverRow>
+          <ColorSwatch
+            color={toHexColor(hueToHex(parseHue(color)))}
+            onChange={handleColorPick}
+          />
 
-        <PopoverDivider />
+          <PopoverDivider />
 
-        <PopoverRow>
           <IconBtn
             variant='delete'
             size='xs'
-            aria-label={`Remove option ${displayIndex.toString()}`}
+            ariaLabel={`Remove option ${displayIndex.toString()}`}
             disabled={!canRemove}
             onClick={handleRemove}
             icon={<TrashIcon />}
+          />
+          <PopoverDivider />
+
+          <IconBtn
+            variant='close'
+            size='xs'
+            ariaLabel='Close'
+            onClick={handleClose}
           />
         </PopoverRow>
       </Popover>

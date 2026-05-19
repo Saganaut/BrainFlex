@@ -15,7 +15,7 @@ const TermsPage = () => {
       </header>
 
       <div className={styles.content}>
-        <nav className={styles.toc} aria-label='Table of contents'>
+        <nav className={styles.toc} ariaLabel='Table of contents'>
           <p className={styles.tocLabel}>On this page</p>
           <ol className={styles.tocList}>
             {SECTIONS.map((s) => (

@@ -59,6 +59,22 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    rateDeck: build.mutation<RateDeckApiResponse, RateDeckApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/rating`,
+        method: "PUT",
+        body: queryArg.rateDeckRequest,
+      }),
+    }),
+    deleteMyRating: build.mutation<
+      DeleteMyRatingApiResponse,
+      DeleteMyRatingApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/rating`,
+        method: "DELETE",
+      }),
+    }),
     updateElement: build.mutation<
       UpdateElementApiResponse,
       UpdateElementApiArg
@@ -75,6 +91,44 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({
         url: `/api/decks/${queryArg.id}/elements/${queryArg.elementId}`,
+        method: "DELETE",
+      }),
+    }),
+    editComment: build.mutation<EditCommentApiResponse, EditCommentApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.deckId}/comments/${queryArg.commentId}`,
+        method: "PUT",
+        body: queryArg.updateCommentRequest,
+      }),
+    }),
+    deleteComment: build.mutation<
+      DeleteCommentApiResponse,
+      DeleteCommentApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.deckId}/comments/${queryArg.commentId}`,
+        method: "DELETE",
+      }),
+    }),
+    getCollection: build.query<GetCollectionApiResponse, GetCollectionApiArg>({
+      query: (queryArg) => ({ url: `/api/collections/${queryArg.id}` }),
+    }),
+    updateCollection: build.mutation<
+      UpdateCollectionApiResponse,
+      UpdateCollectionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/collections/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateDeckCollectionRequest,
+      }),
+    }),
+    deleteCollection: build.mutation<
+      DeleteCollectionApiResponse,
+      DeleteCollectionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/collections/${queryArg.id}`,
         method: "DELETE",
       }),
     }),
@@ -208,6 +262,30 @@ const injectedRtkApi = api.injectEndpoints({
         method: "POST",
       }),
     }),
+    favoriteDeck: build.mutation<FavoriteDeckApiResponse, FavoriteDeckApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/favorite`,
+        method: "POST",
+      }),
+    }),
+    unfavoriteDeck: build.mutation<
+      UnfavoriteDeckApiResponse,
+      UnfavoriteDeckApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/favorite`,
+        method: "DELETE",
+      }),
+    }),
+    recountFavorites: build.mutation<
+      RecountFavoritesApiResponse,
+      RecountFavoritesApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/favorite/recount`,
+        method: "POST",
+      }),
+    }),
     addElement: build.mutation<AddElementApiResponse, AddElementApiArg>({
       query: (queryArg) => ({
         url: `/api/decks/${queryArg.id}/elements`,
@@ -236,10 +314,65 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    listComments: build.query<ListCommentsApiResponse, ListCommentsApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/comments`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
+    postComment: build.mutation<PostCommentApiResponse, PostCommentApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/comments`,
+        method: "POST",
+        body: queryArg.createCommentRequest,
+      }),
+    }),
     archiveDeck: build.mutation<ArchiveDeckApiResponse, ArchiveDeckApiArg>({
       query: (queryArg) => ({
         url: `/api/decks/${queryArg.id}/archive`,
         method: "POST",
+      }),
+    }),
+    toggleCommentUpvote: build.mutation<
+      ToggleCommentUpvoteApiResponse,
+      ToggleCommentUpvoteApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.deckId}/comments/${queryArg.commentId}/upvote`,
+        method: "POST",
+      }),
+    }),
+    createCollection: build.mutation<
+      CreateCollectionApiResponse,
+      CreateCollectionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/collections`,
+        method: "POST",
+        body: queryArg.createDeckCollectionRequest,
+      }),
+    }),
+    addDeckToCollection: build.mutation<
+      AddDeckToCollectionApiResponse,
+      AddDeckToCollectionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/collections/${queryArg.id}/decks`,
+        method: "POST",
+        body: queryArg.addDeckToCollectionRequest,
+      }),
+    }),
+    reorderCollectionDecks: build.mutation<
+      ReorderCollectionDecksApiResponse,
+      ReorderCollectionDecksApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/collections/${queryArg.id}/decks`,
+        method: "PATCH",
+        body: queryArg.reorderCollectionDecksRequest,
       }),
     }),
     register: build.mutation<RegisterApiResponse, RegisterApiArg>({
@@ -271,6 +404,18 @@ const injectedRtkApi = api.injectEndpoints({
       GetUserProfileApiArg
     >({
       query: (queryArg) => ({ url: `/api/users/${queryArg.id}` }),
+    }),
+    listMyFavorites: build.query<
+      ListMyFavoritesApiResponse,
+      ListMyFavoritesApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/users/me/favorites`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
     }),
     getLeaderboard: build.query<
       GetLeaderboardApiResponse,
@@ -328,6 +473,27 @@ const injectedRtkApi = api.injectEndpoints({
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
     }),
+    listRatings: build.query<ListRatingsApiResponse, ListRatingsApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/ratings`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
+    getMyRating: build.query<GetMyRatingApiResponse, GetMyRatingApiArg>({
+      query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/rating/mine` }),
+    }),
+    listReplies: build.query<ListRepliesApiResponse, ListRepliesApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.deckId}/comments/${queryArg.commentId}/replies`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
     listMyDecks: build.query<ListMyDecksApiResponse, ListMyDecksApiArg>({
       query: () => ({ url: `/api/decks/mine` }),
     }),
@@ -339,6 +505,18 @@ const injectedRtkApi = api.injectEndpoints({
           language: queryArg.language,
           difficulty: queryArg.difficulty,
           sort: queryArg.sort,
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
+    listMyCollections: build.query<
+      ListMyCollectionsApiResponse,
+      ListMyCollectionsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/collections/mine`,
+        params: {
           page: queryArg.page,
           size: queryArg.size,
         },
@@ -362,6 +540,15 @@ const injectedRtkApi = api.injectEndpoints({
     leaveOrg: build.mutation<LeaveOrgApiResponse, LeaveOrgApiArg>({
       query: (queryArg) => ({
         url: `/api/organizations/${queryArg.id}/leave`,
+        method: "DELETE",
+      }),
+    }),
+    removeDeckFromCollection: build.mutation<
+      RemoveDeckFromCollectionApiResponse,
+      RemoveDeckFromCollectionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/collections/${queryArg.id}/decks/${queryArg.deckId}`,
         method: "DELETE",
       }),
     }),
@@ -413,6 +600,15 @@ export type DeleteDeckApiResponse = unknown;
 export type DeleteDeckApiArg = {
   id: string;
 };
+export type RateDeckApiResponse = /** status 200 OK */ DeckRatingDto;
+export type RateDeckApiArg = {
+  id: string;
+  rateDeckRequest: RateDeckRequest;
+};
+export type DeleteMyRatingApiResponse = unknown;
+export type DeleteMyRatingApiArg = {
+  id: string;
+};
 export type UpdateElementApiResponse = /** status 200 OK */ DeckDto;
 export type UpdateElementApiArg = {
   id: string;
@@ -432,6 +628,31 @@ export type DeleteElementApiResponse = /** status 200 OK */ DeckDto;
 export type DeleteElementApiArg = {
   id: string;
   elementId: string;
+};
+export type EditCommentApiResponse = /** status 200 OK */ DeckCommentDto;
+export type EditCommentApiArg = {
+  deckId: string;
+  commentId: string;
+  updateCommentRequest: UpdateCommentRequest;
+};
+export type DeleteCommentApiResponse = /** status 200 OK */ DeckCommentDto;
+export type DeleteCommentApiArg = {
+  deckId: string;
+  commentId: string;
+};
+export type GetCollectionApiResponse = /** status 200 OK */ DeckCollectionDto;
+export type GetCollectionApiArg = {
+  id: string;
+};
+export type UpdateCollectionApiResponse =
+  /** status 200 OK */ DeckCollectionDto;
+export type UpdateCollectionApiArg = {
+  id: string;
+  updateDeckCollectionRequest: UpdateDeckCollectionRequest;
+};
+export type DeleteCollectionApiResponse = unknown;
+export type DeleteCollectionApiArg = {
+  id: string;
 };
 export type UploadProfileImageApiResponse = /** status 200 OK */ RegisteredUser;
 export type UploadProfileImageApiArg = {
@@ -512,6 +733,20 @@ export type PublishDeckApiResponse = /** status 200 OK */ DeckDto;
 export type PublishDeckApiArg = {
   id: string;
 };
+export type FavoriteDeckApiResponse = /** status 200 OK */ DeckFavoriteResponse;
+export type FavoriteDeckApiArg = {
+  id: string;
+};
+export type UnfavoriteDeckApiResponse =
+  /** status 200 OK */ DeckFavoriteResponse;
+export type UnfavoriteDeckApiArg = {
+  id: string;
+};
+export type RecountFavoritesApiResponse =
+  /** status 200 OK */ DeckFavoriteResponse;
+export type RecountFavoritesApiArg = {
+  id: string;
+};
 export type AddElementApiResponse = /** status 200 OK */ DeckDto;
 export type AddElementApiArg = {
   id: string;
@@ -539,9 +774,43 @@ export type MoveElementApiArg = {
   elementId: string;
   to: number;
 };
+export type ListCommentsApiResponse = /** status 200 OK */ DeckCommentsPage;
+export type ListCommentsApiArg = {
+  id: string;
+  page?: number;
+  size?: number;
+};
+export type PostCommentApiResponse = /** status 200 OK */ DeckCommentDto;
+export type PostCommentApiArg = {
+  id: string;
+  createCommentRequest: CreateCommentRequest;
+};
 export type ArchiveDeckApiResponse = /** status 200 OK */ DeckDto;
 export type ArchiveDeckApiArg = {
   id: string;
+};
+export type ToggleCommentUpvoteApiResponse =
+  /** status 200 OK */ DeckCommentDto;
+export type ToggleCommentUpvoteApiArg = {
+  deckId: string;
+  commentId: string;
+};
+export type CreateCollectionApiResponse =
+  /** status 200 OK */ DeckCollectionDto;
+export type CreateCollectionApiArg = {
+  createDeckCollectionRequest: CreateDeckCollectionRequest;
+};
+export type AddDeckToCollectionApiResponse =
+  /** status 200 OK */ DeckCollectionDto;
+export type AddDeckToCollectionApiArg = {
+  id: string;
+  addDeckToCollectionRequest: AddDeckToCollectionRequest;
+};
+export type ReorderCollectionDecksApiResponse =
+  /** status 200 OK */ DeckCollectionDto;
+export type ReorderCollectionDecksApiArg = {
+  id: string;
+  reorderCollectionDecksRequest: ReorderCollectionDecksRequest;
 };
 export type RegisterApiResponse = /** status 200 OK */ RegisteredUser;
 export type RegisterApiArg = {
@@ -558,6 +827,11 @@ export type UpdateProfileApiArg = {
 export type GetUserProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type GetUserProfileApiArg = {
   id: string;
+};
+export type ListMyFavoritesApiResponse = /** status 200 OK */ DeckFavoritesPage;
+export type ListMyFavoritesApiArg = {
+  page?: number;
+  size?: number;
 };
 export type GetLeaderboardApiResponse = /** status 200 OK */ GuestUser[];
 export type GetLeaderboardApiArg = {
@@ -594,6 +868,23 @@ export type ListMyOrgsApiResponse = /** status 200 OK */ OrganizationResponse[];
 export type ListMyOrgsApiArg = void;
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
+export type ListRatingsApiResponse = /** status 200 OK */ DeckRatingsPage;
+export type ListRatingsApiArg = {
+  id: string;
+  page?: number;
+  size?: number;
+};
+export type GetMyRatingApiResponse = /** status 200 OK */ DeckRatingDto;
+export type GetMyRatingApiArg = {
+  id: string;
+};
+export type ListRepliesApiResponse = /** status 200 OK */ DeckCommentsPage;
+export type ListRepliesApiArg = {
+  deckId: string;
+  commentId: string;
+  page?: number;
+  size?: number;
+};
 export type ListMyDecksApiResponse = /** status 200 OK */ DeckDto[];
 export type ListMyDecksApiArg = void;
 export type ExploreDecksApiResponse = /** status 200 OK */ DeckExploreResponse;
@@ -602,6 +893,12 @@ export type ExploreDecksApiArg = {
   language?: string;
   difficulty?: "EASY" | "MEDIUM" | "HARD";
   sort?: string;
+  page?: number;
+  size?: number;
+};
+export type ListMyCollectionsApiResponse =
+  /** status 200 OK */ DeckCollectionsPage;
+export type ListMyCollectionsApiArg = {
   page?: number;
   size?: number;
 };
@@ -616,6 +913,24 @@ export type LeaveOrgApiResponse = unknown;
 export type LeaveOrgApiArg = {
   id: string;
 };
+export type RemoveDeckFromCollectionApiResponse =
+  /** status 200 OK */ DeckCollectionDto;
+export type RemoveDeckFromCollectionApiArg = {
+  id: string;
+  deckId: string;
+};
+export type ImageVariant = {
+  size?: "XS" | "SM" | "MD" | "LG" | "XL";
+  url?: string;
+  width?: number;
+  height?: number;
+};
+export type Image = {
+  useExternalImg?: boolean;
+  internalImgId?: string;
+  variants?: ImageVariant[];
+  blank?: boolean;
+};
 export type ThemeResponse = {
   id?: string;
   name?: string;
@@ -626,6 +941,8 @@ export type ThemeResponse = {
   mode?: string;
   backgroundImageUrl?: string;
   logoImageUrl?: string;
+  background?: Image;
+  logo?: Image;
   createdAt?: string;
 };
 export type UpdateThemeRequest = {
@@ -660,19 +977,13 @@ export type GalleryImageResponse = {
   ownerId?: string;
   organizationId?: string;
   tags?: string[];
-  imageUrl?: string;
+  variants?: ImageVariant[];
   createdAt?: string;
 };
 export type UpdateGalleryImageRequest = {
   name?: string;
   tags?: string[];
   organizationId?: string;
-};
-export type Image = {
-  useExternalImg?: boolean;
-  internalImgId?: string;
-  imgUrl?: string;
-  blank?: boolean;
 };
 export type ShowcaseSettings = {
   maxPlayers?: number;
@@ -1045,8 +1356,11 @@ export type DeckDto = {
   playCount?: number;
   viewCount?: number;
   favoriteCount?: number;
+  isFavorited?: boolean;
   averageRating?: number;
   ratingCount?: number;
+  myRating?: number;
+  isRatedByMe?: boolean;
   lastPlayedAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -1067,6 +1381,61 @@ export type UpdateDeckRequest = {
   difficulty?: "EASY" | "MEDIUM" | "HARD";
   ageRange?: string;
   license?: "ALL_RIGHTS_RESERVED" | "CC_BY" | "CC_BY_SA" | "CC_BY_NC" | "CC0";
+};
+export type DeckRatingDto = {
+  id?: string;
+  deckId?: string;
+  userId?: string;
+  userName?: string;
+  userPictureUrl?: string;
+  stars?: number;
+  review?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type RateDeckRequest = {
+  stars?: number;
+  review?: string;
+};
+export type DeckCommentDto = {
+  id?: string;
+  deckId?: string;
+  authorUserId?: string;
+  authorName?: string;
+  authorPictureUrl?: string;
+  parentCommentId?: string;
+  body?: string;
+  upvotes?: number;
+  upvotedByMe?: boolean;
+  edited?: boolean;
+  deleted?: boolean;
+  replyCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type UpdateCommentRequest = {
+  body: string;
+};
+export type DeckCollectionDto = {
+  id?: string;
+  ownerUserId?: string;
+  organizationId?: string;
+  name?: string;
+  description?: string;
+  cover?: Image;
+  deckIds?: string[];
+  visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
+  viewCount?: number;
+  deckCount?: number;
+  decks?: DeckDto[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type UpdateDeckCollectionRequest = {
+  name?: string;
+  description?: string;
+  visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
+  cover?: Image;
 };
 export type PlayerStats = {
   gamesPlayed?: number;
@@ -1092,6 +1461,7 @@ export type RegisteredUser = {
   isGuest?: boolean;
   googleId?: string;
   pictureUrl?: string;
+  picture?: Image;
   stats?: PlayerStats;
   membership?: Membership;
   newsletter?: boolean;
@@ -1203,6 +1573,37 @@ export type CreateDeckRequest = {
   ageRange?: string;
   license?: "ALL_RIGHTS_RESERVED" | "CC_BY" | "CC_BY_SA" | "CC_BY_NC" | "CC0";
 };
+export type DeckFavoriteResponse = {
+  deckId?: string;
+  isFavorited?: boolean;
+  favoriteCount?: number;
+};
+export type DeckCommentsPage = {
+  items?: DeckCommentDto[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  hasMore?: boolean;
+};
+export type CreateCommentRequest = {
+  body: string;
+  parentCommentId?: string;
+};
+export type CreateDeckCollectionRequest = {
+  id?: string;
+  name: string;
+  description?: string;
+  organizationId?: string;
+  visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
+  cover?: Image;
+};
+export type AddDeckToCollectionRequest = {
+  deckId: string;
+  position?: number;
+};
+export type ReorderCollectionDecksRequest = {
+  deckIds: string[];
+};
 export type RegisterRequest = {
   username: string;
   newsletter?: boolean;
@@ -1212,6 +1613,7 @@ export type GuestUser = {
   userName?: string;
   isGuest?: boolean;
   pictureUrl?: string;
+  picture?: Image;
   stats?: PlayerStats;
 };
 export type GuestLoginRequest = {
@@ -1221,6 +1623,13 @@ export type UpdateProfileRequest = {
   pictureUrl?: string;
   newsletter?: boolean;
   activeThemeId?: string;
+};
+export type DeckFavoritesPage = {
+  items?: DeckDto[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  hasMore?: boolean;
 };
 export type PlayerPlacement = {
   userId?: string;
@@ -1326,8 +1735,25 @@ export type HealthCheckResponse = {
   database?: string;
   redis?: string;
 };
+export type DeckRatingsPage = {
+  items?: DeckRatingDto[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  hasMore?: boolean;
+  averageRating?: number;
+  ratingCount?: number;
+  starDistribution?: number[];
+};
 export type DeckExploreResponse = {
   items?: DeckDto[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  hasMore?: boolean;
+};
+export type DeckCollectionsPage = {
+  items?: DeckCollectionDto[];
   page?: number;
   size?: number;
   totalElements?: number;
@@ -1347,8 +1773,16 @@ export const {
   useLazyGetDeckQuery,
   useUpdateDeckMutation,
   useDeleteDeckMutation,
+  useRateDeckMutation,
+  useDeleteMyRatingMutation,
   useUpdateElementMutation,
   useDeleteElementMutation,
+  useEditCommentMutation,
+  useDeleteCommentMutation,
+  useGetCollectionQuery,
+  useLazyGetCollectionQuery,
+  useUpdateCollectionMutation,
+  useDeleteCollectionMutation,
   useUploadProfileImageMutation,
   useCloseAccountMutation,
   useListThemesQuery,
@@ -1371,15 +1805,27 @@ export const {
   useCreateDeckMutation,
   useUnpublishDeckMutation,
   usePublishDeckMutation,
+  useFavoriteDeckMutation,
+  useUnfavoriteDeckMutation,
+  useRecountFavoritesMutation,
   useAddElementMutation,
   useMoveMcqOptionMutation,
   useMoveElementMutation,
+  useListCommentsQuery,
+  useLazyListCommentsQuery,
+  usePostCommentMutation,
   useArchiveDeckMutation,
+  useToggleCommentUpvoteMutation,
+  useCreateCollectionMutation,
+  useAddDeckToCollectionMutation,
+  useReorderCollectionDecksMutation,
   useRegisterMutation,
   useGuestLoginMutation,
   useUpdateProfileMutation,
   useGetUserProfileQuery,
   useLazyGetUserProfileQuery,
+  useListMyFavoritesQuery,
+  useLazyListMyFavoritesQuery,
   useGetLeaderboardQuery,
   useLazyGetLeaderboardQuery,
   useCheckUsernameQuery,
@@ -1397,13 +1843,22 @@ export const {
   useLazyListMyOrgsQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
+  useListRatingsQuery,
+  useLazyListRatingsQuery,
+  useGetMyRatingQuery,
+  useLazyGetMyRatingQuery,
+  useListRepliesQuery,
+  useLazyListRepliesQuery,
   useListMyDecksQuery,
   useLazyListMyDecksQuery,
   useExploreDecksQuery,
   useLazyExploreDecksQuery,
+  useListMyCollectionsQuery,
+  useLazyListMyCollectionsQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,
   useLazyLoginQuery,
   useLeaveOrgMutation,
+  useRemoveDeckFromCollectionMutation,
 } = injectedRtkApi;

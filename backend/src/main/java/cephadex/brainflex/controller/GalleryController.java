@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -31,10 +32,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.GalleryImageDTO;
 import cephadex.brainflex.model.GalleryImage;
+import cephadex.brainflex.model.StoredImageVariant;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.element.ImageSize;
+import cephadex.brainflex.model.element.ImageVariant;
 import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.service.AuthorizationService;
 import cephadex.brainflex.service.ImageProcessingService;
+import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 import cephadex.brainflex.service.S3Service;
 import cephadex.brainflex.service.UserService;
 
@@ -67,7 +72,7 @@ public class GalleryController {
 
     /** Returns the caller's own gallery images plus every image shared with
      *  any of their organizations. Presigned URLs are refreshed on each read
-     *  because the persisted URL has typically expired since upload. */
+     *  because the persisted variants record only the size metadata. */
     @GetMapping
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<GalleryImageDTO.GalleryImageResponse>> listImages(Authentication authentication) {
@@ -84,12 +89,7 @@ public class GalleryController {
                         }
                     }
                     List<GalleryImageDTO.GalleryImageResponse> response = images.stream()
-                            .map(image -> {
-                                if (image.getS3Key() != null) {
-                                    image.setImageUrl(s3Service.refreshPresignedUrl(image.getS3Key()));
-                                }
-                                return new GalleryImageDTO.GalleryImageResponse(image);
-                            })
+                            .map(image -> new GalleryImageDTO.GalleryImageResponse(image, refresh(image)))
                             .toList();
                     return ResponseEntity.ok(response);
                 })
@@ -110,7 +110,7 @@ public class GalleryController {
         User user = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
 
-        byte[] processed = imageProcessingService.validateAndProcessGalleryImage(file);
+        Map<ImageSize, ProcessedVariant> processed = imageProcessingService.processGalleryImage(file);
 
         GalleryImage image = new GalleryImage();
         image.setId(UUID.randomUUID().toString());
@@ -119,14 +119,13 @@ public class GalleryController {
         image.setName(sanitizeName(name, file.getOriginalFilename()));
         image.setTags(sanitizeTags(parseTags(tagsCsv)));
 
-        String key = s3Service.galleryImageKey(image.getId());
-        String url = s3Service.uploadGalleryImage(image.getId(), processed);
-        image.setS3Key(key);
-        image.setImageUrl(url);
+        List<StoredImageVariant> stored = s3Service.uploadGalleryImage(image.getId(), processed);
+        image.setVariants(stored);
 
         GalleryImage saved = galleryImageRepository.save(image);
+        List<ImageVariant> fresh = s3Service.refreshGalleryImage(saved.getId(), saved.getVariants());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new GalleryImageDTO.GalleryImageResponse(saved));
+                .body(new GalleryImageDTO.GalleryImageResponse(saved, fresh));
     }
 
     @PutMapping("/{id}")
@@ -149,10 +148,8 @@ public class GalleryController {
         if (request.organizationId() != null) {
             image.setOrganizationId(resolveOrgScope(user, request.organizationId()));
         }
-        if (image.getS3Key() != null) {
-            image.setImageUrl(s3Service.refreshPresignedUrl(image.getS3Key()));
-        }
-        return ResponseEntity.ok(new GalleryImageDTO.GalleryImageResponse(galleryImageRepository.save(image)));
+        GalleryImage saved = galleryImageRepository.save(image);
+        return ResponseEntity.ok(new GalleryImageDTO.GalleryImageResponse(saved, refresh(saved)));
     }
 
     @DeleteMapping("/{id}")
@@ -163,14 +160,19 @@ public class GalleryController {
         User user = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
         GalleryImage image = authorizationService.requireGalleryImageEditable(id, user);
-        if (image.getS3Key() != null) {
-            s3Service.deleteObject(image.getS3Key());
+        if (image.getVariants() != null && !image.getVariants().isEmpty()) {
+            s3Service.deleteGalleryImage(image.getId(), image.getVariants());
         }
         galleryImageRepository.delete(image);
         return ResponseEntity.ok().build();
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
+
+    private List<ImageVariant> refresh(GalleryImage image) {
+        if (image.getVariants() == null || image.getVariants().isEmpty()) return List.of();
+        return s3Service.refreshGalleryImage(image.getId(), image.getVariants());
+    }
 
     private static String sanitizeName(String supplied, String fallback) {
         String candidate = supplied == null || supplied.isBlank() ? fallback : supplied;

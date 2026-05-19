@@ -17,7 +17,7 @@ This folder tracks the work needed to bring the BrainFlex backend (and the front
 - [x] **02** — [Deck discovery metadata](./02-deck-discovery-metadata/README.md) — `publishStatus`, `language`, rating/play counters, license
 - [ ] **03** — [Deck favorites](./03-deck-favorites/README.md) — `DeckFavorite` join collection + star icon
 - [ ] **04** — [Deck ratings & comments](./04-deck-ratings-and-comments/README.md) — 1–5 star ratings and threaded comments
-- [ ] **05** — [Deck collections](./05-deck-collections/README.md) — user/org folders of decks
+- [x] **05** — [Deck collections](./05-deck-collections/README.md) — user/org folders of decks
 - [ ] **06** — [Deck collaborators](./06-deck-collaborators/README.md) — co-editors on a deck
 
 ### New element kinds

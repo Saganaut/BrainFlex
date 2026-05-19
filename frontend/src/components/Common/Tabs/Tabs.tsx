@@ -67,7 +67,7 @@ const Tabs = ({
     <div className={[styles.tabs, className].filter(Boolean).join(" ")}>
       <div
         role='tablist'
-        aria-label={ariaLabel}
+        ariaLabel={ariaLabel}
         className={[styles.tablist, styles[variant]].join(" ")}>
         {items.map((item, idx) => {
           const selected = item.id === value;
@@ -109,7 +109,7 @@ const Tabs = ({
             key={item.id}
             role='tabpanel'
             id={panelId}
-            aria-labelledby={tabId}
+            ariaLabelledby={tabId}
             hidden={!selected}
             className={styles.panel}>
             {item.panel}

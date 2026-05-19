@@ -77,7 +77,9 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   return (
     <div
       className={styles.lobby}
-      style={{ "--showcase-bg": `url(${backgroundUrl})` } as React.CSSProperties}>
+      style={
+        { "--showcase-bg": `url(${backgroundUrl})` } as React.CSSProperties
+      }>
       <div className={styles.header}>
         <h1 className={styles.title}>Lobby</h1>
         <div className={styles.codeBox}>
@@ -95,7 +97,8 @@ const Lobby = ({ roomCode }: LobbyProps) => {
           {players.map((p) => {
             const playerId = p.userId;
             const isPlayerHost = session?.hostUserId === playerId;
-            const isOffline = !!playerId && game.offlineUserIds.includes(playerId);
+            const isOffline =
+              !!playerId && game.offlineUserIds.includes(playerId);
             return (
               <li
                 key={playerId}
@@ -114,9 +117,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                     offline
                   </span>
                 )}
-                {isPlayerHost && (
-                  <span className={styles.hostBadge}>host</span>
-                )}
+                {isPlayerHost && <span className={styles.hostBadge}>host</span>}
                 {isHost && !isPlayerHost && playerId && (
                   <Btn
                     size='sm'
@@ -125,7 +126,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                     onClick={() => {
                       void handleBoot(playerId);
                     }}
-                    aria-label={`Remove ${p.userName ?? "player"} from the lobby`}>
+                    ariaLabel={`Remove ${p.userName ?? "player"} from the lobby`}>
                     Boot
                   </Btn>
                 )}

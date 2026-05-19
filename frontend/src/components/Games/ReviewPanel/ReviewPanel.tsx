@@ -18,7 +18,10 @@ import type {
   ShowcaseReviewDto,
 } from "../../../store/BrainFlexApi";
 import type { AnswerPayload, DeckElement } from "../../../types/elements";
-import { BarChart, type BarChartItem } from "@/components/Common/Charts/BarChart/BarChart";
+import {
+  BarChart,
+  type BarChartItem,
+} from "@/components/Common/Charts/BarChart/BarChart";
 import {
   FrequencyList,
   type FrequencyListItem,
@@ -46,7 +49,7 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
 
   return (
     <div className={styles.panel}>
-      <div className={styles.pager} role='tablist' aria-label='Round'>
+      <div className={styles.pager} role='tablist' ariaLabel='Round'>
         {rounds.map((_, i) => (
           <button
             // eslint-disable-next-line react-x/no-array-index-key -- round index is the identity
@@ -67,7 +70,9 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
         <span className={styles.roundLabel}>
           {isSlide ? "Slide" : "Round"} {activeIndex + 1} / {rounds.length}
         </span>
-        {element && <h3 className={styles.questionText}>{titleFor(element)}</h3>}
+        {element && (
+          <h3 className={styles.questionText}>{titleFor(element)}</h3>
+        )}
         {element && bodyFor(element) && (
           <p className={styles.correctAnswer}>{bodyFor(element)}</p>
         )}
@@ -145,7 +150,7 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
 
 const titleFor = (e: DeckElement): string => {
   if (e.kind === "Slide") return e.title ?? "(untitled slide)";
-  return ("prompt" in e ? (e.prompt ?? "") : "");
+  return "prompt" in e ? (e.prompt ?? "") : "";
 };
 
 const bodyFor = (e: DeckElement): string | undefined => {
@@ -173,7 +178,9 @@ const renderAggregate = (round: RoundReview, element: DeckElement) => {
         value: counts.get(o.id ?? "") ?? 0,
         highlight: o.id ? correctIds.has(o.id) : false,
       }));
-      return <BarChart items={bars} total={answers.length} caption='Distribution' />;
+      return (
+        <BarChart items={bars} total={answers.length} caption='Distribution' />
+      );
     }
     case "TextQuestion": {
       const counts = new Map<string, number>();
@@ -189,8 +196,7 @@ const renderAggregate = (round: RoundReview, element: DeckElement) => {
         .map(([text, count]) => ({
           text,
           count,
-          correct:
-            text.toLowerCase() === element.correctAnswer?.toLowerCase(),
+          correct: text.toLowerCase() === element.correctAnswer?.toLowerCase(),
         }));
       return (
         <FrequencyList

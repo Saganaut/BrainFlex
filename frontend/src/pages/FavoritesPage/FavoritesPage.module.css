@@ -1,0 +1,101 @@
+/* Favorites listing page — paginated grid of decks the caller has starred.
+ * Visually mirrors MyDecks so the favorites tile feels like a continuation
+ * of that surface; the heart on each tile is the toggle-off control.
+ */
+
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-6);
+  gap: var(--space-4);
+}
+
+.title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+}
+
+.card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    background-color: var(--bg-primary);
+  }
+
+  & .coverWrap {
+    position: relative;
+  }
+
+  & .cover {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    background: var(--bg-subtle);
+    display: block;
+  }
+
+  & .heart {
+    position: absolute;
+    top: var(--space-1);
+    right: var(--space-1);
+    background-color: color-mix(in oklab, var(--bg-surface) 80%, transparent);
+    border-radius: var(--radius-full);
+  }
+
+  & .name {
+    font-size: var(--font-size-base);
+    font-weight: 600;
+  }
+
+  & .meta {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+  }
+}
+
+.empty {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  padding: var(--space-4) 0;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+
+  & .pageInfo {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+}

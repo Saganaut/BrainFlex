@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-conditions'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as MyFavoritesRouteImport } from './routes/my-favorites'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
@@ -21,8 +22,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as GamesIndexRouteImport } from './routes/games/index'
 import { Route as DecksIndexRouteImport } from './routes/decks/index'
 import { Route as PulseCreateRouteImport } from './routes/pulse/create'
+import { Route as MyDecksCollectionsRouteImport } from './routes/my-decks/collections'
 import { Route as GamesJoinRouteImport } from './routes/games/join'
 import { Route as GamesCreateRouteImport } from './routes/games/create'
+import { Route as CollectionsCollectionIdRouteImport } from './routes/collections/$collectionId'
 import { Route as GamesRoomCodeResultsRouteImport } from './routes/games/$roomCode/results'
 import { Route as GamesRoomCodePlayRouteImport } from './routes/games/$roomCode/play'
 import { Route as GamesRoomCodeLobbyRouteImport } from './routes/games/$roomCode/lobby'
@@ -43,6 +46,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyFavoritesRoute = MyFavoritesRouteImport.update({
+  id: '/my-favorites',
+  path: '/my-favorites',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LandingPageRoute = LandingPageRouteImport.update({
@@ -90,6 +98,11 @@ const PulseCreateRoute = PulseCreateRouteImport.update({
   path: '/pulse/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyDecksCollectionsRoute = MyDecksCollectionsRouteImport.update({
+  id: '/my-decks/collections',
+  path: '/my-decks/collections',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesJoinRoute = GamesJoinRouteImport.update({
   id: '/games/join',
   path: '/games/join',
@@ -98,6 +111,11 @@ const GamesJoinRoute = GamesJoinRouteImport.update({
 const GamesCreateRoute = GamesCreateRouteImport.update({
   id: '/games/create',
   path: '/games/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CollectionsCollectionIdRoute = CollectionsCollectionIdRouteImport.update({
+  id: '/collections/$collectionId',
+  path: '/collections/$collectionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GamesRoomCodeResultsRoute = GamesRoomCodeResultsRouteImport.update({
@@ -138,11 +156,14 @@ export interface FileRoutesByFullPath {
   '/design-system': typeof DesignSystemRoute
   '/explore': typeof ExploreRoute
   '/landing-page': typeof LandingPageRoute
+  '/my-favorites': typeof MyFavoritesRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/create': typeof GamesCreateRoute
   '/games/join': typeof GamesJoinRoute
+  '/my-decks/collections': typeof MyDecksCollectionsRoute
   '/pulse/create': typeof PulseCreateRoute
   '/decks/': typeof DecksIndexRoute
   '/games/': typeof GamesIndexRoute
@@ -160,11 +181,14 @@ export interface FileRoutesByTo {
   '/design-system': typeof DesignSystemRoute
   '/explore': typeof ExploreRoute
   '/landing-page': typeof LandingPageRoute
+  '/my-favorites': typeof MyFavoritesRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/create': typeof GamesCreateRoute
   '/games/join': typeof GamesJoinRoute
+  '/my-decks/collections': typeof MyDecksCollectionsRoute
   '/pulse/create': typeof PulseCreateRoute
   '/decks': typeof DecksIndexRoute
   '/games': typeof GamesIndexRoute
@@ -183,11 +207,14 @@ export interface FileRoutesById {
   '/design-system': typeof DesignSystemRoute
   '/explore': typeof ExploreRoute
   '/landing-page': typeof LandingPageRoute
+  '/my-favorites': typeof MyFavoritesRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
+  '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/create': typeof GamesCreateRoute
   '/games/join': typeof GamesJoinRoute
+  '/my-decks/collections': typeof MyDecksCollectionsRoute
   '/pulse/create': typeof PulseCreateRoute
   '/decks/': typeof DecksIndexRoute
   '/games/': typeof GamesIndexRoute
@@ -207,11 +234,14 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/explore'
     | '/landing-page'
+    | '/my-favorites'
     | '/pricing'
     | '/register'
     | '/terms-and-conditions'
+    | '/collections/$collectionId'
     | '/games/create'
     | '/games/join'
+    | '/my-decks/collections'
     | '/pulse/create'
     | '/decks/'
     | '/games/'
@@ -229,11 +259,14 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/explore'
     | '/landing-page'
+    | '/my-favorites'
     | '/pricing'
     | '/register'
     | '/terms-and-conditions'
+    | '/collections/$collectionId'
     | '/games/create'
     | '/games/join'
+    | '/my-decks/collections'
     | '/pulse/create'
     | '/decks'
     | '/games'
@@ -251,11 +284,14 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/explore'
     | '/landing-page'
+    | '/my-favorites'
     | '/pricing'
     | '/register'
     | '/terms-and-conditions'
+    | '/collections/$collectionId'
     | '/games/create'
     | '/games/join'
+    | '/my-decks/collections'
     | '/pulse/create'
     | '/decks/'
     | '/games/'
@@ -274,11 +310,14 @@ export interface RootRouteChildren {
   DesignSystemRoute: typeof DesignSystemRoute
   ExploreRoute: typeof ExploreRoute
   LandingPageRoute: typeof LandingPageRoute
+  MyFavoritesRoute: typeof MyFavoritesRoute
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
+  CollectionsCollectionIdRoute: typeof CollectionsCollectionIdRoute
   GamesCreateRoute: typeof GamesCreateRoute
   GamesJoinRoute: typeof GamesJoinRoute
+  MyDecksCollectionsRoute: typeof MyDecksCollectionsRoute
   PulseCreateRoute: typeof PulseCreateRoute
   DecksIndexRoute: typeof DecksIndexRoute
   GamesIndexRoute: typeof GamesIndexRoute
@@ -311,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-favorites': {
+      id: '/my-favorites'
+      path: '/my-favorites'
+      fullPath: '/my-favorites'
+      preLoaderRoute: typeof MyFavoritesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/landing-page': {
@@ -376,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PulseCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-decks/collections': {
+      id: '/my-decks/collections'
+      path: '/my-decks/collections'
+      fullPath: '/my-decks/collections'
+      preLoaderRoute: typeof MyDecksCollectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games/join': {
       id: '/games/join'
       path: '/games/join'
@@ -388,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/games/create'
       fullPath: '/games/create'
       preLoaderRoute: typeof GamesCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/collections/$collectionId': {
+      id: '/collections/$collectionId'
+      path: '/collections/$collectionId'
+      fullPath: '/collections/$collectionId'
+      preLoaderRoute: typeof CollectionsCollectionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/games/$roomCode/results': {
@@ -442,11 +502,14 @@ const rootRouteChildren: RootRouteChildren = {
   DesignSystemRoute: DesignSystemRoute,
   ExploreRoute: ExploreRoute,
   LandingPageRoute: LandingPageRoute,
+  MyFavoritesRoute: MyFavoritesRoute,
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,
   TermsAndConditionsRoute: TermsAndConditionsRoute,
+  CollectionsCollectionIdRoute: CollectionsCollectionIdRoute,
   GamesCreateRoute: GamesCreateRoute,
   GamesJoinRoute: GamesJoinRoute,
+  MyDecksCollectionsRoute: MyDecksCollectionsRoute,
   PulseCreateRoute: PulseCreateRoute,
   DecksIndexRoute: DecksIndexRoute,
   GamesIndexRoute: GamesIndexRoute,

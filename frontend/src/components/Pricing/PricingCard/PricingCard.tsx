@@ -67,7 +67,7 @@ const PricingCard = ({
   }
 
   return (
-    <article className={className} aria-label={`${name} plan`}>
+    <article className={className} ariaLabel={`${name} plan`}>
       {badge != null && <span className={styles.badge}>{badge}</span>}
       <header className={styles.header}>
         <h3 className={styles.name}>{name}</h3>

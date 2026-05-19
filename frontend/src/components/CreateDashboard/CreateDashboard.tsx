@@ -51,7 +51,7 @@ const CreateDashboard = () => {
             <Btn
               shape={"pill"}
               size={"md"}
-              aria-label='Enter fullscreen'
+              ariaLabel='Enter fullscreen'
               onClick={toggleFullScreen}>
               <ArrowsPointingOutIcon
                 style={{ width: "1rem", height: "1rem" }}
@@ -59,7 +59,7 @@ const CreateDashboard = () => {
             </Btn>
           </div>
           <input
-            aria-label='Deck title'
+            ariaLabel='Deck title'
             value={titleDraft}
             placeholder='Untitled Deck'
             maxLength={100}

@@ -15,7 +15,14 @@ import type { DeckDto, Slide } from "../../store/BrainFlexApi";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Badge } from "@/components/Common/Badge";
+import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+} from "@/components/Menus/DropdownMenu";
+import { AddToCollectionModal } from "@/components/Collections/AddToCollectionModal";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
+import { useModal } from "@/context/useModal";
 import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./MyDecksPage.module.css";
 
@@ -59,18 +66,18 @@ const DeckDiscoveryRow = ({ deck }: { deck: DeckDto }) => {
 
   return (
     <span className={styles.cardDiscovery}>
-      <span className={styles.cardDiscoveryItem} aria-label='Plays'>
+      <span className={styles.cardDiscoveryItem} ariaLabel='Plays'>
         <PlayIcon className={styles.cardIcon} />
         {plays}
       </span>
-      <span className={styles.cardDiscoveryItem} aria-label='Average rating'>
+      <span className={styles.cardDiscoveryItem} ariaLabel='Average rating'>
         <StarIcon className={styles.cardIcon} />
         {formatRating(rating, ratingCount)}
       </span>
-      <span className={styles.cardDiscoveryItem} aria-label='Language'>
+      <span className={styles.cardDiscoveryItem} ariaLabel='Language'>
         {language.toUpperCase()}
       </span>
-      <span className={styles.cardDiscoveryItem} aria-label='Difficulty'>
+      <span className={styles.cardDiscoveryItem} ariaLabel='Difficulty'>
         {DIFFICULTY_LABEL[difficulty]}
       </span>
     </span>
@@ -120,49 +127,85 @@ const DeckCard = ({
   onDelete?: (id: string) => void;
 }) => {
   const navigate = useNavigate();
+  const { openModal, closeModal } = useModal();
+
+  const handleAddToCollection = () => {
+    if (deck.id == null) return;
+    const deckId = deck.id;
+    openModal({
+      title: "Add to collection",
+      content: <AddToCollectionModal deckId={deckId} onClose={closeModal} />,
+    });
+  };
 
   return (
-    <div
-      className={styles.card}
-      onClick={() => {
-        void navigate({ to: `/decks/${deck.id}/edit` });
-      }}>
-      <img
-        src={resolveDeckCover(deck.cover?.imgUrl, deck.id)}
-        alt=''
-        className={styles.cardCover}
-        loading='lazy'
-      />
-      <span className={styles.cardName}>{deck.name}</span>
-      <DeckStatusRow deck={deck} />
-      <span className={styles.cardMeta}>
-        {deck.elementCount ?? 0} elements
-        {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
-      </span>
-      <DeckDiscoveryRow deck={deck} />
-      {deck.description && (
-        <span className={styles.cardDesc}>{deck.description}</span>
-      )}
-      {editable && deck.id && (
-        <div className={styles.cardActions}>
-          <Link
-            to='/decks/$deckId/edit'
-            params={{ deckId: deck.id }}
-            search={{ questionId: undefined }}
-            viewTransition>
-            <Btn size='sm'>Edit</Btn>
-          </Link>
-          <Btn
-            size='sm'
-            variant='error'
-            onClick={() => {
-              if (deck.id) onDelete?.(deck.id);
-            }}>
-            Delete
-          </Btn>
+    <DropdownMenu
+      position='top-left'
+      anchorToCursor
+      trigger={(toggle) => (
+        <div
+          className={styles.card}
+          onClick={() => {
+            void navigate({ to: `/decks/${deck.id}/edit` });
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            toggle(e);
+          }}>
+          <div className={styles.cardCoverWrap}>
+            <img
+              src={resolveDeckCover(deck.cover, deck.id)}
+              alt=''
+              className={styles.cardCover}
+              loading='lazy'
+            />
+            {deck.id && (
+              <span className={styles.cardHeart}>
+                <FavoriteHeart
+                  deckId={deck.id}
+                  isFavorited={deck.isFavorited ?? false}
+                  favoriteCount={deck.favoriteCount}
+                  showCount
+                  size='sm'
+                />
+              </span>
+            )}
+          </div>
+          <span className={styles.cardName}>{deck.name}</span>
+          <DeckStatusRow deck={deck} />
+          <span className={styles.cardMeta}>
+            {deck.elementCount ?? 0} elements
+            {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
+          </span>
+          <DeckDiscoveryRow deck={deck} />
+          {deck.description && (
+            <span className={styles.cardDesc}>{deck.description}</span>
+          )}
+          {editable && deck.id && (
+            <div className={styles.cardActions}>
+              <Link
+                to='/decks/$deckId/edit'
+                params={{ deckId: deck.id }}
+                search={{ questionId: undefined }}
+                viewTransition>
+                <Btn size='sm'>Edit</Btn>
+              </Link>
+              <Btn
+                size='sm'
+                variant='error'
+                onClick={() => {
+                  if (deck.id) onDelete?.(deck.id);
+                }}>
+                Delete
+              </Btn>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      )}>
+      <DropdownMenuItem onClick={handleAddToCollection}>
+        Add to collection…
+      </DropdownMenuItem>
+    </DropdownMenu>
   );
 };
 
@@ -232,8 +275,12 @@ const MyDecksPage = () => {
   type Tab = "live" | "drafts";
   const [tab, setTab] = useState<Tab>("live");
   // Draft = explicit DRAFT or legacy decks without a publishStatus field set.
-  const draftDecks = myDecks.filter((d) => (d.publishStatus ?? "DRAFT") === "DRAFT");
-  const liveDecks = myDecks.filter((d) => (d.publishStatus ?? "DRAFT") !== "DRAFT");
+  const draftDecks = myDecks.filter(
+    (d) => (d.publishStatus ?? "DRAFT") === "DRAFT",
+  );
+  const liveDecks = myDecks.filter(
+    (d) => (d.publishStatus ?? "DRAFT") !== "DRAFT",
+  );
   const visibleDecks = tab === "drafts" ? draftDecks : liveDecks;
 
   return (
@@ -245,7 +292,7 @@ const MyDecksPage = () => {
 
       {isRegistered && (
         <section className={styles.section}>
-          <div className={styles.tabs} role='tablist' aria-label='Your decks'>
+          <div className={styles.tabs} role='tablist' ariaLabel='Your decks'>
             <button
               type='button'
               role='tab'

@@ -18,7 +18,7 @@ import { Btn } from "@/components/Common/Buttons/Btn";
 import { useElementEditor } from "./useElementEditor";
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
 import type { Image, PlaceOnImageQuestion } from "@/store/BrainFlexApi";
-import { displayUrl, externalImage } from "@/utils/image";
+import { displayUrl, externalImage, largestUrl } from "@/utils/image";
 import styles from "./SlideContentTypes.module.css";
 
 const isPlaceOnImage = (e: { kind: string }): e is PlaceOnImageQuestion =>
@@ -26,7 +26,7 @@ const isPlaceOnImage = (e: { kind: string }): e is PlaceOnImageQuestion =>
 
 /** The paste-URL input only shows external URLs; gallery picks leave it blank. */
 const pasteUrlOf = (image: Image | undefined): string =>
-  image?.useExternalImg ? (image.imgUrl ?? "") : "";
+  image?.useExternalImg ? (largestUrl(image, "") ?? "") : "";
 
 const PlaceOnImageSlideContent = () => {
   const { element, schedule, flush, commit, syncedFromId, markSynced } =

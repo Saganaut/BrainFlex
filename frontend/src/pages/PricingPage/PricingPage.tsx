@@ -37,7 +37,7 @@ const PricingPage = () => {
         </div>
       </header>
 
-      <section className={styles.gridWrap} aria-label='Subscription plans'>
+      <section className={styles.gridWrap} ariaLabel='Subscription plans'>
         <PricingGrid columns={3}>
           {tiers.map((tier) => (
             <PricingCard
@@ -61,8 +61,8 @@ const PricingPage = () => {
         <h2 className={styles.faqTitle}>Questions about pricing?</h2>
         <p className={styles.faqBody}>
           Detailed plan comparisons, team seat management, and billing options
-          are coming soon. In the meantime, reach out and we&apos;ll get you
-          set up.
+          are coming soon. In the meantime, reach out and we&apos;ll get you set
+          up.
         </p>
       </section>
     </main>

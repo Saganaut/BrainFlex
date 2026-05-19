@@ -21,7 +21,7 @@ import { Btn } from "@/components/Common/Buttons/Btn";
 import { useElementEditor } from "./useElementEditor";
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
 import type { GridQuestion, Image } from "@/store/BrainFlexApi";
-import { displayUrl, externalImage } from "@/utils/image";
+import { externalImage, largestUrl, resolveImageUrl } from "@/utils/image";
 import styles from "./SlideContentTypes.module.css";
 
 const isGrid = (e: { kind: string }): e is GridQuestion =>
@@ -36,7 +36,7 @@ const inputToIndexes = (raw: string) =>
 
 /** The paste-URL input only shows external URLs; gallery picks leave it blank. */
 const pasteUrlOf = (image: Image | undefined): string =>
-  image?.useExternalImg ? (image.imgUrl ?? "") : "";
+  image?.useExternalImg ? (largestUrl(image, "") ?? "") : "";
 
 const GridSlideContent = () => {
   const { element, schedule, flush, commit, syncedFromId, markSynced } =
@@ -85,7 +85,7 @@ const GridSlideContent = () => {
   });
 
   const seed = element.id ?? "grid";
-  const imgSrc = displayUrl(element.cells?.backingImage, seed, 640, 360);
+  const imgSrc = resolveImageUrl(element.cells?.backingImage, "MD", seed, 640, 360);
 
   return (
     <SlideContentWrapper

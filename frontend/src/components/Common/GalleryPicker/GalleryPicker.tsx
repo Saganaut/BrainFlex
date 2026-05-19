@@ -19,7 +19,7 @@ import { Input } from "@/components/Common/Input/Input/Input";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
 import { EmptyState } from "@/components/Common/EmptyState/EmptyState";
 import { IMAGE_TIERS, validateImageFile } from "@/utils/imageValidation";
-import { internalImage } from "@/utils/image";
+import { internalImage, variantFor } from "@/utils/image";
 import { extractErrorMessage } from "@/utils/utils";
 import styles from "./GalleryPicker.module.css";
 
@@ -117,28 +117,37 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
       setUploadTags("");
       setUploadOrgId("");
       setUploadMode(false);
-      if (created.id && created.imageUrl) {
-        onPick(internalImage(created.id, created.imageUrl));
+      if (created.id) {
+        // Storage only needs the gallery id — the read-side hydrator
+        // refreshes the variants on every response.
+        onPick(internalImage(created.id));
       }
     } catch (err: unknown) {
-      setUploadError(extractErrorMessage(err, "Upload failed. Please try again."));
+      setUploadError(
+        extractErrorMessage(err, "Upload failed. Please try again."),
+      );
     }
   };
 
   const renderTile = (img: GalleryImageResponse) => {
     const isShared = img.ownerId !== ownerId;
+    // Picker tiles are small — SM (200px) is the right tier for the thumb.
+    const thumb = variantFor(
+      { useExternalImg: false, internalImgId: img.id, variants: img.variants },
+      "SM",
+    );
     return (
       <button
         type='button'
         key={img.id}
         className={styles.tile}
         onClick={() => {
-          if (img.id && img.imageUrl) {
-            onPick(internalImage(img.id, img.imageUrl));
+          if (img.id) {
+            onPick(internalImage(img.id));
           }
         }}>
-        {img.imageUrl ? (
-          <img src={img.imageUrl} alt={img.name} className={styles.thumb} />
+        {thumb?.url ? (
+          <img src={thumb.url} alt={img.name} className={styles.thumb} />
         ) : (
           <div className={styles.thumb} aria-hidden='true' />
         )}
@@ -230,7 +239,7 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
                   if (file) handleFileSelected(file);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
-                aria-label='Choose image to upload'
+                ariaLabel='Choose image to upload'
               />
               <Btn onClick={() => fileInputRef.current?.click()}>
                 {uploadFile ? "Replace file" : "Choose file…"}

@@ -6,6 +6,7 @@
  */
 import styles from "./SlideView.module.css";
 import type { Slide } from "../../../types/elements";
+import { largestUrl } from "@/utils/image";
 
 export interface SlideViewProps {
   slide: Slide;
@@ -14,9 +15,15 @@ export interface SlideViewProps {
   timeRemaining?: number;
 }
 
-const SlideView = ({ slide, round, totalRounds, timeRemaining }: SlideViewProps) => {
+const SlideView = ({
+  slide,
+  round,
+  totalRounds,
+  timeRemaining,
+}: SlideViewProps) => {
+  const imageUrl = largestUrl(slide.image, slide.id ?? "");
   return (
-    <article className={styles.card} aria-label='Slide'>
+    <article className={styles.card} ariaLabel='Slide'>
       <div className={styles.meta}>
         <span className={styles.position}>
           Slide {round + 1} / {totalRounds}
@@ -26,9 +33,7 @@ const SlideView = ({ slide, round, totalRounds, timeRemaining }: SlideViewProps)
         )}
       </div>
 
-      {slide.image?.imgUrl && (
-        <img src={slide.image.imgUrl} alt='' className={styles.image} />
-      )}
+      {imageUrl && <img src={imageUrl} alt='' className={styles.image} />}
 
       {slide.title && <h2 className={styles.title}>{slide.title}</h2>}
       {slide.body && <p className={styles.body}>{slide.body}</p>}

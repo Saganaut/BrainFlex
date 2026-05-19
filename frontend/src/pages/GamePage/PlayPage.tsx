@@ -16,6 +16,7 @@ import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { useGetShowcaseQuery } from "../../store/BrainFlexApi";
 import { resolveShowcaseBackground } from "../../utils/deckImages";
+import { largestUrl } from "@/utils/image";
 import {
   setSession,
   answerSubmittedLocally,
@@ -211,7 +212,7 @@ const PlayPage = () => {
               pointValue:
                 "pointValue" in element ? (element.pointValue ?? 0) : 0,
               timeLimit: questionCardTimeLimit,
-              imageUrl: element.image?.imgUrl,
+              imageUrl: largestUrl(element.image, element.id ?? "") ?? undefined,
             }}
             round={game.round}
             totalRounds={game.totalRounds}

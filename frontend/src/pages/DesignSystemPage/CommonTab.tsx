@@ -479,7 +479,7 @@ const CommonTab = () => {
                     variant='ghost'
                     icon={<EllipsisVerticalIcon />}
                     onClick={toggle}
-                    aria-label='Open menu'
+                    ariaLabel='Open menu'
                   />
                 )}>
                 <DropdownMenuLabel>Account</DropdownMenuLabel>
@@ -733,7 +733,7 @@ const CommonTab = () => {
                 <IconBtn
                   variant='ghost'
                   icon={<TrashIcon />}
-                  aria-label='Delete'
+                  ariaLabel='Delete'
                 />
               </Tooltip>
             </div>
@@ -749,8 +749,8 @@ const CommonTab = () => {
                   label: "Overview",
                   panel: (
                     <p style={{ color: "var(--text-secondary)" }}>
-                      The overview tab. Use ← / → on the tab strip to move
-                      focus + selection.
+                      The overview tab. Use ← / → on the tab strip to move focus
+                      + selection.
                     </p>
                   ),
                 },
@@ -759,8 +759,8 @@ const CommonTab = () => {
                   label: "Details",
                   panel: (
                     <p style={{ color: "var(--text-secondary)" }}>
-                      Detail body. Each panel is mounted but only the active
-                      one is visible, so internal state survives a switch.
+                      Detail body. Each panel is mounted but only the active one
+                      is visible, so internal state survives a switch.
                     </p>
                   ),
                 },

@@ -26,7 +26,15 @@ public class User {
     private Boolean isGuest;
 
     private String googleId;
+    /** External avatar URL — currently only set by the Google OAuth flow.
+     *  Once a user uploads their own avatar via {@code pictureVariants},
+     *  read paths prefer the variants and this field stays null. */
     private String pictureUrl;
+    /** One entry per ImageSize tier (xs/sm/md/lg/xl) for uploaded avatars.
+     *  Empty means the user hasn't uploaded their own picture; renderers
+     *  should fall back to {@link #pictureUrl} (Google OAuth) or a stock
+     *  placeholder. Never null. */
+    private List<StoredImageVariant> pictureVariants = new ArrayList<>();
 
     private PlayerStats stats = new PlayerStats();
 

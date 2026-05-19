@@ -4,6 +4,7 @@
 // generated client. Once that happens, switch consumers over to the
 // generated hooks and delete this file.
 import { emptySplitApi } from "./emptyApi";
+import type { ImageVariant } from "./BrainFlexApi";
 
 export interface GalleryImageResponse {
   id: string;
@@ -11,7 +12,9 @@ export interface GalleryImageResponse {
   ownerId: string;
   organizationId?: string | null;
   tags: string[];
-  imageUrl?: string | null;
+  /** One entry per ImageSize tier (xs/sm/md/lg/xl). Renderers should pick the
+   *  smallest tier that still fills their slot via {@link variantFor}. */
+  variants: ImageVariant[];
   createdAt?: string;
 }
 

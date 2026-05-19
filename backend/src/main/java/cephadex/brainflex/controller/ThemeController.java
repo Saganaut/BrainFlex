@@ -3,6 +3,7 @@ package cephadex.brainflex.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,12 +23,16 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.ThemeDTO;
+import cephadex.brainflex.model.StoredImageVariant;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.element.ImageSize;
 import cephadex.brainflex.repository.ThemeRepository;
 import cephadex.brainflex.service.AuthorizationService;
 import cephadex.brainflex.service.ImageProcessingService;
+import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 import cephadex.brainflex.service.S3Service;
+import cephadex.brainflex.service.ThemeImageHydrator;
 import cephadex.brainflex.service.UserService;
 
 @RestController
@@ -39,15 +44,18 @@ public class ThemeController {
     private final S3Service s3Service;
     private final ImageProcessingService imageProcessingService;
     private final AuthorizationService authorizationService;
+    private final ThemeImageHydrator themeImageHydrator;
 
     public ThemeController(ThemeRepository themeRepository, UserService userService,
             S3Service s3Service, ImageProcessingService imageProcessingService,
-            AuthorizationService authorizationService) {
+            AuthorizationService authorizationService,
+            ThemeImageHydrator themeImageHydrator) {
         this.themeRepository = themeRepository;
         this.userService = userService;
         this.s3Service = s3Service;
         this.imageProcessingService = imageProcessingService;
         this.authorizationService = authorizationService;
+        this.themeImageHydrator = themeImageHydrator;
     }
 
     /** Returns all themes owned by the caller plus any shared with their orgs. */
@@ -67,7 +75,7 @@ public class ThemeController {
                         }
                     }
                     List<ThemeDTO.ThemeResponse> response = themes.stream()
-                            .map(ThemeDTO.ThemeResponse::new)
+                            .map(this::buildResponse)
                             .toList();
                     return ResponseEntity.ok(response);
                 })
@@ -90,7 +98,7 @@ public class ThemeController {
                     theme.setOrganizationId(resolveOrgScope(user, request.organizationId()));
                     Theme saved = themeRepository.save(theme);
                     return ResponseEntity.status(HttpStatus.CREATED)
-                            .body(new ThemeDTO.ThemeResponse(saved));
+                            .body(buildResponse(saved));
                 })
                 .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
     }
@@ -122,7 +130,7 @@ public class ThemeController {
         if (request.organizationId() != null) {
             theme.setOrganizationId(resolveOrgScope(user, request.organizationId()));
         }
-        return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
+        return ResponseEntity.ok(buildResponse(themeRepository.save(theme)));
     }
 
     @DeleteMapping("/{id}")
@@ -133,12 +141,18 @@ public class ThemeController {
         User user = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
         Theme theme = authorizationService.requireThemeEditable(id, user);
+        if (theme.getLogoVariants() != null && !theme.getLogoVariants().isEmpty()) {
+            s3Service.deleteThemeLogo(theme.getId(), theme.getLogoVariants());
+        }
+        if (theme.getBackgroundVariants() != null && !theme.getBackgroundVariants().isEmpty()) {
+            s3Service.deleteThemeBackground(theme.getId(), theme.getBackgroundVariants());
+        }
         themeRepository.delete(theme);
         return ResponseEntity.ok().build();
     }
 
     // @PreAuthorize intentionally omitted on multipart endpoints — see
-    // ProfileImageController for the rationale. The inline
+    // AccountController.uploadProfileImage for the rationale. The inline
     // resolveRegisteredUser + authorizationService.requireThemeEditable pair
     // performs both authn and ownership authorization here.
     @PostMapping(value = "/{id}/background", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -150,10 +164,10 @@ public class ThemeController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
         Theme theme = authorizationService.requireThemeEditable(id, user);
 
-        byte[] processed = imageProcessingService.validateAndProcessBackground(file);
-        String url = s3Service.uploadThemeBackground(theme.getId(), processed);
-        theme.setBackgroundImageUrl(url);
-        return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
+        Map<ImageSize, ProcessedVariant> processed = imageProcessingService.processBackground(file);
+        List<StoredImageVariant> stored = s3Service.uploadThemeBackground(theme.getId(), processed);
+        theme.setBackgroundVariants(stored);
+        return ResponseEntity.ok(buildResponse(themeRepository.save(theme)));
     }
 
     @PostMapping(value = "/{id}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -165,13 +179,20 @@ public class ThemeController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
         Theme theme = authorizationService.requireThemeEditable(id, user);
 
-        byte[] processed = imageProcessingService.validateAndProcessLogo(file);
-        String url = s3Service.uploadThemeLogo(theme.getId(), processed);
-        theme.setLogoImageUrl(url);
-        return ResponseEntity.ok(new ThemeDTO.ThemeResponse(themeRepository.save(theme)));
+        Map<ImageSize, ProcessedVariant> processed = imageProcessingService.processLogo(file);
+        List<StoredImageVariant> stored = s3Service.uploadThemeLogo(theme.getId(), processed);
+        theme.setLogoVariants(stored);
+        return ResponseEntity.ok(buildResponse(themeRepository.save(theme)));
     }
 
     // ── helpers ────────────────────────────────────────────────────────────────
+
+    private ThemeDTO.ThemeResponse buildResponse(Theme theme) {
+        return new ThemeDTO.ThemeResponse(
+                theme,
+                themeImageHydrator.backgroundImageOf(theme),
+                themeImageHydrator.logoImageOf(theme));
+    }
 
     private static int clampHue(int hue) {
         return Math.max(0, Math.min(360, hue));

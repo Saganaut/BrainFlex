@@ -1,5 +1,7 @@
 package cephadex.brainflex.controller;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -17,11 +20,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.dto.DeckDTO;
+import cephadex.brainflex.dto.DeckFavoritesPage;
 import cephadex.brainflex.dto.UpdateProfileRequest;
 import cephadex.brainflex.dto.UserDTO;
+import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.DeckFavorite;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.DeckFavoriteService;
+import cephadex.brainflex.service.DeckImageHydrationService;
+import cephadex.brainflex.service.DeckTagHydrationService;
+import cephadex.brainflex.service.UserImageHydrator;
 import cephadex.brainflex.service.UserService;
 
 @RestController
@@ -30,10 +43,27 @@ public class UserController {
 
         private final UserRepository userRepository;
         private final UserService userService;
+        private final DeckFavoriteService deckFavoriteService;
+        private final DeckRepository deckRepository;
+        private final DeckImageHydrationService deckImageHydrationService;
+        private final DeckTagHydrationService deckTagHydrationService;
+        private final UserImageHydrator userImageHydrator;
 
-        public UserController(UserRepository userRepository, UserService userService) {
+        public UserController(
+                        UserRepository userRepository,
+                        UserService userService,
+                        DeckFavoriteService deckFavoriteService,
+                        DeckRepository deckRepository,
+                        DeckImageHydrationService deckImageHydrationService,
+                        DeckTagHydrationService deckTagHydrationService,
+                        UserImageHydrator userImageHydrator) {
                 this.userRepository = userRepository;
                 this.userService = userService;
+                this.deckFavoriteService = deckFavoriteService;
+                this.deckRepository = deckRepository;
+                this.deckImageHydrationService = deckImageHydrationService;
+                this.deckTagHydrationService = deckTagHydrationService;
+                this.userImageHydrator = userImageHydrator;
         }
 
         /**
@@ -48,12 +78,7 @@ public class UserController {
                 Page<User> userPage = userRepository.findAll(pageRequest);
 
                 return userPage.getContent().stream()
-                                .map(user -> new UserDTO.GuestUser(
-                                                user.getId(),
-                                                user.getUserName(),
-                                                user.getIsGuest(),
-                                                user.getPictureUrl(),
-                                                user.getStats()))
+                                .map(user -> new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user)))
                                 .toList();
         }
 
@@ -69,7 +94,7 @@ public class UserController {
         @GetMapping("/{id}")
         public ResponseEntity<UserDTO.RegisteredUser> getUserProfile(@PathVariable String id) {
                 return userRepository.findById(id)
-                                .map(user -> ResponseEntity.ok(new UserDTO.RegisteredUser(user)))
+                                .map(user -> ResponseEntity.ok(new UserDTO.RegisteredUser(user, userImageHydrator.pictureImageOf(user))))
                                 .orElse(ResponseEntity.notFound().build());
         }
 
@@ -78,8 +103,11 @@ public class UserController {
                         @RequestBody UpdateProfileRequest request,
                         Authentication authentication) {
                 return userService.resolveRegisteredUser(authentication)
-                                .map(user -> ResponseEntity.ok(
-                                                new UserDTO.RegisteredUser(userService.updateProfile(user, request))))
+                                .map(user -> {
+                                        User updated = userService.updateProfile(user, request);
+                                        return ResponseEntity.ok(
+                                                        new UserDTO.RegisteredUser(updated, userImageHydrator.pictureImageOf(updated)));
+                                })
                                 .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
         }
 
@@ -91,6 +119,51 @@ public class UserController {
                                         return new ResponseEntity<Void>(HttpStatus.OK);
                                 })
                                 .orElseGet(() -> new ResponseEntity<Void>(HttpStatus.FORBIDDEN));
+        }
+
+        /**
+         * Paginated favorites list for the authenticated caller, ordered
+         * by {@code favoritedAt DESC}. Returns full {@link DeckDTO}s so the
+         * grid can render cards without a second lookup; deleted source
+         * decks are dropped from the page (with the total reflecting the
+         * raw join-row count — close enough until chunk 18 introduces a
+         * background cleanup task).
+         */
+        @PreAuthorize("hasRole('USER')")
+        @GetMapping("/me/favorites")
+        public DeckFavoritesPage listMyFavorites(
+                        @RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "20") int size,
+                        Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.FORBIDDEN, "Registered account required"));
+                int safePage = Math.max(0, page);
+                int safeSize = Math.max(1, Math.min(50, size));
+                PageRequest pageRequest = PageRequest.of(
+                                safePage, safeSize, Sort.by("favoritedAt").descending());
+                Page<DeckFavorite> rows = deckFavoriteService.listForUser(caller.getId(), pageRequest);
+
+                List<String> deckIds = new ArrayList<>(rows.getNumberOfElements());
+                for (DeckFavorite row : rows.getContent()) deckIds.add(row.getDeckId());
+
+                Map<String, Deck> byId = new HashMap<>();
+                for (Deck deck : deckRepository.findAllById(deckIds)) byId.put(deck.getId(), deck);
+
+                List<Deck> ordered = new ArrayList<>(deckIds.size());
+                for (String deckId : deckIds) {
+                        Deck deck = byId.get(deckId);
+                        if (deck != null) ordered.add(deck);
+                }
+
+                for (Deck deck : ordered) deckImageHydrationService.hydrate(deck);
+                deckTagHydrationService.hydrate(ordered);
+
+                List<DeckDTO> items = ordered.stream()
+                                .map(d -> new DeckDTO(d, true))
+                                .toList();
+                boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
+                return new DeckFavoritesPage(items, safePage, safeSize, rows.getTotalElements(), hasMore);
         }
 
 }

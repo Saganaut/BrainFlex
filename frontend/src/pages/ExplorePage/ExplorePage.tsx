@@ -18,6 +18,7 @@ import {
 import { Tag } from "@/components/Common/Tag/Tag";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
+import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
 import { resolveDeckCover } from "@/utils/deckImages";
 import styles from "./ExplorePage.module.css";
 
@@ -61,30 +62,45 @@ const ExploreCard = ({ deck }: { deck: DeckDto }) => (
       params={{ deckId: deck.id ?? "" }}
       search={{ questionId: undefined }}
       className={styles.cardLink}>
-      <img
-        src={resolveDeckCover(deck.cover?.imgUrl, deck.id ?? "")}
-        alt=''
-        loading='lazy'
-        className={styles.cardCover}
-      />
+      <div className={styles.cardCoverWrap}>
+        <img
+          src={resolveDeckCover(deck.cover, deck.id ?? "")}
+          alt=''
+          loading='lazy'
+          className={styles.cardCover}
+        />
+        {deck.id != null && deck.id !== "" && (
+          <span className={styles.cardHeart}>
+            <FavoriteHeart
+              deckId={deck.id}
+              isFavorited={deck.isFavorited ?? false}
+              favoriteCount={deck.favoriteCount}
+              showCount
+              size='sm'
+            />
+          </span>
+        )}
+      </div>
       <div className={styles.cardBody}>
         <span className={styles.cardName}>{deck.name}</span>
         {deck.description != null && deck.description !== "" && (
           <span className={styles.cardDesc}>{deck.description}</span>
         )}
         <div className={styles.cardMeta}>
-          <span className={styles.cardMetaItem} aria-label='Plays'>
+          <span className={styles.cardMetaItem} ariaLabel='Plays'>
             <PlayIcon className={styles.cardIcon} />
             {deck.playCount ?? 0}
           </span>
-          <span className={styles.cardMetaItem} aria-label='Rating'>
+          <span className={styles.cardMetaItem} ariaLabel='Rating'>
             <StarIcon className={styles.cardIcon} />
             {formatRating(deck.averageRating ?? 0, deck.ratingCount ?? 0)}
           </span>
           <span className={styles.cardMetaItem}>
             {(deck.language ?? "en").toUpperCase()}
           </span>
-          <span className={styles.cardMetaItem}>{deck.difficulty ?? "MEDIUM"}</span>
+          <span className={styles.cardMetaItem}>
+            {deck.difficulty ?? "MEDIUM"}
+          </span>
         </div>
         {deck.tags != null && deck.tags.length > 0 && (
           <div className={styles.cardTags}>
@@ -135,15 +151,19 @@ const ExplorePage = () => {
       <header className={styles.header}>
         <h1 className={styles.title}>Explore</h1>
         <p className={styles.subtitle}>
-          Browse published decks by subject. Filter on the left, sort on the right.
+          Browse published decks by subject. Filter on the left, sort on the
+          right.
         </p>
       </header>
 
       <div className={styles.layout}>
-        <aside className={styles.sidebar} aria-label='Deck filters'>
+        <aside className={styles.sidebar} ariaLabel='Deck filters'>
           <section className={styles.filterSection}>
             <h2 className={styles.filterHeading}>Subject</h2>
-            <div className={styles.subjectChips} role='radiogroup' aria-label='Subject'>
+            <div
+              className={styles.subjectChips}
+              role='radiogroup'
+              ariaLabel='Subject'>
               <button
                 type='button'
                 role='radio'

@@ -18,6 +18,7 @@ import {
   type GalleryImageResponse,
 } from "@/store/galleryApi";
 import { useListMyOrgsQuery } from "@/store/BrainFlexApi";
+import { variantFor } from "@/utils/image";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { Input } from "@/components/Common/Input/Input/Input";
@@ -191,11 +192,17 @@ const GallerySection = () => {
               image.organizationId != null &&
               image.organizationId !== "" &&
               !isOwned;
+            // Thumbnails on the management page are ~200px wide — SM fits.
+            const thumb = variantFor({
+              useExternalImg: false,
+              internalImgId: image.id,
+              variants: image.variants,
+            }, "SM");
             return (
               <div key={image.id} className={styles.card}>
-                {image.imageUrl ? (
+                {thumb?.url ? (
                   <img
-                    src={image.imageUrl}
+                    src={thumb.url}
                     alt={image.name}
                     className={styles.thumb}
                   />

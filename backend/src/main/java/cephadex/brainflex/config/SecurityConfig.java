@@ -123,7 +123,8 @@ public class SecurityConfig {
                                 "/api/users/leaderboard/**",
                                 "/api/users/check-username",
                                 "/api/showcases/**",
-                                "/api/decks/**").permitAll()
+                                "/api/decks/**",
+                                "/api/collections/*").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {

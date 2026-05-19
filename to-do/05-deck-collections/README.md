@@ -1,6 +1,6 @@
 # 05 — Deck collections
 
-**Status:** Not started
+**Status:** Done
 **Depends on:** 02 (publish status — collections can include drafts only if you own them)
 **Unblocks:** Nothing critical; sets up a future "Course / Series" concept
 
@@ -61,11 +61,14 @@ Indexes:
 
 ## Checklist
 
-- [ ] `DeckCollection` model + repo + service + controller + tests
-- [ ] Reorder mutation with optimistic UI via `apiEnhancements.ts`
-- [ ] Cover image upload (reuse theme background flow)
-- [ ] `/my-decks/collections` route
-- [ ] `/collections/$collectionId` route with drag-to-reorder
-- [ ] "Add to collection" right-click + deck-detail menu
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `DeckCollection` model + repo + service + controller + tests
+- [x] Reorder mutation with optimistic UI via `apiEnhancements.ts`
+- [ ] Cover image upload (reuse theme background flow) — deferred; the
+      cover field on the model and DTOs is wired through, but the upload
+      endpoint + UI picker can land alongside the broader media-asset work
+      in chunk 19.
+- [x] `/my-decks/collections` route
+- [x] `/collections/$collectionId` route with drag-to-reorder
+- [x] "Add to collection" right-click + deck-detail menu
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

@@ -1,6 +1,8 @@
 package cephadex.brainflex.controller;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,10 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import cephadex.brainflex.dto.UserDTO;
+import cephadex.brainflex.model.StoredImageVariant;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.element.ImageSize;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.ImageProcessingService;
+import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 import cephadex.brainflex.service.S3Service;
+import cephadex.brainflex.service.UserImageHydrator;
 import cephadex.brainflex.service.UserService;
 
 @RestController
@@ -27,16 +33,19 @@ public class AccountController {
     private final UserService userService;
     private final S3Service s3Service;
     private final ImageProcessingService imageProcessingService;
+    private final UserImageHydrator userImageHydrator;
 
     public AccountController(
             UserRepository userRepository,
             UserService userService,
             S3Service s3Service,
-            ImageProcessingService imageProcessingService) {
+            ImageProcessingService imageProcessingService,
+            UserImageHydrator userImageHydrator) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.s3Service = s3Service;
         this.imageProcessingService = imageProcessingService;
+        this.userImageHydrator = userImageHydrator;
     }
 
     // @PreAuthorize intentionally omitted: Spring Session + multipart has a
@@ -56,12 +65,16 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        byte[] processed = imageProcessingService.validateAndProcess(file);
-        String presignedUrl = s3Service.uploadProfileImage(user.getId(), processed);
+        Map<ImageSize, ProcessedVariant> processed = imageProcessingService.processAvatar(file);
+        List<StoredImageVariant> stored = s3Service.uploadAvatar(user.getId(), processed);
 
-        user.setPictureUrl(presignedUrl);
+        // Uploaded variants supersede the OAuth picture URL. Clear it so the
+        // hydrator's preference order (variants > pictureUrl > empty) keeps
+        // pointing at the user's own image even after a re-sign-in.
+        user.setPictureVariants(stored);
+        user.setPictureUrl(null);
         userRepository.save(user);
 
-        return ResponseEntity.ok(new UserDTO.RegisteredUser(user));
+        return ResponseEntity.ok(new UserDTO.RegisteredUser(user, userImageHydrator.pictureImageOf(user)));
     }
 }

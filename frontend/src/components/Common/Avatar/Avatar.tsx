@@ -13,13 +13,7 @@ interface AvatarProps {
   className?: string;
 }
 
-const Avatar = ({
-  src,
-  name,
-  alt,
-  size = "md",
-  className,
-}: AvatarProps) => {
+const Avatar = ({ src, name, alt, size = "md", className }: AvatarProps) => {
   const [errored, setErrored] = useState(false);
   const showImage = Boolean(src) && !errored;
   const initial = name?.trim().charAt(0).toUpperCase();
@@ -28,7 +22,7 @@ const Avatar = ({
     .join(" ");
 
   return (
-    <span className={wrapperClass} aria-label={alt ?? name}>
+    <span className={wrapperClass} ariaLabel={alt ?? name}>
       {showImage ? (
         <img
           src={src ?? ""}

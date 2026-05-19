@@ -17,6 +17,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import cephadex.brainflex.repository.AudienceSubmissionRepository;
 import cephadex.brainflex.repository.BestAnswerVoteRepository;
+import cephadex.brainflex.repository.DeckCollectionRepository;
+import cephadex.brainflex.repository.DeckCommentRepository;
+import cephadex.brainflex.repository.DeckFavoriteRepository;
+import cephadex.brainflex.repository.DeckRatingRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.repository.ShowcaseResultRepository;
@@ -59,6 +63,18 @@ class HealthControllerTest {
 
     @MockitoBean
     private DeckRepository deckRepository;
+
+    @MockitoBean
+    private DeckCollectionRepository deckCollectionRepository;
+
+    @MockitoBean
+    private DeckFavoriteRepository deckFavoriteRepository;
+
+    @MockitoBean
+    private DeckRatingRepository deckRatingRepository;
+
+    @MockitoBean
+    private DeckCommentRepository deckCommentRepository;
 
     @MockitoBean
     private ShowcaseRepository showcaseRepository;

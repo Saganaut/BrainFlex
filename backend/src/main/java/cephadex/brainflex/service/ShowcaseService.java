@@ -92,6 +92,7 @@ public class ShowcaseService {
     private final AuthorizationService authorizationService;
     private final DeckImageHydrationService deckImageHydrationService;
     private final DeckService deckService;
+    private final UserImageHydrator userImageHydrator;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private final ConcurrentHashMap<String, Object> roundLocks = new ConcurrentHashMap<>();
@@ -106,6 +107,7 @@ public class ShowcaseService {
             AuthorizationService authorizationService,
             DeckImageHydrationService deckImageHydrationService,
             DeckService deckService,
+            UserImageHydrator userImageHydrator,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.showcaseRepository = showcaseRepository;
         this.deckRepository = deckRepository;
@@ -115,6 +117,7 @@ public class ShowcaseService {
         this.authorizationService = authorizationService;
         this.deckImageHydrationService = deckImageHydrationService;
         this.deckService = deckService;
+        this.userImageHydrator = userImageHydrator;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -903,7 +906,7 @@ public class ShowcaseService {
         ShowcasePlayer p = new ShowcasePlayer();
         p.setUserId(user.getId());
         p.setUserName(user.getUserName());
-        p.setPictureUrl(user.getPictureUrl());
+        p.setPictureUrl(userImageHydrator.pictureUrlOf(user));
         p.setGuest(Boolean.TRUE.equals(user.getIsGuest()));
         return p;
     }
@@ -944,6 +947,8 @@ public class ShowcaseService {
     }
 
     private static String urlOf(Image image) {
-        return image == null ? null : image.imgUrl();
+        if (image == null) return null;
+        var largest = image.largestVariant();
+        return largest == null ? null : largest.url();
     }
 }

@@ -22,6 +22,7 @@ import cephadex.brainflex.dto.UserDTO;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthoritiesService;
+import cephadex.brainflex.service.UserImageHydrator;
 import cephadex.brainflex.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,14 +36,17 @@ public class AuthController {
     private final UserService userService;
     private final SecurityContextRepository securityContextRepository;
     private final AuthoritiesService authoritiesService;
+    private final UserImageHydrator userImageHydrator;
 
     public AuthController(UserRepository userRepository, UserService userService,
             SecurityContextRepository securityContextRepository,
-            AuthoritiesService authoritiesService) {
+            AuthoritiesService authoritiesService,
+            UserImageHydrator userImageHydrator) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.securityContextRepository = securityContextRepository;
         this.authoritiesService = authoritiesService;
+        this.userImageHydrator = userImageHydrator;
     }
 
     @GetMapping("/me")
@@ -58,11 +62,11 @@ public class AuthController {
             if (isGuest) {
                 String id = authentication.getName().substring(6);
                 return userRepository.findById(id)
-                        .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.GuestUser(user)))
+                        .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user))))
                         .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
             } else if (isRegistered) {
                 return userRepository.findByGoogleId(authentication.getName())
-                        .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.RegisteredUser(user)))
+                        .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.RegisteredUser(user, userImageHydrator.pictureImageOf(user))))
                         .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
             }
         }
@@ -84,8 +88,9 @@ public class AuthController {
         }
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+        User registered = userService.register(oAuth2User, request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UserDTO.RegisteredUser(userService.register(oAuth2User, request)));
+                .body(new UserDTO.RegisteredUser(registered, userImageHydrator.pictureImageOf(registered)));
     }
 
     @GetMapping("/login")
@@ -122,6 +127,6 @@ public class AuthController {
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, httpRequest, httpResponse);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UserDTO.GuestUser(user));
+                .body(new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user)));
     }
 }

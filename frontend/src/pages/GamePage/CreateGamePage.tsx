@@ -58,7 +58,7 @@ const DeckGrid = ({
           key={deck.id}
           media={
             <img
-              src={resolveDeckCover(deck.cover?.imgUrl, deck.id)}
+              src={resolveDeckCover(deck.cover, deck.id)}
               alt=''
               loading='lazy'
             />
@@ -86,7 +86,7 @@ interface ModeTabsProps {
 }
 
 const ModeTabs = ({ mode, onChange }: ModeTabsProps) => (
-  <div className={styles.modeTabs} role='tablist' aria-label='Create mode'>
+  <div className={styles.modeTabs} role='tablist' ariaLabel='Create mode'>
     <ActionCard
       onClick={() => {
         onChange("template");

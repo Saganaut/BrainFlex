@@ -8,6 +8,8 @@
  * Theme-driven backgrounds will slot in between "deck" and "Lorem Picsum" once
  * the showcase passes the host's active theme through to clients.
  */
+import type { Image } from "@/store/BrainFlexApi";
+import { resolveImageUrl } from "@/utils/image";
 
 const COVER_WIDTH = 480;
 const COVER_HEIGHT = 280;
@@ -19,18 +21,27 @@ const picsumUrl = (seed: string, w: number, h: number): string =>
 
 /** Returns the cover thumbnail URL for a deck, falling back to a deterministic Lorem Picsum. */
 export const resolveDeckCover = (
-  override: string | null | undefined,
+  cover: Image | null | undefined,
   deckId: string | null | undefined,
 ): string => {
-  if (override && override.trim().length > 0) return override;
-  return picsumUrl(`brainflex-deck-cover-${deckId ?? "unknown"}`, COVER_WIDTH, COVER_HEIGHT);
+  const seed = `brainflex-deck-cover-${deckId ?? "unknown"}`;
+  // Cover cards sit at ~480×280, so SM (200px) is too small and MD (600px)
+  // overshoots by a hair — MD gives a sharp 2x render on retina.
+  const url = resolveImageUrl(cover, "MD", seed, COVER_WIDTH, COVER_HEIGHT, false);
+  return url ?? picsumUrl(seed, COVER_WIDTH, COVER_HEIGHT);
 };
 
-/** Returns the showcase background URL, with Lorem Picsum as the placeholder fallback. */
+/** Returns the showcase background URL, with Lorem Picsum as the placeholder
+ *  fallback. Takes a plain string because the Showcase model snapshots a
+ *  single URL at session-create time (the largest variant URL frozen at that
+ *  moment) — there are no per-tier variants to choose from at play time. */
 export const resolveShowcaseBackground = (
   deckBackgroundUrl: string | null | undefined,
   deckId: string | null | undefined,
 ): string => {
-  if (deckBackgroundUrl && deckBackgroundUrl.trim().length > 0) return deckBackgroundUrl;
-  return picsumUrl(`brainflex-deck-bg-${deckId ?? "unknown"}`, BG_WIDTH, BG_HEIGHT);
+  const seed = `brainflex-deck-bg-${deckId ?? "unknown"}`;
+  if (deckBackgroundUrl && deckBackgroundUrl.trim().length > 0) {
+    return deckBackgroundUrl;
+  }
+  return picsumUrl(seed, BG_WIDTH, BG_HEIGHT);
 };

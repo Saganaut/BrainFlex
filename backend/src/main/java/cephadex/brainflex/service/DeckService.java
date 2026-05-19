@@ -439,13 +439,13 @@ public class DeckService {
     // ---- Helpers ----
 
     /**
-     * For internal images the `imgUrl` is a transient transport field that the
-     * hydrator regenerates on read — never persist whatever the client sent
-     * for it. External images are passed through untouched.
+     * For internal images the variant list is a transient transport field that
+     * the hydrator regenerates on read — never persist whatever the client
+     * sent for it. External images are passed through untouched.
      */
     private static Image stripTransportUrl(Image image) {
         if (image.useExternalImg()) return image;
-        return image.withImgUrl(null);
+        return image.withVariants(java.util.List.of());
     }
 
     /** Same rule for top-level Deck.cover / Deck.background. */

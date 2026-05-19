@@ -139,7 +139,7 @@ const OrgSection = () => {
               setCreateName(e.target.value);
             }}
             maxLength={128}
-            aria-label='New organization name'
+            ariaLabel='New organization name'
           />
           <Btn
             onClick={() => {
@@ -151,9 +151,7 @@ const OrgSection = () => {
         </div>
 
         <div className={styles.orgDivider}>
-          <span className={styles.orgDividerText}>
-            or join an existing one
-          </span>
+          <span className={styles.orgDividerText}>or join an existing one</span>
         </div>
 
         <div className={styles.orgRow}>
@@ -165,7 +163,7 @@ const OrgSection = () => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setJoinId(e.target.value);
             }}
-            aria-label='Organization ID to join'
+            ariaLabel='Organization ID to join'
           />
           <Btn
             onClick={() => {

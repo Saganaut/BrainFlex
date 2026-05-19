@@ -30,7 +30,9 @@ const ResultsPage = () => {
   const { data: gameResult } = useGetResultsQuery({ roomCode });
   // Fetch the review lazily: only the host typically opens it, but for non-Pulse
   // showcases it's useful for everyone. Suspend nothing — just show a skeleton.
-  const { data: review, isLoading: reviewLoading } = useGetReviewQuery({ roomCode });
+  const { data: review, isLoading: reviewLoading } = useGetReviewQuery({
+    roomCode,
+  });
 
   const [view, setView] = useState<View>("standings");
 
@@ -58,7 +60,7 @@ const ResultsPage = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.tabs} role='tablist' aria-label='Results view'>
+      <div className={styles.tabs} role='tablist' ariaLabel='Results view'>
         <Btn
           type='button'
           role='tab'

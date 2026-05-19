@@ -13,6 +13,7 @@ import { Route as TermsAndConditionsRouteImport } from './routes/terms-and-condi
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as LandingPageRouteImport } from './routes/landing-page'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AboutRouteImport } from './routes/about'
@@ -47,6 +48,11 @@ const PricingRoute = PricingRouteImport.update({
 const LandingPageRoute = LandingPageRouteImport.update({
   id: '/landing-page',
   path: '/landing-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DesignSystemRoute = DesignSystemRouteImport.update({
@@ -130,6 +136,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/design-system': typeof DesignSystemRoute
+  '/explore': typeof ExploreRoute
   '/landing-page': typeof LandingPageRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/design-system': typeof DesignSystemRoute
+  '/explore': typeof ExploreRoute
   '/landing-page': typeof LandingPageRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
@@ -173,6 +181,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/design-system': typeof DesignSystemRoute
+  '/explore': typeof ExploreRoute
   '/landing-page': typeof LandingPageRoute
   '/pricing': typeof PricingRoute
   '/register': typeof RegisterRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/design-system'
+    | '/explore'
     | '/landing-page'
     | '/pricing'
     | '/register'
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/design-system'
+    | '/explore'
     | '/landing-page'
     | '/pricing'
     | '/register'
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/design-system'
+    | '/explore'
     | '/landing-page'
     | '/pricing'
     | '/register'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
   DesignSystemRoute: typeof DesignSystemRoute
+  ExploreRoute: typeof ExploreRoute
   LandingPageRoute: typeof LandingPageRoute
   PricingRoute: typeof PricingRoute
   RegisterRoute: typeof RegisterRoute
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       path: '/landing-page'
       fullPath: '/landing-page'
       preLoaderRoute: typeof LandingPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/design-system': {
@@ -420,6 +440,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
   DesignSystemRoute: DesignSystemRoute,
+  ExploreRoute: ExploreRoute,
   LandingPageRoute: LandingPageRoute,
   PricingRoute: PricingRoute,
   RegisterRoute: RegisterRoute,

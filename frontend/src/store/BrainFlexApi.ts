@@ -14,6 +14,22 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    getTag: build.query<GetTagApiResponse, GetTagApiArg>({
+      query: (queryArg) => ({ url: `/api/tags/${queryArg.id}` }),
+    }),
+    updateTag: build.mutation<UpdateTagApiResponse, UpdateTagApiArg>({
+      query: (queryArg) => ({
+        url: `/api/tags/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateTagRequest,
+      }),
+    }),
+    deleteTag: build.mutation<DeleteTagApiResponse, DeleteTagApiArg>({
+      query: (queryArg) => ({
+        url: `/api/tags/${queryArg.id}`,
+        method: "DELETE",
+      }),
+    }),
     updateImage: build.mutation<UpdateImageApiResponse, UpdateImageApiArg>({
       query: (queryArg) => ({
         url: `/api/gallery/${queryArg.id}`,
@@ -102,6 +118,23 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.body,
       }),
     }),
+    listTags: build.query<ListTagsApiResponse, ListTagsApiArg>({
+      query: (queryArg) => ({
+        url: `/api/tags`,
+        params: {
+          curated: queryArg.curated,
+          parentTagId: queryArg.parentTagId,
+          search: queryArg.search,
+        },
+      }),
+    }),
+    createTag: build.mutation<CreateTagApiResponse, CreateTagApiArg>({
+      query: (queryArg) => ({
+        url: `/api/tags`,
+        method: "POST",
+        body: queryArg.createTagRequest,
+      }),
+    }),
     createShowcase: build.mutation<
       CreateShowcaseApiResponse,
       CreateShowcaseApiArg
@@ -160,6 +193,21 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.createDeckRequest,
       }),
     }),
+    unpublishDeck: build.mutation<
+      UnpublishDeckApiResponse,
+      UnpublishDeckApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/unpublish`,
+        method: "POST",
+      }),
+    }),
+    publishDeck: build.mutation<PublishDeckApiResponse, PublishDeckApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/publish`,
+        method: "POST",
+      }),
+    }),
     addElement: build.mutation<AddElementApiResponse, AddElementApiArg>({
       query: (queryArg) => ({
         url: `/api/decks/${queryArg.id}/elements`,
@@ -186,6 +234,12 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           to: queryArg.to,
         },
+      }),
+    }),
+    archiveDeck: build.mutation<ArchiveDeckApiResponse, ArchiveDeckApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/archive`,
+        method: "POST",
       }),
     }),
     register: build.mutation<RegisterApiResponse, RegisterApiArg>({
@@ -277,6 +331,19 @@ const injectedRtkApi = api.injectEndpoints({
     listMyDecks: build.query<ListMyDecksApiResponse, ListMyDecksApiArg>({
       query: () => ({ url: `/api/decks/mine` }),
     }),
+    exploreDecks: build.query<ExploreDecksApiResponse, ExploreDecksApiArg>({
+      query: (queryArg) => ({
+        url: `/api/decks/explore`,
+        params: {
+          tagId: queryArg.tagId,
+          language: queryArg.language,
+          difficulty: queryArg.difficulty,
+          sort: queryArg.sort,
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
     getCurrentUser: build.query<
       GetCurrentUserApiResponse,
       GetCurrentUserApiArg
@@ -309,6 +376,19 @@ export type UpdateThemeApiArg = {
 };
 export type DeleteThemeApiResponse = unknown;
 export type DeleteThemeApiArg = {
+  id: string;
+};
+export type GetTagApiResponse = /** status 200 OK */ TagResponse;
+export type GetTagApiArg = {
+  id: string;
+};
+export type UpdateTagApiResponse = /** status 200 OK */ TagResponse;
+export type UpdateTagApiArg = {
+  id: string;
+  updateTagRequest: UpdateTagRequest;
+};
+export type DeleteTagApiResponse = unknown;
+export type DeleteTagApiArg = {
   id: string;
 };
 export type UpdateImageApiResponse = /** status 200 OK */ GalleryImageResponse;
@@ -381,6 +461,16 @@ export type UploadBackgroundApiArg = {
     image: Blob;
   };
 };
+export type ListTagsApiResponse = /** status 200 OK */ TagResponse[];
+export type ListTagsApiArg = {
+  curated?: boolean;
+  parentTagId?: string;
+  search?: string;
+};
+export type CreateTagApiResponse = /** status 200 OK */ TagResponse;
+export type CreateTagApiArg = {
+  createTagRequest: CreateTagRequest;
+};
 export type CreateShowcaseApiResponse = /** status 200 OK */ ShowcaseDto;
 export type CreateShowcaseApiArg = {
   createShowcaseRequest: CreateShowcaseRequest;
@@ -414,6 +504,14 @@ export type CreateDeckApiResponse = /** status 200 OK */ DeckDto;
 export type CreateDeckApiArg = {
   createDeckRequest: CreateDeckRequest;
 };
+export type UnpublishDeckApiResponse = /** status 200 OK */ DeckDto;
+export type UnpublishDeckApiArg = {
+  id: string;
+};
+export type PublishDeckApiResponse = /** status 200 OK */ DeckDto;
+export type PublishDeckApiArg = {
+  id: string;
+};
 export type AddElementApiResponse = /** status 200 OK */ DeckDto;
 export type AddElementApiArg = {
   id: string;
@@ -440,6 +538,10 @@ export type MoveElementApiArg = {
   id: string;
   elementId: string;
   to: number;
+};
+export type ArchiveDeckApiResponse = /** status 200 OK */ DeckDto;
+export type ArchiveDeckApiArg = {
+  id: string;
 };
 export type RegisterApiResponse = /** status 200 OK */ RegisteredUser;
 export type RegisterApiArg = {
@@ -494,6 +596,15 @@ export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
 export type ListMyDecksApiResponse = /** status 200 OK */ DeckDto[];
 export type ListMyDecksApiArg = void;
+export type ExploreDecksApiResponse = /** status 200 OK */ DeckExploreResponse;
+export type ExploreDecksApiArg = {
+  tagId?: string;
+  language?: string;
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+  sort?: string;
+  page?: number;
+  size?: number;
+};
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -523,6 +634,25 @@ export type UpdateThemeRequest = {
   hueAccent?: number;
   mode?: string;
   organizationId?: string;
+};
+export type TagResponse = {
+  id?: string;
+  displayName?: string;
+  parentTagId?: string;
+  description?: string;
+  iconUrl?: string;
+  deckCount?: number;
+  curated?: boolean;
+  children?: TagResponse[];
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type UpdateTagRequest = {
+  displayName?: string;
+  parentTagId?: string;
+  description?: string;
+  iconUrl?: string;
+  curated?: boolean;
 };
 export type GalleryImageResponse = {
   id?: string;
@@ -831,10 +961,6 @@ export type Slide = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    // Hand-edited in lockstep with backend Slide.java additions until
-    // `npm run generate-api` runs against a backend that exposes them. Mirror
-    // the comment in McqQuestion.correctOptionIds — these fields are stable and
-    // a fresh codegen will land them in the same shape.
     resultsDisplayType?: "DEFAULT" | "HISTOGRAM" | "PIE_CHART";
     multipleSelectionsEnabled?: boolean;
     selectionsPerParticipant?: number;
@@ -886,6 +1012,8 @@ export type DeckDto = {
   creatorUserId?: string;
   organizationId?: string;
   tags?: string[];
+  tagIds?: string[];
+  subjectTagId?: string;
   isSystem?: boolean;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
@@ -907,6 +1035,19 @@ export type DeckDto = {
     | TextQuestion
   )[];
   parentDeckId?: string;
+  originalAuthorUserId?: string;
+  publishStatus?: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  publishedAt?: string;
+  language?: string;
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+  ageRange?: string;
+  license?: "ALL_RIGHTS_RESERVED" | "CC_BY" | "CC_BY_SA" | "CC_BY_NC" | "CC0";
+  playCount?: number;
+  viewCount?: number;
+  favoriteCount?: number;
+  averageRating?: number;
+  ratingCount?: number;
+  lastPlayedAt?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -914,12 +1055,18 @@ export type UpdateDeckRequest = {
   name?: string;
   description?: string;
   tags?: string[];
+  tagIds?: string[];
+  subjectTagId?: string;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
   cover?: Image;
   background?: Image;
   themeId?: string;
   estimatedDurationMinutes?: number;
+  language?: string;
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+  ageRange?: string;
+  license?: "ALL_RIGHTS_RESERVED" | "CC_BY" | "CC_BY_SA" | "CC_BY_NC" | "CC0";
 };
 export type PlayerStats = {
   gamesPlayed?: number;
@@ -959,6 +1106,14 @@ export type CreateThemeRequest = {
   hueAccent?: number;
   mode?: string;
   organizationId?: string;
+};
+export type CreateTagRequest = {
+  id?: string;
+  displayName: string;
+  parentTagId?: string;
+  description?: string;
+  iconUrl?: string;
+  curated?: boolean;
 };
 export type ShowcasePlayerDto = {
   userId?: string;
@@ -1035,12 +1190,18 @@ export type CreateDeckRequest = {
   name: string;
   description?: string;
   tags?: string[];
+  tagIds?: string[];
+  subjectTagId?: string;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
   cover?: Image;
   background?: Image;
   themeId?: string;
   estimatedDurationMinutes?: number;
+  language?: string;
+  difficulty?: "EASY" | "MEDIUM" | "HARD";
+  ageRange?: string;
+  license?: "ALL_RIGHTS_RESERVED" | "CC_BY" | "CC_BY_SA" | "CC_BY_NC" | "CC0";
 };
 export type RegisterRequest = {
   username: string;
@@ -1165,10 +1326,21 @@ export type HealthCheckResponse = {
   database?: string;
   redis?: string;
 };
+export type DeckExploreResponse = {
+  items?: DeckDto[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  hasMore?: boolean;
+};
 export type UserDto = GuestUser | RegisteredUser;
 export const {
   useUpdateThemeMutation,
   useDeleteThemeMutation,
+  useGetTagQuery,
+  useLazyGetTagQuery,
+  useUpdateTagMutation,
+  useDeleteTagMutation,
   useUpdateImageMutation,
   useDeleteImageMutation,
   useGetDeckQuery,
@@ -1184,6 +1356,9 @@ export const {
   useCreateThemeMutation,
   useUploadLogoMutation,
   useUploadBackgroundMutation,
+  useListTagsQuery,
+  useLazyListTagsQuery,
+  useCreateTagMutation,
   useCreateShowcaseMutation,
   useJoinByRoomCodeMutation,
   useCreateOrgMutation,
@@ -1194,9 +1369,12 @@ export const {
   useListDecksQuery,
   useLazyListDecksQuery,
   useCreateDeckMutation,
+  useUnpublishDeckMutation,
+  usePublishDeckMutation,
   useAddElementMutation,
   useMoveMcqOptionMutation,
   useMoveElementMutation,
+  useArchiveDeckMutation,
   useRegisterMutation,
   useGuestLoginMutation,
   useUpdateProfileMutation,
@@ -1221,6 +1399,8 @@ export const {
   useLazyGetHealthQuery,
   useListMyDecksQuery,
   useLazyListMyDecksQuery,
+  useExploreDecksQuery,
+  useLazyExploreDecksQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

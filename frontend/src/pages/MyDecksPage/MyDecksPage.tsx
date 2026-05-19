@@ -1,5 +1,7 @@
 // Lists user-owned content decks and all system decks, with create/edit/delete actions.
+import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
+import { StarIcon, PlayIcon } from "@heroicons/react/24/outline";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import {
   BrainFlex,
@@ -12,9 +14,68 @@ import {
 import type { DeckDto, Slide } from "../../store/BrainFlexApi";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { Badge } from "@/components/Common/Badge";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./MyDecksPage.module.css";
+
+const PUBLISH_BADGE_VARIANT = {
+  DRAFT: "info",
+  PUBLISHED: "success",
+  ARCHIVED: "warning",
+} as const;
+
+const DIFFICULTY_LABEL = {
+  EASY: "Easy",
+  MEDIUM: "Medium",
+  HARD: "Hard",
+} as const;
+
+const formatRating = (rating: number, count: number): string => {
+  if (count <= 0) return "—";
+  return rating.toFixed(1);
+};
+
+const DeckStatusRow = ({ deck }: { deck: DeckDto }) => {
+  if (deck.isSystem) {
+    return <Badge size='sm' variant='brand' label='System' />;
+  }
+  const status = deck.publishStatus ?? "DRAFT";
+  return (
+    <Badge
+      size='sm'
+      variant={PUBLISH_BADGE_VARIANT[status]}
+      label={status.charAt(0) + status.slice(1).toLowerCase()}
+    />
+  );
+};
+
+const DeckDiscoveryRow = ({ deck }: { deck: DeckDto }) => {
+  const plays = deck.playCount ?? 0;
+  const rating = deck.averageRating ?? 0;
+  const ratingCount = deck.ratingCount ?? 0;
+  const language = deck.language ?? "en";
+  const difficulty = deck.difficulty ?? "MEDIUM";
+
+  return (
+    <span className={styles.cardDiscovery}>
+      <span className={styles.cardDiscoveryItem} aria-label='Plays'>
+        <PlayIcon className={styles.cardIcon} />
+        {plays}
+      </span>
+      <span className={styles.cardDiscoveryItem} aria-label='Average rating'>
+        <StarIcon className={styles.cardIcon} />
+        {formatRating(rating, ratingCount)}
+      </span>
+      <span className={styles.cardDiscoveryItem} aria-label='Language'>
+        {language.toUpperCase()}
+      </span>
+      <span className={styles.cardDiscoveryItem} aria-label='Difficulty'>
+        {DIFFICULTY_LABEL[difficulty]}
+      </span>
+    </span>
+  );
+};
 
 /**
  * Starter slide stamped into every new deck so the editor never opens onto an
@@ -73,11 +134,12 @@ const DeckCard = ({
         loading='lazy'
       />
       <span className={styles.cardName}>{deck.name}</span>
-      {deck.isSystem && <span className={styles.systemBadge}>System</span>}
+      <DeckStatusRow deck={deck} />
       <span className={styles.cardMeta}>
         {deck.elementCount ?? 0} elements
         {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
       </span>
+      <DeckDiscoveryRow deck={deck} />
       {deck.description && (
         <span className={styles.cardDesc}>{deck.description}</span>
       )}
@@ -167,6 +229,13 @@ const MyDecksPage = () => {
 
   const userSystemDecks = systemDecks.filter((p) => p.isSystem);
 
+  type Tab = "live" | "drafts";
+  const [tab, setTab] = useState<Tab>("live");
+  // Draft = explicit DRAFT or legacy decks without a publishStatus field set.
+  const draftDecks = myDecks.filter((d) => (d.publishStatus ?? "DRAFT") === "DRAFT");
+  const liveDecks = myDecks.filter((d) => (d.publishStatus ?? "DRAFT") !== "DRAFT");
+  const visibleDecks = tab === "drafts" ? draftDecks : liveDecks;
+
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -176,14 +245,45 @@ const MyDecksPage = () => {
 
       {isRegistered && (
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Your Decks</h2>
+          <div className={styles.tabs} role='tablist' aria-label='Your decks'>
+            <button
+              type='button'
+              role='tab'
+              aria-selected={tab === "live"}
+              className={[styles.tab, tab === "live" ? styles.tabActive : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => {
+                setTab("live");
+              }}>
+              Live
+              <span className={styles.tabCount}>{liveDecks.length}</span>
+            </button>
+            <button
+              type='button'
+              role='tab'
+              aria-selected={tab === "drafts"}
+              className={[styles.tab, tab === "drafts" ? styles.tabActive : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => {
+                setTab("drafts");
+              }}>
+              Drafts
+              <span className={styles.tabCount}>{draftDecks.length}</span>
+            </button>
+          </div>
           {loadingMine ? (
             <p className={styles.empty}>Loading…</p>
-          ) : myDecks.length === 0 ? (
-            <p className={styles.empty}>You haven't created any decks yet.</p>
+          ) : visibleDecks.length === 0 ? (
+            <p className={styles.empty}>
+              {tab === "drafts"
+                ? "No drafts. Decks default to draft until you publish them."
+                : "No published decks yet. Hit Publish in the editor when you're ready."}
+            </p>
           ) : (
             <div className={styles.grid}>
-              {myDecks.map((deck) => (
+              {visibleDecks.map((deck) => (
                 <DeckCard
                   key={deck.id}
                   deck={deck}

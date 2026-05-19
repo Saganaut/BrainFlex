@@ -57,5 +57,16 @@ BrainFlex.enhanceEndpoints({
     updateDeck: {
       onQueryStarted: (arg, api) => syncDeckCache(arg, api),
     },
+    // Publish lifecycle mutations also return the canonical DeckDto, so the
+    // status pill in the editor navbar updates instantly without a refetch.
+    publishDeck: {
+      onQueryStarted: (arg, api) => syncDeckCache(arg, api),
+    },
+    unpublishDeck: {
+      onQueryStarted: (arg, api) => syncDeckCache(arg, api),
+    },
+    archiveDeck: {
+      onQueryStarted: (arg, api) => syncDeckCache(arg, api),
+    },
   },
 });

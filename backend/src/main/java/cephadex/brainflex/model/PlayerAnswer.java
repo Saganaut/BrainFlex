@@ -17,7 +17,7 @@ import lombok.Data;
 @Data
 public class PlayerAnswer {
     private String elementId;
-    private AnswerPayload payload;       // see model.answer.* for variants
+    private AnswerPayload payload; // see model.answer.* for variants
     private boolean correct;
     private int pointsAwarded;
     private LocalDateTime answeredAt;
@@ -31,4 +31,6 @@ public class PlayerAnswer {
     // submission received the most votes. Drives the "winner" indicator in
     // round result + review UIs.
     private boolean bestAnswerWinner;
+
+    // TODO: Worth adding a fastest response? or resposne time?
 }

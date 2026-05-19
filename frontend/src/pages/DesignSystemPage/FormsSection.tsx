@@ -12,6 +12,7 @@ import { Toggle } from "../../components/Common/Input/Toggle/Toggle";
 import { Dropdown } from "../../components/Common/Input/Dropdown/Dropdown";
 import { FileUpload } from "../../components/Common/Input/FileUpload/FileUpload";
 import { InputWithButton } from "../../components/Common/Input/InputWithButton/InputWithButton";
+import { TagPicker } from "../../components/Common/TagPicker/TagPicker";
 import { Accordion } from "../../components/Containers/Accordion";
 import styles from "./DesignSystem.module.css";
 
@@ -49,6 +50,8 @@ const FormsSection = () => {
   const [points, setPoints] = useState(50);
   const [tolerance, setTolerance] = useState(0.1);
   const [stretchedText, setStretchedText] = useState("");
+  const [pickerTagIds, setPickerTagIds] = useState<string[]>([]);
+  const [pickerCuratedTagIds, setPickerCuratedTagIds] = useState<string[]>([]);
 
   return (
     <section>
@@ -224,6 +227,23 @@ const FormsSection = () => {
               value={searchFaction}
               onChange={setSearchFaction}
               placeholder='Find a faction…'
+            />
+          </div>
+
+          <h4>Tag Picker</h4>
+          <div className={styles.formExampleRow}>
+            <TagPicker
+              label='Deck tags (any)'
+              value={pickerTagIds}
+              onChange={setPickerTagIds}
+              placeholder='Search and add tags…'
+            />
+            <TagPicker
+              label='Curated only'
+              value={pickerCuratedTagIds}
+              onChange={setPickerCuratedTagIds}
+              curatedOnly
+              placeholder='Pick a curated subject…'
             />
           </div>
 

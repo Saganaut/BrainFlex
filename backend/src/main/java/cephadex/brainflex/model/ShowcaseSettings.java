@@ -12,15 +12,16 @@ package cephadex.brainflex.model;
 import cephadex.brainflex.model.enums.GameMode;
 import lombok.Data;
 
+//TODO: We don't have a clear delimitation between Deck and Showcase, a showcase uses a deck but the delimitation is blurry
 @Data
 public class ShowcaseSettings {
     private int maxPlayers = 8;
     private int totalRounds = 10;
-    private int timePerQuestion = 15;   // 0 = unlimited
+    private int timePerQuestion = 15; // 0 = unlimited
     private boolean speedBonus = true;
     private boolean allowGuests = true;
     private GameMode gameMode = GameMode.SIMULTANEOUS;
     private boolean allowLateJoin = false;
     private boolean showScoresImmediately = true;
-    private boolean scoringEnabled = true;   // false = Pulse preset
+    private boolean scoringEnabled = true; // false = Pulse preset
 }

@@ -42,6 +42,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.Organization;
 import cephadex.brainflex.model.ShowcaseSettings;
+import cephadex.brainflex.model.Tag;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
@@ -62,6 +63,8 @@ import cephadex.brainflex.model.element.TextQuestion;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
+import cephadex.brainflex.model.enums.License;
+import cephadex.brainflex.model.enums.PublishStatus;
 import cephadex.brainflex.model.enums.JoinType;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.PlaceScoring;
@@ -72,8 +75,10 @@ import cephadex.brainflex.model.enums.ShowResponsesMode;
 import cephadex.brainflex.model.enums.SlideKind;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
+import cephadex.brainflex.repository.TagRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.TagService;
 
 @Configuration
 @ConditionalOnProperty(name = "seed.run", havingValue = "true")
@@ -96,6 +101,8 @@ public class SampleDataSeeder {
             DeckRepository deckRepository,
             ThemeRepository themeRepository,
             OrganizationRepository organizationRepository,
+            TagRepository tagRepository,
+            TagService tagService,
             MongoTemplate mongoTemplate) {
         return (ApplicationArguments args) -> {
             try {
@@ -106,6 +113,7 @@ public class SampleDataSeeder {
                 }
 
                 ensureUsers(userRepository);
+                int tagsAdded = ensureCuratedTags(tagRepository);
                 ensureSystemDecks(deckRepository);
 
                 List<User> users = userRepository.findAll();
@@ -121,10 +129,14 @@ public class SampleDataSeeder {
                     deckCount += ensureDecksForUser(user, deckRepository);
                 }
 
+                int recounted = tagService.recomputeDeckCounts(deckRepository.findAll());
+
                 System.out.println("=== Sample data seed: done ===");
-                System.out.println("  organizations: " + orgsByFaction.size() + " factions");
-                System.out.println("  themes added:  " + themeCount);
-                System.out.println("  decks added:   " + deckCount);
+                System.out.println("  organizations:    " + orgsByFaction.size() + " factions");
+                System.out.println("  themes added:     " + themeCount);
+                System.out.println("  decks added:      " + deckCount);
+                System.out.println("  curated tags new: " + tagsAdded);
+                System.out.println("  tag counts dirty: " + recounted);
             } finally {
                 int exit = SpringApplication.exit(applicationContext, () -> 0);
                 System.exit(exit);
@@ -152,6 +164,7 @@ public class SampleDataSeeder {
                 "organizations",
                 "themes",
                 "decks",
+                "tags",
                 "gallery_images",
                 "showcases",
                 "showcase_results",
@@ -178,6 +191,48 @@ public class SampleDataSeeder {
                 objectMapper.getTypeFactory().constructCollectionType(List.class, User.class));
         userRepository.saveAll(users);
         System.out.println("Seeded " + users.size() + " users from seed/users.json");
+    }
+
+    // ----------------------------------------------------- curated tags
+
+    /**
+     * Seeds the curated subject taxonomy used by the Explore page filters.
+     * Idempotent per tag id — a re-run only inserts missing rows. Existing
+     * tags (admin-edited names, descriptions) are never overwritten.
+     */
+    private int ensureCuratedTags(TagRepository tagRepository) {
+        record CuratedTag(String id, String displayName, String description) {}
+        List<CuratedTag> curated = List.of(
+                new CuratedTag("general-knowledge", "General Knowledge",
+                        "Mixed trivia spanning multiple subjects."),
+                new CuratedTag("math", "Math",
+                        "Arithmetic, algebra, geometry, and beyond."),
+                new CuratedTag("history", "History",
+                        "World history, eras, and notable events."),
+                new CuratedTag("science", "Science",
+                        "Biology, chemistry, physics, and earth science."),
+                new CuratedTag("sports", "Sports",
+                        "Teams, athletes, rules, and game-day facts."),
+                new CuratedTag("pop-culture", "Pop Culture",
+                        "Film, TV, music, and internet phenomena."),
+                new CuratedTag("trivia", "Trivia",
+                        "Catch-all bucket for grab-bag question decks."));
+        int added = 0;
+        for (CuratedTag entry : curated) {
+            if (tagRepository.existsById(entry.id())) continue;
+            Tag tag = new Tag();
+            tag.setId(entry.id());
+            tag.setDisplayName(entry.displayName());
+            tag.setDescription(entry.description());
+            tag.setCurated(true);
+            tag.setDeckCount(0);
+            LocalDateTime now = LocalDateTime.now();
+            tag.setCreatedAt(now);
+            tag.setUpdatedAt(now);
+            tagRepository.save(tag);
+            added++;
+        }
+        return added;
     }
 
     // ------------------------------------------------------- system decks
@@ -638,10 +693,20 @@ public class SampleDataSeeder {
         deck.setName(name);
         deck.setDescription(description);
         deck.setTags(tags);
+        // Every LOTR-themed starter is fan-trivia — bucket under Pop Culture.
+        deck.setSubjectTagId("pop-culture");
+        deck.setTagIds(new ArrayList<>(List.of("pop-culture", "trivia")));
         deck.setVisibility(DeckVisibility.PRIVATE);
         deck.setRecommendedPreset(DeckPreset.GAME);
         deck.setCover(Image.external("https://picsum.photos/seed/" + seedSlug + "/480/280"));
         deck.setBackground(Image.external("https://picsum.photos/seed/" + seedSlug + "-bg/1600/1000"));
+        // Sample LOTR decks ship as PUBLISHED with CC_BY so the Explore feed
+        // has something to render against a fresh DB.
+        deck.setPublishStatus(PublishStatus.PUBLISHED);
+        deck.setPublishedAt(LocalDateTime.now());
+        deck.setLanguage("en");
+        deck.setDifficulty(Difficulty.MEDIUM);
+        deck.setLicense(License.CC_BY);
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
         return deck;
@@ -700,12 +765,19 @@ public class SampleDataSeeder {
         deck.setName("BrainFlex Welcome Tour");
         deck.setDescription("A quick tour through every kind of element you can put in a deck. Every type, one round each.");
         deck.setTags(List.of("welcome", "tour", "every-type"));
+        deck.setSubjectTagId("general-knowledge");
+        deck.setTagIds(new ArrayList<>(List.of("general-knowledge", "trivia")));
         deck.setSystem(true);
         deck.setVisibility(DeckVisibility.PUBLIC);
         deck.setRecommendedPreset(DeckPreset.GAME);
         deck.setCover(Image.external("https://picsum.photos/seed/brainflex-welcome-tour/480/280"));
         deck.setBackground(Image.external("https://picsum.photos/seed/brainflex-welcome-tour-bg/1600/1000"));
         deck.setEstimatedDurationMinutes(8);
+        deck.setPublishStatus(PublishStatus.PUBLISHED);
+        deck.setPublishedAt(LocalDateTime.now());
+        deck.setLanguage("en");
+        deck.setDifficulty(Difficulty.EASY);
+        deck.setLicense(License.CC_BY);
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
 
@@ -922,12 +994,19 @@ public class SampleDataSeeder {
         deck.setName("General Knowledge");
         deck.setDescription("A mix of geography, history, science, and pop culture. MCQ + text-input only.");
         deck.setTags(List.of("general", "trivia"));
+        deck.setSubjectTagId("general-knowledge");
+        deck.setTagIds(new ArrayList<>(List.of("general-knowledge", "trivia")));
         deck.setSystem(true);
         deck.setVisibility(DeckVisibility.PUBLIC);
         deck.setRecommendedPreset(DeckPreset.GAME);
         deck.setCover(Image.external("https://picsum.photos/seed/brainflex-general-knowledge/480/280"));
         deck.setBackground(Image.external("https://picsum.photos/seed/brainflex-general-knowledge-bg/1600/1000"));
         deck.setEstimatedDurationMinutes(6);
+        deck.setPublishStatus(PublishStatus.PUBLISHED);
+        deck.setPublishedAt(LocalDateTime.now());
+        deck.setLanguage("en");
+        deck.setDifficulty(Difficulty.MEDIUM);
+        deck.setLicense(License.CC_BY);
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
 

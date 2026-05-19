@@ -15,18 +15,26 @@ import {
   PaintBrushIcon,
   UsersIcon,
   ShareIcon,
+  TagIcon,
 } from "@heroicons/react/24/outline";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { ThemePanel } from "./ThemePanel";
 import { EditSlidePanel } from "./EditSlidePanel";
+import { DeckCategorizePanel } from "./DeckCategorizePanel";
 import styles from "./RightSidebarContent.module.css";
 import { RightSidebar } from "@/components/Layout/RightSidebar";
 
-type PanelKey = "edit" | "theme" | "participants" | "sharing";
+type PanelKey =
+  | "edit"
+  | "theme"
+  | "categorize"
+  | "participants"
+  | "sharing";
 
 const PANEL_TITLES: Record<PanelKey, string> = {
   edit: "Edit slide",
   theme: "Theme",
+  categorize: "Tags",
   participants: "Participants",
   sharing: "Sharing preferences",
 };
@@ -80,6 +88,7 @@ const RightSidebarContent = () => {
             <div className={styles.drawerBody}>
               {openPanel === "edit" && <EditSlidePanel />}
               {openPanel === "theme" && <ThemePanel />}
+              {openPanel === "categorize" && <DeckCategorizePanel />}
               {openPanel === "participants" && (
                 <PlaceholderPanel description='Roster of who has joined plus per-participant moderation actions.' />
               )}
@@ -114,6 +123,18 @@ const RightSidebarContent = () => {
           icon={<PaintBrushIcon />}
           onClick={() => {
             toggle("theme");
+          }}
+        />
+        <IconBtn
+          variant='bordered'
+          shape='round'
+          size='md'
+          aria-label={PANEL_TITLES.categorize}
+          aria-pressed={openPanel === "categorize"}
+          className={openPanel === "categorize" ? styles.active : undefined}
+          icon={<TagIcon />}
+          onClick={() => {
+            toggle("categorize");
           }}
         />
         <IconBtn

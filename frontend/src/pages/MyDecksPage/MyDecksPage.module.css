@@ -83,13 +83,58 @@
   margin-top: var(--space-2);
 }
 
-.systemBadge {
+.cardDiscovery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
   font-size: var(--font-size-xs);
-  padding: var(--space-half) var(--space-2);
-  background: var(--bg-brand);
-  border-radius: var(--radius-sm);
   color: var(--text-secondary);
-  width: fit-content;
+
+  .cardDiscoveryItem {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .cardIcon {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.tabs {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+  border-bottom: var(--border-size-sm) solid var(--border-subtle);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  border-bottom: var(--border-size-md) solid transparent;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tabActive {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-focus);
+}
+
+.tabCount {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-full);
+  background-color: var(--bg-subtle);
+  color: var(--text-muted);
 }
 
 .empty {

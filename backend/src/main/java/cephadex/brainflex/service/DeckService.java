@@ -21,11 +21,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.CreateDeckRequest;
+import cephadex.brainflex.dto.DeckExploreRequest;
 import cephadex.brainflex.dto.UpdateDeckRequest;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.User;
@@ -35,6 +40,7 @@ import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
+import cephadex.brainflex.model.enums.PublishStatus;
 import cephadex.brainflex.repository.DeckRepository;
 
 @Service
@@ -42,10 +48,18 @@ public class DeckService {
 
     private final DeckRepository deckRepository;
     private final AuthorizationService authorizationService;
+    private final TagService tagService;
+    private final MongoTemplate mongoTemplate;
 
-    public DeckService(DeckRepository deckRepository, AuthorizationService authorizationService) {
+    public DeckService(
+            DeckRepository deckRepository,
+            AuthorizationService authorizationService,
+            TagService tagService,
+            MongoTemplate mongoTemplate) {
         this.deckRepository = deckRepository;
         this.authorizationService = authorizationService;
+        this.tagService = tagService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     // ---- Read ----
@@ -107,6 +121,13 @@ public class DeckService {
         deck.setName(request.name());
         deck.setDescription(request.description());
         deck.setTags(request.tags() == null ? new ArrayList<>() : request.tags());
+        List<String> tagIds = request.tagIds() == null ? new ArrayList<>() : new ArrayList<>(request.tagIds());
+        tagService.requireAllExist(tagIds);
+        deck.setTagIds(tagIds);
+        if (request.subjectTagId() != null && !request.subjectTagId().isBlank()) {
+            tagService.requireAllExist(List.of(request.subjectTagId()));
+            deck.setSubjectTagId(request.subjectTagId());
+        }
         deck.setVisibility(request.visibility() == null ? DeckVisibility.PRIVATE : request.visibility());
         deck.setRecommendedPreset(request.recommendedPreset() == null ? DeckPreset.GAME : request.recommendedPreset());
         deck.setCover(normalizeImage(request.cover()));
@@ -115,7 +136,23 @@ public class DeckService {
         deck.setEstimatedDurationMinutes(request.estimatedDurationMinutes());
         deck.setSystem(false);
 
+        if (request.language() != null && !request.language().isBlank()) {
+            deck.setLanguage(request.language());
+        }
+        if (request.difficulty() != null) {
+            deck.setDifficulty(request.difficulty());
+        }
+        if (request.ageRange() != null && !request.ageRange().isBlank()) {
+            deck.setAgeRange(request.ageRange());
+        }
+        if (request.license() != null) {
+            deck.setLicense(request.license());
+        }
+
         deck.setCreatorUserId(creator.getId());
+        // First-author credit defaults to the creator — copy-on-fork updates
+        // it explicitly later when fork support lands.
+        deck.setOriginalAuthorUserId(creator.getId());
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
@@ -129,6 +166,19 @@ public class DeckService {
             deck.setDescription(request.description());
         if (request.tags() != null)
             deck.setTags(request.tags());
+        if (request.tagIds() != null) {
+            List<String> nextIds = new ArrayList<>(request.tagIds());
+            tagService.requireAllExist(nextIds);
+            deck.setTagIds(nextIds);
+        }
+        if (request.subjectTagId() != null) {
+            if (request.subjectTagId().isBlank()) {
+                deck.setSubjectTagId(null);
+            } else {
+                tagService.requireAllExist(List.of(request.subjectTagId()));
+                deck.setSubjectTagId(request.subjectTagId());
+            }
+        }
         if (request.visibility() != null)
             deck.setVisibility(request.visibility());
         if (request.recommendedPreset() != null)
@@ -145,6 +195,19 @@ public class DeckService {
         if (request.estimatedDurationMinutes() != null) {
             deck.setEstimatedDurationMinutes(request.estimatedDurationMinutes());
         }
+        if (request.language() != null && !request.language().isBlank()) {
+            deck.setLanguage(request.language());
+        }
+        if (request.difficulty() != null) {
+            deck.setDifficulty(request.difficulty());
+        }
+        if (request.ageRange() != null) {
+            // Empty string clears the audience range.
+            deck.setAgeRange(request.ageRange().isBlank() ? null : request.ageRange());
+        }
+        if (request.license() != null) {
+            deck.setLicense(request.license());
+        }
         deck.setUpdatedAt(LocalDateTime.now());
         deck.setVersion(deck.getVersion() + 1);
         return deckRepository.save(deck);
@@ -153,6 +216,133 @@ public class DeckService {
     public void deleteDeck(String id, User caller) {
         Deck deck = requireOwned(id, caller);
         deckRepository.delete(deck);
+    }
+
+    // ---- Publish lifecycle ----
+
+    /**
+     * Flip a deck from DRAFT/ARCHIVED to PUBLISHED. Stamps {@code publishedAt}
+     * only on the first DRAFT → PUBLISHED transition so the original ship
+     * date survives later unpublish/republish cycles.
+     */
+    public Deck publish(String id, User caller) {
+        Deck deck = requireOwned(id, caller);
+        if (deck.getPublishStatus() == PublishStatus.PUBLISHED) return deck;
+        deck.setPublishStatus(PublishStatus.PUBLISHED);
+        if (deck.getPublishedAt() == null) {
+            deck.setPublishedAt(LocalDateTime.now());
+        }
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
+    }
+
+    /** Move a deck back to DRAFT. {@code publishedAt} is preserved as history. */
+    public Deck unpublish(String id, User caller) {
+        Deck deck = requireOwned(id, caller);
+        if (deck.getPublishStatus() == PublishStatus.DRAFT) return deck;
+        deck.setPublishStatus(PublishStatus.DRAFT);
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
+    }
+
+    /**
+     * Archive removes a deck from Explore and the owner's primary list without
+     * deleting it. Past Showcases and ratings still resolve by id.
+     */
+    public Deck archive(String id, User caller) {
+        Deck deck = requireOwned(id, caller);
+        if (deck.getPublishStatus() == PublishStatus.ARCHIVED) return deck;
+        deck.setPublishStatus(PublishStatus.ARCHIVED);
+        deck.setUpdatedAt(LocalDateTime.now());
+        return deckRepository.save(deck);
+    }
+
+    // ---- Explore ----
+
+    public record ExplorePage(List<Deck> items, long totalElements) {}
+
+    /**
+     * Server-side filtered + sorted page of decks for the Explore grid. Only
+     * PUBLIC + PUBLISHED decks are eligible — visibility=ORG/UNLISTED/PRIVATE
+     * never leak here even if their owner has marked them published.
+     *
+     * Sort options route to the matching index suffix; {@code TRENDING} ranks
+     * by {@code lastPlayedAt} (recently active) and falls back to playCount
+     * for ties so a freshly published deck with no plays still surfaces.
+     */
+    public ExplorePage explore(DeckExploreRequest request) {
+        Criteria criteria = Criteria.where("visibility").is(DeckVisibility.PUBLIC)
+                .and("publishStatus").is(PublishStatus.PUBLISHED);
+        if (request.tagId() != null && !request.tagId().isBlank()) {
+            // Match a tag in either the multi-select list or the primary subject.
+            criteria = criteria.orOperator(
+                    Criteria.where("tagIds").is(request.tagId()),
+                    Criteria.where("subjectTagId").is(request.tagId()));
+        }
+        if (request.language() != null && !request.language().isBlank()) {
+            criteria = criteria.and("language").is(request.language());
+        }
+        if (request.difficulty() != null) {
+            criteria = criteria.and("difficulty").is(request.difficulty());
+        }
+        Query countQuery = new Query(criteria);
+        long total = mongoTemplate.count(countQuery, Deck.class);
+
+        Query query = new Query(criteria);
+        query.with(sortFor(request.sort()));
+        int page = Math.max(0, request.page());
+        int size = Math.max(1, Math.min(50, request.size()));
+        query.skip((long) page * size).limit(size);
+
+        List<Deck> items = mongoTemplate.find(query, Deck.class);
+        return new ExplorePage(items, total);
+    }
+
+    private static org.springframework.data.domain.Sort sortFor(DeckExploreRequest.Sort sort) {
+        DeckExploreRequest.Sort resolved = sort == null ? DeckExploreRequest.Sort.TRENDING : sort;
+        return switch (resolved) {
+            case NEW -> org.springframework.data.domain.Sort
+                    .by(org.springframework.data.domain.Sort.Order.desc("publishedAt"),
+                        org.springframework.data.domain.Sort.Order.desc("createdAt"));
+            case TOP_RATED -> org.springframework.data.domain.Sort
+                    .by(org.springframework.data.domain.Sort.Order.desc("averageRating"),
+                        org.springframework.data.domain.Sort.Order.desc("ratingCount"));
+            case MOST_PLAYED -> org.springframework.data.domain.Sort
+                    .by(org.springframework.data.domain.Sort.Order.desc("playCount"));
+            case TRENDING -> org.springframework.data.domain.Sort
+                    .by(org.springframework.data.domain.Sort.Order.desc("lastPlayedAt"),
+                        org.springframework.data.domain.Sort.Order.desc("playCount"));
+        };
+    }
+
+    // ---- Denormalized counter writes (atomic) ----
+
+    /**
+     * Atomically bump {@code playCount} and stamp {@code lastPlayedAt}. Called
+     * from ShowcaseService.endGame so two showcases finishing on the same
+     * deck simultaneously don't lose a count via read-modify-write.
+     */
+    public void incrementPlayCount(String deckId) {
+        if (deckId == null || deckId.isBlank()) return;
+        mongoTemplate.updateFirst(
+                new Query(Criteria.where("_id").is(deckId)),
+                new Update()
+                        .inc("playCount", 1)
+                        .set("lastPlayedAt", LocalDateTime.now()),
+                Deck.class);
+    }
+
+    /**
+     * Atomically bump {@code viewCount}. Called from DeckController.getDeck
+     * for non-owner reads only — owner traffic would skew the counter and
+     * isn't what the Explore "trending" sort wants to surface.
+     */
+    public void incrementViewCount(String deckId) {
+        if (deckId == null || deckId.isBlank()) return;
+        mongoTemplate.updateFirst(
+                new Query(Criteria.where("_id").is(deckId)),
+                new Update().inc("viewCount", 1),
+                Deck.class);
     }
 
     // ---- Element CRUD (operates on Deck.elements directly) ----

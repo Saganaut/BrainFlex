@@ -91,6 +91,7 @@ public class ShowcaseService {
     private final ShowcaseCacheService showcaseCache;
     private final AuthorizationService authorizationService;
     private final DeckImageHydrationService deckImageHydrationService;
+    private final DeckService deckService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private final ConcurrentHashMap<String, Object> roundLocks = new ConcurrentHashMap<>();
@@ -104,6 +105,7 @@ public class ShowcaseService {
             ShowcaseCacheService showcaseCache,
             AuthorizationService authorizationService,
             DeckImageHydrationService deckImageHydrationService,
+            DeckService deckService,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.showcaseRepository = showcaseRepository;
         this.deckRepository = deckRepository;
@@ -112,6 +114,7 @@ public class ShowcaseService {
         this.showcaseCache = showcaseCache;
         this.authorizationService = authorizationService;
         this.deckImageHydrationService = deckImageHydrationService;
+        this.deckService = deckService;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -768,6 +771,11 @@ public class ShowcaseService {
         showcaseResultRepository.save(result);
         showcaseRepository.save(session);
         showcaseCache.evict(session.getRoomCode());
+
+        // Bump the deck's denormalized play counter atomically so Explore's
+        // "most played" / "trending" sorts reflect this finish without a
+        // cross-collection aggregation.
+        deckService.incrementPlayCount(session.getDeckId());
 
         for (PlayerPlacement p : placements) {
             if (!p.isGuest())

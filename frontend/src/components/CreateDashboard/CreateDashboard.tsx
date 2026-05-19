@@ -9,6 +9,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { Btn } from "../Common/Buttons/Btn";
 import { LeftSidebarContent } from "./LeftSidebar/LeftSidebarContent";
+import { PublishStatusControl } from "./PublishStatusControl";
 import { RightSidebarContent } from "./RightSidebar/RightSidebarContent";
 import { SlideDisplay } from "./SlideDisplay";
 import { SpeakerNotesDrawer } from "./SpeakerNotesDrawer/SpeakerNotesDrawer";
@@ -75,6 +76,7 @@ const CreateDashboard = () => {
             }}
           />
           <div className={styles.rightControlButtons}>
+            <PublishStatusControl />
             <Btn
               size={"md"}
               shape={"pill"}

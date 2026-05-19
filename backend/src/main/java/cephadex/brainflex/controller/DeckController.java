@@ -29,12 +29,16 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.CreateDeckRequest;
 import cephadex.brainflex.dto.DeckDTO;
+import cephadex.brainflex.dto.DeckExploreRequest;
+import cephadex.brainflex.dto.DeckExploreResponse;
 import cephadex.brainflex.dto.UpdateDeckRequest;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.service.DeckImageHydrationService;
 import cephadex.brainflex.service.DeckService;
+import cephadex.brainflex.service.DeckTagHydrationService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
 
@@ -45,20 +49,50 @@ public class DeckController {
     private final DeckService deckService;
     private final UserService userService;
     private final DeckImageHydrationService deckImageHydrationService;
+    private final DeckTagHydrationService deckTagHydrationService;
 
     public DeckController(
             DeckService deckService,
             UserService userService,
-            DeckImageHydrationService deckImageHydrationService) {
+            DeckImageHydrationService deckImageHydrationService,
+            DeckTagHydrationService deckTagHydrationService) {
         this.deckService = deckService;
         this.userService = userService;
         this.deckImageHydrationService = deckImageHydrationService;
+        this.deckTagHydrationService = deckTagHydrationService;
     }
 
     /** All public decks. Used by the create-showcase template picker. */
     @GetMapping
     public List<DeckDTO> listDecks() {
-        return deckService.listPublic().stream().map(DeckDTO::new).toList();
+        List<Deck> decks = deckService.listPublic();
+        deckTagHydrationService.hydrate(decks);
+        return decks.stream().map(DeckDTO::new).toList();
+    }
+
+    /**
+     * Paginated discovery feed. Returns PUBLIC + PUBLISHED decks only,
+     * filterable by tagId / language / difficulty, sortable by trending /
+     * new / top-rated / most-played. Public — no auth required, in line
+     * with the rest of the deck-read surface.
+     */
+    @GetMapping("/explore")
+    public DeckExploreResponse exploreDecks(
+            @RequestParam(name = "tagId", required = false) String tagId,
+            @RequestParam(name = "language", required = false) String language,
+            @RequestParam(name = "difficulty", required = false) Difficulty difficulty,
+            @RequestParam(name = "sort", required = false) String sort,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        DeckExploreRequest request = new DeckExploreRequest(
+                tagId, language, difficulty,
+                DeckExploreRequest.Sort.parse(sort),
+                page, size);
+        DeckService.ExplorePage result = deckService.explore(request);
+        deckTagHydrationService.hydrate(result.items());
+        List<DeckDTO> items = result.items().stream().map(DeckDTO::new).toList();
+        boolean hasMore = (long) (page + 1) * size < result.totalElements();
+        return new DeckExploreResponse(items, page, size, result.totalElements(), hasMore);
     }
 
     /** Decks owned by the authenticated user. */
@@ -66,14 +100,28 @@ public class DeckController {
     @GetMapping("/mine")
     public List<DeckDTO> listMyDecks(Authentication authentication) {
         User caller = resolveUser(authentication);
-        return deckService.listByOwner(caller.getId()).stream().map(DeckDTO::new).toList();
+        List<Deck> decks = deckService.listByOwner(caller.getId());
+        deckTagHydrationService.hydrate(decks);
+        return decks.stream().map(DeckDTO::new).toList();
     }
 
     @GetMapping("/{id}")
     public DeckDTO getDeck(@PathVariable String id, Authentication authentication) {
         Optional<User> caller = userService.resolveRegisteredUser(authentication);
         Deck deck = deckService.getViewable(caller, id);
+        // Non-owner traffic bumps viewCount so Explore's "trending" sort
+        // surfaces decks people are actually opening. Owner views and
+        // anonymous owner-less queries are excluded — the former skew their
+        // own numbers, the latter are most often the owner's optimistic
+        // create flow. System decks also opt out: their viewCount is
+        // dominated by the welcome tour and not meaningful for sorting.
+        boolean isOwner = caller.map(u -> u.getId() != null && u.getId().equals(deck.getCreatorUserId()))
+                .orElse(false);
+        if (!isOwner && !deck.isSystem()) {
+            deckService.incrementViewCount(deck.getId());
+        }
         deckImageHydrationService.hydrate(deck);
+        deckTagHydrationService.hydrate(deck);
         return new DeckDTO(deck);
     }
 
@@ -105,6 +153,38 @@ public class DeckController {
         User caller = resolveUser(authentication);
         deckService.deleteDeck(id, caller);
         return ResponseEntity.noContent().build();
+    }
+
+    // ---- Publish lifecycle ----
+
+    /** Flip the deck to PUBLISHED (stamps publishedAt the first time). */
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/publish")
+    public DeckDTO publishDeck(
+            @PathVariable String id,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        return hydrateAndWrap(deckService.publish(id, caller));
+    }
+
+    /** Flip the deck back to DRAFT. publishedAt is preserved as history. */
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/unpublish")
+    public DeckDTO unpublishDeck(
+            @PathVariable String id,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        return hydrateAndWrap(deckService.unpublish(id, caller));
+    }
+
+    /** Move the deck to ARCHIVED — hidden from Explore + my-decks list. */
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/archive")
+    public DeckDTO archiveDeck(
+            @PathVariable String id,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        return hydrateAndWrap(deckService.archive(id, caller));
     }
 
     // ---- Element CRUD ----
@@ -183,6 +263,7 @@ public class DeckController {
      */
     private DeckDTO hydrateAndWrap(Deck deck) {
         deckImageHydrationService.hydrate(deck);
+        deckTagHydrationService.hydrate(deck);
         return new DeckDTO(deck);
     }
 

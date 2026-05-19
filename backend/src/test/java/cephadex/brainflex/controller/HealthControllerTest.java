@@ -22,6 +22,7 @@ import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.repository.ShowcaseResultRepository;
 import cephadex.brainflex.repository.ShowcaseRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
+import cephadex.brainflex.repository.TagRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 import cephadex.brainflex.repository.UserRepository;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -70,6 +71,9 @@ class HealthControllerTest {
 
     @MockitoBean
     private ThemeRepository themeRepository;
+
+    @MockitoBean
+    private TagRepository tagRepository;
 
     @MockitoBean
     private GalleryImageRepository galleryImageRepository;

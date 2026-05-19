@@ -479,7 +479,7 @@ const CommonTab = () => {
                     variant='ghost'
                     icon={<EllipsisVerticalIcon />}
                     onClick={toggle}
-                    ariaLabel='Open menu'
+                    aria-label='Open menu'
                   />
                 )}>
                 <DropdownMenuLabel>Account</DropdownMenuLabel>
@@ -733,7 +733,7 @@ const CommonTab = () => {
                 <IconBtn
                   variant='ghost'
                   icon={<TrashIcon />}
-                  ariaLabel='Delete'
+                  aria-label='Delete'
                 />
               </Tooltip>
             </div>

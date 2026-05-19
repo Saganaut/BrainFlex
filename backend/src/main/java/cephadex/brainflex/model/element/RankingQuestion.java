@@ -7,6 +7,10 @@
  * authoritative sequence (each entry an item id). Scoring follows `scoring`:
  * EXACT awards full points only on a perfect match; PARTIAL awards pro-rated
  * credit by the count of items in their correct position.
+ *
+ * `shuffleItemsForPresentation` is a per-player presentation flag honoured by
+ * ShowcaseService.startRound — when set, each player sees a different (but
+ * deterministic-on-reconnect) ordering of `items[]`.
  */
 package cephadex.brainflex.model.element;
 
@@ -48,7 +52,9 @@ public record RankingQuestion(
         Image image,
         String videoUrl,
         String audioUrl,
-        MediaPosition mediaPosition
+        MediaPosition mediaPosition,
+        // per-kind ergonomics (chunk 10)
+        boolean shuffleItemsForPresentation
 ) implements DeckElement {
 
     @Override

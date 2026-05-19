@@ -32,6 +32,18 @@ const PUBLISH_BADGE_VARIANT = {
   ARCHIVED: "warning",
 } as const;
 
+const ROLE_BADGE_VARIANT = {
+  OWNER: "brand",
+  EDITOR: "success",
+  VIEWER: "info",
+} as const;
+
+const ROLE_BADGE_LABEL = {
+  OWNER: "Owner",
+  EDITOR: "Editor",
+  VIEWER: "Viewer",
+} as const;
+
 const DIFFICULTY_LABEL = {
   EASY: "Easy",
   MEDIUM: "Medium",
@@ -48,12 +60,22 @@ const DeckStatusRow = ({ deck }: { deck: DeckDto }) => {
     return <Badge size='sm' variant='brand' label='System' />;
   }
   const status = deck.publishStatus ?? "DRAFT";
+  const role = deck.myRole;
   return (
-    <Badge
-      size='sm'
-      variant={PUBLISH_BADGE_VARIANT[status]}
-      label={status.charAt(0) + status.slice(1).toLowerCase()}
-    />
+    <span className={styles.statusRow}>
+      <Badge
+        size='sm'
+        variant={PUBLISH_BADGE_VARIANT[status]}
+        label={status.charAt(0) + status.slice(1).toLowerCase()}
+      />
+      {role && role !== "OWNER" && (
+        <Badge
+          size='sm'
+          variant={ROLE_BADGE_VARIANT[role]}
+          label={ROLE_BADGE_LABEL[role]}
+        />
+      )}
+    </span>
   );
 };
 
@@ -66,18 +88,18 @@ const DeckDiscoveryRow = ({ deck }: { deck: DeckDto }) => {
 
   return (
     <span className={styles.cardDiscovery}>
-      <span className={styles.cardDiscoveryItem} ariaLabel='Plays'>
+      <span className={styles.cardDiscoveryItem} aria-label='Plays'>
         <PlayIcon className={styles.cardIcon} />
         {plays}
       </span>
-      <span className={styles.cardDiscoveryItem} ariaLabel='Average rating'>
+      <span className={styles.cardDiscoveryItem} aria-label='Average rating'>
         <StarIcon className={styles.cardIcon} />
         {formatRating(rating, ratingCount)}
       </span>
-      <span className={styles.cardDiscoveryItem} ariaLabel='Language'>
+      <span className={styles.cardDiscoveryItem} aria-label='Language'>
         {language.toUpperCase()}
       </span>
-      <span className={styles.cardDiscoveryItem} ariaLabel='Difficulty'>
+      <span className={styles.cardDiscoveryItem} aria-label='Difficulty'>
         {DIFFICULTY_LABEL[difficulty]}
       </span>
     </span>
@@ -272,16 +294,30 @@ const MyDecksPage = () => {
 
   const userSystemDecks = systemDecks.filter((p) => p.isSystem);
 
-  type Tab = "live" | "drafts";
+  type Tab = "live" | "drafts" | "shared";
   const [tab, setTab] = useState<Tab>("live");
+  // Owned = decks the caller is the OWNER of (or pre-backfill, has no role
+  // but still appears in /api/decks/mine via the legacy creatorUserId path —
+  // treat a missing role on a non-shared deck as owner).
+  const ownedDecks = myDecks.filter(
+    (d) => d.myRole == null || d.myRole === "OWNER",
+  );
+  const sharedDecks = myDecks.filter(
+    (d) => d.myRole === "EDITOR" || d.myRole === "VIEWER",
+  );
   // Draft = explicit DRAFT or legacy decks without a publishStatus field set.
-  const draftDecks = myDecks.filter(
+  const draftDecks = ownedDecks.filter(
     (d) => (d.publishStatus ?? "DRAFT") === "DRAFT",
   );
-  const liveDecks = myDecks.filter(
+  const liveDecks = ownedDecks.filter(
     (d) => (d.publishStatus ?? "DRAFT") !== "DRAFT",
   );
-  const visibleDecks = tab === "drafts" ? draftDecks : liveDecks;
+  const visibleDecks =
+    tab === "drafts"
+      ? draftDecks
+      : tab === "shared"
+        ? sharedDecks
+        : liveDecks;
 
   return (
     <div className={styles.page}>
@@ -292,7 +328,7 @@ const MyDecksPage = () => {
 
       {isRegistered && (
         <section className={styles.section}>
-          <div className={styles.tabs} role='tablist' ariaLabel='Your decks'>
+          <div className={styles.tabs} role='tablist' aria-label='Your decks'>
             <button
               type='button'
               role='tab'
@@ -319,6 +355,19 @@ const MyDecksPage = () => {
               Drafts
               <span className={styles.tabCount}>{draftDecks.length}</span>
             </button>
+            <button
+              type='button'
+              role='tab'
+              aria-selected={tab === "shared"}
+              className={[styles.tab, tab === "shared" ? styles.tabActive : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => {
+                setTab("shared");
+              }}>
+              Shared with me
+              <span className={styles.tabCount}>{sharedDecks.length}</span>
+            </button>
           </div>
           {loadingMine ? (
             <p className={styles.empty}>Loading…</p>
@@ -326,7 +375,9 @@ const MyDecksPage = () => {
             <p className={styles.empty}>
               {tab === "drafts"
                 ? "No drafts. Decks default to draft until you publish them."
-                : "No published decks yet. Hit Publish in the editor when you're ready."}
+                : tab === "shared"
+                  ? "Nothing shared with you yet. Owners can invite you from the Share button in their deck editor."
+                  : "No published decks yet. Hit Publish in the editor when you're ready."}
             </p>
           ) : (
             <div className={styles.grid}>
@@ -334,7 +385,9 @@ const MyDecksPage = () => {
                 <DeckCard
                   key={deck.id}
                   deck={deck}
-                  editable
+                  editable={
+                    tab !== "shared" || deck.myRole === "EDITOR"
+                  }
                   onDelete={(id) => {
                     void handleDelete(id);
                   }}

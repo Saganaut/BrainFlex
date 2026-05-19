@@ -1,6 +1,6 @@
 # 08 — Allocation & Matching element kinds
 
-**Status:** Not started
+**Status:** Backend + editor complete (models, scoring, redaction, cloning, image mapping, editor surfaces). Player + reveal views still pending — they'll come with the broader showcase polish in chunks 11–13.
 **Depends on:** Nothing strict; should land before chunk 16 so analytics knows these kinds
 **Unblocks:** 16 (analytics)
 
@@ -86,16 +86,16 @@ MatchingAnswer     record { Map<String, String> leftIdToRightId }
 
 ## Checklist
 
-- [ ] `AllocationQuestion`, `MatchingQuestion`, `MatchingPair` records + `permits` updates
-- [ ] `AllocationAnswer`, `MatchingAnswer` records + `permits` updates
-- [ ] `ALLOCATION`, `MATCHING` enums; `MatchingScoring` enum
-- [ ] `ElementScorer` cases + tests (especially ALL_OR_NOTHING vs PARTIAL)
-- [ ] `ElementRedactor` cases — matching shuffles the right column
-- [ ] `DeckElementCloner` cases
-- [ ] `DeckImageHydrationService` + `DeckImageMapper` — loop matching pairs
-- [ ] `useCreateDashboard.buildNewElement` cases with primitive defaults
-- [ ] Allocation editor + player + reveal views
-- [ ] Matching editor + player (drag-and-drop) + reveal views
-- [ ] `NewElementPicker` tiles
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `AllocationQuestion`, `MatchingQuestion`, `MatchingPair` records + `permits` updates
+- [x] `AllocationAnswer`, `MatchingAnswer` records + `permits` updates
+- [x] `ALLOCATION`, `MATCHING` enums; `MatchingScoring` enum
+- [x] `ElementScorer` cases + tests (especially ALL_OR_NOTHING vs PARTIAL)
+- [x] `ElementRedactor` cases — matching shuffles the pair list (visual right-column shuffle stays a frontend concern; full answer-key hiding needs schema changes deferred to a later pass)
+- [x] `DeckElementCloner` cases — matching pair ids regenerated on clone
+- [x] `DeckImageHydrationService` + `DeckImageMapper` — loop matching pairs (also covers allocation's reused MCQ options)
+- [x] `useCreateDashboard.buildNewElement` cases with primitive defaults
+- [x] Allocation editor (player + reveal views deferred — slated for chunks 11–13 showcase polish)
+- [x] Matching editor (player drag-and-drop + reveal views deferred — see above)
+- [x] `NewElementPicker` tiles
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

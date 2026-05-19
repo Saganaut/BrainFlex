@@ -7,6 +7,14 @@
   display: flex;
   align-items: center;
   justify-content: start;
+  border: 1px dashed yellow;
+}
+
+.titleField {
+  div {
+    width: 100%;
+    min-height: 60px;
+  }
 }
 
 .optionsHeader {
@@ -20,6 +28,12 @@
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+/* Keeps the footer slot's vertical space reserved when there is no warning
+   to show, so toggling correct/wrong doesn't reflow the options grid above. */
+.footerPlaceholder {
+  visibility: hidden;
 }
 
 /* Cards stretch to the same height per row, capped at

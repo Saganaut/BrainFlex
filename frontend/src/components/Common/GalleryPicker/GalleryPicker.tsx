@@ -19,18 +19,21 @@ import { Input } from "@/components/Common/Input/Input/Input";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
 import { EmptyState } from "@/components/Common/EmptyState/EmptyState";
 import { IMAGE_TIERS, validateImageFile } from "@/utils/imageValidation";
-import { internalImage, variantFor } from "@/utils/image";
+import { externalImage, internalImage, variantFor } from "@/utils/image";
 import { extractErrorMessage } from "@/utils/utils";
 import styles from "./GalleryPicker.module.css";
 
 interface GalleryPickerProps {
   onPick: (image: Image) => void;
   onClose: () => void;
+  /** Prefills the "paste URL" input — used by callers whose slot already
+   *  references an external URL so the author can edit instead of retyping. */
+  initialUrl?: string;
 }
 
 const ALL_TAGS_KEY = "__all__";
 
-const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
+const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
   const userState = useCurrentUser();
   const ownerId =
     userState.state === "registered" ? (userState.user.id ?? null) : null;
@@ -43,6 +46,7 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
 
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string>(ALL_TAGS_KEY);
+  const [pasteUrl, setPasteUrl] = useState(initialUrl ?? "");
   const [uploadMode, setUploadMode] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState<string | null>(null);
@@ -166,6 +170,12 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
     );
   };
 
+  const handleUseUrl = () => {
+    const trimmed = pasteUrl.trim();
+    if (!trimmed) return;
+    onPick(externalImage(trimmed));
+  };
+
   return (
     <div className={styles.picker}>
       <div className={styles.toolbar}>
@@ -187,6 +197,29 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
               setUploadMode((m) => !m);
             }}>
             {uploadMode ? "Cancel upload" : "Upload new"}
+          </Btn>
+        </div>
+
+        <div className={styles.toolbarRow}>
+          <div className={styles.searchInput}>
+            <Input
+              type='text'
+              fullWidth
+              placeholder='Or paste an image URL'
+              value={pasteUrl}
+              onChange={(e) => {
+                setPasteUrl(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleUseUrl();
+                }
+              }}
+            />
+          </div>
+          <Btn onClick={handleUseUrl} disabled={!pasteUrl.trim()}>
+            Use URL
           </Btn>
         </div>
 
@@ -239,7 +272,7 @@ const GalleryPicker = ({ onPick, onClose }: GalleryPickerProps) => {
                   if (file) handleFileSelected(file);
                   if (fileInputRef.current) fileInputRef.current.value = "";
                 }}
-                ariaLabel='Choose image to upload'
+                aria-label='Choose image to upload'
               />
               <Btn onClick={() => fileInputRef.current?.click()}>
                 {uploadFile ? "Replace file" : "Choose file…"}

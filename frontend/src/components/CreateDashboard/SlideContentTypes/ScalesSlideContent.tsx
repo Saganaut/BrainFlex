@@ -200,7 +200,7 @@ const ScalesSlideContent = () => {
               variant='bordered'
               size='xs'
               icon={<MinusIcon />}
-              ariaLabel={`Remove statement ${(idx + 1).toString()}`}
+              aria-label={`Remove statement ${(idx + 1).toString()}`}
               disabled={statements.length <= MIN_STATEMENTS}
               onClick={() => {
                 if (s.id) handleRemoveStatement(s.id);

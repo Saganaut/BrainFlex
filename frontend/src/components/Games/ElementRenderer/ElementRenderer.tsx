@@ -13,7 +13,15 @@ import { AnswerOptions } from "../AnswerOptions/AnswerOptions";
 import { TextAnswerInput } from "../TextAnswerInput/TextAnswerInput";
 import { NumberAnswerInput } from "../NumberAnswerInput/NumberAnswerInput";
 import { PlaceholderAnswer } from "../PlaceholderAnswer/PlaceholderAnswer";
-import type { AnswerPayload, DeckElement } from "../../../types/elements";
+import { WordCloudInput } from "../WordCloudInput/WordCloudInput";
+import { WordCloud } from "../WordCloud/WordCloud";
+import { useAppSelector } from "../../../store/hooks";
+import type {
+  AnswerPayload,
+  DeckElement,
+  WordCloudQuestion,
+} from "../../../types/elements";
+import styles from "./ElementRenderer.module.css";
 
 export interface ElementRendererProps {
   element: DeckElement;
@@ -123,6 +131,22 @@ const ElementRenderer = ({
       );
     }
 
+    case "WordCloudQuestion": {
+      const myWords =
+        mySubmission?.kind === "WordCloudAnswer"
+          ? (mySubmission.words ?? [])
+          : null;
+      return (
+        <WordCloudView
+          element={liveElement}
+          submittedWords={myWords}
+          revealed={roundResultElement !== null}
+          disabled={disabled}
+          onSubmit={onSubmit}
+        />
+      );
+    }
+
     case "RankingQuestion":
     case "ScalesQuestion":
     case "QAndAQuestion":
@@ -143,6 +167,43 @@ const ElementRenderer = ({
     default:
       return null;
   }
+};
+
+/**
+ * Renderer for an active Word Cloud round. The live cloud sits above the
+ * input (and replaces the input once the player submits). Pulls the
+ * aggregated counts straight from the game slice — populated by the
+ * /topic/showcase/{roomCode}/wordCloud broadcast.
+ */
+interface WordCloudViewProps {
+  element: WordCloudQuestion;
+  submittedWords: string[] | null;
+  revealed: boolean;
+  disabled: boolean;
+  onSubmit: (payload: AnswerPayload) => void;
+}
+
+const WordCloudView = ({
+  element,
+  submittedWords,
+  revealed,
+  disabled,
+  onSubmit,
+}: WordCloudViewProps) => {
+  const counts = useAppSelector((s) => s.game.wordCloudCounts);
+  return (
+    <div className={styles.wordCloudStack}>
+      <WordCloud counts={counts} />
+      {!revealed && (
+        <WordCloudInput
+          element={element}
+          submittedWords={submittedWords}
+          onSubmit={onSubmit}
+          disabled={disabled}
+        />
+      )}
+    </div>
+  );
 };
 
 const optionIndex = (

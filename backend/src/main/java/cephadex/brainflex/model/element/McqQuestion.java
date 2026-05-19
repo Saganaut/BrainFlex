@@ -7,9 +7,16 @@
  * correct — an MCQ may have any number (zero excludes it from scored game
  * modes; one is the typical case; many means "any of these is acceptable").
  *
- * When `multipleSelections` is non-null the player may submit up to that many
- * option ids; the McqAnswer payload carries `optionIds: List<String>` and the
- * scorer checks set membership against `correctOptionIds`.
+ * Multi-select is governed by `allowMultipleSelect`. When `false` (the default
+ * Kahoot-style behavior) the scorer rejects payloads carrying more than one
+ * option id. When `true`, the player may submit up to `maxSelections` ids;
+ * `maxSelections=0` means unlimited (capped by the option count). The legacy
+ * `multipleSelections` field is still emitted for the player-side display
+ * limit but is no longer the source of truth for scoring eligibility.
+ *
+ * `shuffleOptions` is a per-player presentation flag honoured by
+ * ShowcaseService.startRound — when set, each player sees a different (but
+ * deterministic-on-reconnect) ordering of `options[]`.
  */
 package cephadex.brainflex.model.element;
 
@@ -49,7 +56,11 @@ public record McqQuestion(
         Image image,
         String videoUrl,
         String audioUrl,
-        MediaPosition mediaPosition
+        MediaPosition mediaPosition,
+        // per-kind ergonomics (chunk 10)
+        boolean shuffleOptions,
+        boolean allowMultipleSelect,
+        int maxSelections
 ) implements DeckElement {
 
     @Override

@@ -23,7 +23,7 @@ const SlideView = ({
 }: SlideViewProps) => {
   const imageUrl = largestUrl(slide.image, slide.id ?? "");
   return (
-    <article className={styles.card} ariaLabel='Slide'>
+    <article className={styles.card} aria-label='Slide'>
       <div className={styles.meta}>
         <span className={styles.position}>
           Slide {round + 1} / {totalRounds}

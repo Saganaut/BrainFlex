@@ -1,10 +1,10 @@
-import { type ReactNode } from "react";
+import { type ComponentType, type ReactNode, type SVGProps } from "react";
 import { Link } from "@tanstack/react-router";
 import styles from "./ErrorPage.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import LostFish from "@/assets/message/LostFish.svg";
-import SleepyCeph from "@/assets/message/SleepyCeph.svg";
-import OceanFloor from "@/assets/message/OceanFloor.svg";
+import LostFish from "@/assets/images/mascots/lost-fish.svg?react";
+import SleepyCeph from "@/assets/images/mascots/sleepy-ceph.svg?react";
+import OceanFloor from "@/assets/images/mascots/ocean-floor.svg?react";
 
 interface ErrorPageProps {
   statusCode: number;
@@ -13,36 +13,40 @@ interface ErrorPageProps {
   image?: ReactNode;
 }
 
+type MascotComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
 const ERROR_CONFIGS: Record<
   number,
-  { title: string; message: string; imgStr: string }
+  { title: string; message: string; Mascot: MascotComponent }
 > = {
   404: {
     title: "Page not found",
     message: "Looks like this corner of BrainFlex doesn't exist.",
-    imgStr: OceanFloor,
+    Mascot: OceanFloor,
   },
   500: {
     title: "Internal server error",
     message: "Something broke on our end.  Give it a moment and try again.",
-    imgStr: SleepyCeph,
+    Mascot: SleepyCeph,
   },
   503: {
     title: "Service unavailable",
     message: "BrainFlex is taking a quick breather.",
-    imgStr: LostFish,
+    Mascot: LostFish,
   },
 };
 
 const ErrorPage = ({ statusCode, title, message, image }: ErrorPageProps) => {
+  const Mascot = ERROR_CONFIGS[statusCode].Mascot;
   return (
     <main className={styles.page}>
       <p className={styles.code}>{statusCode}</p>
       <div className={styles.mascot}>
         {image ?? (
-          <img
-            src={ERROR_CONFIGS[statusCode].imgStr}
-            alt='Error illustration'
+          <Mascot
+            className={styles.mascotSvg}
+            role='img'
+            aria-label='Error illustration'
           />
         )}
       </div>

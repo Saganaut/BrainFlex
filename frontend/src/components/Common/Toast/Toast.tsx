@@ -30,7 +30,7 @@ const Toast = ({ id, message, variant, duration, onDismiss }: ToastProps) => {
           variant='close'
           size='xs'
           className={styles.dismiss}
-          ariaLabel='Dismiss notification'
+          aria-label='Dismiss notification'
           onClick={() => {
             onDismiss(id);
           }}></IconBtn>
@@ -40,7 +40,7 @@ const Toast = ({ id, message, variant, duration, onDismiss }: ToastProps) => {
 };
 
 const ToastContainer = ({ children }: { children: React.ReactNode }) => (
-  <div className={styles.toastContainer} ariaLabel='Notifications'>
+  <div className={styles.toastContainer} aria-label='Notifications'>
     {children}
   </div>
 );

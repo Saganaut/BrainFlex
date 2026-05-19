@@ -92,7 +92,7 @@ const DeckReviewsPanel = () => {
           </span>
         </div>
 
-        <ul className={styles.histogram} ariaLabel='Rating distribution'>
+        <ul className={styles.histogram} aria-label='Rating distribution'>
           {[5, 4, 3, 2, 1].map((star) => {
             const count = distribution[star - 1] ?? 0;
             const pct = (count / histogramMax) * 100;
@@ -102,7 +102,7 @@ const DeckReviewsPanel = () => {
                 <span
                   className={styles.histogramTrack}
                   role='img'
-                  ariaLabel={`${String(count)} ${
+                  aria-label={`${String(count)} ${
                     count === 1 ? "rating" : "ratings"
                   } at ${String(star)} stars`}>
                   <span

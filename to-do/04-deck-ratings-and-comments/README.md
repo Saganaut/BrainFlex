@@ -1,6 +1,6 @@
 # 04 — Deck ratings & comments
 
-**Status:** Not started
+**Status:** Done
 **Depends on:** 02 (`Deck.averageRating`, `ratingCount` denorms)
 **Unblocks:** 18 (notifications can reference comment events)
 
@@ -80,13 +80,13 @@ DeckComment                            @Document("deck_comments")
 
 ## Checklist
 
-- [ ] `DeckRating` model + repo + service + endpoints + tests
-- [ ] `DeckComment` model + repo + service + endpoints + tests
-- [ ] Incremental `Deck.averageRating` / `ratingCount` updates
-- [ ] `DeckDTO.isRatedByMe`, `myRating` populated for authenticated callers
-- [ ] `StarRating` component
-- [ ] Reviews tab on deck detail page with rating histogram
-- [ ] Discussion tab with `CommentThread` component
-- [ ] Optimistic upvote toggle in `apiEnhancements.ts`
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `DeckRating` model + repo + service + endpoints + tests
+- [x] `DeckComment` model + repo + service + endpoints + tests
+- [x] Incremental `Deck.averageRating` / `ratingCount` updates
+- [x] `DeckDTO.isRatedByMe`, `myRating` populated for authenticated callers
+- [x] `StarRating` component
+- [x] Reviews tab on deck detail page with rating histogram
+- [x] Discussion tab with `CommentThread` component
+- [x] Optimistic upvote toggle in `apiEnhancements.ts`
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

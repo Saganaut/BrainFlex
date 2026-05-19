@@ -78,6 +78,7 @@ import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.TagRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.DeckCollaboratorService;
 import cephadex.brainflex.service.TagService;
 
 @Configuration
@@ -103,6 +104,7 @@ public class SampleDataSeeder {
             OrganizationRepository organizationRepository,
             TagRepository tagRepository,
             TagService tagService,
+            DeckCollaboratorService deckCollaboratorService,
             MongoTemplate mongoTemplate) {
         return (ApplicationArguments args) -> {
             try {
@@ -126,7 +128,7 @@ public class SampleDataSeeder {
                 int deckCount = 0;
                 for (User user : users) {
                     themeCount += ensureThemesForUser(user, userRepository, themeRepository);
-                    deckCount += ensureDecksForUser(user, deckRepository);
+                    deckCount += ensureDecksForUser(user, deckRepository, deckCollaboratorService);
                 }
 
                 int recounted = tagService.recomputeDeckCounts(deckRepository.findAll());
@@ -164,6 +166,7 @@ public class SampleDataSeeder {
                 "organizations",
                 "themes",
                 "decks",
+                "deck_collaborators",
                 "tags",
                 "gallery_images",
                 "showcases",
@@ -382,7 +385,10 @@ public class SampleDataSeeder {
      * own any. Picks decks deterministically from a small library keyed on the
      * user's faction so the same user always gets the same starter content.
      */
-    private int ensureDecksForUser(User user, DeckRepository deckRepository) {
+    private int ensureDecksForUser(
+            User user,
+            DeckRepository deckRepository,
+            DeckCollaboratorService deckCollaboratorService) {
         if (!deckRepository.findByCreatorUserId(user.getId()).isEmpty()) {
             return 0;
         }
@@ -390,7 +396,8 @@ public class SampleDataSeeder {
         for (Deck deck : decks) {
             deck.setCreatorUserId(user.getId());
             deck.setOrganizationId(firstOrgId(user));
-            deckRepository.save(deck);
+            Deck saved = deckRepository.save(deck);
+            deckCollaboratorService.addInitialOwner(saved, user);
         }
         return decks.size();
     }

@@ -35,11 +35,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cephadex.brainflex.dto.AnswerProgressMessage;
 import cephadex.brainflex.dto.AnswerSubmitRequest;
@@ -52,6 +56,7 @@ import cephadex.brainflex.dto.ShowcaseReviewDTO;
 import cephadex.brainflex.dto.VotePhaseStartMessage;
 import cephadex.brainflex.dto.VoteProgressMessage;
 import cephadex.brainflex.dto.VoteSubmitRequest;
+import cephadex.brainflex.dto.WordCloudUpdateMessage;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.PlayerAnswer;
 import cephadex.brainflex.model.PlayerPlacement;
@@ -61,10 +66,17 @@ import cephadex.brainflex.model.ShowcasePlayer;
 import cephadex.brainflex.model.ShowcaseResult;
 import cephadex.brainflex.model.ShowcaseSettings;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.answer.AnswerPayload;
+import cephadex.brainflex.model.answer.DrawingAnswer;
+import cephadex.brainflex.model.answer.Stroke;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
+import cephadex.brainflex.model.answer.WordCloudAnswer;
+import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.element.Slide;
+import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.GameMode;
 import cephadex.brainflex.model.enums.GameStatus;
 import cephadex.brainflex.model.enums.ShowcasePhase;
@@ -98,6 +110,18 @@ public class ShowcaseService {
     private final ConcurrentHashMap<String, Object> roundLocks = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
 
+    /**
+     * Per-answer byte cap for DRAWING submissions. Inline stroke lists can get
+     * large; we count the serialized JSON and silently drop anything over the
+     * cap so a single PlayerAnswer can't blow past Mongo's 16 MB document
+     * limit. Default 256 KB.
+     */
+    @Value("${app.drawing.max-payload-bytes:262144}")
+    private int drawingMaxPayloadBytes = 262144;
+
+    /** Used to count the serialized size of {@link DrawingAnswer} submissions. */
+    private final ObjectMapper objectMapper;
+
     public ShowcaseService(
             ShowcaseRepository showcaseRepository,
             DeckRepository deckRepository,
@@ -108,6 +132,7 @@ public class ShowcaseService {
             DeckImageHydrationService deckImageHydrationService,
             DeckService deckService,
             UserImageHydrator userImageHydrator,
+            ObjectMapper objectMapper,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.showcaseRepository = showcaseRepository;
         this.deckRepository = deckRepository;
@@ -118,6 +143,7 @@ public class ShowcaseService {
         this.deckImageHydrationService = deckImageHydrationService;
         this.deckService = deckService;
         this.userImageHydrator = userImageHydrator;
+        this.objectMapper = objectMapper;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -332,7 +358,29 @@ public class ShowcaseService {
             if (alreadyAnswered)
                 return;
 
-            ElementScorer.Result result = ElementScorer.score(current, request.payload());
+            // Word Cloud submissions are normalized server-side so the value
+            // stored on PlayerAnswer.payload matches what the aggregator counted
+            // (case-folded, trimmed, banned-word filtered, capped at the
+            // question's per-player limit). Submissions whose words all get
+            // stripped become a no-op rather than a stored empty answer — the
+            // player can submit again.
+            AnswerPayload payload = request.payload();
+            if (current instanceof WordCloudQuestion wc && payload instanceof WordCloudAnswer wca) {
+                List<String> sanitized = WordCloudAggregator.normalize(wc, wca.words());
+                if (sanitized.isEmpty())
+                    return;
+                payload = new WordCloudAnswer(sanitized);
+            }
+            // DRAWING: silently drop submissions that bust the per-question
+            // stroke/point caps or the room-wide byte cap. Failing rather than
+            // truncating keeps the on-wire shape stable and pushes the player
+            // back into the editor — clients downsample before submitting.
+            if (current instanceof DrawingQuestion dq && payload instanceof DrawingAnswer da) {
+                if (!isDrawingAnswerWithinLimits(dq, da))
+                    return;
+            }
+
+            ElementScorer.Result result = ElementScorer.score(current, payload);
             int points = result.points();
             if (result.correct()) {
                 points = applySpeedBonus(points, session);
@@ -340,7 +388,7 @@ public class ShowcaseService {
 
             PlayerAnswer answer = new PlayerAnswer();
             answer.setElementId(current.id());
-            answer.setPayload(request.payload());
+            answer.setPayload(payload);
             answer.setCorrect(result.correct());
             answer.setPointsAwarded(points);
             answer.setAnsweredAt(LocalDateTime.now());
@@ -355,6 +403,9 @@ public class ShowcaseService {
             showcaseCache.put(session);
 
             broadcastAnswerProgress(session, current.id());
+            if (current instanceof WordCloudQuestion wc) {
+                broadcastWordCloud(session, wc);
+            }
 
             boolean allAnswered = session.getPlayers().stream()
                     .allMatch(p -> p.getAnswers().stream()
@@ -467,6 +518,13 @@ public class ShowcaseService {
             return;
         }
 
+        // Word Cloud: send the locked-in cloud one more time so any client that
+        // joined mid-round and missed an interim broadcast still renders the
+        // final tally on reveal.
+        if (element instanceof WordCloudQuestion wc) {
+            broadcastWordCloud(session, wc);
+        }
+
         broadcastRoundResult(session, element, null);
         advanceRound(session);
     }
@@ -507,6 +565,12 @@ public class ShowcaseService {
             Showcase session,
             DeckElement element,
             RoundResultMessage.BestAnswerOutcome bestAnswer) {
+        // Surveys (Word Cloud, Allocation) can expose players via their open
+        // answers — reveal shows aggregated counts/averages, so null each
+        // player's payload in the per-player results to avoid leakage.
+        boolean redactPayload = element instanceof WordCloudQuestion
+                || element instanceof AllocationQuestion;
+
         List<RoundResultMessage.PlayerRoundResult> results = session.getPlayers().stream()
                 .map(player -> {
                     PlayerAnswer ans = player.getAnswers().stream()
@@ -514,7 +578,8 @@ public class ShowcaseService {
                             .findFirst().orElseThrow();
                     return new RoundResultMessage.PlayerRoundResult(
                             player.getUserId(), player.getUserName(),
-                            ans.getPayload(), ans.isCorrect(), ans.getPointsAwarded(),
+                            redactPayload ? null : ans.getPayload(),
+                            ans.isCorrect(), ans.getPointsAwarded(),
                             player.getScore());
                 })
                 .toList();
@@ -829,6 +894,56 @@ public class ShowcaseService {
                         session.getDeckSnapshot().size(),
                         ElementRedactor.redact(element),
                         session.getRoundStartedAt()));
+    }
+
+    /**
+     * Aggregate every player's Word Cloud submission for {@code question} and
+     * broadcast the resulting word -> count map. Called both during SUBMIT
+     * (so the cloud animates live as words come in) and one final time on
+     * round complete (the locked-in cloud). The frontend only ever sees
+     * counts — per-player word lists are never sent on this topic.
+     */
+    /**
+     * Validate a DRAWING submission against the question's caps and the
+     * room-wide serialized-byte cap. Returns false (drop the submission) when
+     * the stroke list is too long, any stroke has too many points, or the
+     * serialized JSON would exceed {@link #drawingMaxPayloadBytes}.
+     *
+     * Counting points as pairs: {@link Stroke#points()} is flat
+     * {@code [x0, y0, x1, y1, ...]}, so the count of (x, y) pairs is
+     * {@code points.size() / 2}.
+     */
+    private boolean isDrawingAnswerWithinLimits(DrawingQuestion question, DrawingAnswer answer) {
+        List<Stroke> strokes = answer.strokes();
+        if (strokes == null) return true;
+        if (question.maxStrokesPerPlayer() > 0 && strokes.size() > question.maxStrokesPerPlayer())
+            return false;
+        if (question.maxPointsPerStroke() > 0) {
+            for (Stroke stroke : strokes) {
+                List<Double> pts = stroke.points();
+                if (pts != null && (pts.size() / 2) > question.maxPointsPerStroke())
+                    return false;
+            }
+        }
+        try {
+            return objectMapper.writeValueAsBytes(answer).length <= drawingMaxPayloadBytes;
+        } catch (JsonProcessingException e) {
+            return false;
+        }
+    }
+
+    private void broadcastWordCloud(Showcase session, WordCloudQuestion question) {
+        List<WordCloudAnswer> submissions = session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> question.id().equals(a.getElementId()))
+                .map(PlayerAnswer::getPayload)
+                .filter(WordCloudAnswer.class::isInstance)
+                .map(WordCloudAnswer.class::cast)
+                .toList();
+        Map<String, Integer> counts = WordCloudAggregator.aggregate(question, submissions);
+        messagingTemplate.convertAndSend(
+                "/topic/showcase/" + session.getRoomCode() + "/wordCloud",
+                new WordCloudUpdateMessage(session.getCurrentRound(), question.id(), counts));
     }
 
     private void broadcastAnswerProgress(Showcase session, String elementId) {

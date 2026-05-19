@@ -139,7 +139,7 @@ const OrgSection = () => {
               setCreateName(e.target.value);
             }}
             maxLength={128}
-            ariaLabel='New organization name'
+            aria-label='New organization name'
           />
           <Btn
             onClick={() => {
@@ -163,7 +163,7 @@ const OrgSection = () => {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               setJoinId(e.target.value);
             }}
-            ariaLabel='Organization ID to join'
+            aria-label='Organization ID to join'
           />
           <Btn
             onClick={() => {

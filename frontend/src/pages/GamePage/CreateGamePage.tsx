@@ -86,7 +86,7 @@ interface ModeTabsProps {
 }
 
 const ModeTabs = ({ mode, onChange }: ModeTabsProps) => (
-  <div className={styles.modeTabs} role='tablist' ariaLabel='Create mode'>
+  <div className={styles.modeTabs} role='tablist' aria-label='Create mode'>
     <ActionCard
       onClick={() => {
         onChange("template");

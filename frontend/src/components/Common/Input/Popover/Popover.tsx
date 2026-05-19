@@ -22,7 +22,7 @@ const Popover = ({
   <div
     className={[styles.popover, className].filter(Boolean).join(" ")}
     role={role}
-    ariaLabel={ariaLabel}>
+    aria-label={ariaLabel}>
     {children}
   </div>
 );
@@ -64,7 +64,7 @@ const PopoverButton = ({
   return (
     <button
       type='button'
-      ariaLabel={ariaLabel}
+      aria-label={ariaLabel}
       aria-pressed={isActive}
       onMouseDown={handleMouseDown}
       {...rest}

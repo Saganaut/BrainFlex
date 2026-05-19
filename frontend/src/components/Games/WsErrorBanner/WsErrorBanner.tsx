@@ -29,7 +29,7 @@ const WsErrorBanner = () => {
         onClick={() => {
           dispatch(clearWsError());
         }}
-        ariaLabel='Dismiss error'
+        aria-label='Dismiss error'
       />
     </div>
   );

@@ -87,11 +87,11 @@ const ExploreCard = ({ deck }: { deck: DeckDto }) => (
           <span className={styles.cardDesc}>{deck.description}</span>
         )}
         <div className={styles.cardMeta}>
-          <span className={styles.cardMetaItem} ariaLabel='Plays'>
+          <span className={styles.cardMetaItem} aria-label='Plays'>
             <PlayIcon className={styles.cardIcon} />
             {deck.playCount ?? 0}
           </span>
-          <span className={styles.cardMetaItem} ariaLabel='Rating'>
+          <span className={styles.cardMetaItem} aria-label='Rating'>
             <StarIcon className={styles.cardIcon} />
             {formatRating(deck.averageRating ?? 0, deck.ratingCount ?? 0)}
           </span>
@@ -157,13 +157,13 @@ const ExplorePage = () => {
       </header>
 
       <div className={styles.layout}>
-        <aside className={styles.sidebar} ariaLabel='Deck filters'>
+        <aside className={styles.sidebar} aria-label='Deck filters'>
           <section className={styles.filterSection}>
             <h2 className={styles.filterHeading}>Subject</h2>
             <div
               className={styles.subjectChips}
               role='radiogroup'
-              ariaLabel='Subject'>
+              aria-label='Subject'>
               <button
                 type='button'
                 role='radio'

@@ -94,6 +94,25 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    updateCollaboratorRole: build.mutation<
+      UpdateCollaboratorRoleApiResponse,
+      UpdateCollaboratorRoleApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/collaborators/${queryArg.userId}`,
+        method: "PUT",
+        body: queryArg.updateCollaboratorRoleRequest,
+      }),
+    }),
+    removeCollaborator: build.mutation<
+      RemoveCollaboratorApiResponse,
+      RemoveCollaboratorApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/collaborators/${queryArg.userId}`,
+        method: "DELETE",
+      }),
+    }),
     editComment: build.mutation<EditCommentApiResponse, EditCommentApiArg>({
       query: (queryArg) => ({
         url: `/api/decks/${queryArg.deckId}/comments/${queryArg.commentId}`,
@@ -328,6 +347,32 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/decks/${queryArg.id}/comments`,
         method: "POST",
         body: queryArg.createCommentRequest,
+      }),
+    }),
+    listCollaborators: build.query<
+      ListCollaboratorsApiResponse,
+      ListCollaboratorsApiArg
+    >({
+      query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/collaborators` }),
+    }),
+    inviteCollaborator: build.mutation<
+      InviteCollaboratorApiResponse,
+      InviteCollaboratorApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/collaborators`,
+        method: "POST",
+        body: queryArg.inviteCollaboratorRequest,
+      }),
+    }),
+    transferOwnership: build.mutation<
+      TransferOwnershipApiResponse,
+      TransferOwnershipApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.id}/collaborators/transfer`,
+        method: "POST",
+        body: queryArg.transferOwnershipRequest,
       }),
     }),
     archiveDeck: build.mutation<ArchiveDeckApiResponse, ArchiveDeckApiArg>({
@@ -614,7 +659,10 @@ export type UpdateElementApiArg = {
   id: string;
   elementId: string;
   body:
+    | AllocationQuestion
+    | DrawingQuestion
     | GridQuestion
+    | MatchingQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -622,12 +670,25 @@ export type UpdateElementApiArg = {
     | RankingQuestion
     | ScalesQuestion
     | Slide
-    | TextQuestion;
+    | TextQuestion
+    | WordCloudQuestion;
 };
 export type DeleteElementApiResponse = /** status 200 OK */ DeckDto;
 export type DeleteElementApiArg = {
   id: string;
   elementId: string;
+};
+export type UpdateCollaboratorRoleApiResponse =
+  /** status 200 OK */ DeckCollaboratorDto;
+export type UpdateCollaboratorRoleApiArg = {
+  id: string;
+  userId: string;
+  updateCollaboratorRoleRequest: UpdateCollaboratorRoleRequest;
+};
+export type RemoveCollaboratorApiResponse = unknown;
+export type RemoveCollaboratorApiArg = {
+  id: string;
+  userId: string;
 };
 export type EditCommentApiResponse = /** status 200 OK */ DeckCommentDto;
 export type EditCommentApiArg = {
@@ -751,7 +812,10 @@ export type AddElementApiResponse = /** status 200 OK */ DeckDto;
 export type AddElementApiArg = {
   id: string;
   body:
+    | AllocationQuestion
+    | DrawingQuestion
     | GridQuestion
+    | MatchingQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -759,7 +823,8 @@ export type AddElementApiArg = {
     | RankingQuestion
     | ScalesQuestion
     | Slide
-    | TextQuestion;
+    | TextQuestion
+    | WordCloudQuestion;
 };
 export type MoveMcqOptionApiResponse = /** status 200 OK */ DeckDto;
 export type MoveMcqOptionApiArg = {
@@ -784,6 +849,23 @@ export type PostCommentApiResponse = /** status 200 OK */ DeckCommentDto;
 export type PostCommentApiArg = {
   id: string;
   createCommentRequest: CreateCommentRequest;
+};
+export type ListCollaboratorsApiResponse =
+  /** status 200 OK */ DeckCollaboratorDto[];
+export type ListCollaboratorsApiArg = {
+  id: string;
+};
+export type InviteCollaboratorApiResponse =
+  /** status 200 OK */ DeckCollaboratorDto;
+export type InviteCollaboratorApiArg = {
+  id: string;
+  inviteCollaboratorRequest: InviteCollaboratorRequest;
+};
+export type TransferOwnershipApiResponse =
+  /** status 200 OK */ DeckCollaboratorDto[];
+export type TransferOwnershipApiArg = {
+  id: string;
+  transferOwnershipRequest: TransferOwnershipRequest;
 };
 export type ArchiveDeckApiResponse = /** status 200 OK */ DeckDto;
 export type ArchiveDeckApiArg = {
@@ -999,6 +1081,80 @@ export type ShowcaseSettings = {
 export type DeckElementBase = {
   kind: string;
 };
+export type McqOption = {
+  id?: string;
+  text?: string;
+  image?: Image;
+  color?: string;
+};
+export type AllocationQuestion = {
+  kind: "AllocationQuestion";
+} & DeckElementBase & {
+    id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
+    prompt?: string;
+    options?: McqOption[];
+    totalPointsToDistribute?: number;
+    allowZeroOnItem?: boolean;
+    enforceExactTotal?: boolean;
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
+    bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    speakerNotes?: string;
+    background?: Image;
+    image?: Image;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
+export type DrawingQuestion = {
+  kind: "DrawingQuestion";
+} & DeckElementBase & {
+    id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
+    prompt?: string;
+    backingImage?: Image;
+    canvasWidth?: number;
+    canvasHeight?: number;
+    maxStrokesPerPlayer?: number;
+    maxPointsPerStroke?: number;
+    palette?: string[];
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
+    bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    speakerNotes?: string;
+    background?: Image;
+    image?: Image;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
 export type GridCellsConfig = {
   labels?: string[];
   backingImage?: Image;
@@ -1037,12 +1193,44 @@ export type GridQuestion = {
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
   };
-export type McqOption = {
+export type MatchingPair = {
   id?: string;
-  text?: string;
-  image?: Image;
-  color?: string;
+  leftLabel?: string;
+  rightLabel?: string;
+  leftImage?: Image;
+  rightImage?: Image;
 };
+export type MatchingQuestion = {
+  kind: "MatchingQuestion";
+} & DeckElementBase & {
+    id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
+    prompt?: string;
+    pairs?: MatchingPair[];
+    scoring?: "ALL_OR_NOTHING" | "PARTIAL";
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
+    bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    speakerNotes?: string;
+    background?: Image;
+    image?: Image;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
 export type McqQuestion = {
   kind: "McqQuestion";
 } & DeckElementBase & {
@@ -1316,6 +1504,40 @@ export type TextQuestion = {
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
   };
+export type WordCloudQuestion = {
+  kind: "WordCloudQuestion";
+} & DeckElementBase & {
+    id?: string;
+    publicKey?: string;
+    privateKey?: string;
+    title?: string;
+    styledTitle?: {
+      [key: string]: object;
+    };
+    prompt?: string;
+    maxSubmissionsPerPlayer?: number;
+    maxWordLength?: number;
+    caseSensitive?: boolean;
+    profanityFilter?: boolean;
+    bannedWords?: string[];
+    pointValue?: number;
+    difficulty?: "EASY" | "MEDIUM" | "HARD";
+    scored?: boolean;
+    survey?: boolean;
+    multipleSelections?: number;
+    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
+    bestAnswerMode?: boolean;
+    bestAnswerTitle?: string;
+    bestAnswerBonus?: number;
+    explanation?: string;
+    displaySeconds?: number;
+    speakerNotes?: string;
+    background?: Image;
+    image?: Image;
+    videoUrl?: string;
+    audioUrl?: string;
+    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  };
 export type DeckDto = {
   id?: string;
   name?: string;
@@ -1335,7 +1557,10 @@ export type DeckDto = {
   estimatedDurationMinutes?: number;
   elementCount?: number;
   elements?: (
+    | AllocationQuestion
+    | DrawingQuestion
     | GridQuestion
+    | MatchingQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -1344,6 +1569,7 @@ export type DeckDto = {
     | ScalesQuestion
     | Slide
     | TextQuestion
+    | WordCloudQuestion
   )[];
   parentDeckId?: string;
   originalAuthorUserId?: string;
@@ -1361,6 +1587,7 @@ export type DeckDto = {
   ratingCount?: number;
   myRating?: number;
   isRatedByMe?: boolean;
+  myRole?: "VIEWER" | "EDITOR" | "OWNER";
   lastPlayedAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -1396,6 +1623,22 @@ export type DeckRatingDto = {
 export type RateDeckRequest = {
   stars?: number;
   review?: string;
+};
+export type DeckCollaboratorDto = {
+  id?: string;
+  deckId?: string;
+  userId?: string;
+  email?: string;
+  userName?: string;
+  name?: string;
+  pictureUrl?: string;
+  role?: "VIEWER" | "EDITOR" | "OWNER";
+  invitedByUserId?: string;
+  invitedAt?: string;
+  acceptedAt?: string;
+};
+export type UpdateCollaboratorRoleRequest = {
+  role: "VIEWER" | "EDITOR" | "OWNER";
 };
 export type DeckCommentDto = {
   id?: string;
@@ -1504,7 +1747,10 @@ export type ShowcaseDto = {
   deckBackgroundImageUrl?: string;
   themeId?: string;
   deckSnapshot?: (
+    | AllocationQuestion
+    | DrawingQuestion
     | GridQuestion
+    | MatchingQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -1513,6 +1759,7 @@ export type ShowcaseDto = {
     | ScalesQuestion
     | Slide
     | TextQuestion
+    | WordCloudQuestion
   )[];
   settings?: ShowcaseSettings;
   players?: ShowcasePlayerDto[];
@@ -1589,6 +1836,13 @@ export type CreateCommentRequest = {
   body: string;
   parentCommentId?: string;
 };
+export type InviteCollaboratorRequest = {
+  userIdOrEmail: string;
+  role: "VIEWER" | "EDITOR" | "OWNER";
+};
+export type TransferOwnershipRequest = {
+  userId: string;
+};
 export type CreateDeckCollectionRequest = {
   id?: string;
   name: string;
@@ -1643,10 +1897,34 @@ export type PlayerPlacement = {
 export type AnswerPayloadBase = {
   kind: string;
 };
+export type AllocationAnswer = {
+  kind: "AllocationAnswer";
+} & AnswerPayloadBase & {
+    optionIdToPoints?: {
+      [key: string]: number;
+    };
+  };
+export type Stroke = {
+  color?: string;
+  thickness?: number;
+  points?: number[];
+};
+export type DrawingAnswer = {
+  kind: "DrawingAnswer";
+} & AnswerPayloadBase & {
+    strokes?: Stroke[];
+  };
 export type GridAnswer = {
   kind: "GridAnswer";
 } & AnswerPayloadBase & {
     selectedCellIndexes?: number[];
+  };
+export type MatchingAnswer = {
+  kind: "MatchingAnswer";
+} & AnswerPayloadBase & {
+    leftIdToRightId?: {
+      [key: string]: string;
+    };
   };
 export type McqAnswer = {
   kind: "McqAnswer";
@@ -1684,25 +1962,37 @@ export type TextAnswer = {
 export type TimeoutAnswer = {
   kind: "TimeoutAnswer";
 } & AnswerPayloadBase;
+export type WordCloudAnswer = {
+  kind: "WordCloudAnswer";
+} & AnswerPayloadBase & {
+    words?: string[];
+  };
 export type PlayerRoundDetail = {
   userId?: string;
   userName?: string;
   payload?:
+    | AllocationAnswer
+    | DrawingAnswer
     | GridAnswer
+    | MatchingAnswer
     | McqAnswer
     | NumberAnswer
     | PlaceOnImageAnswer
     | RankingAnswer
     | ScalesAnswer
     | TextAnswer
-    | TimeoutAnswer;
+    | TimeoutAnswer
+    | WordCloudAnswer;
   wasCorrect?: boolean;
   pointsAwarded?: number;
 };
 export type RoundReview = {
   round?: number;
   element?:
+    | AllocationQuestion
+    | DrawingQuestion
     | GridQuestion
+    | MatchingQuestion
     | McqQuestion
     | NumberQuestion
     | PlaceOnImageQuestion
@@ -1710,7 +2000,8 @@ export type RoundReview = {
     | RankingQuestion
     | ScalesQuestion
     | Slide
-    | TextQuestion;
+    | TextQuestion
+    | WordCloudQuestion;
   timedOutCount?: number;
   playerAnswers?: PlayerRoundDetail[];
 };
@@ -1777,6 +2068,8 @@ export const {
   useDeleteMyRatingMutation,
   useUpdateElementMutation,
   useDeleteElementMutation,
+  useUpdateCollaboratorRoleMutation,
+  useRemoveCollaboratorMutation,
   useEditCommentMutation,
   useDeleteCommentMutation,
   useGetCollectionQuery,
@@ -1814,6 +2107,10 @@ export const {
   useListCommentsQuery,
   useLazyListCommentsQuery,
   usePostCommentMutation,
+  useListCollaboratorsQuery,
+  useLazyListCollaboratorsQuery,
+  useInviteCollaboratorMutation,
+  useTransferOwnershipMutation,
   useArchiveDeckMutation,
   useToggleCommentUpvoteMutation,
   useCreateCollectionMutation,

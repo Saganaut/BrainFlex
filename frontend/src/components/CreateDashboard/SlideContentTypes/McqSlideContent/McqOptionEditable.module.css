@@ -17,17 +17,14 @@
   border-radius: var(--radius-md);
   background-color: var(--bg-surface-raised);
   cursor: pointer;
-
-  /* Fill the grid cell so every card in the row has the same height,
-     bounded by `--mcq-option-max-h` on the grid. `min-height: 0` lets
-     inner descendants actually respect bounded heights. `overflow:
-     hidden` clips the rare case where text falls below the font-size
-     floor inside `useFitText`. */
   height: 100%;
   min-height: 0;
+  outline: 2px solid transparent;
+  outline-offset: 4px;
   transition:
     border-color var(--duration-fast, 150ms) ease-out,
-    background-color var(--duration-fast, 150ms) ease-out;
+    background-color var(--duration-fast, 150ms) ease-out,
+    outline-color var(--duration-base) ease-in-out;
 
   .canAddBtn {
     visibility: hidden;
@@ -50,7 +47,7 @@
   }
 
   &.cardCorrect {
-    background-color: var(--bg-primary);
+    outline-color: var(--orange-400);
   }
 
   &.isDragging {
@@ -65,17 +62,10 @@
   }
 }
 
-/* Zones the card-click handler is NOT supposed to fire under. The text input
-   and the correct/wrong button handle their own focus + state, so we restore
-   the default cursor (instead of the card's pointer) and the children's
-   onClick stops propagation on the wrapping element. */
-.interactiveZone {
-  cursor: auto;
-}
-
 /* Replaces the old Toggle: a chrome-less square button that shows a purple
    check when the option is marked correct, an X otherwise. Click toggles. */
-.correctBtn {
+
+/* .correctBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -91,7 +81,7 @@
   &:hover {
     color: var(--action-hover);
   }
-}
+} */
 
 .correctIcon {
   width: 1.25rem;
@@ -175,7 +165,7 @@
   position: absolute;
   top: calc(100% + var(--space-2));
   left: 0;
-  right: 0;
+  right: auto;
   z-index: var(--z-dropdown);
   opacity: 1;
   max-height: 9999px;
@@ -193,12 +183,13 @@
   }
 }
 
-/* Top row of the popover: option label on the left, close button on the
-   right. PopoverRow already provides display:flex + align-items:center, so
-   we only need to stretch + justify-between. */
+/* Single-line popover row: image thumb, optional Clear, color thumb,
+   remove, close. PopoverRow already provides display:flex + align-items:
+   center; here we lock it to one line so the toolbar stays compact and
+   the color popout has a stable anchor to sit above. */
 .popoverHeader {
-  justify-content: space-between;
   width: 100%;
+  flex-wrap: nowrap;
 }
 
 /* Image-thumbnail trigger inside the toolbar. Renders on top of an IconBtn
@@ -207,4 +198,26 @@
    set inline by the consumer when an image is present. */
 .imageThumbBtn {
   border: var(--border-size-sm) solid var(--edge-surface);
+}
+
+/* Color-thumbnail trigger. Same footprint as the image thumb so the row
+   has a consistent rhythm; the background color is set inline by the
+   consumer to reflect the current option color. */
+.colorThumbWrap {
+  display: inline-flex;
+}
+
+.colorThumbBtn {
+  border: var(--border-size-sm) solid var(--edge-surface);
+}
+
+/* Color-swatch popout — sits above the toolbar so the picker doesn't
+   overlap the row's buttons. Stays inside `.popoverWrap` so the parent's
+   stopPropagation continues to shield it from the card-level click
+   handler that toggles the popover open/closed. */
+.colorPopout {
+  position: absolute;
+  bottom: calc(100% + var(--space-1));
+  left: 0;
+  z-index: calc(var(--z-dropdown) + 1);
 }

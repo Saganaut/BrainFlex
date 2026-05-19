@@ -136,6 +136,66 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         correctY: 0.5,
         tolerance: 0.1,
       };
+    case "WordCloudQuestion":
+      return {
+        kind: "WordCloudQuestion",
+        ...sharedQuestionDefaults,
+        scored: false,
+        survey: true,
+        maxSubmissionsPerPlayer: 3,
+        maxWordLength: 30,
+        caseSensitive: false,
+        profanityFilter: true,
+        bannedWords: [],
+      };
+    case "AllocationQuestion":
+      return {
+        kind: "AllocationQuestion",
+        ...sharedQuestionDefaults,
+        scored: false,
+        survey: true,
+        // Two starter options so the player view has something to render; the
+        // author can add up to MAX_OPTIONS in the editor.
+        options: Array.from({ length: 4 }, () => ({
+          id: crypto.randomUUID(),
+          text: "",
+        })),
+        totalPointsToDistribute: 100,
+        allowZeroOnItem: true,
+        enforceExactTotal: true,
+      };
+    case "MatchingQuestion":
+      return {
+        kind: "MatchingQuestion",
+        ...sharedQuestionDefaults,
+        pointValue: 100,
+        // Four starter pairs (mirrors the editor's MIN/DEFAULT). Pair ids are
+        // minted up front so optimistic UI and the answer-key invariant
+        // (leftId == rightId == pair.id) stay stable from the first render.
+        pairs: Array.from({ length: 4 }, () => ({
+          id: crypto.randomUUID(),
+          leftLabel: "",
+          rightLabel: "",
+        })),
+        scoring: "ALL_OR_NOTHING",
+      };
+    case "DrawingQuestion":
+      return {
+        kind: "DrawingQuestion",
+        ...sharedQuestionDefaults,
+        scored: false,
+        survey: true,
+        // 1920x1080 logical units. The player canvas scales strokes from
+        // here to whatever pixel canvas it renders — see the README in the
+        // chunk for the contract.
+        canvasWidth: 1920,
+        canvasHeight: 1080,
+        // Caps keep a single DrawingAnswer bounded; the server enforces an
+        // additional per-payload byte cap (default 256 KB).
+        maxStrokesPerPlayer: 200,
+        maxPointsPerStroke: 500,
+        palette: [],
+      };
   }
 };
 

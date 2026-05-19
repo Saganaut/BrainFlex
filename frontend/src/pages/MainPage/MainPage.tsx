@@ -43,7 +43,7 @@ const MainPage = () => {
         </p>
       </header>
 
-      <section className={styles.cards} ariaLabel='Primary actions'>
+      <section className={styles.cards} aria-label='Primary actions'>
         <ActionCard
           to='/games/create'
           icon='+'

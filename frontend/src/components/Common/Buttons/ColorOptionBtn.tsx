@@ -23,7 +23,7 @@ const ColorOptionBtn = ({
     <button
       type='button'
       title={label}
-      ariaLabel={`Set text color ${label}`}
+      aria-label={`Set text color ${label}`}
       className={styles.colorOptionBtn}
       style={{ background: color || "transparent" }}
       onMouseDown={

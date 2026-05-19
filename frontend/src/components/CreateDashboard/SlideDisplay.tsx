@@ -19,6 +19,10 @@ import { ScalesSlideContent } from "./SlideContentTypes/ScalesSlideContent";
 import { QAndASlideContent } from "./SlideContentTypes/QAndASlideContent";
 import { GridSlideContent } from "./SlideContentTypes/GridSlideContent";
 import { PlaceOnImageSlideContent } from "./SlideContentTypes/PlaceOnImageSlideContent";
+import { WordCloudSlideContent } from "./SlideContentTypes/WordCloudSlideContent";
+import { AllocationSlideContent } from "./SlideContentTypes/AllocationSlideContent";
+import { MatchingSlideContent } from "./SlideContentTypes/MatchingSlideContent";
+import { DrawingSlideContent } from "./SlideContentTypes/DrawingSlideContent";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -62,6 +66,14 @@ const SlideDisplay = () => {
         return <GridSlideContent />;
       case "PlaceOnImageQuestion":
         return <PlaceOnImageSlideContent />;
+      case "WordCloudQuestion":
+        return <WordCloudSlideContent />;
+      case "AllocationQuestion":
+        return <AllocationSlideContent />;
+      case "MatchingQuestion":
+        return <MatchingSlideContent />;
+      case "DrawingQuestion":
+        return <DrawingSlideContent />;
       default:
         return <div>No slide selected</div>;
     }

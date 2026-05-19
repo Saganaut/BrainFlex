@@ -65,6 +65,12 @@ export interface AnswerProgressPayload {
   totalPlayers: number;
 }
 
+export interface WordCloudUpdatePayload {
+  round: number;
+  elementId: string;
+  counts: Record<string, number>;
+}
+
 export interface PresencePayload {
   userId: string;
   online: boolean;
@@ -99,6 +105,11 @@ interface GameState {
   myVote: string | null;
   // userIds who have already voted this round (for the "n of m voted" indicator).
   votedThisRound: string[];
+
+  // Live word -> count map for the active Word Cloud round. Empty {} between
+  // rounds and on every non-WordCloud round. Updated by `wordCloudUpdated`,
+  // which the server emits on every submission and once on round complete.
+  wordCloudCounts: Record<string, number>;
 }
 
 const initialState: GameState = {
@@ -121,6 +132,7 @@ const initialState: GameState = {
   votePhaseSeconds: 0,
   myVote: null,
   votedThisRound: [],
+  wordCloudCounts: {},
 };
 
 export const gameSlice = createSlice({
@@ -153,6 +165,7 @@ export const gameSlice = createSlice({
       state.votePhaseSeconds = 0;
       state.myVote = null;
       state.votedThisRound = [];
+      state.wordCloudCounts = {};
     },
 
     votePhaseStarted(state, action: PayloadAction<VotePhaseStartPayload>) {
@@ -184,6 +197,20 @@ export const gameSlice = createSlice({
     answerProgressReceived(state, action: PayloadAction<AnswerProgressPayload>) {
       if (action.payload.round !== state.round) return;
       state.answeredThisRound = action.payload.answeredUserIds;
+    },
+
+    wordCloudUpdated(state, action: PayloadAction<WordCloudUpdatePayload>) {
+      // Stale broadcasts from a previous round are dropped.
+      if (action.payload.round !== state.round) return;
+      // Element id guards against an out-of-order broadcast landing after the
+      // round advanced to a new element with the same round number.
+      if (
+        state.currentElement &&
+        state.currentElement.id !== action.payload.elementId
+      ) {
+        return;
+      }
+      state.wordCloudCounts = action.payload.counts;
     },
 
     presenceUpdated(state, action: PayloadAction<PresencePayload>) {
@@ -242,6 +269,7 @@ export const {
   votePhaseStarted,
   voteSubmittedLocally,
   voteProgressReceived,
+  wordCloudUpdated,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

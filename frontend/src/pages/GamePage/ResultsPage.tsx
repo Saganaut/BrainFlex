@@ -60,7 +60,7 @@ const ResultsPage = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.tabs} role='tablist' ariaLabel='Results view'>
+      <div className={styles.tabs} role='tablist' aria-label='Results view'>
         <Btn
           type='button'
           role='tab'

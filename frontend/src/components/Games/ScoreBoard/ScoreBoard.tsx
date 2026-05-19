@@ -69,7 +69,7 @@ const ScoreBoard = ({
               {showAnswered && (
                 <span
                   className={`${styles.statusDot} ${answered ? styles.answered : styles.pending}`}
-                  ariaLabel={answered ? "Answered" : "Still answering"}
+                  aria-label={answered ? "Answered" : "Still answering"}
                   title={answered ? "Answered" : "Still answering"}>
                   {answered ? "✓" : "…"}
                 </span>
@@ -86,7 +86,7 @@ const ScoreBoard = ({
                   onClick={() => {
                     onBootPlayer(playerId);
                   }}
-                  ariaLabel={`Remove ${p.userName ?? "player"} from the showcase`}>
+                  aria-label={`Remove ${p.userName ?? "player"} from the showcase`}>
                   Boot
                 </Btn>
               )}

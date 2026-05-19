@@ -35,6 +35,7 @@ import cephadex.brainflex.dto.CreateShowcaseRequest;
 import cephadex.brainflex.dto.RoundResultMessage;
 import cephadex.brainflex.dto.VotePhaseStartMessage;
 import cephadex.brainflex.dto.VoteSubmitRequest;
+import cephadex.brainflex.dto.WordCloudUpdateMessage;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.PlayerAnswer;
 import cephadex.brainflex.model.Showcase;
@@ -42,10 +43,15 @@ import cephadex.brainflex.model.ShowcasePlayer;
 import cephadex.brainflex.model.ShowcaseResult;
 import cephadex.brainflex.model.ShowcaseSettings;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.answer.DrawingAnswer;
 import cephadex.brainflex.model.answer.McqAnswer;
+import cephadex.brainflex.model.answer.Stroke;
+import cephadex.brainflex.model.answer.WordCloudAnswer;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
+import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.GameMode;
 import cephadex.brainflex.model.enums.GameStatus;
@@ -68,6 +74,7 @@ class ShowcaseServiceTest {
     @Mock private DeckImageHydrationService deckImageHydrationService;
     @Mock private DeckService deckService;
     @Mock private UserImageHydrator userImageHydrator;
+    @Mock private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     @Mock private SimpMessagingTemplate messagingTemplate;
 
     @InjectMocks
@@ -451,6 +458,236 @@ class ShowcaseServiceTest {
     }
 
     // ---- Helpers ----
+
+    // ---- Word Cloud rounds ----
+
+    /**
+     * A single submission emits /wordCloud with the normalized words counted.
+     * Subsequent submitters add to the rolling map and trigger another emit.
+     */
+    @Test
+    void submitAnswer_OnWordCloudRound_BroadcastsLiveAggregation() {
+        Showcase session = wordCloudSessionWithTwoPlayers(2);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), new WordCloudAnswer(List.of("Monday", "rainy"))),
+                "guest:p1");
+
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/wordCloud"),
+                argThat((Object msg) -> msg instanceof WordCloudUpdateMessage w
+                        && w.elementId().equals(el.id())
+                        && w.counts().getOrDefault("monday", 0) == 1
+                        && w.counts().getOrDefault("rainy", 0) == 1));
+    }
+
+    /**
+     * Case folding + banned-words filtering happens at submit time so the
+     * historical PlayerAnswer.payload matches the aggregator's view.
+     */
+    @Test
+    void submitAnswer_OnWordCloudRound_NormalizesPayloadBeforeStoring() {
+        Showcase session = wordCloudSessionWithTwoPlayers(3);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(),
+                        new WordCloudAnswer(List.of("  Monday!! ", "spam", "RAINY"))),
+                "guest:p1");
+
+        PlayerAnswer stored = answerOf(session, "p1", el.id());
+        assertTrue(stored.getPayload() instanceof WordCloudAnswer);
+        WordCloudAnswer normalized = (WordCloudAnswer) stored.getPayload();
+        assertEquals(List.of("monday", "rainy"), normalized.words());
+    }
+
+    /**
+     * When every player has submitted, the round completes — the per-player
+     * payloads in the RoundResultMessage are nulled out for privacy on a
+     * Word Cloud round (the aggregated cloud goes out on its own topic).
+     */
+    @Test
+    void submitAnswer_OnWordCloudRound_WhenAllAnswered_RedactsPerPlayerPayloads() {
+        Showcase session = wordCloudSessionWithTwoPlayers(2);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(showcaseRepository.save(any(Showcase.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), new WordCloudAnswer(List.of("Monday"))), "guest:p1");
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), new WordCloudAnswer(List.of("monday"))), "guest:p2");
+
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/roundResult"),
+                argThat((Object msg) -> msg instanceof RoundResultMessage rr
+                        && rr.playerResults().stream().allMatch(r -> r.payload() == null)));
+    }
+
+    /**
+     * An empty submission (all words filtered out by the banned list) is a
+     * silent no-op — no PlayerAnswer is stored and no broadcast goes out.
+     */
+    @Test
+    void submitAnswer_OnWordCloudRound_DroppedWhenEntirelyBanned() {
+        Showcase session = wordCloudSessionWithTwoPlayers(3);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), new WordCloudAnswer(List.of("spam"))),
+                "guest:p1");
+
+        long stored = session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> a.getElementId().equals(el.id()))
+                .count();
+        assertEquals(0, stored);
+        verify(messagingTemplate, never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/showcase/ABCD12/wordCloud"),
+                any(WordCloudUpdateMessage.class));
+    }
+
+    // ---- Drawing rounds ----
+
+    /**
+     * An in-bounds drawing submission is stored verbatim — the byte cap
+     * is sized large enough to accept the payload (mocked ObjectMapper
+     * returns a small byte array).
+     */
+    @Test
+    void submitAnswer_OnDrawingRound_StoresInBoundsSubmission() throws Exception {
+        Showcase session = drawingSessionWithOnePlayer(200, 500);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(objectMapper.writeValueAsBytes(any())).thenReturn(new byte[1024]);
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        DrawingAnswer answer = new DrawingAnswer(List.of(
+                new Stroke("#000", 4.0, List.of(0.0, 0.0, 1.0, 1.0))));
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), answer), "guest:p1");
+
+        long stored = session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> a.getElementId().equals(el.id()))
+                .count();
+        assertEquals(1, stored);
+    }
+
+    /**
+     * A submission whose stroke count exceeds the question's
+     * {@code maxStrokesPerPlayer} is dropped before any storage or
+     * broadcast. The byte cap path isn't hit because the count check
+     * short-circuits first.
+     */
+    @Test
+    void submitAnswer_OnDrawingRound_DropsWhenStrokeCountOverCap() {
+        Showcase session = drawingSessionWithOnePlayer(2, 500);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        DrawingAnswer answer = new DrawingAnswer(List.of(
+                new Stroke("#000", 4.0, List.of(0.0, 0.0)),
+                new Stroke("#000", 4.0, List.of(1.0, 1.0)),
+                new Stroke("#000", 4.0, List.of(2.0, 2.0))));
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), answer), "guest:p1");
+
+        long stored = session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> a.getElementId().equals(el.id()))
+                .count();
+        assertEquals(0, stored);
+    }
+
+    /**
+     * A submission whose serialized JSON exceeds the per-answer byte cap
+     * is dropped. The mocked ObjectMapper reports an oversize byte array
+     * so the cap path triggers without authoring a giant payload.
+     */
+    @Test
+    void submitAnswer_OnDrawingRound_DropsWhenByteCapExceeded() throws Exception {
+        Showcase session = drawingSessionWithOnePlayer(200, 500);
+        when(showcaseCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(objectMapper.writeValueAsBytes(any())).thenReturn(new byte[300_000]);
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        DrawingAnswer answer = new DrawingAnswer(List.of(
+                new Stroke("#000", 4.0, List.of(0.0, 0.0, 1.0, 1.0))));
+        showcaseService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), answer), "guest:p1");
+
+        long stored = session.getPlayers().stream()
+                .flatMap(p -> p.getAnswers().stream())
+                .filter(a -> a.getElementId().equals(el.id()))
+                .count();
+        assertEquals(0, stored);
+    }
+
+    private static Showcase drawingSessionWithOnePlayer(int maxStrokes, int maxPointsPerStroke) {
+        Showcase s = new Showcase();
+        s.setId("session1");
+        s.setRoomCode("ABCD12");
+        s.setHostUserId("p1");
+        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setPhase(ShowcasePhase.SUBMIT);
+        ShowcaseSettings settings = new ShowcaseSettings();
+        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setTotalRounds(1);
+        settings.setSpeedBonus(false);
+        s.setSettings(settings);
+        s.setCurrentRound(0);
+        s.setDeckSnapshot(List.of(drawing("draw-0", maxStrokes, maxPointsPerStroke)));
+        s.setPlayers(new ArrayList<>(List.of(player("p1"))));
+        return s;
+    }
+
+    private static DrawingQuestion drawing(String id, int maxStrokes, int maxPointsPerStroke) {
+        return new DrawingQuestion(
+                id, "pub_" + id, "prv_" + id, "Title", null,
+                "Sketch it", null,
+                1920, 1080, maxStrokes, maxPointsPerStroke, List.of(),
+                0, Difficulty.EASY,
+                false, true, null,
+                cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
+                false, null, 0, null,
+                15, null, null, null, null, null, MediaPosition.NONE);
+    }
+
+    private static Showcase wordCloudSessionWithTwoPlayers(int maxSubmissionsPerPlayer) {
+        Showcase s = new Showcase();
+        s.setId("session1");
+        s.setRoomCode("ABCD12");
+        s.setHostUserId("p1");
+        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setPhase(ShowcasePhase.SUBMIT);
+        ShowcaseSettings settings = new ShowcaseSettings();
+        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setTotalRounds(1);
+        settings.setSpeedBonus(false);
+        s.setSettings(settings);
+        s.setCurrentRound(0);
+        s.setDeckSnapshot(List.of(wordCloud("wc-0", maxSubmissionsPerPlayer)));
+        s.setPlayers(new ArrayList<>(List.of(player("p1"), player("p2"))));
+        return s;
+    }
+
+    private static WordCloudQuestion wordCloud(String id, int maxSubmissionsPerPlayer) {
+        return new WordCloudQuestion(
+                id, "pub_" + id, "prv_" + id, "Title", null,
+                "How was your weekend?",
+                maxSubmissionsPerPlayer, 30, false, true,
+                List.of("spam"),
+                0, Difficulty.EASY,
+                false, true, null,
+                cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
+                false, null, 0, null,
+                15, null, null, null, null, null, MediaPosition.NONE);
+    }
 
     private static PlayerAnswer answerOf(Showcase session, String userId, String elementId) {
         return session.getPlayers().stream()

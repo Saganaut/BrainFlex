@@ -13,8 +13,10 @@ package cephadex.brainflex.service;
 import java.util.List;
 import java.util.Locale;
 
+import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.GridAnswer;
+import cephadex.brainflex.model.answer.MatchingAnswer;
 import cephadex.brainflex.model.answer.McqAnswer;
 import cephadex.brainflex.model.answer.NumberAnswer;
 import cephadex.brainflex.model.answer.PlaceOnImageAnswer;
@@ -22,8 +24,12 @@ import cephadex.brainflex.model.answer.RankingAnswer;
 import cephadex.brainflex.model.answer.ScalesAnswer;
 import cephadex.brainflex.model.answer.TextAnswer;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
+import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.GridQuestion;
+import cephadex.brainflex.model.element.MatchingPair;
+import cephadex.brainflex.model.element.MatchingQuestion;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.PlaceOnImageQuestion;
@@ -32,6 +38,8 @@ import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.TextQuestion;
+import cephadex.brainflex.model.element.WordCloudQuestion;
+import cephadex.brainflex.model.enums.MatchingScoring;
 import cephadex.brainflex.model.enums.PlaceScoring;
 import cephadex.brainflex.model.enums.RankingScoring;
 
@@ -63,6 +71,10 @@ public final class ElementScorer {
             case @SuppressWarnings("unused") QAndAQuestion ignored -> Result.ZERO;
             case GridQuestion q -> scoreGrid(q, payload);
             case PlaceOnImageQuestion q -> scorePlace(q, payload);
+            case @SuppressWarnings("unused") WordCloudQuestion ignored -> Result.ZERO;
+            case @SuppressWarnings("unused") AllocationQuestion ignored -> Result.ZERO;
+            case MatchingQuestion q -> scoreMatching(q, payload);
+            case @SuppressWarnings("unused") DrawingQuestion ignored -> Result.ZERO;
         };
     }
 
@@ -179,6 +191,27 @@ public final class ElementScorer {
         boolean correct = a.selectedCellIndexes().stream()
                 .anyMatch(q.correctCellIndexes()::contains);
         return new Result(correct, correct ? q.pointValue() : 0);
+    }
+
+    private static Result scoreMatching(MatchingQuestion q, AnswerPayload payload) {
+        if (!(payload instanceof MatchingAnswer a) || a.leftIdToRightId() == null)
+            return Result.ZERO;
+        List<MatchingPair> pairs = q.pairs();
+        if (pairs == null || pairs.isEmpty())
+            return Result.ZERO;
+        int matched = 0;
+        for (MatchingPair pair : pairs) {
+            String submittedRight = a.leftIdToRightId().get(pair.id());
+            if (submittedRight != null && submittedRight.equals(pair.id())) {
+                matched++;
+            }
+        }
+        boolean perfect = matched == pairs.size();
+        if (q.scoring() == MatchingScoring.ALL_OR_NOTHING) {
+            return new Result(perfect, perfect ? q.pointValue() : 0);
+        }
+        int points = (int) Math.round(q.pointValue() * ((double) matched / pairs.size()));
+        return new Result(perfect, points);
     }
 
     private static Result scorePlace(PlaceOnImageQuestion q, AnswerPayload payload) {

@@ -133,7 +133,7 @@
   height: 24px;
 }
 
-.themeToggle img {
+.themeToggle svg {
   position: absolute;
   inset: 0;
   width: 100%;

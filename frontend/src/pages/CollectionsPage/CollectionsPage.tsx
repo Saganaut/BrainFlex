@@ -95,7 +95,7 @@ const CollectionsPage = () => {
           type='button'
           className={styles.emptyTile}
           onClick={handleCreate}
-          ariaLabel='Create your first collection'>
+          aria-label='Create your first collection'>
           <span className={styles.emptyIcon} aria-hidden='true'>
             <PlusIcon />
           </span>

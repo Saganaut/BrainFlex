@@ -15,16 +15,16 @@ This folder tracks the work needed to bring the BrainFlex backend (and the front
 
 - [x] **01** — [Tags & taxonomy](./01-tags-and-taxonomy/README.md) — promote free-form `tags: List<String>` to a real `Tag` model
 - [x] **02** — [Deck discovery metadata](./02-deck-discovery-metadata/README.md) — `publishStatus`, `language`, rating/play counters, license
-- [ ] **03** — [Deck favorites](./03-deck-favorites/README.md) — `DeckFavorite` join collection + star icon
-- [ ] **04** — [Deck ratings & comments](./04-deck-ratings-and-comments/README.md) — 1–5 star ratings and threaded comments
+- [x] **03** — [Deck favorites](./03-deck-favorites/README.md) — `DeckFavorite` join collection + star icon
+- [x] **04** — [Deck ratings & comments](./04-deck-ratings-and-comments/README.md) — 1–5 star ratings and threaded comments
 - [x] **05** — [Deck collections](./05-deck-collections/README.md) — user/org folders of decks
-- [ ] **06** — [Deck collaborators](./06-deck-collaborators/README.md) — co-editors on a deck
+- [x] **06** — [Deck collaborators](./06-deck-collaborators/README.md) — co-editors on a deck
 
 ### New element kinds
 
-- [ ] **07** — [Word Cloud & True/False](./07-element-word-cloud-and-true-false/README.md) — two straightforward additions to `ElementKind`
-- [ ] **08** — [Allocation & Matching](./08-element-allocation-and-matching/README.md) — Mentimeter "100 points" and Kahoot "puzzle pairs"
-- [ ] **09** — [Drawing](./09-element-drawing/README.md) — open canvas with stroke-based answers
+- [x] **07** — [Word Cloud](./07-element-word-cloud-and-true-false/README.md) — Mentimeter-style survey kind (True/False dropped: an MCQ with 2 options covers that use case)
+- [x] **08** — [Allocation & Matching](./08-element-allocation-and-matching/README.md) — Mentimeter "100 points" and Kahoot "puzzle pairs"
+- [x] **09** — [Drawing](./09-element-drawing/README.md) — open canvas with stroke-based answers
 - [ ] **10** — [Common element additions](./10-element-common-additions/README.md) — provenance, shuffle, fuzzy match, slide blocks
 
 ### Live game polish
@@ -73,3 +73,16 @@ This folder tracks the work needed to bring the BrainFlex backend (and the front
 - **Element payload primitives** — every payload must include defaults for `displaySeconds`, `pointValue`, `bestAnswerMode`, `bestAnswerBonus`, etc. (Jackson can't deserialize `null` into a primitive). See `useCreateDashboard.ts:buildNewElement`.
 - **Tests** — every chunk must add tests. Service tests go under `src/test/.../service/`, controller tests under `src/test/.../controller/`. Mock `MongoTemplate` correctly (see existing `HealthControllerTest`).
 - **Tokens** — every new piece of UI uses the design tokens from `frontend/src/tokens.css`. No hardcoded colors, no `box-shadow`, no palette references in components.
+
+## Deferred work — come back to this
+
+These items were intentionally left out of the chunk that nominally owns them because they don't fit until a different chunk lands first. Each one is unblocked by a specific later chunk; revisit when that chunk starts so the per-kind work all lands in one consistent pass.
+
+- **Per-kind player surfaces (chunks 07, 08, 09).** Chunks 07 / 08 / 09 shipped the backend + author editor for Word Cloud, Allocation, Matching, and Drawing, but not the **player canvas** or the **reveal view** for any of them — `PlayPage` has no per-kind dispatch yet, so building one element's player view in isolation would establish a pattern the other kinds wouldn't match. Specifically still TODO:
+  - Drawing player canvas (Pointer events, single-finger draw, undo, clear, palette swatches, submit on commit)
+  - Drawing stroke downsampling before submit (Douglas-Peucker pass; mentioned in `09-element-drawing/README.md`)
+  - Drawing reveal grid + lightbox + Best Answer voting wiring
+  - Word Cloud / Allocation / Matching player surfaces (parity items, same gap)
+  - A per-kind player dispatch in `frontend/src/pages/GamePage/PlayPage.tsx` (mirrors `SlideDisplay.tsx` on the author side)
+
+  These naturally cluster with **chunk 13** (Showcase settings & player additions) since that chunk already touches the player UI. Re-open this list when starting chunk 13.

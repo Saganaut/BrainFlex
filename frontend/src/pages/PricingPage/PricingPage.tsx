@@ -37,7 +37,7 @@ const PricingPage = () => {
         </div>
       </header>
 
-      <section className={styles.gridWrap} ariaLabel='Subscription plans'>
+      <section className={styles.gridWrap} aria-label='Subscription plans'>
         <PricingGrid columns={3}>
           {tiers.map((tier) => (
             <PricingCard

@@ -86,7 +86,7 @@ const StarRating = ({
         .filter(Boolean)
         .join(" ")}
       role={isInput ? "radiogroup" : "img"}
-      ariaLabel={label ?? formatAriaLabel(safeValue, isInput)}
+      aria-label={label ?? formatAriaLabel(safeValue, isInput)}
       tabIndex={isInput ? 0 : undefined}
       onKeyDown={isInput ? handleKeyDown : undefined}>
       <div className={styles.stars} aria-hidden={!isInput}>
@@ -111,7 +111,7 @@ const StarRating = ({
                 type='button'
                 role='radio'
                 aria-checked={Math.round(safeValue) === n}
-                ariaLabel={`${n} ${n === 1 ? "star" : "stars"}`}
+                aria-label={`${n} ${n === 1 ? "star" : "stars"}`}
                 className={styles.hit}
                 onClick={() => onChange?.(n)}
               />
@@ -132,7 +132,7 @@ const StarRating = ({
           type='button'
           className={styles.clear}
           onClick={onClear}
-          ariaLabel='Clear rating'>
+          aria-label='Clear rating'>
           Clear
         </button>
       )}

@@ -5,7 +5,12 @@
 // `kind` field. Wire format is `kind: "<ClassName>"` (Jackson's default), so
 // the literal types here must match those exact strings.
 import type {
+  AllocationQuestion,
+  DrawingAnswer,
+  DrawingQuestion,
   GridQuestion,
+  MatchingPair,
+  MatchingQuestion,
   McqAnswer,
   McqOption,
   McqQuestion,
@@ -18,7 +23,10 @@ import type {
   ScalesAnswer,
   ScalesQuestion,
   Slide,
+  Stroke,
   TextQuestion,
+  WordCloudAnswer,
+  WordCloudQuestion,
 } from "../store/BrainFlexApi";
 
 // Codegen names them `<Class>Base` for the abstract parent so reproduce the answer leaves.
@@ -42,6 +50,14 @@ export interface PlaceOnImageAnswer {
 export interface TimeoutAnswer {
   kind: "TimeoutAnswer";
 }
+export interface AllocationAnswer {
+  kind: "AllocationAnswer";
+  optionIdToPoints?: Record<string, number>;
+}
+export interface MatchingAnswer {
+  kind: "MatchingAnswer";
+  leftIdToRightId?: Record<string, string>;
+}
 
 export type DeckElement =
   | Slide
@@ -52,7 +68,11 @@ export type DeckElement =
   | ScalesQuestion
   | QAndAQuestion
   | GridQuestion
-  | PlaceOnImageQuestion;
+  | PlaceOnImageQuestion
+  | WordCloudQuestion
+  | AllocationQuestion
+  | MatchingQuestion
+  | DrawingQuestion;
 
 export type AnswerPayload =
   | McqAnswer
@@ -62,11 +82,16 @@ export type AnswerPayload =
   | ScalesAnswer
   | GridAnswer
   | PlaceOnImageAnswer
+  | WordCloudAnswer
+  | AllocationAnswer
+  | MatchingAnswer
+  | DrawingAnswer
   | TimeoutAnswer;
 
 export type {
   McqOption,
   RankingItem,
+  MatchingPair,
   Slide,
   McqQuestion,
   TextQuestion,
@@ -76,9 +101,16 @@ export type {
   QAndAQuestion,
   GridQuestion,
   PlaceOnImageQuestion,
+  WordCloudQuestion,
+  AllocationQuestion,
+  MatchingQuestion,
+  DrawingQuestion,
+  Stroke,
   McqAnswer,
   RankingAnswer,
   ScalesAnswer,
+  WordCloudAnswer,
+  DrawingAnswer,
 };
 
 /** True when an element is a non-interactive Slide. */

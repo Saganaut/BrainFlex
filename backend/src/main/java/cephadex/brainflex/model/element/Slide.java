@@ -55,7 +55,9 @@ public record Slide(
         boolean showJoinInformation,
         ShowResponsesMode showResponses,
         String heading,
-        Map<String, Object> participantInformation   // TipTap/ProseMirror rich-text doc
+        Map<String, Object> participantInformation,  // TipTap/ProseMirror rich-text doc
+        // per-kind ergonomics (chunk 10)
+        Integer autoAdvanceSeconds                   // null = host advances manually; n = auto-next after n seconds
 ) implements DeckElement {
 
     @Override

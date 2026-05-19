@@ -18,12 +18,14 @@ import {
   presenceUpdated,
   votePhaseStarted,
   voteProgressReceived,
+  wordCloudUpdated,
   type RoundStartPayload,
   type RoundResultPayload,
   type GameOverPayload,
   type WsErrorPayload,
   type AnswerProgressPayload,
   type PresencePayload,
+  type WordCloudUpdatePayload,
 } from "../store/gameSlice";
 import type { ShowcaseDto } from "../store/BrainFlexApi";
 import type { AnswerPayload } from "../types/elements";
@@ -72,6 +74,11 @@ export function useGameWebSocket(roomCode: string | null) {
         client.subscribe(`/topic/showcase/${roomCode}/voted`, (msg) => {
           dispatch(
             voteProgressReceived(JSON.parse(msg.body) as VoteProgressPayload),
+          );
+        });
+        client.subscribe(`/topic/showcase/${roomCode}/wordCloud`, (msg) => {
+          dispatch(
+            wordCloudUpdated(JSON.parse(msg.body) as WordCloudUpdatePayload),
           );
         });
         client.subscribe(`/topic/presence`, (msg) => {

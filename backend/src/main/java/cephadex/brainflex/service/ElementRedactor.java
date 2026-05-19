@@ -9,10 +9,15 @@
  */
 package cephadex.brainflex.service;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.GridQuestion;
+import cephadex.brainflex.model.element.MatchingQuestion;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.PlaceOnImageQuestion;
@@ -21,6 +26,7 @@ import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.TextQuestion;
+import cephadex.brainflex.model.element.WordCloudQuestion;
 
 public final class ElementRedactor {
 
@@ -109,7 +115,37 @@ public final class ElementRedactor {
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
                     q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
+            case WordCloudQuestion q -> q; // survey: no answer key to hide
+            case AllocationQuestion q -> q; // survey: no answer key to hide
+            case MatchingQuestion q -> redactMatching(q);
+            case DrawingQuestion q -> q; // survey: no answer key to hide
         };
+    }
+
+    /**
+     * Redact a MatchingQuestion for broadcast: strip the explanation and
+     * shuffle the pairs[] list so the natural authoring order isn't leaked.
+     * The pair list itself is still the source of truth for both columns
+     * (each MatchingPair ties left and right via a single id), so the frontend
+     * renders the left column in pairs[] order and shuffles the RIGHT column
+     * visually before painting it — the answer key is enforced server-side by
+     * pair.id == pair.id matching regardless of display order.
+     */
+    private static MatchingQuestion redactMatching(MatchingQuestion q) {
+        var pairs = q.pairs();
+        var shuffled = pairs == null ? null : new ArrayList<>(pairs);
+        if (shuffled != null && shuffled.size() > 1) {
+            Collections.shuffle(shuffled);
+        }
+        return new MatchingQuestion(
+                q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                q.prompt(), shuffled, q.scoring(),
+                q.pointValue(), q.difficulty(),
+                q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
+                null,        // explanation
+                q.displaySeconds(), q.speakerNotes(), q.background(),
+                q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition());
     }
 
     /**

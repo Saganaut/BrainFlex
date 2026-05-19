@@ -246,7 +246,7 @@ const CommentBody = ({
             onClick={onToggleUpvote}
             disabled={!canInteract || isDeleted}
             aria-pressed={comment.upvotedByMe ?? false}
-            ariaLabel={comment.upvotedByMe ? "Remove upvote" : "Upvote"}>
+            aria-label={comment.upvotedByMe ? "Remove upvote" : "Upvote"}>
             <ThumbIcon className={styles.upvoteIcon} />
             <span className={styles.upvoteCount}>{upvotes}</span>
           </button>

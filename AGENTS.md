@@ -22,7 +22,7 @@ brainflex/
 │   │   ├── store/         # Redux store and API client
 │   │   ├── types/         # TypeScript type guards and utilities
 │   │   ├── utils/         # Utility functions
-│   │   ├── assets/        # Static assets
+│   │   ├── assets/        # Static assets (icons/, images/) — see ICONS_RULES.md
 │   │   ├── index.css      # Global styles and CSS custom properties
 │   │   └── main.tsx       # App entry point
 │   ├── public/            # Public assets
@@ -43,8 +43,37 @@ brainflex/
 │   └── mvnw               # Maven wrapper
 ├── compose.yaml       # Docker Compose (MongoDB + Redis)
 ├── .env               # Shared environment variables
+├── z-docs/            # All project documentation (except README) — see Documentation section below
 └── README.md
 ```
+
+---
+
+## Documentation
+
+All project documentation other than the top-level `README.md` lives in **`z-docs/`** at the repo root. When you need background on conventions, infrastructure, or supplemental rules — or when you need to add new documentation — go there first.
+
+Current contents (subject to growth):
+
+| File / dir                        | Purpose                                                                |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| `z-docs/RULES.md`                 | **Signpost only** — index into the topic-specific rule files below     |
+| `z-docs/rules/GENERAL-RULES.md`   | Cross-cutting project rules (consistency, env vars, git, etc.)         |
+| `z-docs/rules/BACKEND-RULES.md`   | Java / Spring Boot conventions and testing rules                       |
+| `z-docs/rules/FRONTEND-RULES.md`  | React / TypeScript conventions and testing rules                       |
+| `z-docs/rules/STYLE-RULES.md`     | CSS modules, tokens, and design-system styling rules                   |
+| `z-docs/rules/ICONS-RULES.md`     | Icon/SVG naming, folder, and import conventions                        |
+| `z-docs/INFRASTRUCTURE.md`        | Infrastructure notes (Docker, MongoDB, Redis, deployment)              |
+| `z-docs/membership.md`            | Organization membership semantics and flows                            |
+| `z-docs/NOTES.MD`                 | Working notes / scratchpad                                             |
+
+**Conventions:**
+
+- New design documents, rule docs, architecture notes, and any other long-form documentation belong in `z-docs/` — not at the repo root.
+- The repo root keeps only `README.md`, `AGENTS.md`, and `CLAUDE.md` as top-level docs.
+- All rule files (`*-RULES.md`) live under `z-docs/rules/`. `z-docs/RULES.md` is just the index.
+- Inside rule files, cross-references use the `@FILENAME.md` syntax (e.g. `@BACKEND-RULES.md`); resolution is relative to `z-docs/rules/`.
+- Keep filenames kebab-case or SCREAMING-KEBAB for rule docs (matching existing convention).
 
 ---
 
@@ -144,6 +173,14 @@ App-level fullscreen state lives in `LayoutProvider` (`frontend/src/context/Layo
 - When a field needs more than a plain string (bold, italic, lists, headings), use the project's `RichTextInput` (`components/Common/Input/RichTextInput.tsx`), which wraps `useEditor` + `<EditorContent>` and the supporting TipTap extensions in a single form-input-shaped component with a focus-triggered floating toolbar.
 - Toolbar capabilities today: bold / underline / strike / link (inline URL editor, no `window.prompt`) / 6-swatch color / 4-step font size. Extensions in use: `@tiptap/starter-kit`, `@tiptap/extension-text-style` (TextStyle + Color + FontSize), `@tiptap/extensions` (Placeholder).
 - No `window.alert` / `window.prompt` / `window.confirm` anywhere. In-editor sub-controls (links, colors, sizes) use inline popovers under the toolbar — follow that pattern for any future toolbar additions.
+
+**Icons & graphics:**
+
+- All SVGs live in `frontend/src/assets/` and are consumed as React components via `vite-plugin-svgr` (already wired in `vite.config.ts`).
+- Two top-level lanes: `assets/icons/<category>/` for monochrome UI icons, `assets/images/<category>/` for multi-color illustrations / mascots / brand artwork. Filenames are kebab-case.
+- Import pattern (the only pattern): `import TrashIcon from "@/assets/icons/action/trash.svg?react"` → render as `<TrashIcon className={...} />`. Don't `<img src=...>` SVGs and don't write inline `<svg>` markup for new artwork.
+- `@heroicons/react` is still installed but is a **placeholder** — designer-shipped icons replace heroicon usages one site at a time.
+- Full naming + folder + workflow rules are in **[`ICONS_RULES.md`](../ICONS_RULES.md)** at the repo root.
 
 **Deck editor (`/decks/$deckId/view`):**
 

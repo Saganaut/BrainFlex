@@ -22,7 +22,7 @@ const Avatar = ({ src, name, alt, size = "md", className }: AvatarProps) => {
     .join(" ");
 
   return (
-    <span className={wrapperClass} ariaLabel={alt ?? name}>
+    <span className={wrapperClass} aria-label={alt ?? name}>
       {showImage ? (
         <img
           src={src ?? ""}

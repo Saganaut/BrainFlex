@@ -1,70 +1,89 @@
-// Floating editor for a single MCQ option. Rendered by McqOptionEditable
-// inside the option card's popover and styled with the shared Popover
-// primitive. All controls route through Common/Buttons and Common/Input
-// so the surface inherits the design-system look automatically.
+// Single-line floating editor for one MCQ option. Lives inside the option
+// card's popover. The row contains the image-thumb trigger, an optional
+// Clear button, a color-thumb trigger, remove, and close. The URL field
+// moved into the GalleryPicker modal (the same surface as gallery picks)
+// so the toolbar can stay one row tall.
+//
+// The color swatch is hidden by default and pops out *above* the toolbar
+// only when the color-thumb trigger is clicked. Outside-click closes the
+// popout without dismissing the surrounding toolbar.
 //
 // Color: option.color is stored as a CSS color string. Legacy values may
 // be hex (from the old native color input); the parent palette default is
 // oklch(0.65 0.18 H). We parse hue out of either format for the picker
 // and always write back oklch so storage normalizes over time.
+import { useEffect, useRef, useState } from "react";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { hexToHsva, type HexColor } from "@uiw/color-convert";
+import type { HexColor } from "@uiw/color-convert";
 
 import {
   Popover,
   PopoverRow,
   PopoverDivider,
-  PopoverGroupLabel,
 } from "@/components/Common/Input/Popover/Popover";
-import { Input } from "@/components/Common/Input/Input/Input";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 
 import styles from "./McqOptionEditable.module.css";
-import {
-  ColorPoint,
-  ColorSwatch,
-} from "@/components/Common/Input/ColorPicker/ColorSwatch";
+import { ColorSwatch } from "@/components/Common/Input/ColorPicker/ColorSwatch";
 import { hueToHex, parseHue, toHexColor } from "@/utils/color";
 
 interface EditOptionToolbarProps {
   canRemove: boolean;
-  pasteUrl: string;
   handlePickFromGallery: () => void;
   hasImage: boolean;
   handleRemove: () => void;
   handleColorChange: (str: string) => void;
-  handlePasteUrlChange: (str: string) => void;
   handleClearImage: () => void;
   handleClose: () => void;
   displayIndex: number;
   previewUrl: string;
   /** Resolved color string (option override or palette default). */
   color: string;
-  inputIdBase: string;
   flush: () => void;
 }
 
 const EditOptionToolbar = ({
   canRemove,
-  pasteUrl,
   handlePickFromGallery,
   hasImage,
   handleRemove,
   handleColorChange,
-  handlePasteUrlChange,
   handleClearImage,
   handleClose,
   displayIndex,
   previewUrl,
   color,
-  inputIdBase,
   flush,
 }: EditOptionToolbarProps) => {
+  const [colorOpen, setColorOpen] = useState(false);
+  const colorPopoutRef = useRef<HTMLDivElement>(null);
+  const colorTriggerRef = useRef<HTMLDivElement>(null);
+
+  // Outside-click for the color popout only. The toolbar's outer wrap
+  // already stops propagation so the parent card's outside-click closer
+  // won't fire here — we just need to know when to retract the swatch.
+  useEffect(() => {
+    if (!colorOpen) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as Node;
+      if (colorPopoutRef.current?.contains(target)) return;
+      if (colorTriggerRef.current?.contains(target)) return;
+      setColorOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [colorOpen]);
+
+  const resolvedHex = toHexColor(hueToHex(parseHue(color)));
+
   const handleColorPick = (colorPick: HexColor) => {
     handleColorChange(colorPick);
     flush();
+    setColorOpen(false);
   };
 
   return (
@@ -73,12 +92,19 @@ const EditOptionToolbar = ({
       onClick={(e) => {
         e.stopPropagation();
       }}>
+      {colorOpen && (
+        <div ref={colorPopoutRef} className={styles.colorPopout}>
+          <Popover role='dialog' ariaLabel='Choose option color'>
+            <PopoverRow>
+              <ColorSwatch color={resolvedHex} onChange={handleColorPick} />
+            </PopoverRow>
+          </Popover>
+        </div>
+      )}
       <Popover
         role='dialog'
         ariaLabel={`Option ${displayIndex.toString()} settings`}>
         <PopoverRow className={styles.popoverHeader}>
-          <ColorPoint color={toHexColor(hueToHex(parseHue(color)))} />
-          <PopoverGroupLabel>Image</PopoverGroupLabel>
           <IconBtn
             variant='ghost'
             size='xs'
@@ -93,7 +119,7 @@ const EditOptionToolbar = ({
                   }
                 : undefined
             }
-            ariaLabel={hasImage ? "Change image" : "Pick image"}
+            aria-label={hasImage ? "Change image" : "Pick image"}
             onClick={handlePickFromGallery}
             icon={hasImage ? undefined : <PlusIcon />}
           />
@@ -103,32 +129,31 @@ const EditOptionToolbar = ({
             </Btn>
           )}
 
-          <PopoverGroupLabel>URL</PopoverGroupLabel>
-          <Input
-            id={`${inputIdBase}-url`}
-            type='text'
-            placeholder='Or paste an image URL'
-            value={pasteUrl}
-            onChange={(e) => {
-              handlePasteUrlChange(e.target.value);
-            }}
-            onBlur={flush}
-            fullWidth
-          />
-
           <PopoverDivider />
 
-          <ColorSwatch
-            color={toHexColor(hueToHex(parseHue(color)))}
-            onChange={handleColorPick}
-          />
+          {/* Wrapper div carries the ref so the outside-click handler can
+              recognize the trigger and let its own onClick toggle state. */}
+          <div ref={colorTriggerRef} className={styles.colorThumbWrap}>
+            <IconBtn
+              variant='ghost'
+              size='xs'
+              className={styles.colorThumbBtn}
+              style={{ backgroundColor: resolvedHex }}
+              aria-label='Choose color'
+              aria-expanded={colorOpen}
+              aria-haspopup='dialog'
+              onClick={() => {
+                setColorOpen((o) => !o);
+              }}
+            />
+          </div>
 
           <PopoverDivider />
 
           <IconBtn
-            variant='delete'
+            variant='ghost'
             size='xs'
-            ariaLabel={`Remove option ${displayIndex.toString()}`}
+            aria-label={`Remove option ${displayIndex.toString()}`}
             disabled={!canRemove}
             onClick={handleRemove}
             icon={<TrashIcon />}
@@ -138,7 +163,7 @@ const EditOptionToolbar = ({
           <IconBtn
             variant='close'
             size='xs'
-            ariaLabel='Close'
+            aria-label='Close'
             onClick={handleClose}
           />
         </PopoverRow>

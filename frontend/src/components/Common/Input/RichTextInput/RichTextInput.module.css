@@ -18,7 +18,10 @@
 }
 
 .surface {
-  anchor-name: --rte;
+  /* anchor-name is set inline per-instance via React's `useId` —
+     hardcoding `--rte` here would collapse every RichTextInput on the
+     page onto a single anchor, so toggling one editor's toolbar would
+     reposition every other editor's toolbar. */
   position: relative;
   border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-md);
@@ -46,8 +49,9 @@
    overflow/border box. z-index ensures it paints over any positioned
    siblings (e.g. the SpeakerNotesDrawer at z-index 2). */
 .floatingToolbar {
+  /* position-anchor is set inline per-instance to match the surface's
+     anchor-name (also set inline). See `.surface` above for the why. */
   position: fixed;
-  position-anchor: --rte;
   bottom: anchor(top);
   left: anchor(left);
   margin-bottom: var(--space-1);

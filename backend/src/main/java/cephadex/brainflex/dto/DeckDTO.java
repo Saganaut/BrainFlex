@@ -12,6 +12,7 @@ import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.ShowcaseSettings;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
@@ -57,6 +58,11 @@ public record DeckDTO(
         // branch on the flag without a null check on a number.
         Integer myRating,
         boolean isRatedByMe,
+        // Caller-specific collaborator role on this deck. {@code null} when the
+        // caller is anonymous or has no row in deck_collaborators (e.g. an
+        // anonymous viewer of a PUBLIC deck). OWNER/EDITOR/VIEWER drive the
+        // role pill on the "My Decks → Shared with me" tab.
+        CollaboratorRole myRole,
         LocalDateTime lastPlayedAt,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
@@ -67,14 +73,18 @@ public record DeckDTO(
      * defaults to {@code false}.
      */
     public DeckDTO(Deck deck) {
-        this(deck, false, null);
+        this(deck, false, null, null);
     }
 
     public DeckDTO(Deck deck, boolean isFavorited) {
-        this(deck, isFavorited, null);
+        this(deck, isFavorited, null, null);
     }
 
     public DeckDTO(Deck deck, boolean isFavorited, Integer myRating) {
+        this(deck, isFavorited, myRating, null);
+    }
+
+    public DeckDTO(Deck deck, boolean isFavorited, Integer myRating, CollaboratorRole myRole) {
         this(
                 deck.getId(),
                 deck.getName(),
@@ -110,6 +120,7 @@ public record DeckDTO(
                 deck.getRatingCount(),
                 myRating,
                 myRating != null,
+                myRole,
                 deck.getLastPlayedAt(),
                 deck.getCreatedAt(),
                 deck.getUpdatedAt());

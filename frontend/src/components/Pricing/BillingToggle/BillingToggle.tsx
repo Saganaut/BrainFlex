@@ -20,7 +20,7 @@ interface BillingToggleProps {
 
 const BillingToggle = ({ value, options, onChange }: BillingToggleProps) => {
   return (
-    <div className={styles.toggle} role='radiogroup' ariaLabel='Billing cycle'>
+    <div className={styles.toggle} role='radiogroup' aria-label='Billing cycle'>
       {options.map((opt) => {
         const isActive = opt.value === value;
         return (

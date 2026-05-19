@@ -18,7 +18,7 @@ const CollapseBtn = ({ collapse, isCollapsed }: CollapseBtnProps) => {
       size='sm'
       icon={<ChevronDownIcon />}
       className={isCollapsed ? styles.isCollapsed : undefined}
-      ariaLabel={isCollapsed ? "Expand" : "Collapse"}
+      aria-label={isCollapsed ? "Expand" : "Collapse"}
       aria-expanded={!isCollapsed}
       onClick={() => {
         collapse(!isCollapsed);

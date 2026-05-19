@@ -41,12 +41,17 @@ import cephadex.brainflex.model.enums.ResponseMode;
         @JsonSubTypes.Type(value = ScalesQuestion.class),
         @JsonSubTypes.Type(value = QAndAQuestion.class),
         @JsonSubTypes.Type(value = GridQuestion.class),
-        @JsonSubTypes.Type(value = PlaceOnImageQuestion.class)
+        @JsonSubTypes.Type(value = PlaceOnImageQuestion.class),
+        @JsonSubTypes.Type(value = WordCloudQuestion.class),
+        @JsonSubTypes.Type(value = AllocationQuestion.class),
+        @JsonSubTypes.Type(value = MatchingQuestion.class),
+        @JsonSubTypes.Type(value = DrawingQuestion.class)
 })
 public sealed interface DeckElement
         permits Slide, McqQuestion, TextQuestion, NumberQuestion,
                 RankingQuestion, ScalesQuestion, QAndAQuestion, GridQuestion,
-                PlaceOnImageQuestion {
+                PlaceOnImageQuestion, WordCloudQuestion,
+                AllocationQuestion, MatchingQuestion, DrawingQuestion {
 
     String id();
 

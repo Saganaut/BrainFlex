@@ -49,7 +49,7 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
 
   return (
     <div className={styles.panel}>
-      <div className={styles.pager} role='tablist' ariaLabel='Round'>
+      <div className={styles.pager} role='tablist' aria-label='Round'>
         {rounds.map((_, i) => (
           <button
             // eslint-disable-next-line react-x/no-array-index-key -- round index is the identity

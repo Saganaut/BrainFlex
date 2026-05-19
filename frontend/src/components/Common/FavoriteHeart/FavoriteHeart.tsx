@@ -57,7 +57,7 @@ const FavoriteHeart = ({
       onClick={handleClick}
       disabled={disabled}
       aria-pressed={isFavorited}
-      ariaLabel={label}
+      aria-label={label}
       title={label}
       className={[
         styles.heart,

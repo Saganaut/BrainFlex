@@ -30,9 +30,9 @@
   background-color: var(--background-color);
   border: var(--border-size-sm) solid transparent;
   transition:
-    background-color 300ms ease-in-out,
-    color 300ms ease-in-out,
-    border-color 300ms ease-in-out;
+    background-color var(--duration-base) ease-in-out,
+    color var(--duration-base) ease-in-out,
+    border-color var(--duration-base) ease-in-out;
 
   &:hover {
     color: var(--action-hover);
@@ -217,9 +217,9 @@
   cursor: pointer;
   overflow: hidden;
   transition:
-    background-color 300ms ease-in-out,
-    border-color 300ms ease-in-out,
-    color 300ms ease-in-out;
+    background-color var(--duration-base) ease-in-out,
+    border-color var(--duration-base) ease-in-out,
+    color var(--duration-base) ease-in-out;
 
   /* SVG strokes follow currentcolor, so state changes on the button's    */
 
@@ -235,7 +235,7 @@
     align-items: center;
     max-height: 100%;
     width: 100%;
-    transition: transform 300ms ease-in-out;
+    transition: transform var(--duration-base) ease-in-out;
   }
 
   /* ─── Variants ─────────────────────────────────────────────── */

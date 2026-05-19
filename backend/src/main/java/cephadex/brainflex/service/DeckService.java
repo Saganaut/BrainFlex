@@ -50,16 +50,19 @@ public class DeckService {
     private final AuthorizationService authorizationService;
     private final TagService tagService;
     private final MongoTemplate mongoTemplate;
+    private final DeckCollaboratorService deckCollaboratorService;
 
     public DeckService(
             DeckRepository deckRepository,
             AuthorizationService authorizationService,
             TagService tagService,
-            MongoTemplate mongoTemplate) {
+            MongoTemplate mongoTemplate,
+            DeckCollaboratorService deckCollaboratorService) {
         this.deckRepository = deckRepository;
         this.authorizationService = authorizationService;
         this.tagService = tagService;
         this.mongoTemplate = mongoTemplate;
+        this.deckCollaboratorService = deckCollaboratorService;
     }
 
     // ---- Read ----
@@ -77,8 +80,9 @@ public class DeckService {
      * Fetches a deck for read-only viewing. Caller may be empty (anonymous
      * visitor / guest); the visibility matrix decides what they can see:
      *   PUBLIC, UNLISTED  → anyone with the id
-     *   ORG               → registered users in the same organization
-     *   PRIVATE           → the owner only
+     *   ORG               → registered users in the same organization, or
+     *                       any collaborator (OWNER/EDITOR/VIEWER)
+     *   PRIVATE           → owner + invited collaborators only
      * Unmet visibility rules throw 401 (no caller) or 403 (caller, wrong scope).
      */
     public Deck getViewable(Optional<User> caller, String id) {
@@ -90,16 +94,11 @@ public class DeckService {
         }
         User user = caller.orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to view this deck"));
-        if (visibility == DeckVisibility.ORG) {
-            String deckOrgId = deck.getOrganizationId();
-            var memberships = user.getOrganizationIds();
-            if (deckOrgId != null && memberships != null && memberships.contains(deckOrgId)) {
-                return deck;
-            }
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Deck is restricted to its organization");
-        }
-        if (user.getId().equals(deck.getCreatorUserId())) {
+        if (authorizationService.canViewDeck(deck, user)) {
             return deck;
+        }
+        if (visibility == DeckVisibility.ORG) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Deck is restricted to its organization");
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this deck");
     }
@@ -155,7 +154,12 @@ public class DeckService {
         deck.setOriginalAuthorUserId(creator.getId());
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
-        return deckRepository.save(deck);
+        Deck saved = deckRepository.save(deck);
+        // Seed the OWNER collaborator row so authorization checks and the
+        // "decks shared with me" query both have a consistent source of truth
+        // from day one — no special-case for freshly-created decks.
+        deckCollaboratorService.addInitialOwner(saved, creator);
+        return saved;
     }
 
     public Deck updateDeck(String id, User caller, UpdateDeckRequest request) {
@@ -216,6 +220,38 @@ public class DeckService {
     public void deleteDeck(String id, User caller) {
         Deck deck = requireOwned(id, caller);
         deckRepository.delete(deck);
+        deckCollaboratorService.onDeckDeleted(deck.getId());
+    }
+
+    /**
+     * Decks the user can edit — owned (OWNER) plus EDITOR-shared. Returned as
+     * full {@link Deck} documents in insertion order; callers handle hydration.
+     */
+    public List<Deck> listEditableByUser(String userId) {
+        List<String> editableIds = deckCollaboratorService.editableDeckIdsFor(userId);
+        if (editableIds.isEmpty()) return List.of();
+        List<Deck> decks = new ArrayList<>();
+        for (Deck deck : deckRepository.findAllById(editableIds)) decks.add(deck);
+        return decks;
+    }
+
+    /**
+     * Decks shared with the user — all roles except OWNER. Used by the
+     * "Shared with me" tab in My Decks.
+     */
+    public List<Deck> listSharedWithUser(String userId) {
+        List<cephadex.brainflex.model.DeckCollaborator> rows =
+                deckCollaboratorService.findAllByUser(userId);
+        List<String> sharedIds = new ArrayList<>();
+        for (cephadex.brainflex.model.DeckCollaborator row : rows) {
+            if (row.getRole() != cephadex.brainflex.model.enums.CollaboratorRole.OWNER) {
+                sharedIds.add(row.getDeckId());
+            }
+        }
+        if (sharedIds.isEmpty()) return List.of();
+        List<Deck> decks = new ArrayList<>();
+        for (Deck deck : deckRepository.findAllById(sharedIds)) decks.add(deck);
+        return decks;
     }
 
     // ---- Publish lifecycle ----

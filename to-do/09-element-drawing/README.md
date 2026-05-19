@@ -1,6 +1,6 @@
 # 09 — Drawing element kind
 
-**Status:** Not started
+**Status:** Backend + author editor shipped (matching the scope of chunks 07 / 08). Player canvas, reveal grid, and stroke downsampling are deferred to a future "play surface" chunk that builds the per-kind player views in one pass — there is no per-kind player dispatch in `PlayPage` yet, so shipping the Drawing player canvas alone would need wiring no other element kind has either.
 **Depends on:** Nothing strict; 19 (MediaAsset) if you want to allow image underlays via the new uploader
 **Unblocks:** 16 (analytics)
 
@@ -77,17 +77,17 @@ Stroke (embedded record)
 
 ## Checklist
 
-- [ ] `DrawingQuestion` record + `permits` update
-- [ ] `DrawingAnswer` + `Stroke` records + `permits` update
-- [ ] `DRAWING` enum
-- [ ] `ElementScorer`, `ElementRedactor`, `DeckElementCloner` cases
-- [ ] `DeckImageHydrationService` + `DeckImageMapper` for `backingImage`
-- [ ] Per-answer byte cap + 400 on oversize
-- [ ] `buildNewElement` DRAWING case
-- [ ] Drawing editor component
-- [ ] Drawing player canvas (pointer events, undo, clear, palette)
-- [ ] Drawing reveal grid + lightbox
-- [ ] Best-answer-mode wiring (reuse existing voting flow)
-- [ ] Stroke downsampling pre-submit
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `DrawingQuestion` record + `permits` update
+- [x] `DrawingAnswer` + `Stroke` records + `permits` update
+- [x] `DRAWING` enum
+- [x] `ElementScorer`, `ElementRedactor`, `DeckElementCloner` cases
+- [x] `DeckImageHydrationService` + `DeckImageMapper` for `backingImage` (hydration routes through `DeckImageMapper`)
+- [x] Per-answer byte cap (matches the WordCloud "silently drop" pattern — `submitAnswer` is a STOMP void, so a 400 is not the natural response shape; the question's `maxStrokesPerPlayer` / `maxPointsPerStroke` and `app.drawing.max-payload-bytes` (default 256 KB) all reject without storage or broadcast)
+- [x] `buildNewElement` DRAWING case
+- [x] Drawing editor component
+- [ ] Drawing player canvas (pointer events, undo, clear, palette) — deferred with the rest of the per-kind player surfaces
+- [ ] Drawing reveal grid + lightbox — deferred with the per-kind player surfaces
+- [x] Best-answer-mode wiring (already inherited via the shared `bestAnswerMode` chrome on every `DeckElement`; no extra wiring needed)
+- [ ] Stroke downsampling pre-submit — lives on the (deferred) player canvas
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

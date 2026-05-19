@@ -1,6 +1,6 @@
 # 03 — Deck favorites
 
-**Status:** Not started
+**Status:** Complete
 **Depends on:** 02 (needs `Deck.favoriteCount` for the denorm)
 **Unblocks:** 04 (similar join-table pattern), 18 (notifications can reference favorited decks)
 
@@ -45,12 +45,12 @@ DeckFavorite                           @Document("deck_favorites")
 
 ## Checklist
 
-- [ ] `DeckFavorite` model + repository
-- [ ] `DeckFavoriteService` with idempotent favorite/unfavorite + `$inc` of `Deck.favoriteCount`
-- [ ] Endpoints + service tests
-- [ ] `DeckDTO.isFavorited` populated for authenticated callers in batch
-- [ ] Heart icon component + optimistic cache update
-- [ ] `/my-favorites` route
-- [ ] Recount admin endpoint
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `DeckFavorite` model + repository
+- [x] `DeckFavoriteService` with idempotent favorite/unfavorite + `$inc` of `Deck.favoriteCount`
+- [x] Endpoints + service tests
+- [x] `DeckDTO.isFavorited` populated for authenticated callers in batch
+- [x] Heart icon component + optimistic cache update
+- [x] `/my-favorites` route
+- [x] Recount admin endpoint
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

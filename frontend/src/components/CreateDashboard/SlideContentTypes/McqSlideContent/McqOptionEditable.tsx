@@ -40,19 +40,18 @@ import { useTheme } from "@/hooks/useTheme";
 import { useFitText } from "@/hooks/useFitText";
 import {
   emptyImage,
-  externalImage,
   isImageEmpty,
   largestUrl,
   resolveImageUrl,
 } from "@/utils/image";
 import { useMcqOptionEditor } from "../useElementEditor";
 import styles from "./McqOptionEditable.module.css";
-import { EllipsisVerticalIcon, XMarkIcon } from "@heroicons/react/24/solid";
-import PurpleCheckIcon from "@/assets/common/PurpleCheckIcon.svg";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { ProgressBar } from "@/components/Common/ProgressBar/ProgressBar";
 import { EditOptionToolbar } from "./EditOptionToolbar";
 import { Container } from "@/components/Containers/Container";
-
+import QuizPoints from "@/assets/icons/content/quiz-points.svg?react";
+import Sad from "@/assets/icons/content/sad.svg?react";
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
 // Six swatches spaced evenly around the wheel from the theme's primary hue.
@@ -78,8 +77,9 @@ interface McqOptionEditableProps {
   canAddOption: boolean;
 }
 
-/** The paste-URL input only shows external URLs; gallery picks leave it blank. */
-const pasteUrlOf = (image: McqOptionType["image"]): string =>
+/** Only external URLs prefill the picker's paste-URL field; gallery picks
+ *  are internal images and have no meaningful URL for the author to edit. */
+const externalUrlOf = (image: McqOptionType["image"]): string =>
   image?.useExternalImg ? (largestUrl(image, "") ?? "") : "";
 
 const McqOptionEditable = ({
@@ -117,11 +117,12 @@ const McqOptionEditable = ({
     markSynced,
   } = useMcqOptionEditor(optionId);
 
-  // --- local mirrors for debounced fields (text + paste-link URL) -------
+  // --- local mirror for the debounced text field ------------------------
   // Color uses a debounced commit while dragging; no separate local mirror
   // is needed because the native <input type="color"> owns the swatch DOM.
+  // The paste-URL field now lives inside the gallery picker modal, so it
+  // owns its own state per-open and we don't mirror it here.
   const [text, setText] = useState(option?.text ?? "");
-  const [pasteUrl, setPasteUrl] = useState(() => pasteUrlOf(option?.image));
 
   // Auto-shrink the option text so it fits inside the bounded card
   // (the grid caps row height at `--mcq-option-max-h`). Below 11px the
@@ -160,12 +161,11 @@ const McqOptionEditable = ({
     };
   }, [popoverOpen]);
 
-  // Resync local mirrors when the active option id changes (slide switch
+  // Resync local mirror when the active option id changes (slide switch
   // or option re-order). React's "derive state during render" pattern.
   if (option && syncedFromId !== option.id) {
     markSynced(option.id);
     setText(option.text ?? "");
-    setPasteUrl(pasteUrlOf(option.image));
   }
 
   if (!option || !optionId) {
@@ -179,47 +179,42 @@ const McqOptionEditable = ({
     schedule({ ...option, text: next });
   };
 
-  /** Pick from the gallery: write the picker-supplied Image directly into
-   *  both the optimistic cache and the persisted record. The backend will
-   *  drop `imgUrl` on save and rehydrate it on read, but the cache write
-   *  keeps the freshly-signed URL on screen until the mutation response
-   *  (already hydrated by the controller) lands.
-   *  Closes the popover up front — the gallery modal takes over, and the
-   *  outside-click handler would otherwise close it as soon as the modal
-   *  swallows pointer events. */
+  /** Open the gallery picker: it returns a fully-populated Image whether
+   *  the author picked from the gallery or pasted an external URL inside
+   *  the modal. We write the result into both the optimistic cache and the
+   *  persisted record. The backend drops `imgUrl` on save and rehydrates
+   *  it on read, but the cache write keeps the freshly-signed URL on
+   *  screen until the mutation response lands.
+   *  Closes the toolbar popover up front — the gallery modal takes over,
+   *  and the outside-click handler would otherwise close it as soon as
+   *  the modal swallows pointer events. */
   const handlePickFromGallery = () => {
     flush();
     setPopoverOpen(false);
-    openPicker((image) => {
-      if (!parent?.id) return;
+    openPicker(
+      (image) => {
+        if (!parent?.id) return;
 
-      // Optimistic cache write: keyed lookup into the right deck/element/option.
-      dispatch(
-        BrainFlex.util.updateQueryData("getDeck", { id: deckId }, (draft) => {
-          if (!draft.elements) return;
-          const el = draft.elements.find((e) => e.id === parent.id);
-          if (el?.kind !== "McqQuestion") return;
-          const opt = el.options?.find((o) => o.id === optionId);
-          if (!opt) return;
-          opt.image = image;
-        }),
-      );
+        // Optimistic cache write: keyed lookup into the right deck/element/option.
+        dispatch(
+          BrainFlex.util.updateQueryData("getDeck", { id: deckId }, (draft) => {
+            if (!draft.elements) return;
+            const el = draft.elements.find((e) => e.id === parent.id);
+            if (el?.kind !== "McqQuestion") return;
+            const opt = el.options?.find((o) => o.id === optionId);
+            if (!opt) return;
+            opt.image = image;
+          }),
+        );
 
-      // Persisted write: the same Image. The paste-URL input also clears
-      // because the option is now internal.
-      setPasteUrl("");
-      commit({ ...option, image });
-    });
-  };
-
-  const handlePasteUrlChange = (next: string) => {
-    setPasteUrl(next);
-    schedule({ ...option, image: externalImage(next) });
+        commit({ ...option, image });
+      },
+      { initialUrl: externalUrlOf(option.image) },
+    );
   };
 
   const handleClearImage = () => {
     flush();
-    setPasteUrl("");
     commit({ ...option, image: emptyImage() });
   };
 
@@ -300,30 +295,23 @@ const McqOptionEditable = ({
 
         <ProgressBar value={100} color={color} />
         <div className={styles.footer}>
-          <button
-            type='button'
+          <IconBtn
+            variant='ghost'
             className={[styles.interactiveZone, styles.correctBtn].join(" ")}
-            ariaLabel={isCorrect ? "Mark as wrong" : "Mark as correct"}
+            aria-label={isCorrect ? "Mark as wrong" : "Mark as correct"}
             aria-pressed={isCorrect}
             onClick={(e) => {
               e.stopPropagation();
               toggleCorrect();
-            }}>
-            {isCorrect ? (
-              <img
-                src={PurpleCheckIcon}
-                alt=''
-                className={styles.correctIcon}
-              />
-            ) : (
-              <XMarkIcon className={styles.wrongIcon} />
-            )}
-          </button>
+            }}
+            icon={isCorrect ? <QuizPoints /> : <Sad />}
+          />
+
           <IconBtn
             variant='ghost'
             size='xs'
             icon={<EllipsisVerticalIcon />}
-            ariaLabel={`Edit option ${displayIndex.toString()}`}
+            aria-label={`Edit option ${displayIndex.toString()}`}
             aria-expanded={popoverOpen}
             aria-haspopup='dialog'
             onClick={(e) => {
@@ -335,20 +323,17 @@ const McqOptionEditable = ({
         {popoverOpen && (
           <EditOptionToolbar
             canRemove={canRemove}
-            pasteUrl={pasteUrl}
             handlePickFromGallery={handlePickFromGallery}
             hasImage={hasImage}
             handleRemove={handleRemove}
             handleClearImage={handleClearImage}
             handleColorChange={handleColorChange}
-            handlePasteUrlChange={handlePasteUrlChange}
             handleClose={() => {
               setPopoverOpen(false);
             }}
             displayIndex={displayIndex}
             previewUrl={previewUrl}
             color={color}
-            inputIdBase={inputIdBase}
             flush={flush}
           />
         )}

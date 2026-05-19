@@ -57,6 +57,13 @@ import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.dto.DeckCollaboratorDTO;
+import cephadex.brainflex.dto.InviteCollaboratorRequest;
+import cephadex.brainflex.dto.TransferOwnershipRequest;
+import cephadex.brainflex.dto.UpdateCollaboratorRoleRequest;
+import cephadex.brainflex.model.DeckCollaborator;
+import cephadex.brainflex.service.AuthorizationService;
+import cephadex.brainflex.service.DeckCollaboratorService;
 import cephadex.brainflex.service.DeckCommentService;
 import cephadex.brainflex.service.DeckFavoriteService;
 import cephadex.brainflex.service.DeckImageHydrationService;
@@ -78,6 +85,8 @@ public class DeckController {
     private final DeckFavoriteService deckFavoriteService;
     private final DeckRatingService deckRatingService;
     private final DeckCommentService deckCommentService;
+    private final DeckCollaboratorService deckCollaboratorService;
+    private final AuthorizationService authorizationService;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
     private final AdminProperties adminProperties;
@@ -91,6 +100,8 @@ public class DeckController {
             DeckFavoriteService deckFavoriteService,
             DeckRatingService deckRatingService,
             DeckCommentService deckCommentService,
+            DeckCollaboratorService deckCollaboratorService,
+            AuthorizationService authorizationService,
             DeckRepository deckRepository,
             UserRepository userRepository,
             AdminProperties adminProperties,
@@ -102,6 +113,8 @@ public class DeckController {
         this.deckFavoriteService = deckFavoriteService;
         this.deckRatingService = deckRatingService;
         this.deckCommentService = deckCommentService;
+        this.deckCollaboratorService = deckCollaboratorService;
+        this.authorizationService = authorizationService;
         this.deckRepository = deckRepository;
         this.userRepository = userRepository;
         this.adminProperties = adminProperties;
@@ -146,30 +159,68 @@ public class DeckController {
         return new DeckExploreResponse(items, page, size, result.totalElements(), hasMore);
     }
 
-    /** Decks owned by the authenticated user. */
+    /**
+     * Every deck the caller has any role on — owned (OWNER), co-edited
+     * (EDITOR), and viewer-shared (VIEWER). Each row carries {@code myRole} so
+     * the My Decks page can split them into "Owned" and "Shared with me" tabs
+     * and render a role pill.
+     *
+     * Legacy decks that predate the collaborator backfill are matched by
+     * {@code creatorUserId} so the endpoint stays correct even before
+     * {@code scripts/migrate-deck-owners.sh} has been run.
+     */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/mine")
     public List<DeckDTO> listMyDecks(Authentication authentication) {
         User caller = resolveUser(authentication);
-        List<Deck> decks = deckService.listByOwner(caller.getId());
+        java.util.Map<String, cephadex.brainflex.model.enums.CollaboratorRole> roleByDeckId =
+                new java.util.LinkedHashMap<>();
+        for (DeckCollaborator row : deckCollaboratorService.findAllByUser(caller.getId())) {
+            roleByDeckId.put(row.getDeckId(), row.getRole());
+        }
+        List<Deck> decks = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        if (!roleByDeckId.isEmpty()) {
+            for (Deck deck : deckRepository.findAllById(roleByDeckId.keySet())) {
+                decks.add(deck);
+                seen.add(deck.getId());
+            }
+        }
+        // Pre-backfill compat: surface decks the caller created but doesn't
+        // yet have a collaborator row for, so the My Decks list isn't empty
+        // between deploy and migration.
+        for (Deck legacy : deckService.listByOwner(caller.getId())) {
+            if (seen.add(legacy.getId())) {
+                decks.add(legacy);
+                roleByDeckId.put(
+                        legacy.getId(),
+                        cephadex.brainflex.model.enums.CollaboratorRole.OWNER);
+            }
+        }
         deckTagHydrationService.hydrate(decks);
         Set<String> favorites = deckFavoriteService.favoritedDeckIds(caller.getId(), idsOf(decks));
-        return decks.stream().map(d -> new DeckDTO(d, favorites.contains(d.getId()))).toList();
+        return decks.stream()
+                .map(d -> new DeckDTO(
+                        d,
+                        favorites.contains(d.getId()),
+                        null,
+                        roleByDeckId.get(d.getId())))
+                .toList();
     }
 
     @GetMapping("/{id}")
     public DeckDTO getDeck(@PathVariable String id, Authentication authentication) {
         Optional<User> caller = userService.resolveRegisteredUser(authentication);
         Deck deck = deckService.getViewable(caller, id);
-        // Non-owner traffic bumps viewCount so Explore's "trending" sort
-        // surfaces decks people are actually opening. Owner views and
-        // anonymous owner-less queries are excluded — the former skew their
-        // own numbers, the latter are most often the owner's optimistic
-        // create flow. System decks also opt out: their viewCount is
+        // Non-owner / non-editor traffic bumps viewCount so Explore's
+        // "trending" sort surfaces decks people are actually opening. Owners
+        // and editors are excluded so internal authoring sessions don't skew
+        // their own numbers. System decks also opt out: their viewCount is
         // dominated by the welcome tour and not meaningful for sorting.
-        boolean isOwner = caller.map(u -> u.getId() != null && u.getId().equals(deck.getCreatorUserId()))
+        boolean callerCanEdit = caller
+                .map(u -> authorizationService.canEditDeck(deck, u))
                 .orElse(false);
-        if (!isOwner && !deck.isSystem()) {
+        if (!callerCanEdit && !deck.isSystem()) {
             deckService.incrementViewCount(deck.getId());
         }
         deckImageHydrationService.hydrate(deck);
@@ -181,7 +232,11 @@ public class DeckController {
                 .flatMap(u -> deckRatingService.findMine(deck.getId(), u.getId()))
                 .map(DeckRating::getStars)
                 .orElse(null);
-        return new DeckDTO(deck, isFavorited, myRating);
+        cephadex.brainflex.model.enums.CollaboratorRole myRole = caller
+                .flatMap(u -> deckCollaboratorService.findRow(deck.getId(), u.getId()))
+                .map(DeckCollaborator::getRole)
+                .orElse(null);
+        return new DeckDTO(deck, isFavorited, myRating, myRole);
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -494,6 +549,104 @@ public class DeckController {
         return DeckCommentDTO.of(row, caller.getId(), replyCount);
     }
 
+    // ---- Collaborators ----
+
+    /**
+     * Everyone who can view, edit, or owns this deck. Returns hydrated
+     * collaborator rows including userName and avatar URL so the Share modal
+     * can render without an extra round-trip. Restricted to callers who can
+     * already view the deck — viewers can see the team, but anonymous /
+     * outside users get a 401/403 from {@code getViewable}.
+     */
+    @GetMapping("/{id}/collaborators")
+    public List<DeckCollaboratorDTO> listCollaborators(
+            @PathVariable String id,
+            Authentication authentication) {
+        Optional<User> caller = userService.resolveRegisteredUser(authentication);
+        deckService.getViewable(caller, id);
+        return deckCollaboratorService.listForDeckHydrated(id);
+    }
+
+    /**
+     * Invite a user (by id / username / email) to collaborate. EDITOR/VIEWER
+     * only; ownership transfer has a dedicated endpoint. Owner-only — viewers
+     * and editors can't reshape the team.
+     */
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/collaborators")
+    public ResponseEntity<DeckCollaboratorDTO> inviteCollaborator(
+            @PathVariable String id,
+            @Valid @RequestBody InviteCollaboratorRequest request,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        authorizationService.requireDeckOwner(id, caller);
+        DeckCollaborator row = deckCollaboratorService.invite(id, caller, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(hydrateOne(row));
+    }
+
+    /** Change an existing collaborator's role (owner only; cannot promote to OWNER). */
+    @PreAuthorize("hasRole('USER')")
+    @PutMapping("/{id}/collaborators/{userId}")
+    public DeckCollaboratorDTO updateCollaboratorRole(
+            @PathVariable String id,
+            @PathVariable String userId,
+            @Valid @RequestBody UpdateCollaboratorRoleRequest request,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        authorizationService.requireDeckOwner(id, caller);
+        DeckCollaborator row = deckCollaboratorService.updateRole(id, userId, request.role());
+        return hydrateOne(row);
+    }
+
+    /**
+     * Remove a collaborator. The owner can remove anyone (except themselves —
+     * use the transfer endpoint first); a non-owner can only remove themselves.
+     */
+    @PreAuthorize("hasRole('USER')")
+    @DeleteMapping("/{id}/collaborators/{userId}")
+    public ResponseEntity<Void> removeCollaborator(
+            @PathVariable String id,
+            @PathVariable String userId,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        if (caller.getId().equals(userId)) {
+            // Self-removal is always allowed for non-owners.
+            DeckCollaborator row = deckCollaboratorService.findRow(id, userId)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Collaborator not found"));
+            if (row.getRole() == cephadex.brainflex.model.enums.CollaboratorRole.OWNER) {
+                throw new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, "Transfer ownership before leaving");
+            }
+        } else {
+            authorizationService.requireDeckOwner(id, caller);
+        }
+        deckCollaboratorService.remove(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Transfer the OWNER role to another user. The previous owner is demoted
+     * to EDITOR.
+     */
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/{id}/collaborators/transfer")
+    public List<DeckCollaboratorDTO> transferOwnership(
+            @PathVariable String id,
+            @Valid @RequestBody TransferOwnershipRequest request,
+            Authentication authentication) {
+        User caller = resolveUser(authentication);
+        authorizationService.requireDeckOwner(id, caller);
+        deckCollaboratorService.transferOwnership(id, caller, request.userId());
+        return deckCollaboratorService.listForDeckHydrated(id);
+    }
+
+    private DeckCollaboratorDTO hydrateOne(DeckCollaborator row) {
+        List<DeckCollaboratorDTO> list = deckCollaboratorService.hydrate(List.of(row));
+        return list.isEmpty() ? null : list.get(0);
+    }
+
     // ---- Element CRUD ----
 
     /**
@@ -578,7 +731,11 @@ public class DeckController {
                 ? null
                 : deckRatingService.findMine(deck.getId(), caller.getId())
                         .map(DeckRating::getStars).orElse(null);
-        return new DeckDTO(deck, isFavorited, myRating);
+        cephadex.brainflex.model.enums.CollaboratorRole myRole = caller == null
+                ? null
+                : deckCollaboratorService.findRow(deck.getId(), caller.getId())
+                        .map(DeckCollaborator::getRole).orElse(null);
+        return new DeckDTO(deck, isFavorited, myRating, myRole);
     }
 
     private User resolveUser(Authentication authentication) {

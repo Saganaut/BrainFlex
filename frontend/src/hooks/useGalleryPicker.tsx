@@ -9,6 +9,10 @@
 //       commitOption({ ...option, image });
 //     });
 //
+// Callers that also support pasting an external URL can pass `initialUrl`
+// so the picker's URL input pre-populates with whatever the slot currently
+// references; the same onPick handles both gallery picks and URL submits.
+//
 // The backend strips `imgUrl` on write for internal images and rehydrates
 // it on read, so there's no field-by-field merge dance for callers.
 //
@@ -20,15 +24,23 @@ import type { Image } from "@/store/BrainFlexApi";
 
 type PickHandler = (image: Image) => void;
 
-const useGalleryPicker = (): ((onPick: PickHandler) => void) => {
+interface OpenPickerOptions {
+  initialUrl?: string;
+}
+
+const useGalleryPicker = (): ((
+  onPick: PickHandler,
+  options?: OpenPickerOptions,
+) => void) => {
   const { openModal, closeModal } = useModal();
 
   return useCallback(
-    (onPick: PickHandler) => {
+    (onPick: PickHandler, options?: OpenPickerOptions) => {
       openModal({
         title: "Choose an image",
         content: (
           <GalleryPicker
+            initialUrl={options?.initialUrl}
             onPick={(image) => {
               onPick(image);
               closeModal();

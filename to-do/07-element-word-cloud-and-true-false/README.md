@@ -1,6 +1,6 @@
 # 07 — Word Cloud & True/False element kinds
 
-**Status:** Not started
+**Status:** Word Cloud complete (editor + scoring + live aggregation broadcast + player input + reveal cloud). True/False dropped — an MCQ with 2 options already covers that use case.
 **Depends on:** Nothing strict; chunk 10 will tidy common provenance fields afterwards
 **Unblocks:** 16 (analytics needs every element kind to be known)
 
@@ -75,17 +75,17 @@ Add `WORD_CLOUD` and `TRUE_FALSE` to `ElementKind`. Extend the sealed `permits` 
 
 ## Checklist
 
-- [ ] `WordCloudQuestion` + `TrueFalseQuestion` records + `permits` updates
-- [ ] `WordCloudAnswer` + `TrueFalseAnswer` records + `permits` updates
-- [ ] `ElementKind` enum updates (`WORD_CLOUD`, `TRUE_FALSE`)
-- [ ] `ElementScorer` cases + tests
-- [ ] `ElementRedactor` cases
-- [ ] `DeckElementCloner` cases
-- [ ] `WordCloudAggregator` (or method on `ShowcaseService`) + tests
-- [ ] WebSocket emits aggregated word cloud during SUBMIT phase
-- [ ] `buildNewElement` frontend cases with primitive defaults
-- [ ] Editor components for both kinds
-- [ ] Player + reveal views for both kinds
-- [ ] `NewElementPicker` tiles
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `WordCloudQuestion` record + `permits` updates  *(True/False dropped — MCQ-of-2 covers it)*
+- [x] `WordCloudAnswer` record + `permits` updates
+- [x] `ElementKind` enum update (`WORD_CLOUD`)
+- [x] `ElementScorer` case + tests
+- [x] `ElementRedactor` case
+- [x] `DeckElementCloner` case
+- [x] `WordCloudAggregator` + tests
+- [x] WebSocket emits aggregated word cloud during SUBMIT phase (live + final on round complete)
+- [x] `buildNewElement` frontend case with primitive defaults
+- [x] Editor component for Word Cloud
+- [x] Player + reveal view for Word Cloud
+- [x] `NewElementPicker` tile
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

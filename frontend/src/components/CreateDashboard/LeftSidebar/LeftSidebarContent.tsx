@@ -63,7 +63,7 @@ const LeftSidebarContent = () => {
             type='button'
             className={styles.emptySlide}
             onClick={handleNewSlideClick}
-            ariaLabel='Create your first slide'>
+            aria-label='Create your first slide'>
             <span className={styles.emptySlideIcon} aria-hidden='true'>
               <PlusIcon />
             </span>

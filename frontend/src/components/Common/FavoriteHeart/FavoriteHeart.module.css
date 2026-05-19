@@ -30,14 +30,14 @@
     border-color: var(--border-focus);
   }
 
-  &:hover:not(:disabled) {
-    color: var(--text-error);
-    transform: scale(1.05);
-  }
-
   &:disabled {
     cursor: not-allowed;
     opacity: 0.5;
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--text-error);
+    transform: scale(1.05);
   }
 
   &.heartActive {

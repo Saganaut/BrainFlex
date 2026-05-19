@@ -23,11 +23,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.DeckCollaborator;
 import cephadex.brainflex.model.Organization;
 import cephadex.brainflex.model.Showcase;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.enums.CollaboratorRole;
+import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;
+import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.ShowcaseRepository;
 import cephadex.brainflex.repository.ThemeRepository;
@@ -39,6 +43,8 @@ class AuthorizationServiceTest {
     @Mock private ThemeRepository themeRepository;
     @Mock private ShowcaseRepository showcaseRepository;
     @Mock private OrganizationRepository organizationRepository;
+    @Mock private GalleryImageRepository galleryImageRepository;
+    @Mock private DeckCollaboratorRepository deckCollaboratorRepository;
 
     @InjectMocks private AuthorizationService authorizationService;
 
@@ -61,6 +67,8 @@ class AuthorizationServiceTest {
         deck.setId("deck-1");
         deck.setCreatorUserId(owner.getId());
         when(deckRepository.findById("deck-1")).thenReturn(Optional.of(deck));
+        when(deckCollaboratorRepository.findByDeckIdAndUserId("deck-1", owner.getId()))
+                .thenReturn(Optional.of(ownerRow("deck-1", owner.getId())));
 
         Deck result = authorizationService.requireDeckEditable("deck-1", owner);
 
@@ -68,16 +76,65 @@ class AuthorizationServiceTest {
     }
 
     @Test
-    void requireDeckEditable_AsNonOwner_ThrowsForbidden() {
+    void requireDeckEditable_AsEditor_ReturnsDeck() {
         Deck deck = new Deck();
         deck.setId("deck-1");
         deck.setCreatorUserId(owner.getId());
         when(deckRepository.findById("deck-1")).thenReturn(Optional.of(deck));
+        when(deckCollaboratorRepository.findByDeckIdAndUserId("deck-1", other.getId()))
+                .thenReturn(Optional.of(editorRow("deck-1", other.getId())));
+
+        Deck result = authorizationService.requireDeckEditable("deck-1", other);
+
+        assertSame(deck, result);
+    }
+
+    @Test
+    void requireDeckEditable_AsViewer_ThrowsForbidden() {
+        Deck deck = new Deck();
+        deck.setId("deck-1");
+        deck.setCreatorUserId(owner.getId());
+        when(deckRepository.findById("deck-1")).thenReturn(Optional.of(deck));
+        when(deckCollaboratorRepository.findByDeckIdAndUserId("deck-1", other.getId()))
+                .thenReturn(Optional.of(viewerRow("deck-1", other.getId())));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> authorizationService.requireDeckEditable("deck-1", other));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void requireDeckEditable_AsNonCollaborator_ThrowsForbidden() {
+        Deck deck = new Deck();
+        deck.setId("deck-1");
+        deck.setCreatorUserId(owner.getId());
+        when(deckRepository.findById("deck-1")).thenReturn(Optional.of(deck));
+        when(deckCollaboratorRepository.findByDeckIdAndUserId("deck-1", other.getId()))
+                .thenReturn(Optional.empty());
+        when(deckCollaboratorRepository.findByDeckId("deck-1"))
+                .thenReturn(java.util.List.of(ownerRow("deck-1", owner.getId())));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> authorizationService.requireDeckEditable("deck-1", other));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void requireDeckEditable_LegacyCreatorWithoutCollaboratorRows_AllowsCreator() {
+        Deck deck = new Deck();
+        deck.setId("deck-legacy");
+        deck.setCreatorUserId(owner.getId());
+        when(deckRepository.findById("deck-legacy")).thenReturn(Optional.of(deck));
+        when(deckCollaboratorRepository.findByDeckIdAndUserId("deck-legacy", owner.getId()))
+                .thenReturn(Optional.empty());
+        when(deckCollaboratorRepository.findByDeckId("deck-legacy"))
+                .thenReturn(java.util.List.of());
+
+        Deck result = authorizationService.requireDeckEditable("deck-legacy", owner);
+
+        assertSame(deck, result);
     }
 
     @Test
@@ -102,6 +159,27 @@ class AuthorizationServiceTest {
                 () -> authorizationService.requireDeckEditable("missing", owner));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+    }
+
+    private DeckCollaborator ownerRow(String deckId, String userId) {
+        return makeRow(deckId, userId, CollaboratorRole.OWNER);
+    }
+
+    private DeckCollaborator editorRow(String deckId, String userId) {
+        return makeRow(deckId, userId, CollaboratorRole.EDITOR);
+    }
+
+    private DeckCollaborator viewerRow(String deckId, String userId) {
+        return makeRow(deckId, userId, CollaboratorRole.VIEWER);
+    }
+
+    private DeckCollaborator makeRow(String deckId, String userId, CollaboratorRole role) {
+        DeckCollaborator row = new DeckCollaborator();
+        row.setId(deckId + ":" + userId);
+        row.setDeckId(deckId);
+        row.setUserId(userId);
+        row.setRole(role);
+        return row;
     }
 
     // ---- requireThemeEditable ----

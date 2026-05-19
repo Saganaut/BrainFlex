@@ -1,0 +1,21 @@
+/* Pair-row layout for the Matching editor: two text inputs separated by a
+   visual ↔ arrow, sized so left and right take an equal share of the row. */
+
+.pairRow {
+  align-items: center;
+}
+
+.pairFields {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pairArrow {
+  color: var(--text-muted);
+  font-size: var(--font-size-md);
+  user-select: none;
+}

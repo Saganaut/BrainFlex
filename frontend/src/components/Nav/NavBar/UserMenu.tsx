@@ -2,8 +2,8 @@
 import React from "react";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { Input } from "@/components/Common/Input/Input/Input";
-import lightModeIcon from "@/assets/nav/LightModeIcon.svg";
-import darkModeIcon from "@/assets/nav/DarkModeIcon.svg";
+import SunIcon from "@/assets/icons/theme/sun.svg?react";
+import MoonIcon from "@/assets/icons/theme/moon.svg?react";
 import { Link } from "@tanstack/react-router";
 import {
   DropdownMenu,
@@ -47,7 +47,7 @@ const UserMenu = () => {
           shape='avatar'
           variant='filled'
           size='md'
-          ariaLabel='User menu'
+          aria-label='User menu'
           icon={avatarContent()}
           onClick={toggle}
         />
@@ -112,16 +112,12 @@ const UserMenu = () => {
       <DropdownMenuDivider />
       <DropdownMenuItem onClick={toggleTheme} centered={true}>
         <span className={styles.themeToggle} aria-hidden='true'>
-          <img
-            src={lightModeIcon}
-            alt=''
+          <SunIcon
             className={
               theme === "dark" ? styles.themeIconActive : styles.themeIconHidden
             }
           />
-          <img
-            src={darkModeIcon}
-            alt=''
+          <MoonIcon
             className={
               theme === "light"
                 ? styles.themeIconActive

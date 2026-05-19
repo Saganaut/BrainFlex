@@ -44,7 +44,8 @@ const McqSlideContent = () => {
 
   // Only the prompt needs a local mirror — typing should feel responsive
   // and the rich-text editor controls its own DOM. Options come straight
-  // from the cache via each `<McqOptionEditable />`.
+  // from the cache via each `<McqOptionEditable />`. Auto-fit shrinking
+  // happens inside RichTextInput via its `minPx`/`maxPx` props.
   const [prompt, setPrompt] = useState(question?.prompt ?? "");
 
   // Resync local mirror when the active question changes. "Derive state
@@ -72,12 +73,10 @@ const McqSlideContent = () => {
   return (
     <SlideContentWrapper
       footer={
-        !hasCorrectAnswer ? (
-          <p>
-            Not setting a correct answer means this slide is not scoreable in a
-            game showcase.
-          </p>
-        ) : null
+        <p className={hasCorrectAnswer ? styles.footerPlaceholder : undefined}>
+          Not setting a correct answer means this slide is not scoreable in a
+          game showcase.
+        </p>
       }>
       <div className={styles.slideHeader}>
         <RichTextInput
@@ -85,6 +84,9 @@ const McqSlideContent = () => {
           id={`mcq-prompt-${question.id ?? ""}`}
           placeholder='Type your question…'
           value={prompt}
+          minPx={11}
+          maxPx={40}
+          className={styles.titleField}
           onChange={(html) => {
             setPrompt(html);
             schedulePrompt(html);

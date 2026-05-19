@@ -131,7 +131,7 @@ const RankingSlideContent = () => {
               variant='bordered'
               size='xs'
               icon={<MinusIcon />}
-              ariaLabel={`Remove item ${(idx + 1).toString()}`}
+              aria-label={`Remove item ${(idx + 1).toString()}`}
               disabled={items.length <= MIN_ITEMS}
               onClick={() => {
                 if (item.id) handleRemoveItem(item.id);

@@ -5,6 +5,13 @@
  * Submissions live in the `audience_submissions` collection.
  *
  * `bestAnswerMode` is meaningless for Q&A and ignored by the scorer.
+ *
+ * Moderation flags (chunk 10):
+ *   - `anonymousSubmissions` hides the submitter on the moderation board so
+ *     the host evaluates the message text without bias.
+ *   - `minVotesToShow` is the floor (when allowVoting=true) for a submission
+ *     to appear on the public board; until that many upvotes, the message is
+ *     pending. 0 disables the gate.
  */
 package cephadex.brainflex.model.element;
 
@@ -44,7 +51,10 @@ public record QAndAQuestion(
         Image image,
         String videoUrl,
         String audioUrl,
-        MediaPosition mediaPosition
+        MediaPosition mediaPosition,
+        // per-kind ergonomics (chunk 10)
+        boolean anonymousSubmissions,
+        int minVotesToShow
 ) implements DeckElement {
 
     @Override

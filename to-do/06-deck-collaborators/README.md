@@ -1,6 +1,6 @@
 # 06 — Deck collaborators
 
-**Status:** Not started
+**Status:** Done
 **Depends on:** 02 (publish status — co-editors edit drafts)
 **Unblocks:** 16 (analytics access is owner+collaborator)
 
@@ -63,13 +63,13 @@ Only one `OWNER` per deck — enforce in the service layer. The legacy `Deck.cre
 
 ## Checklist
 
-- [ ] `DeckCollaborator` model + repo + service + tests
-- [ ] `CollaboratorRole` enum
-- [ ] `AuthorizationService.canViewDeck` / `canEditDeck` overhaul + tests
-- [ ] Migration to backfill OWNER rows for existing decks
-- [ ] Endpoints + tests
-- [ ] "My Decks" page shows owned + shared decks, role pill
-- [ ] Share modal in deck editor
-- [ ] Transfer ownership flow
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `DeckCollaborator` model + repo + service + tests
+- [x] `CollaboratorRole` enum
+- [x] `AuthorizationService.canViewDeck` / `canEditDeck` overhaul + tests
+- [x] Migration to backfill OWNER rows for existing decks
+- [x] Endpoints + tests
+- [x] "My Decks" page shows owned + shared decks, role pill
+- [x] Share modal in deck editor
+- [x] Transfer ownership flow
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

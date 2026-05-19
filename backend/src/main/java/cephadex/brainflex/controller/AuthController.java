@@ -22,6 +22,7 @@ import cephadex.brainflex.dto.UserDTO;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthoritiesService;
+import cephadex.brainflex.service.DeckCollaboratorService;
 import cephadex.brainflex.service.UserImageHydrator;
 import cephadex.brainflex.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,16 +38,19 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final AuthoritiesService authoritiesService;
     private final UserImageHydrator userImageHydrator;
+    private final DeckCollaboratorService deckCollaboratorService;
 
     public AuthController(UserRepository userRepository, UserService userService,
             SecurityContextRepository securityContextRepository,
             AuthoritiesService authoritiesService,
-            UserImageHydrator userImageHydrator) {
+            UserImageHydrator userImageHydrator,
+            DeckCollaboratorService deckCollaboratorService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.securityContextRepository = securityContextRepository;
         this.authoritiesService = authoritiesService;
         this.userImageHydrator = userImageHydrator;
+        this.deckCollaboratorService = deckCollaboratorService;
     }
 
     @GetMapping("/me")
@@ -89,6 +93,10 @@ public class AuthController {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         User registered = userService.register(oAuth2User, request);
+        // Promote any pending email-based deck-collaborator invites for this
+        // address — invites sent to "alice@example.com" before Alice signed up
+        // resolve to her userId now.
+        deckCollaboratorService.claimPendingInvitesFor(registered);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new UserDTO.RegisteredUser(registered, userImageHydrator.pictureImageOf(registered)));
     }

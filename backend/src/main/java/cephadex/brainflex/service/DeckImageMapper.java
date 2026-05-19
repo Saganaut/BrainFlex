@@ -16,10 +16,14 @@ import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
 import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.element.MatchingPair;
+import cephadex.brainflex.model.element.MatchingQuestion;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
@@ -30,6 +34,7 @@ import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.TextQuestion;
+import cephadex.brainflex.model.element.WordCloudQuestion;
 
 public final class DeckImageMapper {
 
@@ -143,6 +148,46 @@ public final class DeckImageMapper {
                     q.displaySeconds(), q.speakerNotes(),
                     applyNullable(q.background(), op), applyNullable(q.image(), op),
                     q.videoUrl(), q.audioUrl(), q.mediaPosition());
+            case WordCloudQuestion q -> new WordCloudQuestion(
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), q.maxSubmissionsPerPlayer(), q.maxWordLength(),
+                    q.caseSensitive(), q.profanityFilter(), q.bannedWords(),
+                    q.pointValue(), q.difficulty(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
+                    q.displaySeconds(), q.speakerNotes(),
+                    applyNullable(q.background(), op), applyNullable(q.image(), op),
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+            case AllocationQuestion q -> new AllocationQuestion(
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), mapOptions(q.options(), op),
+                    q.totalPointsToDistribute(), q.allowZeroOnItem(), q.enforceExactTotal(),
+                    q.pointValue(), q.difficulty(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
+                    q.displaySeconds(), q.speakerNotes(),
+                    applyNullable(q.background(), op), applyNullable(q.image(), op),
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+            case MatchingQuestion q -> new MatchingQuestion(
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), mapPairs(q.pairs(), op), q.scoring(),
+                    q.pointValue(), q.difficulty(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
+                    q.displaySeconds(), q.speakerNotes(),
+                    applyNullable(q.background(), op), applyNullable(q.image(), op),
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
+            case DrawingQuestion q -> new DrawingQuestion(
+                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
+                    q.prompt(), applyNullable(q.backingImage(), op),
+                    q.canvasWidth(), q.canvasHeight(),
+                    q.maxStrokesPerPlayer(), q.maxPointsPerStroke(), q.palette(),
+                    q.pointValue(), q.difficulty(),
+                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
+                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
+                    q.displaySeconds(), q.speakerNotes(),
+                    applyNullable(q.background(), op), applyNullable(q.image(), op),
+                    q.videoUrl(), q.audioUrl(), q.mediaPosition());
         };
     }
 
@@ -177,6 +222,20 @@ public final class DeckImageMapper {
                 if (q.cells() != null) visitNullable(q.cells().backingImage(), visitor);
             }
             case PlaceOnImageQuestion q -> visitNullable(q.targetImage(), visitor);
+            case AllocationQuestion q -> {
+                if (q.options() != null) {
+                    for (McqOption opt : q.options()) visitNullable(opt.image(), visitor);
+                }
+            }
+            case MatchingQuestion q -> {
+                if (q.pairs() != null) {
+                    for (MatchingPair pair : q.pairs()) {
+                        visitNullable(pair.leftImage(), visitor);
+                        visitNullable(pair.rightImage(), visitor);
+                    }
+                }
+            }
+            case DrawingQuestion q -> visitNullable(q.backingImage(), visitor);
             default -> { /* nothing extra */ }
         }
     }
@@ -195,6 +254,18 @@ public final class DeckImageMapper {
         List<RankingItem> mapped = new ArrayList<>(items.size());
         for (RankingItem item : items) {
             mapped.add(item.withImage(applyNullable(item.image(), op)));
+        }
+        return mapped;
+    }
+
+    private static List<MatchingPair> mapPairs(List<MatchingPair> pairs, UnaryOperator<Image> op) {
+        if (pairs == null) return null;
+        List<MatchingPair> mapped = new ArrayList<>(pairs.size());
+        for (MatchingPair pair : pairs) {
+            mapped.add(new MatchingPair(
+                    pair.id(), pair.leftLabel(), pair.rightLabel(),
+                    applyNullable(pair.leftImage(), op),
+                    applyNullable(pair.rightImage(), op)));
         }
         return mapped;
     }

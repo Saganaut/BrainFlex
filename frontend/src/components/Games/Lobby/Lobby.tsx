@@ -126,7 +126,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                     onClick={() => {
                       void handleBoot(playerId);
                     }}
-                    ariaLabel={`Remove ${p.userName ?? "player"} from the lobby`}>
+                    aria-label={`Remove ${p.userName ?? "player"} from the lobby`}>
                     Boot
                   </Btn>
                 )}

@@ -1,7 +1,10 @@
 /**
  * Free-text question. The submitted text is matched case-insensitively (unless
- * caseSensitive=true) against the canonical answer or any acceptedVariants, all
- * compared after trimming whitespace.
+ * caseSensitive=true) against the canonical answer or any acceptedVariants.
+ * Trimming is governed by `trimWhitespace` (default true). When `fuzzyMatch`
+ * is enabled the scorer also accepts answers within `fuzzyDistance` Levenshtein
+ * edits of the canonical or any variant — useful for typos and minor spelling
+ * slips. `maxLength` is a client-side cap on the input (default 80).
  */
 package cephadex.brainflex.model.element;
 
@@ -42,7 +45,12 @@ public record TextQuestion(
         Image image,
         String videoUrl,
         String audioUrl,
-        MediaPosition mediaPosition
+        MediaPosition mediaPosition,
+        // per-kind ergonomics (chunk 10)
+        int maxLength,
+        boolean trimWhitespace,
+        boolean fuzzyMatch,
+        int fuzzyDistance
 ) implements DeckElement {
 
     @Override

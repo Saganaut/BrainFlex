@@ -25,6 +25,10 @@ const KIND_LABELS: Record<ElementKind, string> = {
   QAndAQuestion: "Q & A",
   GridQuestion: "Grid",
   PlaceOnImageQuestion: "Place on Image",
+  WordCloudQuestion: "Word Cloud",
+  AllocationQuestion: "Allocation",
+  MatchingQuestion: "Matching",
+  DrawingQuestion: "Drawing",
 };
 
 // Preserve the order defined in the graphics map by reading its keys directly.

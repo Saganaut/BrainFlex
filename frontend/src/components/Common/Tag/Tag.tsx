@@ -21,7 +21,7 @@ const Tag = ({ children, size = "md", onRemove, className }: TagProps) => (
         type='button'
         className={styles.remove}
         onClick={onRemove}
-        ariaLabel='Remove tag'>
+        aria-label='Remove tag'>
         <XMarkIcon />
       </button>
     )}

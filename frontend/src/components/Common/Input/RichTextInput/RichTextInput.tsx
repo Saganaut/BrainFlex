@@ -21,7 +21,14 @@
  * directly to the backend (e.g. Slide.body).
  */
 import { EditorContent, type Editor } from "@tiptap/react";
-import { useEffect, useImperativeHandle, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import styles from "./RichTextInput.module.css";
 import {
   Popover,
@@ -50,6 +57,15 @@ interface RichTextInputProps {
   id?: string;
   ref?: React.Ref<RichTextInputHandle>;
   isBordered?: boolean;
+  className?: string;
+  /** Auto-shrink the editor's font-size so its content fits inside its
+   *  bounded box — same algorithm as `useFitText` (the shared hook can't
+   *  bind to TipTap's contenteditable because the DOM is owned by the
+   *  editor view, not React). Pass both bounds to opt in; below `minPx`
+   *  the content clips. Only meaningful when the host constrains the
+   *  editor's height (e.g. inside a fixed-height card). */
+  minPx?: number;
+  maxPx?: number;
 }
 
 // A handful of presets — "a few choices" per the spec.
@@ -214,10 +230,23 @@ const RichTextInput = ({
   id,
   ref,
   isBordered = true,
+  className,
+  minPx,
+  maxPx,
 }: RichTextInputProps) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [toolbarOpen, setToolbarOpen] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
+
+  // Per-instance CSS anchor name. The floating toolbar uses CSS Anchor
+  // Positioning to sit above the editor surface, but `anchor-name` is a
+  // single shared identifier — every RichTextInput on the page declaring
+  // the same `--rte` name collapses to one anchor, so every toolbar
+  // positions against whichever surface wins, and toggling one editor
+  // shifts another's toolbar. `useId` gives each instance its own name.
+  // `useId` returns identifiers like `:r0:`; strip the colons since they
+  // aren't valid in CSS custom-property names.
+  const anchorName = `--rte-${useId().replace(/:/g, "")}`;
 
   const editor = useRichTextEditor({
     value,
@@ -240,6 +269,47 @@ const RichTextInput = ({
       editor.off("focus", handleFocus);
     };
   }, [editor]);
+
+  // Auto-fit font-size so the editor's content stays within ~one line at
+  // `maxPx`. Same intent as `useFitText`, but TipTap's contenteditable has
+  // no intrinsic height cap — it grows with its content — so we can't
+  // compare `scrollHeight > clientHeight` (they're always equal). Instead
+  // we compute a target height (one `maxPx` line + the element's own
+  // padding) and shrink the font until `scrollHeight` fits the target.
+  //
+  // Crucially this avoids touching min-height / max-height / overflow on
+  // the element. Capping those collapses the empty editor (the placeholder
+  // has `height: 0`, so the box has nothing else holding it open) and the
+  // small/clipped click target breaks the focus → floating-toolbar flow.
+  useLayoutEffect(() => {
+    if (minPx == null || maxPx == null) return;
+    const el: HTMLElement = editor.view.dom;
+    const stepPx = 0.5;
+    const setStyle = (prop: string, value: string) => {
+      el.style.setProperty(prop, value);
+    };
+    const fit = () => {
+      let size = maxPx;
+      setStyle("font-size", `${size.toString()}px`);
+      const cs = window.getComputedStyle(el);
+      const padding =
+        parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      const target = maxPx * 1.5 + padding;
+      while (el.scrollHeight > target && size > minPx) {
+        size -= stepPx;
+        setStyle("font-size", `${size.toString()}px`);
+      }
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    editor.on("update", fit);
+    return () => {
+      ro.disconnect();
+      editor.off("update", fit);
+      setStyle("font-size", "");
+    };
+  }, [editor, value, minPx, maxPx]);
 
   // Dismiss the toolbar on outside pointerdown / Escape — same shape as
   // McqOptionEditable. Listeners only attach while open.
@@ -274,16 +344,21 @@ const RichTextInput = ({
   }));
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
+    <div
+      className={[styles.wrapper, className].filter(Boolean).join(" ")}
+      ref={wrapperRef}>
       {label && (
         <label className={styles.label} htmlFor={id}>
           {label}
         </label>
       )}
       <div
-        className={`${styles.surface} ${isBordered ? " " : styles.noBorders}`}>
+        className={`${styles.surface} ${isBordered ? " " : styles.noBorders}`}
+        style={{ anchorName }}>
         {toolbarOpen && (
-          <div className={styles.floatingToolbar}>
+          <div
+            className={styles.floatingToolbar}
+            style={{ positionAnchor: anchorName }}>
             <Toolbar
               editor={editor}
               linkOpen={linkOpen}

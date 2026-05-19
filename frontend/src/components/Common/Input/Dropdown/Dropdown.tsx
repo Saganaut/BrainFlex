@@ -58,7 +58,7 @@ const Dropdown = ({
               <span
                 role='button'
                 tabIndex={0}
-                ariaLabel={`Remove ${opt?.label ?? v}`}
+                aria-label={`Remove ${opt?.label ?? v}`}
                 className={styles.chipRemove}
                 onClick={(e) => {
                   removeChip(e, v);
@@ -118,7 +118,7 @@ const Dropdown = ({
                     setQuery(e.target.value);
                   }}
                   placeholder='Search...'
-                  ariaLabel='Search options'
+                  aria-label='Search options'
                   autoFocus
                 />
               </div>

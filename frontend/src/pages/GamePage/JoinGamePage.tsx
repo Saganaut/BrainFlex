@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useJoinByRoomCodeMutation } from "../../store/BrainFlexApi";
 import { extractErrorMessage } from "../../utils/utils";
 import styles from "./GameHub.module.css";
+import { Alert } from "@/components/Common/Alert/Alert";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input/Input";
 const JoinGamePage = () => {
@@ -52,13 +53,13 @@ const JoinGamePage = () => {
             disabled={code.trim().length !== 6 || isLoading}>
             {isLoading ? "Joining…" : "Join Game"}
           </Btn>
-          {error && (
-            <p className={styles.errorMsg} role='alert'>
+          {error != null && (
+            <Alert severity='error'>
               {extractErrorMessage(
                 error,
                 "Could not join — check the room code and try again.",
               )}
-            </p>
+            </Alert>
           )}
         </form>
 

@@ -35,6 +35,8 @@ import { ProgressBar } from "../../components/Common/ProgressBar/ProgressBar";
 import { Skeleton } from "../../components/Common/Skeleton/Skeleton";
 import { Tooltip } from "../../components/Common/Tooltip/Tooltip";
 import { Tabs } from "../../components/Common/Tabs/Tabs";
+import { Alert } from "../../components/Common/Alert/Alert";
+import { Pagination } from "../../components/Common/Pagination/Pagination";
 import { useConfirm } from "../../components/Common/ConfirmDialog/useConfirm";
 import { SelectableTile } from "../../components/Common/SelectableTile/SelectableTile";
 import { Card } from "../../components/Common/Cards/Card";
@@ -73,6 +75,9 @@ const CommonTab = () => {
   const [progressValue, setProgressValue] = useState(40);
   const [confirmResult, setConfirmResult] = useState<string | null>(null);
   const [tileChoice, setTileChoice] = useState<string | null>("alpha");
+  const [demoPage, setDemoPage] = useState(2);
+  const [demoCompactPage, setDemoCompactPage] = useState(0);
+  const [dismissedAlert, setDismissedAlert] = useState(false);
 
   const openDesignModal = () => {
     openModal({
@@ -860,6 +865,141 @@ const CommonTab = () => {
                   Last result: {confirmResult}
                 </span>
               )}
+            </div>
+          </Accordion>
+          <Accordion titleBar='Alert'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-3)",
+                maxWidth: "560px",
+              }}>
+              <Alert severity='info' title='Heads up'>
+                Inline feedback that sits next to a field — info severity.
+              </Alert>
+              <Alert severity='success' title='Saved'>
+                Your changes were saved to the deck.
+              </Alert>
+              <Alert severity='warning' title='Heads up'>
+                Two players left the room. The game can keep going with the
+                remaining six.
+              </Alert>
+              <Alert severity='error' title='Image too large'>
+                The background image exceeds 5 MB. Pick something smaller.
+              </Alert>
+              <Alert severity='info' compact>
+                Compact variant — single-line, tighter padding.
+              </Alert>
+              {!dismissedAlert && (
+                <Alert
+                  severity='warning'
+                  title='Dismissable'
+                  onDismiss={() => {
+                    setDismissedAlert(true);
+                  }}>
+                  This one has a dismiss button. Close it to confirm the
+                  callback fires.
+                </Alert>
+              )}
+              {dismissedAlert && (
+                <Btn
+                  size='sm'
+                  variant='secondary'
+                  onClick={() => {
+                    setDismissedAlert(false);
+                  }}>
+                  Reset dismissable Alert
+                </Btn>
+              )}
+            </div>
+          </Accordion>
+          <Accordion titleBar='Pagination'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-4)",
+                maxWidth: "560px",
+              }}>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "var(--space-2)",
+                }}>
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Default — page numbers with boundary + ellipsis collapse
+                </span>
+                <Pagination
+                  page={demoPage}
+                  pageCount={12}
+                  onPageChange={setDemoPage}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "var(--space-2)",
+                }}>
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Compact — prev/next plus Page N of M (no page numbers)
+                </span>
+                <Pagination
+                  page={demoCompactPage}
+                  pageCount={5}
+                  onPageChange={setDemoCompactPage}
+                  compact
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "var(--space-2)",
+                }}>
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Unknown total — caller passes hasMore instead of pageCount
+                </span>
+                <Pagination
+                  page={demoCompactPage}
+                  hasMore
+                  onPageChange={setDemoCompactPage}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "var(--space-2)",
+                }}>
+                <span
+                  style={{
+                    fontSize: "var(--font-size-sm)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  Disabled — controls inert while a request is in flight
+                </span>
+                <Pagination
+                  page={demoPage}
+                  pageCount={12}
+                  onPageChange={setDemoPage}
+                  disabled
+                />
+              </div>
             </div>
           </Accordion>
           <Accordion titleBar='Selectable tile'>

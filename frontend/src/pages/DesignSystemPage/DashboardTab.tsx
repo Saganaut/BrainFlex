@@ -8,6 +8,8 @@ import { Btn } from "../../components/Common/Buttons/Btn";
 import { Leaderboard } from "../../components/Leaderboard/Leaderboard";
 import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
+import { RoundDataView } from "../../components/Games/RoundDataView/RoundDataView";
+import { SessionSummary } from "../../components/Games/SessionSummary/SessionSummary";
 import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
 import { TextAnswerInput } from "../../components/Games/TextAnswerInput/TextAnswerInput";
 import { VotePanel } from "../../components/Games/VotePanel/VotePanel";
@@ -58,6 +60,7 @@ const WsErrorBannerDemo = () => {
 
 const DashboardTab = () => {
   const [roundResultIsOpen, setRoundResultIsOpen] = useState(false);
+  const [roundDataViewIsOpen, setRoundDataViewIsOpen] = useState(false);
 
   useEffect(() => {
     if (roundResultIsOpen) {
@@ -70,6 +73,18 @@ const DashboardTab = () => {
     }
     return undefined;
   }, [roundResultIsOpen]);
+
+  useEffect(() => {
+    if (roundDataViewIsOpen) {
+      const timer = setTimeout(() => {
+        setRoundDataViewIsOpen(false);
+      }, 3000);
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+    return undefined;
+  }, [roundDataViewIsOpen]);
 
   return (
     <section>
@@ -146,7 +161,7 @@ const DashboardTab = () => {
                 pointValue: 0,
                 difficulty: "EASY",
                 bestAnswerMode: true,
-                bestAnswerBonus: 100,
+                bestAnswerPoints: 100,
                 caseSensitive: false,
                 displaySeconds: 30,
                 mediaPosition: "NONE",
@@ -229,6 +244,50 @@ const DashboardTab = () => {
         <Accordion titleBar='Review panel (post-interactiveSession)'>
           <div className={styles.cardComponentContainer}>
             <ReviewPanel review={reviewSampleData} />
+          </div>
+        </Accordion>
+        <Accordion titleBar='Round data view (chunk 24, PRESENTATION round-end)'>
+          <div className={styles.cardComponentContainer}>
+            <Btn
+              onClick={() => {
+                setRoundDataViewIsOpen(!roundDataViewIsOpen);
+              }}>
+              Trigger Round Data View
+            </Btn>
+            {roundDataViewIsOpen && (
+              <RoundDataView
+                result={RoundResultData}
+                isHost
+                isTurnBased={false}
+                onNextRound={() => {
+                  console.log("next round (presentation)");
+                }}
+              />
+            )}
+          </div>
+        </Accordion>
+        <Accordion titleBar='Session summary (chunk 24, PRESENTATION end screen)'>
+          <div className={styles.cardComponentContainer}>
+            <SessionSummary
+              roomCode='DEMO00'
+              summary={{
+                roundsPlayed: 1,
+                anyScoringEnabled: true,
+                rounds: [
+                  {
+                    roundIndex: 0,
+                    element: RoundResultData.element,
+                    aggregatedPayloads: [
+                      { kind: "McqAnswer", optionIds: ["opt-9"] },
+                      { kind: "McqAnswer", optionIds: ["opt-9"] },
+                      { kind: "McqAnswer", optionIds: ["opt-9"] },
+                      { kind: "McqAnswer", optionIds: ["opt-1"] },
+                      { kind: "McqAnswer", optionIds: ["opt-12"] },
+                    ],
+                  },
+                ],
+              }}
+            />
           </div>
         </Accordion>
         <Accordion titleBar='Content Deck Picker'>

@@ -15,6 +15,7 @@ import {
   useUploadLogoMutation,
 } from "../../store/BrainFlexApi";
 import styles from "./ThemeSection.module.css";
+import { Alert } from "@/components/Common/Alert/Alert";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
 import { FileUpload } from "@/components/Common/Input/FileUpload/FileUpload";
@@ -265,7 +266,9 @@ const ThemeEditor = ({
         }
       />
 
-      {error && <p className={styles.editorError}>{error}</p>}
+      {error != null && error !== "" && (
+        <Alert severity='error'>{error}</Alert>
+      )}
 
       <div className={styles.editorActions}>
         <Btn type='button' onClick={onCancel} disabled={isSaving}>

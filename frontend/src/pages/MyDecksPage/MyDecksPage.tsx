@@ -148,7 +148,7 @@ const buildOptimisticDeck = (
   tags: [],
   isSystem: false,
   visibility: "PRIVATE",
-  recommendedPreset: "GAME",
+  defaultSessionFormat: "GAME",
   elementCount: 1,
   elements: [firstSlide],
 });

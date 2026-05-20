@@ -1,9 +1,13 @@
 // Post-interactiveSession results screen — switches between the final standings (GameOver)
-// and the per-round review panel via a top-of-page toggle.
+// and the per-round review panel via a top-of-page toggle. Chunk 24:
+// PRESENTATION-format sessions short-circuit the standings/review tabs in favor
+// of `SessionSummary`, which renders aggregated room responses with no
+// leaderboard.
 import { getRouteApi } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { GameOver } from "../../components/Games/GameOver/GameOver";
 import { ReviewPanel } from "../../components/Games/ReviewPanel/ReviewPanel";
+import { SessionSummary } from "../../components/Games/SessionSummary/SessionSummary";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useInteractiveSession } from "../../hooks/useInteractiveSession";
 import {
@@ -44,6 +48,27 @@ const ResultsPage = () => {
     userState.state === "registered" || userState.state === "guest"
       ? userState.user.id
       : undefined;
+
+  // Chunk 24 — PRESENTATION sessions never have placements; the wire payload
+  // is `SessionSummaryMessage` on /summary instead of `/ended`. The slice's
+  // `format` defaults to GAME if no session has loaded yet, so this is the
+  // authoritative read once `setSession` has run.
+  const isPresentation = game.format === "PRESENTATION";
+
+  if (isPresentation) {
+    if (!game.sessionSummary) {
+      return (
+        <div className={styles.loading}>
+          <p>Aggregating responses…</p>
+        </div>
+      );
+    }
+    return (
+      <div className={styles.page}>
+        <SessionSummary summary={game.sessionSummary} roomCode={roomCode} />
+      </div>
+    );
+  }
 
   const placements =
     game.finalPlacements.length > 0

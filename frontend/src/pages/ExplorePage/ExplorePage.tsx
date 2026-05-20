@@ -16,9 +16,9 @@ import {
   type ExploreDecksApiArg,
 } from "@/store/BrainFlexApi";
 import { Tag } from "@/components/Common/Tag/Tag";
-import { Btn } from "@/components/Common/Buttons/Btn";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
 import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
+import { Pagination } from "@/components/Common/Pagination/Pagination";
 import { resolveDeckCover } from "@/utils/deckImages";
 import styles from "./ExplorePage.module.css";
 
@@ -143,8 +143,8 @@ const ExplorePage = () => {
   const { data: response, isFetching } = useExploreDecksQuery(exploreArgs);
 
   const items = response?.items ?? [];
-  const hasMore = response?.hasMore ?? false;
   const total = response?.totalElements ?? 0;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className={styles.explore}>
@@ -260,27 +260,15 @@ const ExplorePage = () => {
             </ul>
           )}
 
-          {(page > 0 || hasMore) && (
+          {pageCount > 1 && (
             <div className={styles.pager}>
-              <Btn
-                size='sm'
-                shape='pill'
-                disabled={page === 0 || isFetching}
-                onClick={() => {
-                  setPage((p) => Math.max(0, p - 1));
-                }}>
-                Previous
-              </Btn>
-              <span className={styles.pagerInfo}>Page {page + 1}</span>
-              <Btn
-                size='sm'
-                shape='pill'
-                disabled={!hasMore || isFetching}
-                onClick={() => {
-                  setPage((p) => p + 1);
-                }}>
-                Next
-              </Btn>
+              <Pagination
+                page={page}
+                pageCount={pageCount}
+                disabled={isFetching}
+                ariaLabel='Decks pagination'
+                onPageChange={setPage}
+              />
             </div>
           )}
         </section>

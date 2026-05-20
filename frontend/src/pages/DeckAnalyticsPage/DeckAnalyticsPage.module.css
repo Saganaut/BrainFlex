@@ -1,0 +1,270 @@
+/*
+ * Per-deck analytics dashboard (chunk 16). Layout = page header (deck name,
+ * back link, Export CSV) → KPI strip → per-element accordion list. Distribution
+ * is rendered as a CSS bar list keyed off the discriminated `Map<String, Integer>`
+ * the backend stores on each ElementStats; the dashboard switches between count-
+ * style (raw value) and sum-style (value ÷ answeredCount) interpretations based
+ * on the element kind. No chart library — keeps the surface small and matches
+ * the hand-rolled idiom of the rest of the app.
+ */
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-6);
+    gap: var(--space-4);
+    flex-wrap: wrap;
+
+    .headerLeft {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      min-width: 0;
+    }
+
+    .breadcrumb {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+    }
+
+    .title {
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      margin: 0;
+    }
+  }
+
+  .headerActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .empty,
+  .loading,
+  .errorBanner {
+    padding: var(--space-6);
+    text-align: center;
+    color: var(--text-secondary);
+    background: var(--bg-surface-raised);
+    border: 1px solid var(--edge-surface);
+    border-radius: var(--radius-md);
+  }
+
+  .errorBanner {
+    color: var(--bg-error-text, var(--text-primary));
+    background: var(--bg-error);
+    border-color: var(--bg-error);
+  }
+
+  .kpiStrip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-8);
+
+    .kpiCard {
+      padding: var(--space-4);
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--edge-surface-raised);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+
+      .kpiLabel {
+        font-size: var(--font-size-xs);
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .kpiValue {
+        font-size: var(--font-size-2xl);
+        font-weight: 700;
+      }
+
+      .kpiSub {
+        font-size: var(--font-size-xs);
+        color: var(--text-secondary);
+      }
+    }
+  }
+
+  .sectionTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin: 0 0 var(--space-3) 0;
+  }
+
+  .elementList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+
+    .elementCard {
+      background: var(--bg-surface-raised);
+      border: 1px solid var(--edge-surface-raised);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+
+      .elementHeader {
+        width: 100%;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        text-align: left;
+        color: inherit;
+        font: inherit;
+
+        &:hover {
+          background: var(--bg-secondary);
+        }
+
+        &:focus-visible {
+          outline: 2px solid var(--edge-primary);
+          outline-offset: -2px;
+        }
+
+        .kindBadge {
+          font-size: var(--font-size-xs);
+          font-weight: 600;
+          padding: var(--space-1) var(--space-2);
+          background: var(--bg-secondary);
+          border-radius: var(--radius-sm);
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          white-space: nowrap;
+        }
+
+        .elementTitle {
+          font-weight: 600;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          min-width: 0;
+        }
+
+        .elementSummary {
+          display: flex;
+          gap: var(--space-4);
+          font-size: var(--font-size-sm);
+          color: var(--text-secondary);
+
+          .summaryStat {
+            display: inline-flex;
+            gap: var(--space-1);
+
+            .summaryLabel {
+              color: var(--text-secondary);
+            }
+
+            .summaryValue {
+              color: var(--text-primary);
+              font-weight: 600;
+            }
+          }
+        }
+      }
+
+      .elementBody {
+        padding: var(--space-4);
+        border-top: 1px solid var(--edge-surface-raised);
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        gap: var(--space-6);
+
+        .distributionTitle {
+          font-size: var(--font-size-sm);
+          font-weight: 600;
+          margin: 0 0 var(--space-2) 0;
+          color: var(--text-secondary);
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+        }
+
+        .distributionEmpty {
+          font-size: var(--font-size-sm);
+          color: var(--text-secondary);
+          font-style: italic;
+        }
+
+        .distributionList {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-2);
+
+          .distributionRow {
+            display: grid;
+            grid-template-columns: minmax(80px, 1fr) minmax(0, 3fr) auto;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--font-size-sm);
+
+            .distributionLabel {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
+            .distributionBar {
+              height: 0.625rem;
+              background: var(--bg-subtle);
+              border-radius: var(--radius-sm);
+              overflow: hidden;
+
+              .distributionFill {
+                height: 100%;
+                background: var(--bg-primary);
+              }
+            }
+
+            .distributionValue {
+              font-variant-numeric: tabular-nums;
+              color: var(--text-secondary);
+              font-weight: 600;
+            }
+          }
+        }
+
+        .statsTable {
+          display: grid;
+          grid-template-columns: max-content 1fr;
+          gap: var(--space-1) var(--space-4);
+          font-size: var(--font-size-sm);
+          align-content: start;
+
+          .statLabel {
+            color: var(--text-secondary);
+          }
+
+          .statValue {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media (width <= 700px) {
+  .page .elementList .elementCard .elementBody {
+    grid-template-columns: 1fr;
+  }
+
+  .page .elementList .elementCard .elementHeader .elementSummary {
+    display: none;
+  }
+}

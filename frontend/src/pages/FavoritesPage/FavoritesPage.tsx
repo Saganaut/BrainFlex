@@ -5,8 +5,8 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useListMyFavoritesQuery } from "@/store/BrainFlexApi";
-import { Btn } from "@/components/Common/Buttons/Btn";
 import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
+import { Pagination } from "@/components/Common/Pagination/Pagination";
 import { resolveDeckCover } from "@/utils/deckImages";
 import styles from "./FavoritesPage.module.css";
 
@@ -23,7 +23,7 @@ const FavoritesPage = () => {
 
   const items = data?.items ?? [];
   const total = data?.totalElements ?? 0;
-  const hasMore = data?.hasMore ?? false;
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className={styles.page}>
@@ -77,27 +77,15 @@ const FavoritesPage = () => {
         </div>
       )}
 
-      {(page > 0 || hasMore) && (
+      {pageCount > 1 && (
         <div className={styles.pager}>
-          <Btn
-            size='sm'
-            shape='pill'
-            disabled={page === 0 || isFetching}
-            onClick={() => {
-              setPage((p) => Math.max(0, p - 1));
-            }}>
-            Previous
-          </Btn>
-          <span className={styles.pageInfo}>Page {page + 1}</span>
-          <Btn
-            size='sm'
-            shape='pill'
-            disabled={!hasMore || isFetching}
-            onClick={() => {
-              setPage((p) => p + 1);
-            }}>
-            Next
-          </Btn>
+          <Pagination
+            page={page}
+            pageCount={pageCount}
+            disabled={isFetching}
+            ariaLabel='Favorites pagination'
+            onPageChange={setPage}
+          />
         </div>
       )}
     </div>

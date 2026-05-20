@@ -13,6 +13,7 @@ import { apiBaseUrl } from "../../store/emptyApi";
 import { ThemeSection } from "./ThemeSection";
 import { OrgSection } from "./OrgSection";
 import { GallerySection } from "./GallerySection";
+import { AchievementsSection } from "./AchievementsSection";
 import styles from "./AccountPage.module.css";
 import { Btn } from "@components/Common/Buttons/Btn";
 import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
@@ -23,7 +24,13 @@ import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { validateImageFile } from "@/utils/imageValidation";
 import { extractErrorMessage } from "@/utils/utils";
 
-type Tab = "profile" | "theme" | "gallery" | "organizations" | "danger";
+type Tab =
+  | "profile"
+  | "theme"
+  | "gallery"
+  | "organizations"
+  | "achievements"
+  | "danger";
 
 const AccountPage = () => {
   // The /_authenticated layout route guarantees userState.state === "registered"
@@ -244,6 +251,11 @@ const AccountPage = () => {
             id: "organizations",
             label: "Organizations",
             panel: <OrgSection />,
+          },
+          {
+            id: "achievements",
+            label: "Achievements",
+            panel: <AchievementsSection />,
           },
           { id: "danger", label: "Danger zone", panel: dangerPanel },
         ]}

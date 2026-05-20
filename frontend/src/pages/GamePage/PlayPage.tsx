@@ -9,6 +9,7 @@ import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
 import { ReactionBar } from "../../components/Games/ReactionBar/ReactionBar";
 import { ReactionRain } from "../../components/Games/ReactionRain/ReactionRain";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
+import { RoundDataView } from "../../components/Games/RoundDataView/RoundDataView";
 import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
 import { TeamLeaderboard } from "../../components/Games/TeamLeaderboard/TeamLeaderboard";
 import { VotePanel } from "../../components/Games/VotePanel/VotePanel";
@@ -18,7 +19,7 @@ import { useInteractiveSession } from "../../hooks/useInteractiveSession";
 import { useInteractiveSessionWebSocket } from "../../hooks/useInteractiveSessionWebSocket";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
-import { useGetInteractiveSessionQuery } from "../../store/BrainFlexApi";
+import { useGetInteractiveSessionQuery, useGetDeckQuery } from "../../store/BrainFlexApi";
 import { resolveInteractiveSessionBackground } from "../../utils/deckImages";
 import { largestUrl } from "@/utils/image";
 import {
@@ -28,6 +29,7 @@ import {
 } from "../../store/interactiveSessionSlice";
 import { useAppDispatch } from "../../store/hooks";
 import type { AnswerPayload } from "../../types/elements";
+import { resolveShowResponsesFor } from "../../utils/showResponsesResolver";
 import styles from "./Game.module.css";
 
 const routeApi = getRouteApi("/games/$roomCode/play");
@@ -38,9 +40,23 @@ const PlayPage = () => {
   const dispatch = useAppDispatch();
   const userState = useCurrentUser();
   const game = useInteractiveSession();
-  const { sendAnswer, sendVote, sendNextRound, sendBoot, sendEndInteractiveSession } =
-    useInteractiveSessionWebSocket(roomCode);
+  const {
+    sendAnswer,
+    sendVote,
+    sendNextRound,
+    sendBoot,
+    sendEndInteractiveSession,
+    sendRevealNow,
+    sendFreezeResponses,
+  } = useInteractiveSessionWebSocket(roomCode);
   const { data: session } = useGetInteractiveSessionQuery({ roomCode });
+  // Chunk 24 — deck is fetched here only so the host's Reveal button can
+  // resolve the showResponses cascade (session > deck > element). Player
+  // surfaces don't need it.
+  const { data: deck } = useGetDeckQuery(
+    { id: session?.deckId ?? "" },
+    { skip: !session?.deckId },
+  );
   const [timeRemaining, setTimeRemaining] = useState(0);
   const confirm = useConfirm();
 
@@ -50,7 +66,12 @@ const PlayPage = () => {
       : undefined;
 
   const isHost = !!userId && session?.hostUserId === userId;
-  const isTurnBased = session?.settings?.mode === "TURN_BASED";
+  const isTurnBased = session?.settings?.answerSubmissionMode === "TURN_BASED";
+  // Chunk 24 — frozen session format drives chrome (GAME = persistent
+  // leaderboard, PRESENTATION = no leaderboard, aggregated data view at
+  // round-end). Fall back to GAME for legacy sessions written before the
+  // field landed.
+  const isPresentation = (session?.format ?? "GAME") === "PRESENTATION";
   // Host disables the question timer by setting timePerQuestion = 0.
   // Per-element displaySeconds always overrides on the server; the frontend
   // here just respects "is there any countdown?" for the QuestionCard chrome.
@@ -185,7 +206,11 @@ const PlayPage = () => {
       <div className={styles.waiting} style={bgStyle}>
         <WsErrorBanner />
         <p className={styles.waitingMsg}>Waiting for the first element…</p>
-        {teamMode && (
+        {/* Chunk 24 — PRESENTATION sessions don't carry a persistent
+            leaderboard at all (the format spec is explicit about chrome:
+            "no persistent leaderboard, round-end focuses on aggregated
+            data"). Skip the scoreboard mounts entirely for that flavor. */}
+        {!isPresentation && teamMode && (
           <TeamLeaderboard
             teams={teams}
             players={game.players}
@@ -193,17 +218,19 @@ const PlayPage = () => {
             hideScores={hideScoresDuringPlay}
           />
         )}
-        <ScoreBoard
-          players={game.players}
-          currentUserId={userId}
-          hideScores={hideScoresDuringPlay}
-          offlineUserIds={game.offlineUserIds}
-          isHost={isHost}
-          onBootPlayer={(id) => {
-            void handleBoot(id);
-          }}
-          teams={teamMode ? teams : undefined}
-        />
+        {!isPresentation && (
+          <ScoreBoard
+            players={game.players}
+            currentUserId={userId}
+            hideScores={hideScoresDuringPlay}
+            offlineUserIds={game.offlineUserIds}
+            isHost={isHost}
+            onBootPlayer={(id) => {
+              void handleBoot(id);
+            }}
+            teams={teamMode ? teams : undefined}
+          />
+        )}
       </div>
     );
   }
@@ -273,7 +300,9 @@ const PlayPage = () => {
         )}
       </div>
       <aside className={styles.sidebar}>
-        {teamMode && (
+        {/* Chunk 24 — leaderboard chrome is GAME-only. PRESENTATION hosts
+            see only chat + reveal/freeze controls in the sidebar. */}
+        {!isPresentation && teamMode && (
           <TeamLeaderboard
             teams={teams}
             players={game.players}
@@ -281,29 +310,53 @@ const PlayPage = () => {
             hideScores={hideScoresDuringPlay}
           />
         )}
-        <ScoreBoard
-          players={game.players}
-          currentUserId={userId}
-          hideScores={hideScoresDuringPlay}
-          answeredUserIds={
-            isSlide
-              ? undefined
-              : isVotePhase
-                ? game.votedThisRound
-                : game.answeredThisRound
-          }
-          offlineUserIds={game.offlineUserIds}
-          isHost={isHost}
-          onBootPlayer={(id) => {
-            void handleBoot(id);
-          }}
-          teams={teamMode ? teams : undefined}
-        />
+        {!isPresentation && (
+          <ScoreBoard
+            players={game.players}
+            currentUserId={userId}
+            hideScores={hideScoresDuringPlay}
+            answeredUserIds={
+              isSlide
+                ? undefined
+                : isVotePhase
+                  ? game.votedThisRound
+                  : game.answeredThisRound
+            }
+            offlineUserIds={game.offlineUserIds}
+            isHost={isHost}
+            onBootPlayer={(id) => {
+              void handleBoot(id);
+            }}
+            teams={teamMode ? teams : undefined}
+          />
+        )}
         {chatEnabled && (
           <ChatPanel
             roomCode={roomCode}
             isHost={isHost}
             currentUserId={userId}
+          />
+        )}
+        {isHost && !isSlide && (
+          <HostRoundControls
+            elementId={element.id ?? ""}
+            elementFrozen={game.frozenElementIds.includes(element.id ?? "")}
+            elementRevealed={game.revealedElementIds.includes(element.id ?? "")}
+            inSubmitPhase={game.phase === "SUBMIT" && !game.roundResult}
+            resolvedShowResponses={resolveShowResponsesFor(
+              session,
+              deck,
+              element,
+            )}
+            onReveal={() => {
+              sendRevealNow(element.id ?? "");
+            }}
+            onToggleFreeze={() => {
+              sendFreezeResponses(
+                element.id ?? "",
+                !game.frozenElementIds.includes(element.id ?? ""),
+              );
+            }}
           />
         )}
         {isHost && (
@@ -321,7 +374,17 @@ const PlayPage = () => {
       {/* Host-only emoji burst overlay. Pointer-events: none so it doesn't
           intercept clicks on the underlying scoreboard / end-game button. */}
       {isHost && reactionsEnabled && <ReactionRain />}
-      {game.roundResult && (
+      {/* Chunk 24 — PRESENTATION uses the aggregated RoundDataView overlay
+          instead of RoundResult (no leaderboard, no per-player rankings). */}
+      {game.roundResult && isPresentation && (
+        <RoundDataView
+          result={game.roundResult}
+          isHost={isHost}
+          isTurnBased={isTurnBased}
+          onNextRound={sendNextRound}
+        />
+      )}
+      {game.roundResult && !isPresentation && (
         <RoundResult
           result={game.roundResult}
           currentUserId={userId}
@@ -330,6 +393,55 @@ const PlayPage = () => {
           onNextRound={sendNextRound}
         />
       )}
+    </div>
+  );
+};
+
+/**
+ * Chunk 24 — host's per-round control strip. "Reveal results" is enabled
+ * only when the resolved showResponses cascade lands on ON_CLICK and the
+ * round is still in its SUBMIT phase (post-reveal is a no-op on the server,
+ * but we disable client-side so the button doesn't look interactive). The
+ * Freeze toggle is universally available — it flips the round's response
+ * mode without touching the authored element.
+ */
+interface HostRoundControlsProps {
+  elementId: string;
+  elementFrozen: boolean;
+  elementRevealed: boolean;
+  inSubmitPhase: boolean;
+  resolvedShowResponses: "INSTANT" | "ON_CLICK" | "PRIVATE";
+  onReveal: () => void;
+  onToggleFreeze: () => void;
+}
+
+const HostRoundControls = ({
+  elementFrozen,
+  elementRevealed,
+  inSubmitPhase,
+  resolvedShowResponses,
+  onReveal,
+  onToggleFreeze,
+}: HostRoundControlsProps) => {
+  const canReveal =
+    resolvedShowResponses === "ON_CLICK" && inSubmitPhase && !elementRevealed;
+
+  return (
+    <div className={styles.hostRoundControls}>
+      <Btn
+        type='button'
+        size='sm'
+        disabled={!canReveal}
+        onClick={onReveal}>
+        {elementRevealed ? "Responses revealed" : "Reveal responses"}
+      </Btn>
+      <Btn
+        type='button'
+        size='sm'
+        variant={elementFrozen ? "warning" : undefined}
+        onClick={onToggleFreeze}>
+        {elementFrozen ? "Unfreeze answers" : "Freeze answers"}
+      </Btn>
     </div>
   );
 };

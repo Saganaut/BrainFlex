@@ -206,13 +206,6 @@
 
 .pager {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: var(--space-3);
   padding: var(--space-4) 0;
-}
-
-.pagerInfo {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
 }

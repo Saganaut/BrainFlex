@@ -88,14 +88,6 @@
 
 .pager {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: var(--space-3);
   margin-top: var(--space-6);
-
-  & .pageInfo {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
-  }
 }

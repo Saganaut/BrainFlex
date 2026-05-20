@@ -408,7 +408,7 @@ export const RoundResultData = {
     pointValue: 100,
     difficulty: "EASY" as const,
     bestAnswerMode: false,
-    bestAnswerBonus: 0,
+    bestAnswerPoints: 0,
     displaySeconds: 15,
     mediaPosition: "NONE" as const,
   },

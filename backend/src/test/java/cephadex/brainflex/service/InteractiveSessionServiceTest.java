@@ -89,6 +89,7 @@ class InteractiveSessionServiceTest {
     @Mock private AvatarService avatarService;
     @Mock private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     @Mock private SimpMessagingTemplate messagingTemplate;
+    @Mock private org.springframework.context.ApplicationEventPublisher events;
 
     @InjectMocks
     private InteractiveSessionService interactiveSessionService;

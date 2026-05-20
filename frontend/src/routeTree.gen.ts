@@ -20,8 +20,10 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GamesIndexRouteImport } from './routes/games/index'
 import { Route as PulseCreateRouteImport } from './routes/pulse/create'
+import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as GamesJoinRouteImport } from './routes/games/join'
 import { Route as CollectionsCollectionIdRouteImport } from './routes/collections/$collectionId'
+import { Route as AuthenticatedScheduledRouteImport } from './routes/_authenticated/scheduled'
 import { Route as AuthenticatedMyFavoritesRouteImport } from './routes/_authenticated/my-favorites'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedDecksIndexRouteImport } from './routes/_authenticated/decks/index'
@@ -88,6 +90,11 @@ const PulseCreateRoute = PulseCreateRouteImport.update({
   path: '/pulse/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GamesJoinRoute = GamesJoinRouteImport.update({
   id: '/games/join',
   path: '/games/join',
@@ -97,6 +104,11 @@ const CollectionsCollectionIdRoute = CollectionsCollectionIdRouteImport.update({
   id: '/collections/$collectionId',
   path: '/collections/$collectionId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedScheduledRoute = AuthenticatedScheduledRouteImport.update({
+  id: '/scheduled',
+  path: '/scheduled',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMyFavoritesRoute =
   AuthenticatedMyFavoritesRouteImport.update({
@@ -168,8 +180,10 @@ export interface FileRoutesByFullPath {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/my-favorites': typeof AuthenticatedMyFavoritesRoute
+  '/scheduled': typeof AuthenticatedScheduledRoute
   '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/join': typeof GamesJoinRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/pulse/create': typeof PulseCreateRoute
   '/games/': typeof GamesIndexRoute
   '/games/create': typeof AuthenticatedGamesCreateRoute
@@ -193,8 +207,10 @@ export interface FileRoutesByTo {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/account': typeof AuthenticatedAccountRoute
   '/my-favorites': typeof AuthenticatedMyFavoritesRoute
+  '/scheduled': typeof AuthenticatedScheduledRoute
   '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/join': typeof GamesJoinRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/pulse/create': typeof PulseCreateRoute
   '/games': typeof GamesIndexRoute
   '/games/create': typeof AuthenticatedGamesCreateRoute
@@ -220,8 +236,10 @@ export interface FileRoutesById {
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/my-favorites': typeof AuthenticatedMyFavoritesRoute
+  '/_authenticated/scheduled': typeof AuthenticatedScheduledRoute
   '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/join': typeof GamesJoinRoute
+  '/invite/$token': typeof InviteTokenRoute
   '/pulse/create': typeof PulseCreateRoute
   '/games/': typeof GamesIndexRoute
   '/_authenticated/games/create': typeof AuthenticatedGamesCreateRoute
@@ -247,8 +265,10 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/account'
     | '/my-favorites'
+    | '/scheduled'
     | '/collections/$collectionId'
     | '/games/join'
+    | '/invite/$token'
     | '/pulse/create'
     | '/games/'
     | '/games/create'
@@ -272,8 +292,10 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/account'
     | '/my-favorites'
+    | '/scheduled'
     | '/collections/$collectionId'
     | '/games/join'
+    | '/invite/$token'
     | '/pulse/create'
     | '/games'
     | '/games/create'
@@ -298,8 +320,10 @@ export interface FileRouteTypes {
     | '/terms-and-conditions'
     | '/_authenticated/account'
     | '/_authenticated/my-favorites'
+    | '/_authenticated/scheduled'
     | '/collections/$collectionId'
     | '/games/join'
+    | '/invite/$token'
     | '/pulse/create'
     | '/games/'
     | '/_authenticated/games/create'
@@ -325,6 +349,7 @@ export interface RootRouteChildren {
   TermsAndConditionsRoute: typeof TermsAndConditionsRoute
   CollectionsCollectionIdRoute: typeof CollectionsCollectionIdRoute
   GamesJoinRoute: typeof GamesJoinRoute
+  InviteTokenRoute: typeof InviteTokenRoute
   PulseCreateRoute: typeof PulseCreateRoute
   GamesIndexRoute: typeof GamesIndexRoute
   DecksDeckIdEditRoute: typeof DecksDeckIdEditRoute
@@ -414,6 +439,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PulseCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/games/join': {
       id: '/games/join'
       path: '/games/join'
@@ -427,6 +459,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/collections/$collectionId'
       preLoaderRoute: typeof CollectionsCollectionIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/scheduled': {
+      id: '/_authenticated/scheduled'
+      path: '/scheduled'
+      fullPath: '/scheduled'
+      preLoaderRoute: typeof AuthenticatedScheduledRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/my-favorites': {
       id: '/_authenticated/my-favorites'
@@ -511,6 +550,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedMyFavoritesRoute: typeof AuthenticatedMyFavoritesRoute
+  AuthenticatedScheduledRoute: typeof AuthenticatedScheduledRoute
   AuthenticatedGamesCreateRoute: typeof AuthenticatedGamesCreateRoute
   AuthenticatedMyDecksCollectionsRoute: typeof AuthenticatedMyDecksCollectionsRoute
   AuthenticatedDecksIndexRoute: typeof AuthenticatedDecksIndexRoute
@@ -519,6 +559,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedMyFavoritesRoute: AuthenticatedMyFavoritesRoute,
+  AuthenticatedScheduledRoute: AuthenticatedScheduledRoute,
   AuthenticatedGamesCreateRoute: AuthenticatedGamesCreateRoute,
   AuthenticatedMyDecksCollectionsRoute: AuthenticatedMyDecksCollectionsRoute,
   AuthenticatedDecksIndexRoute: AuthenticatedDecksIndexRoute,
@@ -540,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsAndConditionsRoute: TermsAndConditionsRoute,
   CollectionsCollectionIdRoute: CollectionsCollectionIdRoute,
   GamesJoinRoute: GamesJoinRoute,
+  InviteTokenRoute: InviteTokenRoute,
   PulseCreateRoute: PulseCreateRoute,
   GamesIndexRoute: GamesIndexRoute,
   DecksDeckIdEditRoute: DecksDeckIdEditRoute,

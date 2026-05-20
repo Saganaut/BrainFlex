@@ -34,7 +34,7 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 - [x] **11** — [InteractiveSession reactions & chat](./11-interactive-session-reactions-and-chat/README.md) — emoji reactions + audience chat *(backend + codegen done; player/host UI deferred to chunk 13)*
 - [x] **12** — [InteractiveSession teams](./12-interactive-session-teams/README.md) — team mode + team leaderboard *(backend + codegen done; lobby team picker / team leaderboard / team podium deferred to chunk 13)*
 - [x] **13** — [InteractiveSession settings & player additions](./13-interactive-session-settings-and-player-additions/README.md) — shuffle, auto-advance, podium, avatars, streaks, answer timing *(backend + codegen done; lobby avatar picker / streak indicator / autoAdvance ring / placement card UI deferred to the holistic chunk-13 player-UI pass)*
-- [ ] **14** — [Scheduled interactive sessions & invites](./14-scheduled-interactive-sessions-and-invites/README.md) — schedule a game and email invites
+- [x] **14** — [Scheduled interactive sessions & invites](./14-scheduled-interactive-sessions-and-invites/README.md) — schedule a session and email invites
 
 ### Analytics & reporting
 

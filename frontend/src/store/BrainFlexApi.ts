@@ -30,6 +30,24 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    getScheduledSession: build.query<
+      GetScheduledSessionApiResponse,
+      GetScheduledSessionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/scheduled-interactive-sessions/${queryArg.id}`,
+      }),
+    }),
+    updateScheduledSession: build.mutation<
+      UpdateScheduledSessionApiResponse,
+      UpdateScheduledSessionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/scheduled-interactive-sessions/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateScheduledInteractiveSessionRequest,
+      }),
+    }),
     getApiMediaById: build.query<
       GetApiMediaByIdApiResponse,
       GetApiMediaByIdApiArg
@@ -259,6 +277,35 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.createTagRequest,
       }),
     }),
+    createScheduledSession: build.mutation<
+      CreateScheduledSessionApiResponse,
+      CreateScheduledSessionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/scheduled-interactive-sessions`,
+        method: "POST",
+        body: queryArg.createScheduledInteractiveSessionRequest,
+      }),
+    }),
+    addScheduledInvite: build.mutation<
+      AddScheduledInviteApiResponse,
+      AddScheduledInviteApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/scheduled-interactive-sessions/${queryArg.id}/invite`,
+        method: "POST",
+        body: queryArg.addInviteRequest,
+      }),
+    }),
+    cancelScheduledSession: build.mutation<
+      CancelScheduledSessionApiResponse,
+      CancelScheduledSessionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/scheduled-interactive-sessions/${queryArg.id}/cancel`,
+        method: "POST",
+      }),
+    }),
     createOrg: build.mutation<CreateOrgApiResponse, CreateOrgApiArg>({
       query: (queryArg) => ({
         url: `/api/organizations`,
@@ -301,6 +348,12 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/media/embed`,
         method: "POST",
         body: queryArg.createEmbedRequest,
+      }),
+    }),
+    redeemInvite: build.mutation<RedeemInviteApiResponse, RedeemInviteApiArg>({
+      query: (queryArg) => ({
+        url: `/api/invites/${queryArg.token}/redeem`,
+        method: "POST",
       }),
     }),
     createInteractiveSession: build.mutation<
@@ -594,6 +647,20 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    listScheduledInvites: build.query<
+      ListScheduledInvitesApiResponse,
+      ListScheduledInvitesApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/scheduled-interactive-sessions/${queryArg.id}/invites`,
+      }),
+    }),
+    listMyScheduledSessions: build.query<
+      ListMyScheduledSessionsApiResponse,
+      ListMyScheduledSessionsApiArg
+    >({
+      query: () => ({ url: `/api/scheduled-interactive-sessions/mine` }),
+    }),
     listMyOrgs: build.query<ListMyOrgsApiResponse, ListMyOrgsApiArg>({
       query: () => ({ url: `/api/organizations/mine` }),
     }),
@@ -742,6 +809,17 @@ export type UpdateTagApiArg = {
 export type DeleteTagApiResponse = unknown;
 export type DeleteTagApiArg = {
   id: string;
+};
+export type GetScheduledSessionApiResponse =
+  /** status 200 OK */ ScheduledInteractiveSessionDto;
+export type GetScheduledSessionApiArg = {
+  id: string;
+};
+export type UpdateScheduledSessionApiResponse =
+  /** status 200 OK */ ScheduledInteractiveSessionDto;
+export type UpdateScheduledSessionApiArg = {
+  id: string;
+  updateScheduledInteractiveSessionRequest: UpdateScheduledInteractiveSessionRequest;
 };
 export type GetApiMediaByIdApiResponse =
   /** status 200 OK */ MediaAssetResponse;
@@ -911,6 +989,22 @@ export type CreateTagApiResponse = /** status 200 OK */ TagResponse;
 export type CreateTagApiArg = {
   createTagRequest: CreateTagRequest;
 };
+export type CreateScheduledSessionApiResponse =
+  /** status 200 OK */ ScheduledInteractiveSessionDto;
+export type CreateScheduledSessionApiArg = {
+  createScheduledInteractiveSessionRequest: CreateScheduledInteractiveSessionRequest;
+};
+export type AddScheduledInviteApiResponse =
+  /** status 200 OK */ InteractiveSessionInviteDto;
+export type AddScheduledInviteApiArg = {
+  id: string;
+  addInviteRequest: AddInviteRequest;
+};
+export type CancelScheduledSessionApiResponse =
+  /** status 200 OK */ ScheduledInteractiveSessionDto;
+export type CancelScheduledSessionApiArg = {
+  id: string;
+};
 export type CreateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type CreateOrgApiArg = {
   createOrganizationRequest: CreateOrganizationRequest;
@@ -938,6 +1032,10 @@ export type UploadApiArg = {
 export type CreateEmbedApiResponse = /** status 200 OK */ MediaAssetResponse;
 export type CreateEmbedApiArg = {
   createEmbedRequest: CreateEmbedRequest;
+};
+export type RedeemInviteApiResponse = /** status 200 OK */ RedeemInviteResponse;
+export type RedeemInviteApiArg = {
+  token: string;
 };
 export type CreateInteractiveSessionApiResponse =
   /** status 200 OK */ InteractiveSessionDto;
@@ -1130,6 +1228,14 @@ export type CheckUsernameApiResponse = /** status 200 OK */ {
 export type CheckUsernameApiArg = {
   username: string;
 };
+export type ListScheduledInvitesApiResponse =
+  /** status 200 OK */ InteractiveSessionInviteDto[];
+export type ListScheduledInvitesApiArg = {
+  id: string;
+};
+export type ListMyScheduledSessionsApiResponse =
+  /** status 200 OK */ ScheduledInteractiveSessionDto[];
+export type ListMyScheduledSessionsApiArg = void;
 export type ListMyOrgsApiResponse = /** status 200 OK */ OrganizationResponse[];
 export type ListMyOrgsApiArg = void;
 export type GetInteractiveSessionApiResponse =
@@ -1262,6 +1368,52 @@ export type UpdateTagRequest = {
   description?: string;
   iconUrl?: string;
   curated?: boolean;
+};
+export type InteractiveSessionSettings = {
+  maxPlayers?: number;
+  totalRounds?: number;
+  timePerQuestion?: number;
+  speedBonus?: boolean;
+  allowGuests?: boolean;
+  mode?: "SIMULTANEOUS" | "TURN_BASED";
+  allowLateJoin?: boolean;
+  showScoresImmediately?: boolean;
+  scoringEnabled?: boolean;
+  reactionsEnabled?: boolean;
+  chatEnabled?: boolean;
+  teamMode?: boolean;
+  teamCount?: number;
+  autoBalanceTeams?: boolean;
+  shuffleQuestions?: boolean;
+  shuffleAnswers?: boolean;
+  autoAdvance?: boolean;
+  podiumDuration?: number;
+  lobbyCountdownSeconds?: number;
+  lobbyMusicAssetId?: string;
+  requireFullName?: boolean;
+  spectatorsAllowed?: boolean;
+};
+export type ScheduledInteractiveSessionDto = {
+  id?: string;
+  hostUserId?: string;
+  hostName?: string;
+  deckId?: string;
+  deckName?: string;
+  settings?: InteractiveSessionSettings;
+  scheduledStartAt?: string;
+  scheduledEndAt?: string;
+  reminderEmailTemplate?: string;
+  invitedEmails?: string[];
+  createdInteractiveSessionId?: string;
+  status?: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED";
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type UpdateScheduledInteractiveSessionRequest = {
+  scheduledStartAt?: string;
+  scheduledEndAt?: string;
+  settings?: InteractiveSessionSettings;
+  reminderEmailTemplate?: string;
 };
 export type MediaAssetResponse = {
   id?: string;
@@ -1888,30 +2040,6 @@ export type WordCloudQuestion = {
     reactionsEnabled?: boolean;
     version?: number;
   };
-export type InteractiveSessionSettings = {
-  maxPlayers?: number;
-  totalRounds?: number;
-  timePerQuestion?: number;
-  speedBonus?: boolean;
-  allowGuests?: boolean;
-  mode?: "SIMULTANEOUS" | "TURN_BASED";
-  allowLateJoin?: boolean;
-  showScoresImmediately?: boolean;
-  scoringEnabled?: boolean;
-  reactionsEnabled?: boolean;
-  chatEnabled?: boolean;
-  teamMode?: boolean;
-  teamCount?: number;
-  autoBalanceTeams?: boolean;
-  shuffleQuestions?: boolean;
-  shuffleAnswers?: boolean;
-  autoAdvance?: boolean;
-  podiumDuration?: number;
-  lobbyCountdownSeconds?: number;
-  lobbyMusicAssetId?: string;
-  requireFullName?: boolean;
-  spectatorsAllowed?: boolean;
-};
 export type InteractiveSessionPlayerDto = {
   userId?: string;
   userName?: string;
@@ -2204,6 +2332,25 @@ export type CreateTagRequest = {
   iconUrl?: string;
   curated?: boolean;
 };
+export type CreateScheduledInteractiveSessionRequest = {
+  deckId: string;
+  scheduledStartAt: string;
+  scheduledEndAt?: string;
+  settings?: InteractiveSessionSettings;
+  reminderEmailTemplate?: string;
+  invitedEmails?: string[];
+};
+export type InteractiveSessionInviteDto = {
+  id?: string;
+  email?: string;
+  resolvedUserId?: string;
+  sentAt?: string;
+  redeemedAt?: string;
+  expiresAt?: string;
+};
+export type AddInviteRequest = {
+  email: string;
+};
 export type OrganizationPlan = {
   tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
   status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
@@ -2232,6 +2379,14 @@ export type CreateEmbedRequest = {
   name?: string;
   tags?: string[];
   organizationId?: string;
+};
+export type RedeemInviteResponse = {
+  scheduledInteractiveSessionId?: string;
+  interactiveSessionId?: string;
+  roomCode?: string;
+  deckName?: string;
+  hostName?: string;
+  scheduledStartAt?: string;
 };
 export type CreateInteractiveSessionRequest = {
   deckId: string;
@@ -2547,6 +2702,9 @@ export const {
   useLazyGetTagQuery,
   useUpdateTagMutation,
   useDeleteTagMutation,
+  useGetScheduledSessionQuery,
+  useLazyGetScheduledSessionQuery,
+  useUpdateScheduledSessionMutation,
   useGetApiMediaByIdQuery,
   useLazyGetApiMediaByIdQuery,
   useUpdateMutation,
@@ -2583,12 +2741,16 @@ export const {
   useListTagsQuery,
   useLazyListTagsQuery,
   useCreateTagMutation,
+  useCreateScheduledSessionMutation,
+  useAddScheduledInviteMutation,
+  useCancelScheduledSessionMutation,
   useCreateOrgMutation,
   useJoinOrgMutation,
   useListQuery,
   useLazyListQuery,
   useUploadMutation,
   useCreateEmbedMutation,
+  useRedeemInviteMutation,
   useCreateInteractiveSessionMutation,
   useCreateTeamMutation,
   useSendReactionMutation,
@@ -2633,6 +2795,10 @@ export const {
   useLazyGetLeaderboardQuery,
   useCheckUsernameQuery,
   useLazyCheckUsernameQuery,
+  useListScheduledInvitesQuery,
+  useLazyListScheduledInvitesQuery,
+  useListMyScheduledSessionsQuery,
+  useLazyListMyScheduledSessionsQuery,
   useListMyOrgsQuery,
   useLazyListMyOrgsQuery,
   useGetInteractiveSessionQuery,

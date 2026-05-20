@@ -11,6 +11,7 @@ import { Btn } from "../Common/Buttons/Btn";
 import { LeftSidebarContent } from "./LeftSidebar/LeftSidebarContent";
 import { PublishStatusControl } from "./PublishStatusControl";
 import { RightSidebarContent } from "./RightSidebar/RightSidebarContent";
+import { ScheduleSessionModal } from "./ScheduleSessionModal/ScheduleSessionModal";
 import { ShareDeckModal } from "./ShareDeckModal/ShareDeckModal";
 import { SlideDisplay } from "./SlideDisplay";
 import { SpeakerNotesDrawer } from "./SpeakerNotesDrawer/SpeakerNotesDrawer";
@@ -22,6 +23,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useStartInteractiveSession } from "@/hooks/useStartInteractiveSession";
 import {
   ArrowsPointingOutIcon,
+  CalendarIcon,
   EyeIcon,
   PlayIcon,
   ShareIcon,
@@ -58,6 +60,13 @@ const DeckEditor = () => {
           onClose={closeModal}
         />
       ),
+    });
+  };
+
+  const handleScheduleClick = () => {
+    openModal({
+      title: "Schedule session",
+      content: <ScheduleSessionModal deckId={deckId} onClose={closeModal} />,
     });
   };
 
@@ -124,6 +133,14 @@ const DeckEditor = () => {
               }}>
               <EyeIcon style={{ width: "1rem", height: "1rem" }} />
               Preview
+            </Btn>
+            <Btn
+              size={"md"}
+              shape={"pill"}
+              variant={"default"}
+              onClick={handleScheduleClick}>
+              <CalendarIcon style={{ width: "1rem", height: "1rem" }} />
+              Schedule
             </Btn>
             <Btn
               size={"md"}

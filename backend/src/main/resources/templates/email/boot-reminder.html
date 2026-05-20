@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; background: #f6f6f6; padding: 24px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px;">
+    <h1 style="font-size: 22px; margin: 0 0 16px;">
+      <span th:text="${deckName}">A session</span> is starting now
+    </h1>
+    <p>
+      <strong th:text="${hostName}">Your host</strong> just opened the lobby. Join with one tap:
+    </p>
+    <p style="margin: 24px 0;">
+      <a th:href="${joinUrl}"
+         style="display: inline-block; padding: 14px 24px; background: #16a34a; color: #fff; text-decoration: none; border-radius: 8px; font-size: 16px;">
+        Join now
+      </a>
+    </p>
+    <p>
+      Or enter the room code: <strong style="font-family: 'IBM Plex Mono', monospace;" th:text="${roomCode}">XXXX</strong>
+    </p>
+    <p th:if="${customReminder}" style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; color: #444;"
+       th:text="${customReminder}">
+      Host's custom note appears here.
+    </p>
+  </div>
+</body>
+</html>

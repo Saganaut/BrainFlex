@@ -39,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -122,6 +123,7 @@ public class InteractiveSessionService {
     private final InteractiveSessionChatMessageRepository chatRepository;
     private final InteractiveSessionRateLimiter rateLimiter;
     private final AvatarService avatarService;
+    private final ApplicationEventPublisher events;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int CHAT_MAX_BODY = 500;
@@ -156,6 +158,7 @@ public class InteractiveSessionService {
             InteractiveSessionChatMessageRepository chatRepository,
             InteractiveSessionRateLimiter rateLimiter,
             AvatarService avatarService,
+            ApplicationEventPublisher events,
             ObjectMapper objectMapper,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.interactiveSessionRepository = interactiveSessionRepository;
@@ -171,6 +174,7 @@ public class InteractiveSessionService {
         this.chatRepository = chatRepository;
         this.rateLimiter = rateLimiter;
         this.avatarService = avatarService;
+        this.events = events;
         this.objectMapper = objectMapper;
         this.messagingTemplate = messagingTemplate;
     }
@@ -1201,6 +1205,10 @@ public class InteractiveSessionService {
         messagingTemplate.convertAndSend(
                 "/topic/interactive-session/" + session.getRoomCode() + "/ended",
                 new InteractiveSessionEndedMessage(placements));
+
+        // Chunk 14 — let ScheduledInteractiveSessionService transition the parent
+        // SCHEDULED row to COMPLETED if this live session was booted from one.
+        events.publishEvent(new InteractiveSessionEndedEvent(session.getId()));
     }
 
     // ---- Scoring + broadcast helpers ----

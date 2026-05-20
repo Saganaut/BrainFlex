@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; background: #f6f6f6; padding: 24px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px;">
+    <h1 style="font-size: 20px; margin: 0 0 16px;">Session cancelled</h1>
+    <p>
+      <strong th:text="${hostName}">Your host</strong> cancelled the
+      <strong th:text="${deckName}">session</strong> scheduled for
+      <strong th:text="${scheduledFor}">a date</strong>.
+    </p>
+    <p>No further action needed — your invite link is no longer valid.</p>
+  </div>
+</body>
+</html>

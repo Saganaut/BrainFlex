@@ -1,6 +1,6 @@
 # 14 — Scheduled interactive sessions & invites
 
-**Status:** Not started
+**Status:** Shipped — backend models + service + cron sweep + REST + tests; frontend schedule modal + `/scheduled` list + `/invite/$token` redemption flow
 **Depends on:** Nothing strict; chunk 18 (notifications) integrates nicely
 **Unblocks:** Future "recurring class" features
 
@@ -99,15 +99,45 @@ Use plain Thymeleaf templates under `backend/src/main/resources/templates/email/
 
 ## Checklist
 
-- [ ] `ScheduledInteractiveSession` + `InteractiveSessionInvite` models + repos + indexes
-- [ ] `ScheduleStatus` enum
-- [ ] `EmailService` interface + SMTP impl
-- [ ] Email templates (Thymeleaf)
-- [ ] `ScheduledInteractiveSessionService` schedule/cancel/boot/complete
-- [ ] `@Scheduled` cron sweep
-- [ ] Endpoints + tests (mock `EmailService` in tests)
-- [ ] Invite redeem flow + `/invite/$token` route
-- [ ] Schedule modal on deck detail page
-- [ ] `/scheduled` host list page
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `ScheduledInteractiveSession` + `InteractiveSessionInvite` models + repos + indexes
+- [x] `ScheduleStatus` enum
+- [x] `EmailService` interface + SMTP impl
+- [x] Email templates (Thymeleaf)
+- [x] `ScheduledInteractiveSessionService` schedule/cancel/boot/complete
+- [x] `@Scheduled` cron sweep
+- [x] Endpoints + tests (mock `EmailService` in tests)
+- [x] Invite redeem flow + `/invite/$token` route
+- [x] Schedule modal on deck detail page
+- [x] `/scheduled` host list page
+- [x] Frontend codegen + lint
+- [x] Backend tests pass
+
+## Implementation notes
+
+- Settings UI is read-only-from-deck in v1: the schedule modal does not let
+  the host override session settings inline. The schedule inherits the deck's
+  `defaultSettings` at boot time. The `PUT /api/scheduled-interactive-sessions/{id}`
+  endpoint accepts a settings override but no UI binds to it yet — finish-work
+  for a later pass.
+- `EmailService` has two implementations selected by `spring.mail.host`:
+  `SmtpEmailService` (Thymeleaf-rendered HTML through `JavaMailSender`) and
+  `NoOpEmailService` (logs at DEBUG, used in tests + local dev without an SMTP
+  relay). Templates live in `backend/src/main/resources/templates/email/`.
+- `InteractiveSessionEndedEvent` + `InteractiveSessionEndedListener` decouple
+  the live-session lifecycle from the schedule lifecycle. When a session
+  reaches `FINISHED`, `InteractiveSessionService` publishes the event and the
+  listener marks the parent `ScheduledInteractiveSession` `COMPLETED`.
+- Cron sweep runs every 30s with `fixedDelay = 30_000`. Compound index on
+  `(status, scheduledStartAt)` keeps the per-tick query cheap.
+- Invite tokens are 24-byte random, base64url-encoded, looked up via the
+  unique `inviteToken` index. Default expiry = `scheduledStartAt + 2h`.
+
+## Deferred
+
+- ICS calendar attachment in the initial invite email — body has the time
+  but no `.ics` attachment yet. The email templates are minimal HTML; revisit
+  alongside chunk 18 (notifications) once an iCal builder is on the
+  classpath.
+- "Resend invite" UI affordance — the backend has the endpoint shape (the
+  `POST /{id}/invite` accepts the same email and creates the row idempotently)
+  but the `/scheduled` list page doesn't surface it yet.

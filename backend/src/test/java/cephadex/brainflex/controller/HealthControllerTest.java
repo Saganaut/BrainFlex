@@ -24,12 +24,14 @@ import cephadex.brainflex.repository.DeckFavoriteRepository;
 import cephadex.brainflex.repository.DeckRatingRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GalleryImageRepository;
+import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
 import cephadex.brainflex.repository.MediaAssetRepository;
 import cephadex.brainflex.repository.ReactionRepository;
 import cephadex.brainflex.repository.InteractiveSessionChatMessageRepository;
 import cephadex.brainflex.repository.InteractiveSessionResultRepository;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
+import cephadex.brainflex.repository.ScheduledInteractiveSessionRepository;
 import cephadex.brainflex.repository.TagRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -115,6 +117,12 @@ class HealthControllerTest {
 
     @MockitoBean
     private InteractiveSessionChatMessageRepository interactiveSessionChatMessageRepository;
+
+    @MockitoBean
+    private ScheduledInteractiveSessionRepository scheduledInteractiveSessionRepository;
+
+    @MockitoBean
+    private InteractiveSessionInviteRepository interactiveSessionInviteRepository;
 
     // GridFsTemplate auto-configuration also reads MongoConverter from the
     // mocked MongoTemplate (getConverter() → null), so mock it here too.

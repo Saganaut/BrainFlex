@@ -124,6 +124,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login",
                                 "/api/auth/me",
                                 "/api/auth/guest").permitAll()
+                        // Invite token is the credential; endpoint is public.
+                        .requestMatchers(HttpMethod.POST, "/api/invites/*/redeem").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/api/users/leaderboard/**",
                                 "/api/users/check-username",

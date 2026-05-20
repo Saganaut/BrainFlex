@@ -18,6 +18,7 @@ import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextI
 import { Tooltip } from "@/components/Common/Tooltip/Tooltip";
 import { useElementEditor } from "../../SlideContentTypes/useElementEditor";
 import type { Slide } from "@/store/BrainFlexApi";
+import { relevanceFor, type ChartType } from "../data";
 import styles from "../EditSlidePanel.module.css";
 
 const isSlide = (e: { kind: string }): e is Slide => e.kind === "Slide";
@@ -25,7 +26,7 @@ const isSlide = (e: { kind: string }): e is Slide => e.kind === "Slide";
 type ResultsDisplayValue = NonNullable<Slide["resultsDisplayType"]>;
 
 const CHART_OPTIONS: {
-  value: Exclude<ResultsDisplayValue, "DEFAULT">;
+  value: ChartType;
   label: string;
   Icon: typeof ChartBarIcon;
   rotated?: boolean;
@@ -110,6 +111,15 @@ const SlideOptionsSection = () => {
 
   if (!element) return null;
 
+  // chunk 21 — relevance map narrows what's controllable for this element.
+  // Slide (any slideKind) suppresses chart picker / response gating; only the
+  // lobby slide (slideKind=TITLE) surfaces QR + join chrome.
+  const rel = relevanceFor({
+    kind: element.kind,
+    slideKind: element.slideKind,
+  });
+  const chartEnabled = new Set(rel.resultsCharts);
+
   const buildPatch = (overrides: Partial<Slide>): Slide => ({
     ...element,
     resultsDisplayType,
@@ -146,6 +156,12 @@ const SlideOptionsSection = () => {
                 ? "BAR_VERTICAL"
                 : resultsDisplayType;
             const isActive = normalized === value;
+            // The whole picker is disabled when the kind has no aggregate viz
+            // (Slide / Q&A / Drawing / Matching / Grid / PlaceOnImage); within
+            // an enabled picker, only the chart types the kind supports are
+            // clickable (e.g. TextQuestion: WORD_CLOUD only).
+            const isDisabled =
+              !rel.resultsDisplayType || !chartEnabled.has(value);
             return (
               <Tooltip key={value} label={label}>
                 <button
@@ -153,6 +169,7 @@ const SlideOptionsSection = () => {
                   role='radio'
                   aria-checked={isActive}
                   aria-label={label}
+                  disabled={isDisabled}
                   className={[
                     styles.chartButton,
                     isActive ? styles.chartButtonActive : "",
@@ -186,6 +203,7 @@ const SlideOptionsSection = () => {
           id={`slide-percent-${elId}`}
           label='Show results as percentage'
           checked={showResultsAsPercentage}
+          disabled={!rel.showResultsAsPercentage}
           onChange={(e) => {
             const next = e.currentTarget.checked;
             setShowResultsAsPercentage(next);
@@ -200,13 +218,14 @@ const SlideOptionsSection = () => {
           id={`slide-multi-${elId}`}
           label='Allow multiple selections'
           checked={multipleSelectionsEnabled}
+          disabled={!rel.multipleSelectionsEnabled}
           onChange={(e) => {
             const next = e.currentTarget.checked;
             setMultipleSelectionsEnabled(next);
             commit(buildPatch({ multipleSelectionsEnabled: next }));
           }}
         />
-        {multipleSelectionsEnabled && (
+        {multipleSelectionsEnabled && rel.multipleSelectionsEnabled && (
           <NumberInput
             label='Selections per participant'
             id={`slide-multi-count-${elId}`}
@@ -225,6 +244,7 @@ const SlideOptionsSection = () => {
           legend='Show responses'
           options={SHOW_RESPONSES_OPTIONS}
           value={showResponses}
+          disabled={!rel.showResponses}
           onChange={(value) => {
             const next = value as Slide["showResponses"];
             setShowResponses(next);
@@ -239,6 +259,7 @@ const SlideOptionsSection = () => {
           id={`slide-auto-advance-${elId}`}
           label='Auto-advance after a fixed delay'
           checked={autoAdvanceEnabled}
+          disabled={!rel.autoAdvance}
           onChange={(e) => {
             const next = e.currentTarget.checked;
             setAutoAdvanceEnabled(next);
@@ -271,6 +292,7 @@ const SlideOptionsSection = () => {
           id={`slide-show-qr-${elId}`}
           label='Display QR code'
           checked={showQrCode}
+          disabled={!rel.showQrCode}
           onChange={(e) => {
             const next = e.currentTarget.checked;
             setShowQrCode(next);
@@ -281,6 +303,7 @@ const SlideOptionsSection = () => {
           id={`slide-show-join-${elId}`}
           label='Display join info'
           checked={showJoinInformation}
+          disabled={!rel.showJoinInformation}
           onChange={(e) => {
             const next = e.currentTarget.checked;
             setShowJoinInformation(next);

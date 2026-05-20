@@ -41,7 +41,7 @@ public final class DeckElementCloner {
                 q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                 q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                 q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                 q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
                 q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                 q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -54,7 +54,7 @@ public final class DeckElementCloner {
                     s.title(), s.styledTitle(), s.body(),
                     s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
                     s.displaySeconds(), s.speakerNotes(), s.background(),
-                    s.image(), s.videoUrl(), s.audioUrl(), s.mediaPosition(),
+                    s.image(), s.videoUrl(), s.audioUrl(), s.videoAssetId(), s.audioAssetId(), s.mediaPosition(),
                     s.resultsDisplayType(), s.multipleSelectionsEnabled(),
                     s.selectionsPerParticipant(), s.showResultsAsPercentage(),
                     s.joinType(), s.showJoinInformation(), s.showQrCode(), s.showResponses(),
@@ -69,7 +69,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -80,7 +80,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -91,7 +91,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.minValue(), q.maxValue(), q.allowNegative(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -102,7 +102,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleItemsForPresentation(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -114,7 +114,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case QAndAQuestion q -> new QAndAQuestion(
@@ -124,7 +124,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.anonymousSubmissions(), q.minVotesToShow(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -136,7 +136,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
@@ -147,7 +147,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case WordCloudQuestion q -> new WordCloudQuestion(
@@ -158,7 +158,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case AllocationQuestion q -> new AllocationQuestion(
@@ -169,7 +169,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case MatchingQuestion q -> new MatchingQuestion(
@@ -179,7 +179,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case DrawingQuestion q -> new DrawingQuestion(
@@ -191,7 +191,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
         };
@@ -215,7 +215,7 @@ public final class DeckElementCloner {
                     s.title(), s.styledTitle(), s.body(),
                     s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
                     s.displaySeconds(), s.speakerNotes(), s.background(),
-                    s.image(), s.videoUrl(), s.audioUrl(), s.mediaPosition(),
+                    s.image(), s.videoUrl(), s.audioUrl(), s.videoAssetId(), s.audioAssetId(), s.mediaPosition(),
                     s.resultsDisplayType(), s.multipleSelectionsEnabled(),
                     s.selectionsPerParticipant(), s.showResultsAsPercentage(),
                     s.joinType(), s.showJoinInformation(), s.showQrCode(), s.showResponses(),
@@ -230,7 +230,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
@@ -241,7 +241,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
@@ -252,7 +252,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.minValue(), q.maxValue(), q.allowNegative(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
@@ -263,7 +263,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleItemsForPresentation(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
@@ -275,7 +275,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
             case QAndAQuestion q -> new QAndAQuestion(
@@ -285,7 +285,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.anonymousSubmissions(), q.minVotesToShow(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
@@ -297,7 +297,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
@@ -308,7 +308,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
             case WordCloudQuestion q -> new WordCloudQuestion(
@@ -319,7 +319,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
             case AllocationQuestion q -> new AllocationQuestion(
@@ -330,7 +330,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
             case MatchingQuestion q -> new MatchingQuestion(
@@ -340,7 +340,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
             case DrawingQuestion q -> new DrawingQuestion(
@@ -352,7 +352,7 @@ public final class DeckElementCloner {
                     q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     createdByUserId, lastEditedByUserId, createdAt, updatedAt,
                     tagIds, mediaCaption, altText, reactionsEnabled, version);
         };

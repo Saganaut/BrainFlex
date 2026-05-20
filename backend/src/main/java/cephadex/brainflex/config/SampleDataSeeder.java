@@ -450,7 +450,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Four hobbits, two men, an elf, a dwarf, and a wizard.",
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 null, null, true,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -496,7 +496,7 @@ public class SampleDataSeeder {
                 0, Difficulty.EASY,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                30, null, null, null, null, null, MediaPosition.NONE,
+                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
@@ -556,7 +556,7 @@ public class SampleDataSeeder {
                 250, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "An Age ends with a great war or sundering.",
-                25, null, null, null, null, null, MediaPosition.NONE,
+                25, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -573,7 +573,7 @@ public class SampleDataSeeder {
                 300, Difficulty.HARD,
                 true, false, 3, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Valar are the greater powers; Sauron, Gandalf, and Saruman are all Maiar.",
-                30, null, null, null, null, null, MediaPosition.NONE,
+                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
@@ -613,7 +613,7 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Lorem Picsum placeholder until a real map ships.",
-                25, null, null, null, null, null, MediaPosition.NONE,
+                25, null, null, null, null, null, null, null, MediaPosition.NONE,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
@@ -689,7 +689,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Old Toby is from the Southfarthing — Gandalf's favorite.",
-                20, null, null, null, null, null, MediaPosition.NONE,
+                20, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true, false, 0,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -702,7 +702,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "His eleventy-first birthday.",
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 null, null, true,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -757,7 +757,7 @@ public class SampleDataSeeder {
     private static Slide titleSlide(String id, String title, String body) {
         return new Slide(id, SlideKind.TITLE, pub(id), prv(id), title, null, body,
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                6, null, null, null, null, null, MediaPosition.NONE,
+                6, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, true, false, ShowResponsesMode.INSTANT,
                 null, null,
@@ -769,7 +769,7 @@ public class SampleDataSeeder {
     private static Slide endSlide(String id, String title, String body) {
         return new Slide(id, SlideKind.END, pub(id), prv(id), title, null, body,
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                8, null, null, null, null, null, MediaPosition.NONE,
+                8, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, true, false, ShowResponsesMode.INSTANT,
                 null, null,
@@ -789,7 +789,7 @@ public class SampleDataSeeder {
                 pointValue, difficulty,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true, false, 0,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
@@ -802,7 +802,7 @@ public class SampleDataSeeder {
                 pointValue, difficulty,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                20, null, null, null, null, null, MediaPosition.NONE,
+                20, null, null, null, null, null, null, null, MediaPosition.NONE,
                 80, true, false, 1,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
@@ -845,7 +845,7 @@ public class SampleDataSeeder {
                 "Welcome to BrainFlex", null,
                 "A quick tour through every kind of element a deck can contain. Press the screen to begin.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                6, null, null, null, null, null, MediaPosition.NONE,
+                6, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.QR_CODE, true, true, ShowResponsesMode.INSTANT,
                 "Join the tour",
@@ -859,7 +859,7 @@ public class SampleDataSeeder {
                 "Trivia round", null,
                 "Multiple choice, then free-text, then a number guess.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE,
+                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
@@ -880,7 +880,7 @@ public class SampleDataSeeder {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Mars looks red because of iron oxide (rust) on its surface.",
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true, false, 0,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -893,7 +893,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Paris has been France's capital since 987 AD.",
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 80, true, false, 1,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -906,7 +906,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Pluto was reclassified as a dwarf planet in 2006.",
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 null, null, true,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -916,7 +916,7 @@ public class SampleDataSeeder {
                 "Order and rate", null,
                 "Drag to reorder, then rate some statements.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE,
+                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.BAR_VERTICAL, true, 3, true,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
@@ -939,7 +939,7 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Distance order from the Sun outward.",
-                20, null, null, null, null, null, MediaPosition.NONE,
+                20, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -957,7 +957,7 @@ public class SampleDataSeeder {
                 0, Difficulty.EASY,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                25, null, null, null, null, null, MediaPosition.NONE,
+                25, null, null, null, null, null, null, null, MediaPosition.NONE,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
@@ -966,7 +966,7 @@ public class SampleDataSeeder {
                 "Audience interaction", null,
                 "Vote on the funniest answer, then ask anything.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE,
+                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.PIE_CHART, false, 1, true,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.ON_CLICK,
                 null, null,
@@ -984,7 +984,7 @@ public class SampleDataSeeder {
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 true, "Which one-word theme is the most creative?", 100,
                 "Best Answer mode — players vote on the most creative response.",
-                30, null, null, null, null, null, MediaPosition.NONE,
+                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 80, true, false, 1,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -1008,7 +1008,7 @@ public class SampleDataSeeder {
                 "Visual round", null,
                 "Tap cells, place a pin, pick an image.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, MediaPosition.NONE,
+                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
@@ -1027,7 +1027,7 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, 4, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Primes: 2, 3, 5, 7.",
-                20, null, null, null, null, null, MediaPosition.NONE,
+                20, null, null, null, null, null, null, null, MediaPosition.NONE,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
@@ -1041,7 +1041,7 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "Lorem Picsum stands in for a real map until we wire one up.",
-                25, null, null, null, null, null, MediaPosition.NONE,
+                25, null, null, null, null, null, null, null, MediaPosition.NONE,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
 
@@ -1062,7 +1062,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, "MCQ option carries images.",
-                20, null, null, null, null, null, MediaPosition.NONE,
+                20, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true, false, 0,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -1072,7 +1072,7 @@ public class SampleDataSeeder {
                 "Thanks for playing!", null,
                 "That's every element type. Now go build your own deck.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                8, null, null, null, null, null, MediaPosition.NONE,
+                8, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.PRIVATE,
                 null, null,
@@ -1129,7 +1129,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 80, true, false, 1,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -1141,7 +1141,7 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                20, null, null, null, null, null, MediaPosition.NONE,
+                20, null, null, null, null, null, null, null, MediaPosition.NONE,
                 80, true, false, 1,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -1153,7 +1153,7 @@ public class SampleDataSeeder {
                 150, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 null, null, true,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));

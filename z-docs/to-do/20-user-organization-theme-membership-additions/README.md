@@ -139,8 +139,10 @@ AudienceSubmission (additions only)
 
 ## Checklist
 
-- [ ] `User` additions + migration for existing users *(partial — `roles` field + backfill migration landed; remaining: `displayName`, `customAvatarUrl`, `bio`, `location`, `websiteUrl`, `locale`, `timezone`, `tagInterests`, `emailVerifiedAt`)*
-- [ ] `NotificationPrefs` + `UserRole` + admin endpoint gating *(partial — `UserRole` enum, `User.roles`, `ROLE_ADMIN` / `ROLE_MODERATOR` authorities, `AdminProperties` now reads from `User.roles` (env-var allowlist removed). Remaining: `NotificationPrefs` embedded record + endpoints; migrating remaining `adminProperties.isAdmin` callers to `@PreAuthorize("hasRole('ADMIN')")` where they're pure forbid-or-allow)*
+- [x] `UserRole` enum + `User.roles` field + `ROLE_ADMIN` / `ROLE_MODERATOR` authorities + role-backed `AdminProperties` (env-var allowlist removed) + `UserRoleBackfillMigration` (`scripts/migrate-user-roles.sh`)
+- [ ] Remaining `User` profile additions: `displayName`, `customAvatarUrl`, `bio`, `location`, `websiteUrl`, `locale`, `timezone`, `tagInterests`, `emailVerifiedAt`
+- [ ] `NotificationPrefs` embedded record + endpoints
+- [ ] Migrate remaining `adminProperties.isAdmin(caller)` *forbid-or-allow* sites to `@PreAuthorize("hasRole('ADMIN')")` (the inline-branching sites like `TagController.createTag`'s curated-flag shaping stay on the helper)
 - [ ] `PlayerStats` extensions + weekly/monthly reset cron
 - [ ] `Organization` additions + endpoints + email-domain auto-join
 - [ ] `Theme` additions + frontend token override application

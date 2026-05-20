@@ -180,4 +180,23 @@ public sealed interface DeckElement
     default Integer version() {
         return 1;
     }
+
+    // ── MediaAsset references (chunk 19) ──────────────────────────────────────
+    //
+    // Optional pointers at a MediaAsset.id. When set, take precedence over the
+    // legacy {@code videoUrl} / {@code audioUrl} string fields at render time
+    // (renderer should prefer asset-id, fall back to url string). Declared as
+    // default methods returning null so existing records don't need to be
+    // rewritten; kinds that introduce real value for these fields can override
+    // by declaring them as record components.
+
+    /** Optional MediaAsset id (kind=VIDEO_FILE or VIDEO_EMBED). Wins over {@code videoUrl} when set. */
+    default String videoAssetId() {
+        return null;
+    }
+
+    /** Optional MediaAsset id (kind=AUDIO). Wins over {@code audioUrl} when set. */
+    default String audioAssetId() {
+        return null;
+    }
 }

@@ -48,23 +48,17 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.updateScheduledInteractiveSessionRequest,
       }),
     }),
-    getApiMediaById: build.query<
-      GetApiMediaByIdApiResponse,
-      GetApiMediaByIdApiArg
-    >({
+    getMedia: build.query<GetMediaApiResponse, GetMediaApiArg>({
       query: (queryArg) => ({ url: `/api/media/${queryArg.id}` }),
     }),
-    update: build.mutation<UpdateApiResponse, UpdateApiArg>({
+    updateMedia: build.mutation<UpdateMediaApiResponse, UpdateMediaApiArg>({
       query: (queryArg) => ({
         url: `/api/media/${queryArg.id}`,
         method: "PUT",
         body: queryArg.updateMediaAssetRequest,
       }),
     }),
-    deleteApiMediaById: build.mutation<
-      DeleteApiMediaByIdApiResponse,
-      DeleteApiMediaByIdApiArg
-    >({
+    deleteMedia: build.mutation<DeleteMediaApiResponse, DeleteMediaApiArg>({
       query: (queryArg) => ({
         url: `/api/media/${queryArg.id}`,
         method: "DELETE",
@@ -320,7 +314,7 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.joinOrganizationRequest,
       }),
     }),
-    list: build.query<ListApiResponse, ListApiArg>({
+    listMedia: build.query<ListMediaApiResponse, ListMediaApiArg>({
       query: (queryArg) => ({
         url: `/api/media`,
         params: {
@@ -329,7 +323,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    upload: build.mutation<UploadApiResponse, UploadApiArg>({
+    uploadMedia: build.mutation<UploadMediaApiResponse, UploadMediaApiArg>({
       query: (queryArg) => ({
         url: `/api/media`,
         method: "POST",
@@ -343,7 +337,10 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    createEmbed: build.mutation<CreateEmbedApiResponse, CreateEmbedApiArg>({
+    createMediaEmbed: build.mutation<
+      CreateMediaEmbedApiResponse,
+      CreateMediaEmbedApiArg
+    >({
       query: (queryArg) => ({
         url: `/api/media/embed`,
         method: "POST",
@@ -751,7 +748,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    list1: build.query<List1ApiResponse, List1ApiArg>({
+    list: build.query<ListApiResponse, ListApiArg>({
       query: () => ({ url: `/api/avatars` }),
     }),
     getCurrentUser: build.query<
@@ -821,18 +818,17 @@ export type UpdateScheduledSessionApiArg = {
   id: string;
   updateScheduledInteractiveSessionRequest: UpdateScheduledInteractiveSessionRequest;
 };
-export type GetApiMediaByIdApiResponse =
-  /** status 200 OK */ MediaAssetResponse;
-export type GetApiMediaByIdApiArg = {
+export type GetMediaApiResponse = /** status 200 OK */ MediaAssetResponse;
+export type GetMediaApiArg = {
   id: string;
 };
-export type UpdateApiResponse = /** status 200 OK */ MediaAssetResponse;
-export type UpdateApiArg = {
+export type UpdateMediaApiResponse = /** status 200 OK */ MediaAssetResponse;
+export type UpdateMediaApiArg = {
   id: string;
   updateMediaAssetRequest: UpdateMediaAssetRequest;
 };
-export type DeleteApiMediaByIdApiResponse = unknown;
-export type DeleteApiMediaByIdApiArg = {
+export type DeleteMediaApiResponse = unknown;
+export type DeleteMediaApiArg = {
   id: string;
 };
 export type UpdateTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
@@ -1013,13 +1009,13 @@ export type JoinOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type JoinOrgApiArg = {
   joinOrganizationRequest: JoinOrganizationRequest;
 };
-export type ListApiResponse = /** status 200 OK */ MediaAssetResponse[];
-export type ListApiArg = {
+export type ListMediaApiResponse = /** status 200 OK */ MediaAssetResponse[];
+export type ListMediaApiArg = {
   kind?: "IMAGE" | "AUDIO" | "VIDEO_FILE" | "VIDEO_EMBED";
   tag?: string;
 };
-export type UploadApiResponse = /** status 200 OK */ MediaAssetResponse;
-export type UploadApiArg = {
+export type UploadMediaApiResponse = /** status 200 OK */ MediaAssetResponse;
+export type UploadMediaApiArg = {
   kind: "IMAGE" | "AUDIO" | "VIDEO_FILE" | "VIDEO_EMBED";
   name?: string;
   tags?: string;
@@ -1029,8 +1025,9 @@ export type UploadApiArg = {
     file: Blob;
   };
 };
-export type CreateEmbedApiResponse = /** status 200 OK */ MediaAssetResponse;
-export type CreateEmbedApiArg = {
+export type CreateMediaEmbedApiResponse =
+  /** status 200 OK */ MediaAssetResponse;
+export type CreateMediaEmbedApiArg = {
   createEmbedRequest: CreateEmbedRequest;
 };
 export type RedeemInviteApiResponse = /** status 200 OK */ RedeemInviteResponse;
@@ -1298,8 +1295,8 @@ export type ListMyCollectionsApiArg = {
   page?: number;
   size?: number;
 };
-export type List1ApiResponse = /** status 200 OK */ AvatarPreset[];
-export type List1ApiArg = void;
+export type ListApiResponse = /** status 200 OK */ AvatarPreset[];
+export type ListApiArg = void;
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -1482,6 +1479,8 @@ export type AllocationQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     createdByUserId?: string;
     lastEditedByUserId?: string;
@@ -1526,6 +1525,8 @@ export type DrawingQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     createdByUserId?: string;
     lastEditedByUserId?: string;
@@ -1573,6 +1574,8 @@ export type GridQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     createdByUserId?: string;
     lastEditedByUserId?: string;
@@ -1620,6 +1623,8 @@ export type MatchingQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     createdByUserId?: string;
     lastEditedByUserId?: string;
@@ -1660,6 +1665,8 @@ export type McqQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     shuffleOptions?: boolean;
     allowMultipleSelect?: boolean;
@@ -1705,6 +1712,8 @@ export type NumberQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     minValue?: number;
     maxValue?: number;
@@ -1751,6 +1760,8 @@ export type PlaceOnImageQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     createdByUserId?: string;
     lastEditedByUserId?: string;
@@ -1792,6 +1803,8 @@ export type QAndAQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     anonymousSubmissions?: boolean;
     minVotesToShow?: number;
@@ -1840,6 +1853,8 @@ export type RankingQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     shuffleItemsForPresentation?: boolean;
     createdByUserId?: string;
@@ -1889,6 +1904,8 @@ export type ScalesQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     createdByUserId?: string;
     lastEditedByUserId?: string;
@@ -1922,6 +1939,8 @@ export type Slide = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     resultsDisplayType?:
       | "DEFAULT"
@@ -1982,6 +2001,8 @@ export type TextQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     maxLength?: number;
     trimWhitespace?: boolean;
@@ -2029,6 +2050,8 @@ export type WordCloudQuestion = {
     image?: Image;
     videoUrl?: string;
     audioUrl?: string;
+    videoAssetId?: string;
+    audioAssetId?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     createdByUserId?: string;
     lastEditedByUserId?: string;
@@ -2705,10 +2728,10 @@ export const {
   useGetScheduledSessionQuery,
   useLazyGetScheduledSessionQuery,
   useUpdateScheduledSessionMutation,
-  useGetApiMediaByIdQuery,
-  useLazyGetApiMediaByIdQuery,
-  useUpdateMutation,
-  useDeleteApiMediaByIdMutation,
+  useGetMediaQuery,
+  useLazyGetMediaQuery,
+  useUpdateMediaMutation,
+  useDeleteMediaMutation,
   useUpdateTeamMutation,
   useDeleteTeamMutation,
   useMovePlayerToTeamMutation,
@@ -2746,10 +2769,10 @@ export const {
   useCancelScheduledSessionMutation,
   useCreateOrgMutation,
   useJoinOrgMutation,
-  useListQuery,
-  useLazyListQuery,
-  useUploadMutation,
-  useCreateEmbedMutation,
+  useListMediaQuery,
+  useLazyListMediaQuery,
+  useUploadMediaMutation,
+  useCreateMediaEmbedMutation,
   useRedeemInviteMutation,
   useCreateInteractiveSessionMutation,
   useCreateTeamMutation,
@@ -2824,8 +2847,8 @@ export const {
   useLazyExploreDecksQuery,
   useListMyCollectionsQuery,
   useLazyListMyCollectionsQuery,
-  useList1Query,
-  useLazyList1Query,
+  useListQuery,
+  useLazyListQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

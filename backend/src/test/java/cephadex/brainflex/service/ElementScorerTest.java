@@ -55,7 +55,7 @@ class ElementScorerTest {
                 0, Difficulty.MEDIUM,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                30, null, null, null, null, null, MediaPosition.NONE,
+                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
     }
@@ -68,7 +68,7 @@ class ElementScorerTest {
                 0, Difficulty.MEDIUM,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                30, null, null, null, null, null, MediaPosition.NONE,
+                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
     }
@@ -81,7 +81,7 @@ class ElementScorerTest {
                 0, Difficulty.MEDIUM,
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                30, null, null, null, null, null, MediaPosition.NONE,
+                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
     }
@@ -99,7 +99,7 @@ class ElementScorerTest {
                 100, Difficulty.MEDIUM,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                30, null, null, null, null, null, MediaPosition.NONE,
+                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
     }
@@ -178,7 +178,7 @@ class ElementScorerTest {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true, allowMultiple, maxSelections,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
@@ -223,7 +223,7 @@ class ElementScorerTest {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 min, max, true,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
@@ -257,7 +257,7 @@ class ElementScorerTest {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                20, null, null, null, null, null, MediaPosition.NONE,
+                20, null, null, null, null, null, null, null, MediaPosition.NONE,
                 80, true, fuzzy, distance,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);

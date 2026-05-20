@@ -51,6 +51,8 @@ public record PlaceOnImageQuestion(
         Image image,
         String videoUrl,
         String audioUrl,
+        String videoAssetId,
+        String audioAssetId,
         MediaPosition mediaPosition,
         // shared metadata (chunk 10b)
         String createdByUserId,

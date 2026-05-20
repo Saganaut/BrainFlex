@@ -53,7 +53,7 @@ public class MediaAssetController {
 
     @GetMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<java.util.List<MediaAssetDTO.MediaAssetResponse>> list(
+    public ResponseEntity<java.util.List<MediaAssetDTO.MediaAssetResponse>> listMedia(
             @RequestParam(value = "kind", required = false) MediaKind kind,
             @RequestParam(value = "tag", required = false) String tag,
             Authentication authentication) {
@@ -64,7 +64,7 @@ public class MediaAssetController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> get(
+    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> getMedia(
             @PathVariable String id,
             Authentication authentication) {
         User caller = userService.resolveRegisteredUser(authentication)
@@ -78,7 +78,7 @@ public class MediaAssetController {
     // resolveRegisteredUser call upgrades anyRequest().authenticated() to a
     // registered-user check.
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> upload(
+    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> uploadMedia(
             @RequestParam("file") MultipartFile file,
             @RequestParam("kind") MediaKind kind,
             @RequestParam(value = "name", required = false) String name,
@@ -100,7 +100,7 @@ public class MediaAssetController {
 
     @PostMapping(value = "/embed", consumes = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> createEmbed(
+    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> createMediaEmbed(
             @RequestBody MediaAssetDTO.CreateEmbedRequest request,
             Authentication authentication) {
         User caller = userService.resolveRegisteredUser(authentication)
@@ -111,7 +111,7 @@ public class MediaAssetController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> update(
+    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> updateMedia(
             @PathVariable String id,
             @RequestBody MediaAssetDTO.UpdateMediaAssetRequest request,
             Authentication authentication) {
@@ -123,7 +123,7 @@ public class MediaAssetController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> delete(
+    public ResponseEntity<Void> deleteMedia(
             @PathVariable String id,
             Authentication authentication) {
         User caller = userService.resolveRegisteredUser(authentication)

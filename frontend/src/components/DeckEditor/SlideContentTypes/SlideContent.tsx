@@ -3,8 +3,12 @@
  * callout / content / end card). Captures slide kind, title, rich-text body,
  * and display seconds. Speaker notes live in the global drawer below the
  * canvas (see SpeakerNotesDrawer) so every element kind exposes them in the
- * same place. Media URLs (image/video/audio/background) are intentionally not
- * exposed yet — that requires the media-picker library.
+ * same place.
+ *
+ * Audio / video / embed pickers live below the body field — each one persists
+ * a MediaAsset id (audioAssetId / videoAssetId) and the inline preview
+ * confirms the selection. The image / background slots still wait on the
+ * media-library v2 migration of legacy gallery_images.
  */
 import { useState } from "react";
 import { SlideContentWrapper } from "./SlideContentWrapper";
@@ -12,6 +16,9 @@ import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextI
 import { Input } from "@/components/Common/Input/Input/Input";
 import { NumberInput } from "@/components/Common/Input/NumberInput/NumberInput";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
+import { Btn } from "@/components/Common/Buttons/Btn";
+import { MediaAssetChip } from "@/components/Common/MediaPicker/MediaAssetChip";
+import { useMediaPicker } from "@/hooks/useMediaPicker";
 import { useElementEditor } from "./useElementEditor";
 import type { Slide } from "@/store/BrainFlexApi";
 
@@ -28,6 +35,7 @@ const SLIDE_KIND_OPTIONS: { value: Slide["slideKind"]; label: string }[] = [
 const SlideContent = () => {
   const { element, schedule, flush, commit, syncedFromId, markSynced } =
     useElementEditor<Slide>(isSlide);
+  const openMediaPicker = useMediaPicker();
 
   const [title, setTitle] = useState<string>(element?.title ?? "");
   const [body, setBody] = useState<string>(element?.body ?? "");
@@ -117,8 +125,78 @@ const SlideContent = () => {
         onBlur={flush}
       />
 
-      {/* TODO: Get more specs — background/image/video/audio fields once the
-          media library is in place. */}
+      <MediaAssetChip
+        label='Audio'
+        assetId={element.audioAssetId}
+        onReplace={() => {
+          flush();
+          openMediaPicker("AUDIO", (asset) => {
+            commit(buildPatch({ audioAssetId: asset.id, audioUrl: undefined }));
+          });
+        }}
+        onRemove={() => {
+          flush();
+          commit(buildPatch({ audioAssetId: undefined }));
+        }}
+      />
+      {!element.audioAssetId && (
+        <Btn
+          size='sm'
+          onClick={() => {
+            flush();
+            openMediaPicker("AUDIO", (asset) => {
+              commit(buildPatch({ audioAssetId: asset.id, audioUrl: undefined }));
+            });
+          }}>
+          Add audio
+        </Btn>
+      )}
+
+      <MediaAssetChip
+        label='Video'
+        assetId={element.videoAssetId}
+        onReplace={() => {
+          flush();
+          openMediaPicker("VIDEO_FILE", (asset) => {
+            commit(buildPatch({ videoAssetId: asset.id, videoUrl: undefined }));
+          });
+        }}
+        onRemove={() => {
+          flush();
+          commit(buildPatch({ videoAssetId: undefined }));
+        }}
+      />
+      {!element.videoAssetId && (
+        <div style={{ display: "flex", gap: "var(--space-2)" }}>
+          <Btn
+            size='sm'
+            onClick={() => {
+              flush();
+              openMediaPicker("VIDEO_FILE", (asset) => {
+                commit(
+                  buildPatch({ videoAssetId: asset.id, videoUrl: undefined }),
+                );
+              });
+            }}>
+            Add video
+          </Btn>
+          <Btn
+            size='sm'
+            onClick={() => {
+              flush();
+              openMediaPicker("VIDEO_EMBED", (asset) => {
+                commit(
+                  buildPatch({ videoAssetId: asset.id, videoUrl: undefined }),
+                );
+              });
+            }}>
+            Add video link
+          </Btn>
+        </div>
+      )}
+
+      {/* TODO: image / background slots wait on the media-library v2
+          migration of legacy gallery_images. */}
     </SlideContentWrapper>
   );
 };

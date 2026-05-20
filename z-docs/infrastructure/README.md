@@ -5,6 +5,7 @@ Notes on the local dev stack (Docker Compose, MongoDB, Redis, Garage/S3) and per
 ## In this folder
 
 - [Infrastructure overview](infrastructure.md) — Full notes on Docker services, persistence, sessions, and deployment-relevant details.
+- [Testing & CI](testing-and-ci.md) — Backend + frontend test stacks, CI workflow, pre-commit / pre-push git hooks.
 
 ## Per-directory READMEs (live next to their code)
 

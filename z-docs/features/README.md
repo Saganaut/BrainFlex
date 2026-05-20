@@ -6,6 +6,8 @@ Per-feature design docs. One subfolder per feature; each owns its `README.md` pl
 
 - [Auth](auth/README.md) — Google OAuth + guest sessions, cookie + Redis session store.
 - [Games](games/README.md) — InteractiveSessions & decks implementation checklist and notes.
+- [Deck Editor](deck-editor/README.md) — `/decks/$deckId/view` authoring dashboard architecture (commit pattern, cache sync, RichText, fullscreen).
+- [Data Models](data-models.md) — User / PlayerStats / Organization / Theme MongoDB documents, DTOs, image processing tiers.
 - [Membership](membership/README.md) — Organization membership semantics and flows.
 
 ## Adding a new feature

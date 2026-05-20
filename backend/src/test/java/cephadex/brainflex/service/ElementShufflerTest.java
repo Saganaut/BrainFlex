@@ -47,7 +47,7 @@ class ElementShufflerTest {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 shuffleOptions, false, 0,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
@@ -65,7 +65,7 @@ class ElementShufflerTest {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 shuffleItems,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
@@ -78,7 +78,7 @@ class ElementShufflerTest {
                 100, Difficulty.EASY,
                 true, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 null, null, true,
                 META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
                 META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);

@@ -1,6 +1,6 @@
 # 19 — Media asset
 
-**Status:** Backend foundation landed; frontend + integration pending
+**Status:** Backend + frontend in; play-side render + GalleryImage migration deferred
 **Depends on:** Nothing strict; chunk 13 (lobby music) references `mediaAssetId`
 **Unblocks:** Audio/video in deck elements; lobby music; richer galleries
 
@@ -88,18 +88,27 @@ S3 key conventions per kind:
 - [ ] Audio/video metadata extraction *(deferred — v1 ships without `durationMs` / pixel dims for audio + video; `width`/`height` is set for `IMAGE` from the largest WebP rendition. Add jaudiotagger / ffmpeg-metadata in a follow-up.)*
 - [x] Endpoints + multipart upload + embed POST + tests
 - [ ] `GalleryImageService` becomes a view over `MediaAsset where kind=IMAGE` *(requires data migration; left for a follow-up. New `MediaAsset` collection runs alongside the legacy `gallery_images` collection for now.)*
-- [ ] DeckElement `videoAssetId` / `audioAssetId` fields with backwards-compat fallback to string URLs
-- [ ] `MediaPicker` component (kind-filterable)
-- [ ] Audio/video upload buttons in editor
+- [x] DeckElement `videoAssetId` / `audioAssetId` fields with backwards-compat fallback to string URLs *(record components on all 13 element kinds; legacy `videoUrl`/`audioUrl` strings stay populated so existing data keeps working — renderer prefers asset id when set, falls back to url string.)*
+- [x] `MediaPicker` component (kind-filterable) *(`Common/MediaPicker/MediaPicker.tsx` + `useMediaPicker` hook — IMAGE / AUDIO / VIDEO_FILE / VIDEO_EMBED tabs with per-kind upload form, search, tag-pill filter, org-share dropdown.)*
+- [x] Audio/video upload buttons in editor *(`SlideContent.tsx` exposes Add audio / Add video / Add video link beneath the body field; each opens MediaPicker filtered to that kind and persists the returned asset id via the existing `schedule(patch)` pipeline.)*
 - [ ] Lobby music dropdown in interactive session create form (when chunk 13 lands)
-- [ ] Audio/video render on slides
+- [x] Audio/video render on slides *(editor-side preview via `MediaAssetChip`: shows `<audio controls>` for AUDIO, `<video controls>` for VIDEO_FILE, allow-listed `<iframe>` for VIDEO_EMBED. Play-side rendering inside an active interactive session still pending — see "Open follow-ups" below.)*
 - [x] Video embed allowlist (YouTube, Vimeo) *(URL normaliser in `MediaAssetService.normaliseEmbedUrl`: accepts `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/embed/`, `vimeo.com/{id}`, `player.vimeo.com/video/{id}`; rejects everything else with 400.)*
-- [ ] Frontend codegen + lint
-- [x] Backend tests pass
+- [x] Frontend codegen + lint *(`useListMediaQuery`, `useUploadMediaMutation`, `useCreateMediaEmbedMutation`, `useUpdateMediaMutation`, `useDeleteMediaMutation`, `useGetMediaQuery`; type baseline unchanged at 48 errors, all new files lint clean.)*
+- [x] Backend tests pass *(335 / 335 — was 308 before chunk 19; 27 new tests cover MediaAssetController + the additional DeckElement field on positional clone paths.)*
 
-## Implementation notes (foundation wave)
+## Open follow-ups
 
-Files added/touched:
+These came out of chunk 19 and need their own threads of work — they are out of scope for this chunk but worth tracking:
+
+- **Play-side media rendering.** `PlayPage` and `QuestionCard` don't yet read `audioAssetId` / `videoAssetId` or render the media at run-time. The asset is persisted on save; once the play surface knows how to dispatch on it, the renderer can mirror `MediaAssetChip`'s preview shape (audio / video / iframe).
+- **Image slot still routed through `GalleryPicker`.** Slide / element image and background fields keep using the legacy `gallery_images` collection. Migrating those to `MediaAsset where kind=IMAGE` requires a one-time data backfill (see deferred checkbox above) and is a separate task.
+- **Audio/video metadata.** `durationMs` and pixel dimensions for audio + video remain null. Pulling them out at upload time needs `jaudiotagger` (audio) and an ffmpeg-style probe (video) — both add real binary dependencies, so they're deliberately deferred.
+- **Lobby music dropdown.** Waits on chunk 13 — once `InteractiveSession` carries `lobbyMusicAssetId`, the create form needs a `MediaPicker` invoked with `kind="AUDIO"`.
+
+## Implementation notes
+
+Backend files added/touched:
 
 - `backend/src/main/java/cephadex/brainflex/model/enums/MediaKind.java` — IMAGE / AUDIO / VIDEO_FILE / VIDEO_EMBED
 - `backend/src/main/java/cephadex/brainflex/model/MediaAsset.java` — `@Document("media_assets")`; image rows reuse the gallery `StoredImageVariant` multi-tier list, audio/video rows carry `fileExtension` + `mimeType` + `sizeBytes`, embed rows carry `embedUrl` + `sourceUrl`
@@ -110,7 +119,17 @@ Files added/touched:
 - `backend/src/main/java/cephadex/brainflex/service/AuthorizationService.java` — `requireMediaAssetEditable` / `requireMediaAssetVisible`
 - `backend/src/main/java/cephadex/brainflex/controller/MediaAssetController.java` — REST at `/api/media`
 - `backend/src/main/java/cephadex/brainflex/dto/MediaAssetDTO.java` — `MediaAssetResponse`, `UpdateMediaAssetRequest`, `CreateEmbedRequest`
+- `backend/src/main/java/cephadex/brainflex/model/element/*.java` — `videoAssetId` + `audioAssetId` record components added to all 13 element kinds; positional callers updated in `ElementShuffler`, `ElementRedactor`, `DeckElementCloner`, `DeckImageMapper`, `SampleDataSeeder`
 - `backend/src/test/java/cephadex/brainflex/controller/MediaAssetControllerTest.java` — 16 cases covering each endpoint + auth / org-scope failure modes
+
+Frontend files added/touched:
+
+- `frontend/src/utils/mediaValidation.ts` — per-kind caps + MIME allow-list mirroring `MediaProcessingService`
+- `frontend/src/components/Common/MediaPicker/MediaPicker.tsx` + `MediaPicker.module.css` — kind-filterable picker (file upload for IMAGE/AUDIO/VIDEO_FILE, URL form for VIDEO_EMBED)
+- `frontend/src/components/Common/MediaPicker/MediaAssetChip.tsx` + `MediaAssetChip.module.css` — read-only summary chip with inline preview (`<audio>` / `<video>` / `<iframe>`)
+- `frontend/src/hooks/useMediaPicker.tsx` — opens MediaPicker in the global modal scoped to a single kind
+- `frontend/src/components/DeckEditor/SlideContentTypes/SlideContent.tsx` — wires Add audio / Add video / Add video link buttons + the asset chip + replace / remove actions
+- `frontend/src/store/BrainFlexApi.ts` — codegen output picked up the new `/api/media` endpoints, the renamed media operations, and the `audioAssetId` / `videoAssetId` fields on every element kind
 
 Storage layout per kind:
 

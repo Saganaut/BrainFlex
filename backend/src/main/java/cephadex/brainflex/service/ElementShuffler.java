@@ -86,7 +86,7 @@ public final class ElementShuffler {
                 q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                 q.explanation(),
                 q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                 q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
                 q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                 q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -103,7 +103,7 @@ public final class ElementShuffler {
                 q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                 q.explanation(),
                 q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                 q.shuffleItemsForPresentation(),
                 q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                 q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());

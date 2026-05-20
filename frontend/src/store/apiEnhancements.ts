@@ -28,11 +28,24 @@ import {
   type ListRatingsApiArg,
   type ListRepliesApiArg,
 } from "./BrainFlexApi";
-import type { RootState } from "./store";
+// import type { RootState } from "./store";
+
+// type MutationLifecycleApi<QueryArg, BaseQuery extends BaseQueryFn, ResultType, ReducerPath extends string = string>
+// = MutationBaseLifecycleApi<QueryArg, BaseQuery, ResultType, ReducerPath> & QueryLifecyclePromises<ResultType, BaseQuery>;
+
+interface WithApiQueries {
+  api?: {
+    queries?: Record<
+      string,
+      | { endpointName?: string; originalArgs?: unknown; data?: unknown }
+      | undefined
+    >;
+  };
+}
 
 interface CacheSyncApi {
   dispatch: (action: unknown) => unknown;
-  getState: () => RootState;
+  getState: () => WithApiQueries;
   queryFulfilled: Promise<{ data: unknown }>;
 }
 
@@ -66,7 +79,7 @@ const syncDeckCache = async (arg: { id: string }, api: CacheSyncApi) => {
  */
 interface CollectionSyncApi {
   dispatch: (action: unknown) => unknown;
-  getState: () => RootState;
+  getState: () => WithApiQueries;
   queryFulfilled: Promise<{ data: DeckCollectionDto }>;
 }
 
@@ -118,7 +131,7 @@ const syncCollectionCaches = async (
  */
 interface ReorderApi {
   dispatch: (action: unknown) => unknown;
-  getState: () => RootState;
+  getState: () => WithApiQueries;
   queryFulfilled: Promise<{ data: DeckCollectionDto }>;
 }
 
@@ -161,7 +174,7 @@ const optimisticReorderCollectionDecks = async (
  */
 interface CollaboratorSyncApi {
   dispatch: (action: unknown) => unknown;
-  getState: () => RootState;
+  getState: () => WithApiQueries;
   queryFulfilled: Promise<{ data: unknown }>;
 }
 
@@ -221,10 +234,10 @@ const upsertCollaboratorRow = async (
  *    unfavoriting we also drop the deck from {@code listMyFavorites} pages
  *    because the server would no longer return it
  */
-interface ApiQueryEntry {
-  endpointName?: string;
-  originalArgs?: unknown;
-}
+// interface ApiQueryEntry {
+//   endpointName?: string;
+//   originalArgs?: unknown;
+// }
 
 const adjustDeckRow = (deck: DeckDto, desiredIsFavorited: boolean) => {
   deck.isFavorited = desiredIsFavorited;
@@ -261,12 +274,7 @@ const optimisticToggleFavorite = async (
   patchListInPlace("listDecks");
   patchListInPlace("listMyDecks");
 
-  const queries =
-    (
-      api.getState() as unknown as {
-        api?: { queries?: Record<string, ApiQueryEntry | undefined> };
-      }
-    ).api?.queries ?? {};
+  const queries = api.getState().api?.queries ?? {};
 
   for (const entry of Object.values(queries)) {
     if (!entry?.endpointName) continue;
@@ -338,12 +346,7 @@ const optimisticToggleCommentUpvote = async (
   arg: { deckId: string; commentId: string },
   api: CacheSyncApi,
 ) => {
-  const queries =
-    (
-      api.getState() as unknown as {
-        api?: { queries?: Record<string, ApiQueryEntry | undefined> };
-      }
-    ).api?.queries ?? {};
+  const queries = api.getState().api?.queries ?? {};
 
   // First pass: find a cached copy so we know which way the toggle should go.
   // The endpoint is idempotent on the server, but the optimistic flip needs a
@@ -359,7 +362,7 @@ const optimisticToggleCommentUpvote = async (
       continue;
     const cacheKey = `${entry.endpointName}(${JSON.stringify(entry.originalArgs ?? null)})`;
     const cached = (
-      api.getState() as unknown as {
+      api.getState() as {
         api?: {
           queries?: Record<string, { data?: { items?: DeckCommentDto[] } }>;
         };
@@ -496,12 +499,7 @@ const refetchRatingViews = (deckId: string, api: CacheSyncApi) => {
       { subscribe: false, forceRefetch: true },
     ),
   );
-  const queries =
-    (
-      api.getState() as unknown as {
-        api?: { queries?: Record<string, ApiQueryEntry | undefined> };
-      }
-    ).api?.queries ?? {};
+  const queries = api.getState().api?.queries ?? {};
   for (const entry of Object.values(queries)) {
     if (entry?.endpointName !== "listRatings") continue;
     const queryArg = (entry.originalArgs ?? {}) as ListRatingsApiArg;

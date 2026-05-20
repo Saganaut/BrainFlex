@@ -44,13 +44,18 @@
     cursor: pointer;
     transition: color 120ms ease;
 
-    &:hover {
+    &:hover:not(:disabled) {
       color: var(--text-primary);
     }
 
     &:focus-visible {
       outline: none;
       border-color: var(--border-focus);
+    }
+
+    &:disabled {
+      color: var(--text-disabled);
+      cursor: not-allowed;
     }
   }
 

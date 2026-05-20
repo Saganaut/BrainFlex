@@ -85,7 +85,10 @@ const ShareDeckModal = ({
     }
   };
 
-  const handleRoleChange = async (row: DeckCollaboratorDto, next: InviteRole) => {
+  const handleRoleChange = async (
+    row: DeckCollaboratorDto,
+    next: InviteRole,
+  ) => {
     if (row.userId == null || isBusy) return;
     try {
       await updateRole({
@@ -123,7 +126,9 @@ const ShareDeckModal = ({
   return (
     <div className={styles.body}>
       {callerIsOwner && (
-        <form className={styles.inviteForm} onSubmit={(e) => void handleInvite(e)}>
+        <form
+          className={styles.inviteForm}
+          onSubmit={(e) => void handleInvite(e)}>
           <label className={styles.inviteLabel} htmlFor='collab-identifier'>
             Invite by username or email
           </label>
@@ -218,7 +223,10 @@ const ShareDeckModal = ({
                       aria-label={`Change role for ${displayName}`}
                       value={row.role ?? "VIEWER"}
                       onChange={(e) => {
-                        void handleRoleChange(row, e.target.value as InviteRole);
+                        void handleRoleChange(
+                          row,
+                          e.target.value as InviteRole,
+                        );
                       }}
                       disabled={isBusy}>
                       <option value='EDITOR'>Editor</option>
@@ -247,9 +255,7 @@ const ShareDeckModal = ({
                       size='sm'
                       variant='error'
                       aria-label={
-                        canSelfLeave
-                          ? `Leave deck`
-                          : `Remove ${displayName}`
+                        canSelfLeave ? `Leave deck` : `Remove ${displayName}`
                       }
                       onClick={() => {
                         void handleRemove(row);

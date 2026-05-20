@@ -47,6 +47,8 @@ public record Slide(
         Image image,
         String videoUrl,
         String audioUrl,
+        String videoAssetId,
+        String audioAssetId,
         MediaPosition mediaPosition,
         // audience / display options (first "Edit slide" tab in the deck editor)
         ResultsDisplayType resultsDisplayType,

@@ -131,7 +131,7 @@ class InteractiveSessionServiceTest {
                     100, Difficulty.EASY,
                     true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                     false, null, 0, null,
-                    15, null, null, null, null, null, MediaPosition.NONE,
+                    15, null, null, null, null, null, null, null, MediaPosition.NONE,
                     true, false, 0,
                     null, null, null, null, List.of(),
                     null, null, true, 1));
@@ -676,7 +676,7 @@ class InteractiveSessionServiceTest {
                 false, true, null,
                 cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 null, null, null, null, List.of(),
                 null, null, true, 1);
     }
@@ -709,7 +709,7 @@ class InteractiveSessionServiceTest {
                 false, true, null,
                 cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 null, null, null, null, List.of(),
                 null, null, true, 1);
     }
@@ -765,7 +765,7 @@ class InteractiveSessionServiceTest {
                 100, Difficulty.EASY,
                 true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                 true, null, bonus, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 true, false, 0,
                 null, null, null, null, List.of(),
                 null, null, true, 1);
@@ -1234,7 +1234,7 @@ class InteractiveSessionServiceTest {
                 100, Difficulty.EASY,
                 true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
-                15, null, null, null, null, null, MediaPosition.NONE,
+                15, null, null, null, null, null, null, null, MediaPosition.NONE,
                 false, false, 0, // shuffleOptions=false
                 null, null, null, null, List.of(),
                 null, null, true, 1);

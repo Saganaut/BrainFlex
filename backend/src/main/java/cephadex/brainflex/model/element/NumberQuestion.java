@@ -49,6 +49,8 @@ public record NumberQuestion(
         Image image,
         String videoUrl,
         String audioUrl,
+        String videoAssetId,
+        String audioAssetId,
         MediaPosition mediaPosition,
         // per-kind ergonomics (chunk 10)
         Double minValue,

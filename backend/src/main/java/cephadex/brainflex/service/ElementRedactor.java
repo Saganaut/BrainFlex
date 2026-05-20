@@ -44,7 +44,7 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -59,7 +59,7 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -74,7 +74,7 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.minValue(), q.maxValue(), q.allowNegative(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -88,7 +88,7 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleItemsForPresentation(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
@@ -102,7 +102,7 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case QAndAQuestion q -> q; // no answer key to hide
@@ -116,7 +116,7 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
@@ -130,7 +130,7 @@ public final class ElementRedactor {
                     q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
                     q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                     q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
             case WordCloudQuestion q -> q; // survey: no answer key to hide
@@ -163,7 +163,7 @@ public final class ElementRedactor {
                 q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                 null,        // explanation
                 q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.mediaPosition(),
+                q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                 q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
                 q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
     }

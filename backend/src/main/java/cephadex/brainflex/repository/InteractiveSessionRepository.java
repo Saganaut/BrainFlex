@@ -11,7 +11,7 @@ import java.util.Optional;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.enums.GameStatus;
+import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 
 public interface InteractiveSessionRepository extends MongoRepository<InteractiveSession, String> {
 
@@ -21,10 +21,10 @@ public interface InteractiveSessionRepository extends MongoRepository<Interactiv
 
     List<InteractiveSession> findByHostUserId(String hostUserId);
 
-    List<InteractiveSession> findByStatus(GameStatus status);
+    List<InteractiveSession> findByStatus(InteractiveSessionStatus status);
 
     // Chunk 13 — used by PresenceService to find a player's current active
     // game on WS connect/disconnect so the per-interactiveSession
     // InteractiveSessionPlayer.disconnected flag can be flipped.
-    List<InteractiveSession> findByStatusAndPlayersUserId(GameStatus status, String userId);
+    List<InteractiveSession> findByStatusAndPlayersUserId(InteractiveSessionStatus status, String userId);
 }

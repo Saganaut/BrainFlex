@@ -17,14 +17,14 @@ import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.InteractiveSessionPlayer;
 import cephadex.brainflex.model.Team;
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.enums.GameStatus;
+import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 import cephadex.brainflex.model.enums.InteractiveSessionPhase;
 
 public record InteractiveSessionDTO(
         String id,
         String roomCode,
         String inviteToken,
-        GameStatus status,
+        InteractiveSessionStatus status,
         InteractiveSessionPhase phase,
         String hostUserId,
         // Chunk 13 — denormalized host display fields for lobby header.

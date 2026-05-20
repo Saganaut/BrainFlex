@@ -39,8 +39,8 @@ import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.PlayerPlacement;
 import cephadex.brainflex.model.InteractiveSessionPlayer;
 import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.enums.GameMode;
-import cephadex.brainflex.model.enums.GameStatus;
+import cephadex.brainflex.model.enums.InteractiveSessionMode;
+import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.InteractiveSessionService;
 
@@ -76,7 +76,7 @@ class InteractiveSessionControllerTest {
                 InteractiveSessionSettings settings = new InteractiveSessionSettings();
                 settings.setTotalRounds(10);
                 settings.setTimePerQuestion(15);
-                settings.setGameMode(GameMode.SIMULTANEOUS);
+                settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
 
                 InteractiveSessionPlayer hostPlayer = new InteractiveSessionPlayer();
                 hostPlayer.setUserId("user1");
@@ -88,7 +88,7 @@ class InteractiveSessionControllerTest {
                 lobbySession.setInviteToken("token-uuid");
                 lobbySession.setHostUserId("user1");
                 lobbySession.setSettings(settings);
-                lobbySession.setStatus(GameStatus.LOBBY);
+                lobbySession.setStatus(InteractiveSessionStatus.LOBBY);
                 lobbySession.setPlayers(new ArrayList<>(List.of(hostPlayer)));
         }
 

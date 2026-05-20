@@ -6,13 +6,13 @@
  */
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
-import { clearWsError } from "../../../store/gameSlice";
+import { clearWsError } from "../../../store/interactiveSessionSlice";
 import { IconBtn } from "../../Common/Buttons/IconBtn";
 import styles from "./WsErrorBanner.module.css";
 //TODO: WE should have a general error banner component, likely in a provider so it can be re-used.
 const WsErrorBanner = () => {
   const dispatch = useAppDispatch();
-  const error = useAppSelector((s) => s.game.wsError);
+  const error = useAppSelector((s) => s.interactiveSession.wsError);
 
   if (!error) return null;
 

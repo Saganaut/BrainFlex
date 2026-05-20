@@ -8,6 +8,7 @@ import { useState } from "react";
 import {
   useDeleteMyRatingMutation,
   useGetDeckQuery,
+  useGetMyRatingQuery,
   useListRatingsQuery,
   useRateDeckMutation,
   type DeckRatingDto,
@@ -32,10 +33,29 @@ const DeckReviewsPanel = () => {
     page,
     size: PAGE_SIZE,
   });
+  // Fetch the caller's own row separately so we can pre-populate the textarea
+  // even when the row isn't on page 0 of the listing. 404 (no rating yet) is
+  // expected and lands as an isError state — we treat that as "no review".
+  const myRatingQuery = useGetMyRatingQuery(
+    { id: deckId },
+    { skip: !isRegistered },
+  );
+  const myRating = myRatingQuery.data;
   const [rateDeck, rateStatus] = useRateDeckMutation();
   const [deleteMyRating, deleteStatus] = useDeleteMyRatingMutation();
 
+  // null = the user hasn't touched the textarea this session; mirror the
+  // persisted review until they do. Once they type, the draft takes over.
   const [reviewDraft, setReviewDraft] = useState<string | null>(null);
+  const [lastSyncedReview, setLastSyncedReview] = useState<string | null>(null);
+  const persistedReview = myRating?.review ?? "";
+  // Same set-state-during-render pattern the deck editor uses: re-sync the
+  // draft whenever the server-side review text changes (initial load, after
+  // a successful save, or after deleteMyRating clears it).
+  if (lastSyncedReview !== persistedReview) {
+    setLastSyncedReview(persistedReview);
+    setReviewDraft(persistedReview);
+  }
 
   if (!deck) {
     return (
@@ -161,7 +181,13 @@ const DeckReviewsPanel = () => {
         ) : (
           <ul className={styles.reviewList}>
             {items.map((rating) => (
-              <ReviewListItem key={rating.id} rating={rating} />
+              <ReviewListItem
+                key={rating.id}
+                rating={rating}
+                isMine={
+                  myRating?.id != null && rating.id === myRating.id
+                }
+              />
             ))}
           </ul>
         )}
@@ -195,9 +221,10 @@ const DeckReviewsPanel = () => {
 
 interface ReviewListItemProps {
   rating: DeckRatingDto;
+  isMine?: boolean;
 }
 
-const ReviewListItem = ({ rating }: ReviewListItemProps) => (
+const ReviewListItem = ({ rating, isMine }: ReviewListItemProps) => (
   <li className={styles.reviewItem}>
     <div className={styles.reviewHeader}>
       {rating.userPictureUrl != null && rating.userPictureUrl !== "" && (
@@ -209,6 +236,9 @@ const ReviewListItem = ({ rating }: ReviewListItemProps) => (
       )}
       <span className={styles.reviewAuthor}>
         {rating.userName ?? "Anonymous"}
+        {isMine === true && (
+          <span className={styles.mineBadge}>You</span>
+        )}
       </span>
       <StarRating value={rating.stars ?? 0} mode='display' size='sm' />
     </div>

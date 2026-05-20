@@ -20,7 +20,7 @@ import { ReviewPanel } from "../../components/Games/ReviewPanel/ReviewPanel";
 import { ContentDeckPicker } from "../../components/Games/ContentDeckPicker/ContentDeckPicker";
 import { PlayerInfo } from "../../components/PlayerInfo/PlayerInfo";
 import { useAppDispatch } from "../../store/hooks";
-import { wsErrorReceived } from "../../store/gameSlice";
+import { wsErrorReceived } from "../../store/interactiveSessionSlice";
 import {
   gameOverData,
   playersData,

@@ -5,13 +5,13 @@ import { useEffect, useState } from "react";
 import { GameOver } from "../../components/Games/GameOver/GameOver";
 import { ReviewPanel } from "../../components/Games/ReviewPanel/ReviewPanel";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-import { useGameSession } from "../../hooks/useGameSession";
+import { useInteractiveSession } from "../../hooks/useInteractiveSession";
 import {
   useGetInteractiveSessionQuery,
   useGetResultsQuery,
   useGetReviewQuery,
 } from "../../store/BrainFlexApi";
-import { setSession } from "../../store/gameSlice";
+import { setSession } from "../../store/interactiveSessionSlice";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./Results.module.css";
@@ -24,7 +24,7 @@ const ResultsPage = () => {
   const { roomCode } = routeApi.useParams();
   const dispatch = useAppDispatch();
   const userState = useCurrentUser();
-  const game = useGameSession();
+  const game = useInteractiveSession();
 
   const { data: session } = useGetInteractiveSessionQuery({ roomCode });
   const { data: gameResult } = useGetResultsQuery({ roomCode });

@@ -14,12 +14,12 @@ import styles from "./Game.module.css";
 
 const routeApi = getRouteApi("/_authenticated/games/create");
 
-type GameMode = "SIMULTANEOUS" | "TURN_BASED";
+type SessionMode = "SIMULTANEOUS" | "TURN_BASED";
 
 const DEFAULT_ROUNDS = 10;
 const DEFAULT_TIME = 15;
 const DEFAULT_SPEED_BONUS = true;
-const DEFAULT_GAME_MODE: GameMode = "SIMULTANEOUS";
+const DEFAULT_MODE: SessionMode = "SIMULTANEOUS";
 const DEFAULT_MAX_PLAYERS = 8;
 const DEFAULT_ALLOW_GUESTS = true;
 const DEFAULT_ALLOW_LATE_JOIN = false;
@@ -30,7 +30,7 @@ interface SettingsState {
   // 0 = unlimited (no countdown). Any positive value enables the timer.
   timePerQuestion: number;
   speedBonus: boolean;
-  gameMode: GameMode;
+  mode: SessionMode;
   maxPlayers: number;
   allowGuests: boolean;
   allowLateJoin: boolean;
@@ -41,7 +41,7 @@ const PLATFORM_DEFAULTS: SettingsState = {
   totalRounds: DEFAULT_ROUNDS,
   timePerQuestion: DEFAULT_TIME,
   speedBonus: DEFAULT_SPEED_BONUS,
-  gameMode: DEFAULT_GAME_MODE,
+  mode: DEFAULT_MODE,
   maxPlayers: DEFAULT_MAX_PLAYERS,
   allowGuests: DEFAULT_ALLOW_GUESTS,
   allowLateJoin: DEFAULT_ALLOW_LATE_JOIN,
@@ -104,8 +104,8 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
         <summary className={styles.moreOptionsSummary}>More options</summary>
         <div className={styles.moreOptionsBody}>
           <RadioGroup
-            name='gameMode'
-            legend='Game mode'
+            name='mode'
+            legend='Session mode'
             options={[
               {
                 value: "SIMULTANEOUS",
@@ -116,9 +116,9 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
                 label: "Turn-based — host advances each round",
               },
             ]}
-            value={settings.gameMode}
+            value={settings.mode}
             onChange={(value) => {
-              patch({ gameMode: value as GameMode });
+              patch({ mode: value as SessionMode });
             }}
           />
 
@@ -198,7 +198,7 @@ const CreateGamePage = () => {
       totalRounds: d.totalRounds ?? DEFAULT_ROUNDS,
       timePerQuestion: d.timePerQuestion ?? DEFAULT_TIME,
       speedBonus: d.speedBonus ?? DEFAULT_SPEED_BONUS,
-      gameMode: d.gameMode ?? DEFAULT_GAME_MODE,
+      mode: d.mode ?? DEFAULT_MODE,
       maxPlayers: d.maxPlayers ?? DEFAULT_MAX_PLAYERS,
       allowGuests: d.allowGuests ?? DEFAULT_ALLOW_GUESTS,
       allowLateJoin: d.allowLateJoin ?? DEFAULT_ALLOW_LATE_JOIN,
@@ -220,7 +220,7 @@ const CreateGamePage = () => {
           totalRounds: settings.totalRounds,
           timePerQuestion: settings.timePerQuestion,
           speedBonus: settings.speedBonus,
-          gameMode: settings.gameMode,
+          mode: settings.mode,
           maxPlayers: settings.maxPlayers,
           allowGuests: settings.allowGuests,
           allowLateJoin: settings.allowLateJoin,

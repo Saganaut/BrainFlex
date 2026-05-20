@@ -1,5 +1,5 @@
 /**
- * Configuration knobs the host picks when starting a InteractiveSession. Embedded inside
+ * Configuration knobs the host picks when starting an InteractiveSession. Embedded inside
  * the InteractiveSession document so settings travel with the session for its lifetime.
  *
  * `timePerQuestion = 0` is the "unlimited" signal — questions wait for all
@@ -9,7 +9,7 @@
  */
 package cephadex.brainflex.model;
 
-import cephadex.brainflex.model.enums.GameMode;
+import cephadex.brainflex.model.enums.InteractiveSessionMode;
 import lombok.Data;
 
 //TODO: We don't have a clear delimitation between Deck and InteractiveSession, a interactiveSession uses a deck but the delimitation is blurry
@@ -20,7 +20,7 @@ public class InteractiveSessionSettings {
     private int timePerQuestion = 15; // 0 = unlimited
     private boolean speedBonus = true;
     private boolean allowGuests = true;
-    private GameMode gameMode = GameMode.SIMULTANEOUS;
+    private InteractiveSessionMode mode = InteractiveSessionMode.SIMULTANEOUS;
     private boolean allowLateJoin = false;
     private boolean showScoresImmediately = true;
     private boolean scoringEnabled = true; // false = Pulse preset

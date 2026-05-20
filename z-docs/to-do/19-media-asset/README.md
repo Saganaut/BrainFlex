@@ -1,6 +1,6 @@
 # 19 — Media asset
 
-**Status:** Not started
+**Status:** Backend foundation landed; frontend + integration pending
 **Depends on:** Nothing strict; chunk 13 (lobby music) references `mediaAssetId`
 **Unblocks:** Audio/video in deck elements; lobby music; richer galleries
 
@@ -83,16 +83,42 @@ S3 key conventions per kind:
 
 ## Checklist
 
-- [ ] `MediaAsset` model + `MediaKind` enum + repo
-- [ ] `MediaAssetService` with size caps + format validation per kind
-- [ ] Audio/video metadata extraction
-- [ ] Endpoints + multipart upload + embed POST + tests
-- [ ] `GalleryImageService` becomes a view over `MediaAsset where kind=IMAGE`
+- [x] `MediaAsset` model + `MediaKind` enum + repo
+- [x] `MediaAssetService` with size caps + format validation per kind
+- [ ] Audio/video metadata extraction *(deferred — v1 ships without `durationMs` / pixel dims for audio + video; `width`/`height` is set for `IMAGE` from the largest WebP rendition. Add jaudiotagger / ffmpeg-metadata in a follow-up.)*
+- [x] Endpoints + multipart upload + embed POST + tests
+- [ ] `GalleryImageService` becomes a view over `MediaAsset where kind=IMAGE` *(requires data migration; left for a follow-up. New `MediaAsset` collection runs alongside the legacy `gallery_images` collection for now.)*
 - [ ] DeckElement `videoAssetId` / `audioAssetId` fields with backwards-compat fallback to string URLs
 - [ ] `MediaPicker` component (kind-filterable)
 - [ ] Audio/video upload buttons in editor
 - [ ] Lobby music dropdown in interactive session create form (when chunk 13 lands)
 - [ ] Audio/video render on slides
-- [ ] Video embed allowlist (YouTube, Vimeo)
+- [x] Video embed allowlist (YouTube, Vimeo) *(URL normaliser in `MediaAssetService.normaliseEmbedUrl`: accepts `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/embed/`, `vimeo.com/{id}`, `player.vimeo.com/video/{id}`; rejects everything else with 400.)*
 - [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] Backend tests pass
+
+## Implementation notes (foundation wave)
+
+Files added/touched:
+
+- `backend/src/main/java/cephadex/brainflex/model/enums/MediaKind.java` — IMAGE / AUDIO / VIDEO_FILE / VIDEO_EMBED
+- `backend/src/main/java/cephadex/brainflex/model/MediaAsset.java` — `@Document("media_assets")`; image rows reuse the gallery `StoredImageVariant` multi-tier list, audio/video rows carry `fileExtension` + `mimeType` + `sizeBytes`, embed rows carry `embedUrl` + `sourceUrl`
+- `backend/src/main/java/cephadex/brainflex/repository/MediaAssetRepository.java` — `findByOwnerId{,AndKind}`, `findByOrganizationId{,AndKind}`
+- `backend/src/main/java/cephadex/brainflex/service/MediaProcessingService.java` — per-kind caps (image 5 MB, audio 20 MB, video 100 MB), byte-header MIME detection for MP3/M4A/MP4
+- `backend/src/main/java/cephadex/brainflex/service/MediaAssetService.java` — list/get/upload/embed/update/delete + URL hydration
+- `backend/src/main/java/cephadex/brainflex/service/S3Service.java` — added `media-assets/` prefix, single-file upload/refresh/delete helpers
+- `backend/src/main/java/cephadex/brainflex/service/AuthorizationService.java` — `requireMediaAssetEditable` / `requireMediaAssetVisible`
+- `backend/src/main/java/cephadex/brainflex/controller/MediaAssetController.java` — REST at `/api/media`
+- `backend/src/main/java/cephadex/brainflex/dto/MediaAssetDTO.java` — `MediaAssetResponse`, `UpdateMediaAssetRequest`, `CreateEmbedRequest`
+- `backend/src/test/java/cephadex/brainflex/controller/MediaAssetControllerTest.java` — 16 cases covering each endpoint + auth / org-scope failure modes
+
+Storage layout per kind:
+
+| Kind          | S3 layout                                          | Persisted fields                          |
+| ------------- | -------------------------------------------------- | ----------------------------------------- |
+| `IMAGE`       | `media-assets/{id}/{xs,sm,md,lg,xl}.webp`          | `variants`, `width`, `height`, `mimeType` |
+| `AUDIO`       | `media-assets/{id}/file.{mp3\|m4a}`                | `fileExtension`, `mimeType`, `sizeBytes`  |
+| `VIDEO_FILE`  | `media-assets/{id}/file.mp4`                       | `fileExtension`, `mimeType`, `sizeBytes`  |
+| `VIDEO_EMBED` | *(no S3 object)*                                   | `embedUrl`, `sourceUrl`                   |
+
+Read-time URL hydration mirrors the gallery flow: `IMAGE` responses carry a presigned `variants[]` with one URL per tier; `AUDIO`/`VIDEO_FILE` responses carry a single presigned `url`; `VIDEO_EMBED` responses echo the stored `embedUrl`. Mutation responses always hydrate fresh URLs, so renderers never merge stale links.

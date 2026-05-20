@@ -88,8 +88,8 @@ import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.WordCloudQuestion;
-import cephadex.brainflex.model.enums.GameMode;
-import cephadex.brainflex.model.enums.GameStatus;
+import cephadex.brainflex.model.enums.InteractiveSessionMode;
+import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 import cephadex.brainflex.model.enums.InteractiveSessionPhase;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.ReactionRepository;
@@ -200,8 +200,8 @@ public class InteractiveSessionService {
         // Start from the deck's author-suggested defaults, then layer the host's
         // overrides.
         InteractiveSessionSettings settings = copyOf(deck.getDefaultSettings());
-        if (request.gameMode() != null)
-            settings.setGameMode(request.gameMode());
+        if (request.mode() != null)
+            settings.setMode(request.mode());
         if (request.totalRounds() != null)
             settings.setTotalRounds(request.totalRounds());
         if (request.timePerQuestion() != null)
@@ -380,10 +380,10 @@ public class InteractiveSessionService {
                                   String avatarKey, String colorTag) {
         InteractiveSession session = getByRoomCode(roomCode);
 
-        GameStatus status = session.getStatus();
-        if (status == GameStatus.FINISHED || status == GameStatus.CANCELLED)
+        InteractiveSessionStatus status = session.getStatus();
+        if (status == InteractiveSessionStatus.FINISHED || status == InteractiveSessionStatus.CANCELLED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is over");
-        if (status == GameStatus.IN_PROGRESS && !session.getSettings().isAllowLateJoin())
+        if (status == InteractiveSessionStatus.IN_PROGRESS && !session.getSettings().isAllowLateJoin())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession has already started");
 
         boolean alreadyJoined = session.getPlayers().stream()
@@ -427,7 +427,7 @@ public class InteractiveSessionService {
 
         // Chunk 13 — late-join tag is purely informational on the player
         // record (lobby vs. mid-game arrival); allowLateJoin is the gate.
-        if (status == GameStatus.IN_PROGRESS) {
+        if (status == InteractiveSessionStatus.IN_PROGRESS) {
             newPlayer.setLateJoin(true);
         }
 
@@ -477,7 +477,7 @@ public class InteractiveSessionService {
             return;
         try {
             List<InteractiveSession> sessions = interactiveSessionRepository.findByStatusAndPlayersUserId(
-                    GameStatus.IN_PROGRESS, userId);
+                    InteractiveSessionStatus.IN_PROGRESS, userId);
             LocalDateTime now = LocalDateTime.now();
             for (InteractiveSession session : sessions) {
                 synchronized (getLock(session.getRoomCode())) {
@@ -510,10 +510,10 @@ public class InteractiveSessionService {
 
     public void cancelInteractiveSession(String roomCode, User requestingUser) {
         InteractiveSession session = authorizationService.requireInteractiveSessionHost(roomCode, requestingUser);
-        if (session.getStatus() == GameStatus.FINISHED || session.getStatus() == GameStatus.CANCELLED)
+        if (session.getStatus() == InteractiveSessionStatus.FINISHED || session.getStatus() == InteractiveSessionStatus.CANCELLED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is already ended");
 
-        session.setStatus(GameStatus.CANCELLED);
+        session.setStatus(InteractiveSessionStatus.CANCELLED);
         interactiveSessionRepository.save(session);
         interactiveSessionCache.evict(roomCode);
         messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
@@ -528,7 +528,7 @@ public class InteractiveSessionService {
 
     public InteractiveSessionReviewDTO buildReview(String roomCode) {
         InteractiveSession session = getByRoomCode(roomCode);
-        if (session.getStatus() != GameStatus.FINISHED)
+        if (session.getStatus() != InteractiveSessionStatus.FINISHED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is not yet finished");
 
         InteractiveSessionResult result = interactiveSessionResultRepository.findByInteractiveSessionId(session.getId()).orElse(null);
@@ -571,7 +571,7 @@ public class InteractiveSessionService {
             InteractiveSession session = getByRoomCode(roomCode);
             validateHost(session, principalName);
 
-            if (session.getStatus() != GameStatus.LOBBY)
+            if (session.getStatus() != InteractiveSessionStatus.LOBBY)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession has already started");
 
             // Chunk 13 — when the host opts in to shuffleQuestions, permute
@@ -586,7 +586,7 @@ public class InteractiveSessionService {
                 session.setDeckSnapshot(shuffled);
             }
 
-            session.setStatus(GameStatus.IN_PROGRESS);
+            session.setStatus(InteractiveSessionStatus.IN_PROGRESS);
             session.setPhase(InteractiveSessionPhase.SUBMIT);
             session.setStartedAt(LocalDateTime.now());
             session.setCurrentRound(0);
@@ -603,7 +603,7 @@ public class InteractiveSessionService {
     public void submitAnswer(String roomCode, AnswerSubmitRequest request, String principalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != GameStatus.IN_PROGRESS)
+            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
                 return;
             if (session.getPhase() != InteractiveSessionPhase.SUBMIT)
                 return;
@@ -722,7 +722,7 @@ public class InteractiveSessionService {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
             validateHost(session, hostPrincipalName);
-            if (session.getStatus() == GameStatus.FINISHED || session.getStatus() == GameStatus.CANCELLED)
+            if (session.getStatus() == InteractiveSessionStatus.FINISHED || session.getStatus() == InteractiveSessionStatus.CANCELLED)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is already over");
             if (session.getHostUserId().equals(targetUserId))
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Host cannot boot themselves");
@@ -748,7 +748,7 @@ public class InteractiveSessionService {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
             validateHost(session, hostPrincipalName);
-            if (session.getStatus() != GameStatus.IN_PROGRESS)
+            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is not in progress");
             endGame(session);
         }
@@ -758,9 +758,9 @@ public class InteractiveSessionService {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = getByRoomCode(roomCode);
             validateHost(session, principalName);
-            if (session.getStatus() != GameStatus.IN_PROGRESS)
+            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
                 return;
-            if (session.getSettings().getGameMode() != GameMode.TURN_BASED)
+            if (session.getSettings().getMode() != InteractiveSessionMode.TURN_BASED)
                 return;
             startNextRound(roomCode);
         }
@@ -769,7 +769,7 @@ public class InteractiveSessionService {
     public void leaveGame(String roomCode, String principalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() == GameStatus.FINISHED || session.getStatus() == GameStatus.CANCELLED)
+            if (session.getStatus() == InteractiveSessionStatus.FINISHED || session.getStatus() == InteractiveSessionStatus.CANCELLED)
                 return;
 
             String userId = resolveUserId(principalName);
@@ -798,7 +798,7 @@ public class InteractiveSessionService {
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
             if (session == null)
                 return;
-            if (session.getStatus() != GameStatus.IN_PROGRESS)
+            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
                 return;
             if (session.getCurrentRound() != timedRound)
                 return;
@@ -923,7 +923,7 @@ public class InteractiveSessionService {
         interactiveSessionRepository.save(session);
         interactiveSessionCache.put(session);
 
-        if (session.getSettings().getGameMode() == GameMode.SIMULTANEOUS) {
+        if (session.getSettings().getMode() == InteractiveSessionMode.SIMULTANEOUS) {
             String roomCode = session.getRoomCode();
             scheduler.schedule(() -> {
                 try {
@@ -931,7 +931,7 @@ public class InteractiveSessionService {
                 } catch (Exception ignored) {
                 }
             }, BETWEEN_ROUNDS_DELAY_SECONDS, TimeUnit.SECONDS);
-        } else if (session.getSettings().getGameMode() == GameMode.TURN_BASED
+        } else if (session.getSettings().getMode() == InteractiveSessionMode.TURN_BASED
                 && session.getSettings().isAutoAdvance()) {
             // Chunk 13 — when the host turns on autoAdvance for a TURN_BASED
             // session, advance from the reveal to the next round on a timer
@@ -989,7 +989,7 @@ public class InteractiveSessionService {
     public void submitVote(String roomCode, VoteSubmitRequest request, String principalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != GameStatus.IN_PROGRESS)
+            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
                 return;
             if (session.getPhase() != InteractiveSessionPhase.VOTE)
                 return;
@@ -1124,7 +1124,7 @@ public class InteractiveSessionService {
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
             if (session == null)
                 return;
-            if (session.getStatus() != GameStatus.IN_PROGRESS)
+            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
                 return;
             if (session.getCurrentRound() != timedRound)
                 return;
@@ -1138,7 +1138,7 @@ public class InteractiveSessionService {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = interactiveSessionCache.get(roomCode)
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
-            if (session == null || session.getStatus() != GameStatus.IN_PROGRESS)
+            if (session == null || session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
                 return;
 
             session.setRoundStartedAt(LocalDateTime.now());
@@ -1153,7 +1153,7 @@ public class InteractiveSessionService {
     }
 
     private void endGame(InteractiveSession session) {
-        session.setStatus(GameStatus.FINISHED);
+        session.setStatus(InteractiveSessionStatus.FINISHED);
         session.setEndedAt(LocalDateTime.now());
 
         List<InteractiveSessionPlayer> ranked = session.getPlayers().stream()
@@ -1199,7 +1199,7 @@ public class InteractiveSessionService {
         }
 
         messagingTemplate.convertAndSend(
-                "/topic/interactive-session/" + session.getRoomCode() + "/gameOver",
+                "/topic/interactive-session/" + session.getRoomCode() + "/ended",
                 new InteractiveSessionEndedMessage(placements));
     }
 
@@ -1214,7 +1214,7 @@ public class InteractiveSessionService {
      */
     private int computeSpeedBonus(int basePoints, InteractiveSession session) {
         InteractiveSessionSettings s = session.getSettings();
-        if (!s.isSpeedBonus() || s.getGameMode() != GameMode.SIMULTANEOUS || session.getRoundStartedAt() == null) {
+        if (!s.isSpeedBonus() || s.getMode() != InteractiveSessionMode.SIMULTANEOUS || session.getRoundStartedAt() == null) {
             return 0;
         }
         DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
@@ -1433,7 +1433,7 @@ public class InteractiveSessionService {
         out.setTimePerQuestion(src.getTimePerQuestion());
         out.setSpeedBonus(src.isSpeedBonus());
         out.setAllowGuests(src.isAllowGuests());
-        out.setGameMode(src.getGameMode());
+        out.setMode(src.getMode());
         out.setAllowLateJoin(src.isAllowLateJoin());
         out.setShowScoresImmediately(src.isShowScoresImmediately());
         out.setScoringEnabled(src.isScoringEnabled());
@@ -1490,7 +1490,7 @@ public class InteractiveSessionService {
      */
     public Reaction acceptReaction(String roomCode, ReactionSendRequest request, String principalName) {
         InteractiveSession session = loadActiveSession(roomCode);
-        if (session.getStatus() != GameStatus.IN_PROGRESS) {
+        if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is not in progress");
         }
         if (!session.getSettings().isReactionsEnabled()) {
@@ -1564,7 +1564,7 @@ public class InteractiveSessionService {
         InteractiveSession session = loadActiveSession(roomCode);
         // Chat is allowed before start and after finish too — lobbies and review
         // pages benefit from it — but a cancelled session is dead.
-        if (session.getStatus() == GameStatus.CANCELLED) {
+        if (session.getStatus() == InteractiveSessionStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession has been cancelled");
         }
         if (!session.getSettings().isChatEnabled()) {
@@ -1838,7 +1838,7 @@ public class InteractiveSessionService {
     }
 
     private static void requireLobby(InteractiveSession session) {
-        if (session.getStatus() != GameStatus.LOBBY)
+        if (session.getStatus() != InteractiveSessionStatus.LOBBY)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Teams can only be edited in the lobby");
     }
 

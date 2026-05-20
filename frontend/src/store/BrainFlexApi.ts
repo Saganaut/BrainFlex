@@ -30,6 +30,28 @@ const injectedRtkApi = api.injectEndpoints({
         method: "DELETE",
       }),
     }),
+    getApiMediaById: build.query<
+      GetApiMediaByIdApiResponse,
+      GetApiMediaByIdApiArg
+    >({
+      query: (queryArg) => ({ url: `/api/media/${queryArg.id}` }),
+    }),
+    update: build.mutation<UpdateApiResponse, UpdateApiArg>({
+      query: (queryArg) => ({
+        url: `/api/media/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateMediaAssetRequest,
+      }),
+    }),
+    deleteApiMediaById: build.mutation<
+      DeleteApiMediaByIdApiResponse,
+      DeleteApiMediaByIdApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/media/${queryArg.id}`,
+        method: "DELETE",
+      }),
+    }),
     updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
       query: (queryArg) => ({
         url: `/api/interactive-sessions/${queryArg.roomCode}/teams/${queryArg.teamId}`,
@@ -237,6 +259,50 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.createTagRequest,
       }),
     }),
+    createOrg: build.mutation<CreateOrgApiResponse, CreateOrgApiArg>({
+      query: (queryArg) => ({
+        url: `/api/organizations`,
+        method: "POST",
+        body: queryArg.createOrganizationRequest,
+      }),
+    }),
+    joinOrg: build.mutation<JoinOrgApiResponse, JoinOrgApiArg>({
+      query: (queryArg) => ({
+        url: `/api/organizations/join`,
+        method: "POST",
+        body: queryArg.joinOrganizationRequest,
+      }),
+    }),
+    list: build.query<ListApiResponse, ListApiArg>({
+      query: (queryArg) => ({
+        url: `/api/media`,
+        params: {
+          kind: queryArg.kind,
+          tag: queryArg.tag,
+        },
+      }),
+    }),
+    upload: build.mutation<UploadApiResponse, UploadApiArg>({
+      query: (queryArg) => ({
+        url: `/api/media`,
+        method: "POST",
+        body: queryArg.body,
+        params: {
+          kind: queryArg.kind,
+          name: queryArg.name,
+          tags: queryArg.tags,
+          organizationId: queryArg.organizationId,
+          altText: queryArg.altText,
+        },
+      }),
+    }),
+    createEmbed: build.mutation<CreateEmbedApiResponse, CreateEmbedApiArg>({
+      query: (queryArg) => ({
+        url: `/api/media/embed`,
+        method: "POST",
+        body: queryArg.createEmbedRequest,
+      }),
+    }),
     createInteractiveSession: build.mutation<
       CreateInteractiveSessionApiResponse,
       CreateInteractiveSessionApiArg
@@ -285,20 +351,6 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/interactive-sessions/${queryArg.roomCode}/chat`,
         method: "POST",
         body: queryArg.chatSendRequest,
-      }),
-    }),
-    createOrg: build.mutation<CreateOrgApiResponse, CreateOrgApiArg>({
-      query: (queryArg) => ({
-        url: `/api/organizations`,
-        method: "POST",
-        body: queryArg.createOrganizationRequest,
-      }),
-    }),
-    joinOrg: build.mutation<JoinOrgApiResponse, JoinOrgApiArg>({
-      query: (queryArg) => ({
-        url: `/api/organizations/join`,
-        method: "POST",
-        body: queryArg.joinOrganizationRequest,
       }),
     }),
     listImages: build.query<ListImagesApiResponse, ListImagesApiArg>({
@@ -542,8 +594,16 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    getInteractiveSession: build.query<GetInteractiveSessionApiResponse, GetInteractiveSessionApiArg>({
-      query: (queryArg) => ({ url: `/api/interactive-sessions/${queryArg.roomCode}` }),
+    listMyOrgs: build.query<ListMyOrgsApiResponse, ListMyOrgsApiArg>({
+      query: () => ({ url: `/api/organizations/mine` }),
+    }),
+    getInteractiveSession: build.query<
+      GetInteractiveSessionApiResponse,
+      GetInteractiveSessionApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/interactive-sessions/${queryArg.roomCode}`,
+      }),
     }),
     cancelInteractiveSession: build.mutation<
       CancelInteractiveSessionApiResponse,
@@ -571,9 +631,6 @@ const injectedRtkApi = api.injectEndpoints({
       query: (queryArg) => ({
         url: `/api/interactive-sessions/join/${queryArg.inviteToken}`,
       }),
-    }),
-    listMyOrgs: build.query<ListMyOrgsApiResponse, ListMyOrgsApiArg>({
-      query: () => ({ url: `/api/organizations/mine` }),
     }),
     getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
       query: () => ({ url: `/api/health` }),
@@ -627,7 +684,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    list: build.query<ListApiResponse, ListApiArg>({
+    list1: build.query<List1ApiResponse, List1ApiArg>({
       query: () => ({ url: `/api/avatars` }),
     }),
     getCurrentUser: build.query<
@@ -686,6 +743,20 @@ export type DeleteTagApiResponse = unknown;
 export type DeleteTagApiArg = {
   id: string;
 };
+export type GetApiMediaByIdApiResponse =
+  /** status 200 OK */ MediaAssetResponse;
+export type GetApiMediaByIdApiArg = {
+  id: string;
+};
+export type UpdateApiResponse = /** status 200 OK */ MediaAssetResponse;
+export type UpdateApiArg = {
+  id: string;
+  updateMediaAssetRequest: UpdateMediaAssetRequest;
+};
+export type DeleteApiMediaByIdApiResponse = unknown;
+export type DeleteApiMediaByIdApiArg = {
+  id: string;
+};
 export type UpdateTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
 export type UpdateTeamApiArg = {
   roomCode: string;
@@ -697,7 +768,8 @@ export type DeleteTeamApiArg = {
   roomCode: string;
   teamId: string;
 };
-export type MovePlayerToTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type MovePlayerToTeamApiResponse =
+  /** status 200 OK */ InteractiveSessionDto;
 export type MovePlayerToTeamApiArg = {
   roomCode: string;
   userId: string;
@@ -839,7 +911,36 @@ export type CreateTagApiResponse = /** status 200 OK */ TagResponse;
 export type CreateTagApiArg = {
   createTagRequest: CreateTagRequest;
 };
-export type CreateInteractiveSessionApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type CreateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
+export type CreateOrgApiArg = {
+  createOrganizationRequest: CreateOrganizationRequest;
+};
+export type JoinOrgApiResponse = /** status 200 OK */ OrganizationResponse;
+export type JoinOrgApiArg = {
+  joinOrganizationRequest: JoinOrganizationRequest;
+};
+export type ListApiResponse = /** status 200 OK */ MediaAssetResponse[];
+export type ListApiArg = {
+  kind?: "IMAGE" | "AUDIO" | "VIDEO_FILE" | "VIDEO_EMBED";
+  tag?: string;
+};
+export type UploadApiResponse = /** status 200 OK */ MediaAssetResponse;
+export type UploadApiArg = {
+  kind: "IMAGE" | "AUDIO" | "VIDEO_FILE" | "VIDEO_EMBED";
+  name?: string;
+  tags?: string;
+  organizationId?: string;
+  altText?: string;
+  body: {
+    file: Blob;
+  };
+};
+export type CreateEmbedApiResponse = /** status 200 OK */ MediaAssetResponse;
+export type CreateEmbedApiArg = {
+  createEmbedRequest: CreateEmbedRequest;
+};
+export type CreateInteractiveSessionApiResponse =
+  /** status 200 OK */ InteractiveSessionDto;
 export type CreateInteractiveSessionApiArg = {
   createInteractiveSessionRequest: CreateInteractiveSessionRequest;
 };
@@ -853,29 +954,24 @@ export type SendReactionApiArg = {
   roomCode: string;
   reactionSendRequest: ReactionSendRequest;
 };
-export type JoinByRoomCodeApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type JoinByRoomCodeApiResponse =
+  /** status 200 OK */ InteractiveSessionDto;
 export type JoinByRoomCodeApiArg = {
   roomCode: string;
   joinInteractiveSessionRequest: JoinInteractiveSessionRequest;
 };
-export type ListChatApiResponse = /** status 200 OK */ InteractiveSessionChatMessageDto[];
+export type ListChatApiResponse =
+  /** status 200 OK */ InteractiveSessionChatMessageDto[];
 export type ListChatApiArg = {
   roomCode: string;
   page?: number;
   size?: number;
 };
-export type SendChatApiResponse = /** status 200 OK */ InteractiveSessionChatMessageDto;
+export type SendChatApiResponse =
+  /** status 200 OK */ InteractiveSessionChatMessageDto;
 export type SendChatApiArg = {
   roomCode: string;
   chatSendRequest: ChatSendRequest;
-};
-export type CreateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
-export type CreateOrgApiArg = {
-  createOrganizationRequest: CreateOrganizationRequest;
-};
-export type JoinOrgApiResponse = /** status 200 OK */ OrganizationResponse;
-export type JoinOrgApiArg = {
-  joinOrganizationRequest: JoinOrganizationRequest;
 };
 export type ListImagesApiResponse = /** status 200 OK */ GalleryImageResponse[];
 export type ListImagesApiArg = void;
@@ -1034,7 +1130,10 @@ export type CheckUsernameApiResponse = /** status 200 OK */ {
 export type CheckUsernameApiArg = {
   username: string;
 };
-export type GetInteractiveSessionApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type ListMyOrgsApiResponse = /** status 200 OK */ OrganizationResponse[];
+export type ListMyOrgsApiArg = void;
+export type GetInteractiveSessionApiResponse =
+  /** status 200 OK */ InteractiveSessionDto;
 export type GetInteractiveSessionApiArg = {
   roomCode: string;
 };
@@ -1042,20 +1141,21 @@ export type CancelInteractiveSessionApiResponse = unknown;
 export type CancelInteractiveSessionApiArg = {
   roomCode: string;
 };
-export type GetReviewApiResponse = /** status 200 OK */ InteractiveSessionReviewDto;
+export type GetReviewApiResponse =
+  /** status 200 OK */ InteractiveSessionReviewDto;
 export type GetReviewApiArg = {
   roomCode: string;
 };
-export type GetResultsApiResponse = /** status 200 OK */ InteractiveSessionResult;
+export type GetResultsApiResponse =
+  /** status 200 OK */ InteractiveSessionResult;
 export type GetResultsApiArg = {
   roomCode: string;
 };
-export type GetByInviteTokenApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type GetByInviteTokenApiResponse =
+  /** status 200 OK */ InteractiveSessionDto;
 export type GetByInviteTokenApiArg = {
   inviteToken: string;
 };
-export type ListMyOrgsApiResponse = /** status 200 OK */ OrganizationResponse[];
-export type ListMyOrgsApiArg = void;
 export type GetHealthApiResponse = /** status 200 OK */ HealthCheckResponse;
 export type GetHealthApiArg = void;
 export type ListRatingsApiResponse = /** status 200 OK */ DeckRatingsPage;
@@ -1092,8 +1192,8 @@ export type ListMyCollectionsApiArg = {
   page?: number;
   size?: number;
 };
-export type ListApiResponse = /** status 200 OK */ AvatarPreset[];
-export type ListApiArg = void;
+export type List1ApiResponse = /** status 200 OK */ AvatarPreset[];
+export type List1ApiArg = void;
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -1162,6 +1262,33 @@ export type UpdateTagRequest = {
   description?: string;
   iconUrl?: string;
   curated?: boolean;
+};
+export type MediaAssetResponse = {
+  id?: string;
+  kind?: "IMAGE" | "AUDIO" | "VIDEO_FILE" | "VIDEO_EMBED";
+  name?: string;
+  ownerId?: string;
+  organizationId?: string;
+  variants?: ImageVariant[];
+  url?: string;
+  sizeBytes?: number;
+  width?: number;
+  height?: number;
+  durationMs?: number;
+  mimeType?: string;
+  altText?: string;
+  attribution?: string;
+  sourceUrl?: string;
+  tags?: string[];
+  createdAt?: string;
+};
+export type UpdateMediaAssetRequest = {
+  name?: string;
+  tags?: string[];
+  organizationId?: string;
+  altText?: string;
+  attribution?: string;
+  sourceUrl?: string;
 };
 export type DeckElementBase = {
   kind: string;
@@ -1644,9 +1771,6 @@ export type Slide = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    // Chunk 21 — manually extended to BAR_HORIZONTAL/BAR_VERTICAL/WORD_CLOUD.
-    // HISTOGRAM is a deprecated read-only alias for BAR_VERTICAL (legacy data).
-    // Re-verify after `npx @rtk-query/codegen-openapi openapi-config.cts`.
     resultsDisplayType?:
       | "DEFAULT"
       | "BAR_HORIZONTAL"
@@ -1659,8 +1783,6 @@ export type Slide = {
     showResultsAsPercentage?: boolean;
     joinType?: "INSTRUCTIONS_BAR" | "QR_CODE";
     showJoinInformation?: boolean;
-    // Chunk 21 — manual: replaces joinType as the QR toggle. Re-verify after
-    // `npx @rtk-query/codegen-openapi openapi-config.cts`.
     showQrCode?: boolean;
     showResponses?: "INSTANT" | "ON_CLICK" | "PRIVATE";
     heading?: string;
@@ -1772,7 +1894,7 @@ export type InteractiveSessionSettings = {
   timePerQuestion?: number;
   speedBonus?: boolean;
   allowGuests?: boolean;
-  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+  mode?: "SIMULTANEOUS" | "TURN_BASED";
   allowLateJoin?: boolean;
   showScoresImmediately?: boolean;
   scoringEnabled?: boolean;
@@ -2082,9 +2204,38 @@ export type CreateTagRequest = {
   iconUrl?: string;
   curated?: boolean;
 };
+export type OrganizationPlan = {
+  tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
+  status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
+  seatLimit?: number;
+  startedAt?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+};
+export type OrganizationResponse = {
+  id?: string;
+  name?: string;
+  ownerId?: string;
+  plan?: OrganizationPlan;
+  createdAt?: string;
+};
+export type CreateOrganizationRequest = {
+  name?: string;
+};
+export type JoinOrganizationRequest = {
+  organizationId?: string;
+};
+export type CreateEmbedRequest = {
+  url?: string;
+  name?: string;
+  tags?: string[];
+  organizationId?: string;
+};
 export type CreateInteractiveSessionRequest = {
   deckId: string;
-  gameMode?: "SIMULTANEOUS" | "TURN_BASED";
+  mode?: "SIMULTANEOUS" | "TURN_BASED";
   totalRounds?: number;
   timePerQuestion?: number;
   speedBonus?: boolean;
@@ -2129,29 +2280,6 @@ export type JoinInteractiveSessionRequest = {
 };
 export type ChatSendRequest = {
   body: string;
-};
-export type OrganizationPlan = {
-  tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
-  status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
-  seatLimit?: number;
-  startedAt?: string;
-  currentPeriodEnd?: string;
-  cancelAtPeriodEnd?: boolean;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-};
-export type OrganizationResponse = {
-  id?: string;
-  name?: string;
-  ownerId?: string;
-  plan?: OrganizationPlan;
-  createdAt?: string;
-};
-export type CreateOrganizationRequest = {
-  name?: string;
-};
-export type JoinOrganizationRequest = {
-  organizationId?: string;
 };
 export type CreateDeckRequest = {
   id?: string;
@@ -2419,6 +2547,10 @@ export const {
   useLazyGetTagQuery,
   useUpdateTagMutation,
   useDeleteTagMutation,
+  useGetApiMediaByIdQuery,
+  useLazyGetApiMediaByIdQuery,
+  useUpdateMutation,
+  useDeleteApiMediaByIdMutation,
   useUpdateTeamMutation,
   useDeleteTeamMutation,
   useMovePlayerToTeamMutation,
@@ -2451,6 +2583,12 @@ export const {
   useListTagsQuery,
   useLazyListTagsQuery,
   useCreateTagMutation,
+  useCreateOrgMutation,
+  useJoinOrgMutation,
+  useListQuery,
+  useLazyListQuery,
+  useUploadMutation,
+  useCreateEmbedMutation,
   useCreateInteractiveSessionMutation,
   useCreateTeamMutation,
   useSendReactionMutation,
@@ -2458,8 +2596,6 @@ export const {
   useListChatQuery,
   useLazyListChatQuery,
   useSendChatMutation,
-  useCreateOrgMutation,
-  useJoinOrgMutation,
   useListImagesQuery,
   useLazyListImagesQuery,
   useUploadImageMutation,
@@ -2497,6 +2633,8 @@ export const {
   useLazyGetLeaderboardQuery,
   useCheckUsernameQuery,
   useLazyCheckUsernameQuery,
+  useListMyOrgsQuery,
+  useLazyListMyOrgsQuery,
   useGetInteractiveSessionQuery,
   useLazyGetInteractiveSessionQuery,
   useCancelInteractiveSessionMutation,
@@ -2506,8 +2644,6 @@ export const {
   useLazyGetResultsQuery,
   useGetByInviteTokenQuery,
   useLazyGetByInviteTokenQuery,
-  useListMyOrgsQuery,
-  useLazyListMyOrgsQuery,
   useGetHealthQuery,
   useLazyGetHealthQuery,
   useListRatingsQuery,
@@ -2522,8 +2658,8 @@ export const {
   useLazyExploreDecksQuery,
   useListMyCollectionsQuery,
   useLazyListMyCollectionsQuery,
-  useListQuery,
-  useLazyListQuery,
+  useList1Query,
+  useLazyList1Query,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

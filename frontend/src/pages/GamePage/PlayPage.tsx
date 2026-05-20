@@ -10,8 +10,8 @@ import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
 import { VotePanel } from "../../components/Games/VotePanel/VotePanel";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
-import { useGameSession } from "../../hooks/useGameSession";
-import { useGameWebSocket } from "../../hooks/useGameWebSocket";
+import { useInteractiveSession } from "../../hooks/useInteractiveSession";
+import { useInteractiveSessionWebSocket } from "../../hooks/useInteractiveSessionWebSocket";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { useGetInteractiveSessionQuery } from "../../store/BrainFlexApi";
@@ -21,7 +21,7 @@ import {
   setSession,
   answerSubmittedLocally,
   voteSubmittedLocally,
-} from "../../store/gameSlice";
+} from "../../store/interactiveSessionSlice";
 import { useAppDispatch } from "../../store/hooks";
 import type { AnswerPayload } from "../../types/elements";
 import styles from "./Game.module.css";
@@ -33,9 +33,9 @@ const PlayPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const userState = useCurrentUser();
-  const game = useGameSession();
+  const game = useInteractiveSession();
   const { sendAnswer, sendVote, sendNextRound, sendBoot, sendEndInteractiveSession } =
-    useGameWebSocket(roomCode);
+    useInteractiveSessionWebSocket(roomCode);
   const { data: session } = useGetInteractiveSessionQuery({ roomCode });
   const [timeRemaining, setTimeRemaining] = useState(0);
   const confirm = useConfirm();
@@ -46,7 +46,7 @@ const PlayPage = () => {
       : undefined;
 
   const isHost = !!userId && session?.hostUserId === userId;
-  const isTurnBased = session?.settings?.gameMode === "TURN_BASED";
+  const isTurnBased = session?.settings?.mode === "TURN_BASED";
   // Host disables the question timer by setting timePerQuestion = 0.
   // Per-element displaySeconds always overrides on the server; the frontend
   // here just respects "is there any countdown?" for the QuestionCard chrome.

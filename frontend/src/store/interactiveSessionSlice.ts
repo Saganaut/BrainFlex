@@ -1,7 +1,7 @@
 /**
- * Redux slice for active interactiveSession state.
+ * Redux slice for active InteractiveSession state.
  *
- * All WebSocket interactiveSession events (ROUND_START, ROUND_RESULT, GAME_OVER, lobby
+ * All WebSocket session events (ROUND_START, ROUND_RESULT, SESSION_ENDED, lobby
  * updates, presence, answer-progress) are dispatched here so any component can
  * read the current state without prop drilling.
  *
@@ -48,7 +48,7 @@ export interface RoundResultPayload {
   bestAnswer?: BestAnswerOutcome | null;
 }
 
-export interface GameOverPayload {
+export interface SessionEndedPayload {
   placements: PlayerPlacement[];
 }
 
@@ -76,7 +76,7 @@ export interface PresencePayload {
   online: boolean;
 }
 
-interface GameState {
+interface InteractiveSessionState {
   roomCode: string | null;
   status: InteractiveSessionDto["status"] | null;
   players: InteractiveSessionPlayerDto[];
@@ -112,7 +112,7 @@ interface GameState {
   wordCloudCounts: Record<string, number>;
 }
 
-const initialState: GameState = {
+const initialState: InteractiveSessionState = {
   roomCode: null,
   status: null,
   players: [],
@@ -135,8 +135,8 @@ const initialState: GameState = {
   wordCloudCounts: {},
 };
 
-export const gameSlice = createSlice({
-  name: "game",
+export const interactiveSessionSlice = createSlice({
+  name: "interactiveSession",
   initialState,
   reducers: {
     setSession(state, action: PayloadAction<InteractiveSessionDto>) {
@@ -235,7 +235,7 @@ export const gameSlice = createSlice({
       state.votePhaseStartedAt = null;
     },
 
-    gameOver(state, action: PayloadAction<GameOverPayload>) {
+    sessionEnded(state, action: PayloadAction<SessionEndedPayload>) {
       state.status = "FINISHED";
       state.finalPlacements = action.payload.placements;
       state.currentElement = null;
@@ -249,7 +249,7 @@ export const gameSlice = createSlice({
       state.wsError = null;
     },
 
-    resetGame() {
+    resetSession() {
       return initialState;
     },
   },
@@ -262,14 +262,14 @@ export const {
   answerProgressReceived,
   presenceUpdated,
   roundResultReceived,
-  gameOver,
+  sessionEnded,
   wsErrorReceived,
   clearWsError,
-  resetGame,
+  resetSession,
   votePhaseStarted,
   voteSubmittedLocally,
   voteProgressReceived,
   wordCloudUpdated,
-} = gameSlice.actions;
+} = interactiveSessionSlice.actions;
 
-export default gameSlice.reducer;
+export default interactiveSessionSlice.reducer;

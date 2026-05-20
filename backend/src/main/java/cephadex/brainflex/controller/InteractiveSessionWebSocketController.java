@@ -10,7 +10,7 @@
  *   /topic/interactive-session/{roomCode}/votePhase   — VotePhaseStartMessage (Best Answer mode)
  *   /topic/interactive-session/{roomCode}/voted       — VoteProgressMessage (who has voted)
  *   /topic/interactive-session/{roomCode}/roundResult — RoundResultMessage (reveal; optional BestAnswerOutcome)
- *   /topic/interactive-session/{roomCode}/gameOver    — InteractiveSessionEndedMessage (final placements)
+ *   /topic/interactive-session/{roomCode}/ended       — InteractiveSessionEndedMessage (final placements)
  *   /user/queue/errors                     — InteractiveSessionErrorMessage, principal-specific
  *
  * Client sends (client → server via /app prefix):

@@ -8,7 +8,7 @@
  * with an answer key.
  */
 import styles from "./RoundResult.module.css";
-import type { RoundResultPayload } from "../../../store/gameSlice";
+import type { RoundResultPayload } from "../../../store/interactiveSessionSlice";
 import type { AnswerPayload, DeckElement } from "../../../types/elements";
 import type { BestAnswerOutcome } from "../../../types/bestAnswer";
 import { Btn } from "@/components/Common/Buttons/Btn";

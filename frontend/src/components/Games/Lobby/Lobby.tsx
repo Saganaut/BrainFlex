@@ -6,10 +6,10 @@
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAppDispatch } from "../../../store/hooks";
-import { setSession } from "../../../store/gameSlice";
+import { setSession } from "../../../store/interactiveSessionSlice";
 import { useGetInteractiveSessionQuery } from "../../../store/BrainFlexApi";
-import { useGameSession } from "../../../hooks/useGameSession";
-import { useGameWebSocket } from "../../../hooks/useGameWebSocket";
+import { useInteractiveSession } from "../../../hooks/useInteractiveSession";
+import { useInteractiveSessionWebSocket } from "../../../hooks/useInteractiveSessionWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
 import { resolveInteractiveSessionBackground } from "../../../utils/deckImages";
@@ -25,8 +25,8 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const userState = useCurrentUser();
-  const game = useGameSession();
-  const { sendStart, sendLeave, sendBoot } = useGameWebSocket(roomCode);
+  const game = useInteractiveSession();
+  const { sendStart, sendLeave, sendBoot } = useInteractiveSessionWebSocket(roomCode);
   const confirm = useConfirm();
 
   const { data: session } = useGetInteractiveSessionQuery({ roomCode });

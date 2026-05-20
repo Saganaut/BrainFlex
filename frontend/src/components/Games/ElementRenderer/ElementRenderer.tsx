@@ -190,7 +190,7 @@ const WordCloudView = ({
   disabled,
   onSubmit,
 }: WordCloudViewProps) => {
-  const counts = useAppSelector((s) => s.game.wordCloudCounts);
+  const counts = useAppSelector((s) => s.interactiveSession.wordCloudCounts);
   return (
     <div className={styles.wordCloudStack}>
       <WordCloud counts={counts} />

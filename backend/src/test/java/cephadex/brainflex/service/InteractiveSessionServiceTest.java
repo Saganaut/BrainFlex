@@ -53,8 +53,8 @@ import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.Difficulty;
-import cephadex.brainflex.model.enums.GameMode;
-import cephadex.brainflex.model.enums.GameStatus;
+import cephadex.brainflex.model.enums.InteractiveSessionMode;
+import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.InteractiveSessionPhase;
 import cephadex.brainflex.dto.ChatSendRequest;
@@ -113,7 +113,7 @@ class InteractiveSessionServiceTest {
         lobbySession.setId("session1");
         lobbySession.setRoomCode("ABCD12");
         lobbySession.setHostUserId("host1");
-        lobbySession.setStatus(GameStatus.LOBBY);
+        lobbySession.setStatus(InteractiveSessionStatus.LOBBY);
         lobbySession.setSettings(new InteractiveSessionSettings());
         lobbySession.setPlayers(new ArrayList<>());
     }
@@ -154,7 +154,7 @@ class InteractiveSessionServiceTest {
 
         assertNotNull(result);
         assertNotNull(result.getRoomCode());
-        assertEquals(GameStatus.LOBBY, result.getStatus());
+        assertEquals(InteractiveSessionStatus.LOBBY, result.getStatus());
         assertEquals("host1", result.getHostUserId());
         assertEquals(1, result.getPlayers().size());
         assertEquals(10, result.getDeckSnapshot().size()); // totalRounds default
@@ -264,7 +264,7 @@ class InteractiveSessionServiceTest {
 
     @Test
     void joinInteractiveSession_WhenGameAlreadyStarted_ThrowsConflict() {
-        lobbySession.setStatus(GameStatus.IN_PROGRESS);
+        lobbySession.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
 
         User player = new User();
@@ -321,7 +321,7 @@ class InteractiveSessionServiceTest {
 
         interactiveSessionService.cancelInteractiveSession("ABCD12", host);
 
-        verify(interactiveSessionRepository).save(argThat(s -> s.getStatus() == GameStatus.CANCELLED));
+        verify(interactiveSessionRepository).save(argThat(s -> s.getStatus() == InteractiveSessionStatus.CANCELLED));
         verify(interactiveSessionCache).evict("ABCD12");
     }
 
@@ -340,7 +340,7 @@ class InteractiveSessionServiceTest {
 
     @Test
     void cancelInteractiveSession_WhenAlreadyFinished_ThrowsConflict() {
-        lobbySession.setStatus(GameStatus.FINISHED);
+        lobbySession.setStatus(InteractiveSessionStatus.FINISHED);
         when(authorizationService.requireInteractiveSessionHost("ABCD12", host)).thenReturn(lobbySession);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
@@ -653,10 +653,10 @@ class InteractiveSessionServiceTest {
         s.setId("session1");
         s.setRoomCode("ABCD12");
         s.setHostUserId("p1");
-        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         s.setSettings(settings);
@@ -685,10 +685,10 @@ class InteractiveSessionServiceTest {
         s.setId("session1");
         s.setRoomCode("ABCD12");
         s.setHostUserId("p1");
-        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         s.setSettings(settings);
@@ -726,10 +726,10 @@ class InteractiveSessionServiceTest {
         s.setId("session1");
         s.setRoomCode("ABCD12");
         s.setHostUserId("p1");
-        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         s.setSettings(settings);
@@ -1132,7 +1132,7 @@ class InteractiveSessionServiceTest {
         s.setId("session1");
         s.setRoomCode("ABCD12");
         s.setHostUserId("host1");
-        s.setStatus(GameStatus.LOBBY);
+        s.setStatus(InteractiveSessionStatus.LOBBY);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
         settings.setTeamMode(true);
         settings.setAutoBalanceTeams(true);
@@ -1158,10 +1158,10 @@ class InteractiveSessionServiceTest {
         s.setId("session1");
         s.setRoomCode("ABCD12");
         s.setHostUserId("p1");
-        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setGameMode(GameMode.SIMULTANEOUS);
+        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         settings.setTeamMode(true);
@@ -1395,7 +1395,7 @@ class InteractiveSessionServiceTest {
         s.setId("session1");
         s.setRoomCode("ABCD12");
         s.setHostUserId("host1");
-        s.setStatus(GameStatus.IN_PROGRESS);
+        s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         s.setSettings(new InteractiveSessionSettings());
         s.setCurrentRound(0);

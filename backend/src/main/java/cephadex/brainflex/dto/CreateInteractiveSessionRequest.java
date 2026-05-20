@@ -6,7 +6,7 @@
  */
 package cephadex.brainflex.dto;
 
-import cephadex.brainflex.model.enums.GameMode;
+import cephadex.brainflex.model.enums.InteractiveSessionMode;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -15,7 +15,7 @@ import jakarta.validation.constraints.Size;
 
 public record CreateInteractiveSessionRequest(
         @NotBlank String deckId,
-        GameMode gameMode,                              // null → deck default
+        InteractiveSessionMode mode,                                  // null → deck default
         @Min(1) @Max(60) Integer totalRounds,           // null → deck default
         @Min(0) @Max(120) Integer timePerQuestion,      // null → deck default; 0 = unlimited
         Boolean speedBonus,

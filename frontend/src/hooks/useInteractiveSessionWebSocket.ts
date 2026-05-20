@@ -1,6 +1,6 @@
 /**
- * Manages the STOMP/WebSocket connection for an active interactiveSession.
- * Subscribes to every interactiveSession topic, dispatches payloads into the Redux game
+ * Manages the STOMP/WebSocket connection for an active InteractiveSession.
+ * Subscribes to every session topic, dispatches payloads into the Redux session
  * slice, and exposes helper functions for sending host/player actions.
  */
 import { useEffect, useRef, useCallback } from "react";
@@ -12,7 +12,7 @@ import {
   setSession,
   roundStarted,
   roundResultReceived,
-  gameOver,
+  sessionEnded,
   wsErrorReceived,
   answerProgressReceived,
   presenceUpdated,
@@ -21,12 +21,12 @@ import {
   wordCloudUpdated,
   type RoundStartPayload,
   type RoundResultPayload,
-  type GameOverPayload,
+  type SessionEndedPayload,
   type WsErrorPayload,
   type AnswerProgressPayload,
   type PresencePayload,
   type WordCloudUpdatePayload,
-} from "../store/gameSlice";
+} from "../store/interactiveSessionSlice";
 import type { InteractiveSessionDto } from "../store/BrainFlexApi";
 import type { AnswerPayload } from "../types/elements";
 import type {
@@ -34,7 +34,7 @@ import type {
   VoteProgressPayload,
 } from "../types/bestAnswer";
 
-export function useGameWebSocket(roomCode: string | null) {
+export function useInteractiveSessionWebSocket(roomCode: string | null) {
   const dispatch = useAppDispatch();
   const clientRef = useRef<Client | null>(null);
 
@@ -56,8 +56,8 @@ export function useGameWebSocket(roomCode: string | null) {
             roundResultReceived(JSON.parse(msg.body) as RoundResultPayload),
           );
         });
-        client.subscribe(`/topic/interactive-session/${roomCode}/gameOver`, (msg) => {
-          dispatch(gameOver(JSON.parse(msg.body) as GameOverPayload));
+        client.subscribe(`/topic/interactive-session/${roomCode}/ended`, (msg) => {
+          dispatch(sessionEnded(JSON.parse(msg.body) as SessionEndedPayload));
         });
         client.subscribe(`/topic/interactive-session/${roomCode}/answered`, (msg) => {
           dispatch(

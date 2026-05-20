@@ -486,6 +486,16 @@ const refetchRatingViews = (deckId: string, api: CacheSyncApi) => {
       { subscribe: false, forceRefetch: true },
     ),
   );
+  // chunk 21 — also refetch getMyRating so the reviews panel sees the new
+  // review text on the caller's own row without a page reload. A 404 is OK
+  // (the user may have just cleared their rating); the cache layer treats
+  // that as an "errored" entry and the panel falls back to the empty state.
+  api.dispatch(
+    BrainFlex.endpoints.getMyRating.initiate(
+      { id: deckId },
+      { subscribe: false, forceRefetch: true },
+    ),
+  );
   const queries =
     (
       api.getState() as unknown as {

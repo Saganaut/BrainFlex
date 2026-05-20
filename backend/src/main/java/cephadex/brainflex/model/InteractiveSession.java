@@ -17,7 +17,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.enums.GameStatus;
+import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 import cephadex.brainflex.model.enums.InteractiveSessionPhase;
 import lombok.Data;
 
@@ -33,7 +33,7 @@ public class InteractiveSession {
     @Indexed(unique = true)
     private String inviteToken;
 
-    private GameStatus status = GameStatus.LOBBY;
+    private InteractiveSessionStatus status = InteractiveSessionStatus.LOBBY;
 
     // The active phase within the current round. Most question kinds live in
     // SUBMIT only; Best-Answer-mode questions cycle SUBMIT → VOTE → REVEAL.

@@ -87,6 +87,7 @@ class InteractiveSessionServiceTest {
     @Mock private InteractiveSessionChatMessageRepository chatRepository;
     @Mock private InteractiveSessionRateLimiter rateLimiter;
     @Mock private AvatarService avatarService;
+    @Mock private GameHistoryService gameHistoryService;
     @Mock private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     @Mock private SimpMessagingTemplate messagingTemplate;
     @Mock private org.springframework.context.ApplicationEventPublisher events;
@@ -1117,6 +1118,22 @@ class InteractiveSessionServiceTest {
             if (!(r instanceof InteractiveSessionResult res)) return false;
             return res.getPlacements().stream().allMatch(pp -> pp.getTeamId() != null);
         }));
+    }
+
+    @Test
+    void endGame_DelegatesPlacementsToGameHistoryService() {
+        // Chunk 15 — endGame must hand its computed placements to the
+        // GameHistoryService so per-user history rows get written before the
+        // PlayerStats rollup mutates.
+        InteractiveSession session = teamModeSubmitSession();
+        session.getPlayers().get(0).setScore(75);
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        interactiveSessionService.endInteractiveSessionEarly("ABCD12", "guest:p1");
+
+        verify(gameHistoryService).recordFinish(
+                argThat(s -> s instanceof InteractiveSession is && "session1".equals(is.getId())),
+                argThat(placements -> placements != null && !placements.isEmpty()));
     }
 
     private cephadex.brainflex.model.Team makeTeam(String id, String color) {

@@ -124,6 +124,7 @@ public class InteractiveSessionService {
     private final InteractiveSessionRateLimiter rateLimiter;
     private final AvatarService avatarService;
     private final ApplicationEventPublisher events;
+    private final GameHistoryService gameHistoryService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int CHAT_MAX_BODY = 500;
@@ -159,6 +160,7 @@ public class InteractiveSessionService {
             InteractiveSessionRateLimiter rateLimiter,
             AvatarService avatarService,
             ApplicationEventPublisher events,
+            GameHistoryService gameHistoryService,
             ObjectMapper objectMapper,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.interactiveSessionRepository = interactiveSessionRepository;
@@ -175,6 +177,7 @@ public class InteractiveSessionService {
         this.rateLimiter = rateLimiter;
         this.avatarService = avatarService;
         this.events = events;
+        this.gameHistoryService = gameHistoryService;
         this.objectMapper = objectMapper;
         this.messagingTemplate = messagingTemplate;
     }
@@ -1197,9 +1200,15 @@ public class InteractiveSessionService {
         // cross-collection aggregation.
         deckService.incrementPlayCount(session.getDeckId());
 
+        // Chunk 15 — write the per-user GameHistoryEntry rows (idempotent on
+        // (userId, sessionId)) before mutating PlayerStats. The history rows
+        // are the authoritative per-user log; PlayerStats stays as the
+        // rolled-up snapshot.
+        gameHistoryService.recordFinish(session, placements);
+
         for (PlayerPlacement p : placements) {
             if (!p.isGuest())
-                updateStatsAfterGame(p.getUserId(), p.getFinalScore(), p.getPlacement() == 1);
+                updateStatsAfterGame(p.getUserId(), p.getFinalScore());
         }
 
         messagingTemplate.convertAndSend(
@@ -1236,14 +1245,24 @@ public class InteractiveSessionService {
         return Math.max(0, (int) (basePoints * 0.5 * speedFraction));
     }
 
-    private void updateStatsAfterGame(String userId, int finalScore, boolean won) {
+    /**
+     * Rolls forward the registered user's {@link cephadex.brainflex.model.PlayerStats}
+     * snapshot after a finished game. Guests are excluded by the caller — their
+     * accounts are ephemeral and not tracked on the leaderboard.
+     *
+     * Chunk 15: {@code currentStreak} is now a never-resetting tally of games
+     * the user has finished. The previous "consecutive wins" semantic was
+     * never surfaced in the UI and is dropped here; per-game streaks live on
+     * {@code GameHistoryEntry.longestStreak} / {@code currentStreakAtEnd}.
+     */
+    private void updateStatsAfterGame(String userId, int finalScore) {
         userRepository.findById(userId).ifPresent(user -> {
             var stats = user.getStats();
             stats.setGamesPlayed(stats.getGamesPlayed() + 1);
             stats.setTotalPoints(stats.getTotalPoints() + finalScore);
             if (finalScore > stats.getHighScore())
                 stats.setHighScore(finalScore);
-            stats.setCurrentStreak(won ? stats.getCurrentStreak() + 1 : 0);
+            stats.setCurrentStreak(stats.getCurrentStreak() + 1);
             userRepository.save(user);
         });
     }

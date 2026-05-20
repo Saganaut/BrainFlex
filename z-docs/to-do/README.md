@@ -27,7 +27,7 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 - [x] **07** — [Word Cloud](./07-element-word-cloud-and-true-false/README.md) — Mentimeter-style survey kind (True/False dropped: an MCQ with 2 options covers that use case)
 - [x] **08** — [Allocation & Matching](./08-element-allocation-and-matching/README.md) — Mentimeter "100 points" and Kahoot "puzzle pairs"
 - [x] **09** — [Drawing](./09-element-drawing/README.md) — open canvas with stroke-based answers
-- [ ] **10** — [Common element additions](./10-element-common-additions/README.md) — provenance, shuffle, fuzzy match, slide blocks
+- [x] **10** — [Common element additions](./10-element-common-additions/README.md) — provenance, shuffle, fuzzy match, slide blocks
 
 ### Live game polish
 
@@ -38,7 +38,7 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 
 ### Analytics & reporting
 
-- [ ] **15** — [Game history](./15-game-history/README.md) — per-user `GameHistoryEntry`
+- [x] **15** — [Game history](./15-game-history/README.md) — per-user `GameHistoryEntry` *(backend + tests done; profile history tab / your-best widget / stats cards deferred to the holistic chunk-13 player-UI pass)*
 - [ ] **16** — [Deck analytics](./16-deck-analytics/README.md) — rolled-up `DeckAnalytics` + per-element stats + reports
 - [ ] **17** — [Achievements](./17-achievements/README.md) — `Achievement` + `UserAchievement` + trigger evaluator
 - [ ] **18** — [Notifications](./18-notifications/README.md) — in-app notification stream
@@ -130,3 +130,11 @@ These items were intentionally left out of the chunk that nominally owns them be
   - Optimistic chat send + STOMP reconcile (apiEnhancements `onQueryStarted` for `sendChat`)
 
   These cluster with **chunk 13** for the same reason as the per-kind player surfaces above: chunk 13 is the holistic player-UI pass, and building the reaction/chat shell in isolation would establish a layout pattern the other deferred work would have to match.
+
+- **Game history UI (chunk 15).** Chunk 15 shipped the backend (`GameHistoryEntry` model + `(userId, interactiveSessionId)` unique index, `GameHistoryService.recordFinish` writing per-player + standalone-host rows from `InteractiveSessionService.endGame`, `PlayerStats.currentStreak` reinterpreted as a never-resetting tally of games played, `Membership.monthlyInteractiveSessionCount` + `monthlyCountPeriodStart` with month-boundary rollover, three GET endpoints under `/api/users/me/history`, `/api/users/{userId}/history`, `/api/decks/{deckId}/history/mine`, plus a `GameHistoryBackfillMigration` gated on `--migrate.game-history=true`), but **no frontend yet** (codegen has not been regenerated). Specifically still TODO:
+  - Profile page "History" tab with paginated list (deck cover + name, placement badge, score, host, relative played-at)
+  - Stats summary cards above the list (total games, best placement, total points, average accuracy)
+  - "Your best: 1,240 (rank #3 of 12)" widget on the deck detail page driven by `/api/decks/{deckId}/history/mine`
+  - Frontend codegen + RTK Query cache-sync enhancements
+
+  These cluster with **chunk 13** alongside the other deferred player/host surfaces — the deck-detail "your best" widget is small enough to land standalone, but the profile history tab + summary cards share styling decisions with the chunk-13 placement card and read most naturally next to the deferred chunk 11/12/13 work.

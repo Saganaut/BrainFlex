@@ -45,6 +45,7 @@ import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.Tag;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.element.BodyBlock;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
@@ -59,6 +60,7 @@ import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.element.ScaleStatement;
 import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
+import cephadex.brainflex.model.element.SlideBlock;
 import cephadex.brainflex.model.element.TextQuestion;
 import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
@@ -509,7 +511,7 @@ public class SampleDataSeeder {
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
                 45, "Pin the best ones to share.",
-                null, null, null, null, MediaPosition.NONE,
+                null, null, null, null, null, null, MediaPosition.NONE,
                 false, 0,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -754,8 +756,16 @@ public class SampleDataSeeder {
     private static final boolean SEED_REACTIONS = true;
     private static final Integer SEED_VERSION = 1;
 
+    /** Wrap a non-empty seed body string into the canonical single-BodyBlock
+     *  list. Mirrors the runtime migration shape so seed-loaded decks match
+     *  what SlideBlocksMigrationRunner would produce for legacy content. */
+    private static List<SlideBlock> seedBlocks(String id, String body) {
+        if (body == null || body.isBlank()) return List.of();
+        return List.of(new BodyBlock(id + "-block-1", body));
+    }
+
     private static Slide titleSlide(String id, String title, String body) {
-        return new Slide(id, SlideKind.TITLE, pub(id), prv(id), title, null, body,
+        return new Slide(id, SlideKind.TITLE, pub(id), prv(id), title, null, body, seedBlocks(id, body),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 6, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
@@ -767,7 +777,7 @@ public class SampleDataSeeder {
     }
 
     private static Slide endSlide(String id, String title, String body) {
-        return new Slide(id, SlideKind.END, pub(id), prv(id), title, null, body,
+        return new Slide(id, SlideKind.END, pub(id), prv(id), title, null, body, seedBlocks(id, body),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 8, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
@@ -844,6 +854,7 @@ public class SampleDataSeeder {
                 pub("wt-s-1"), prv("wt-s-1"),
                 "Welcome to BrainFlex", null,
                 "A quick tour through every kind of element a deck can contain. Press the screen to begin.",
+                seedBlocks("wt-s-1", "A quick tour through every kind of element a deck can contain. Press the screen to begin."),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 6, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
@@ -858,6 +869,7 @@ public class SampleDataSeeder {
                 pub("wt-s-2"), prv("wt-s-2"),
                 "Trivia round", null,
                 "Multiple choice, then free-text, then a number guess.",
+                seedBlocks("wt-s-2", "Multiple choice, then free-text, then a number guess."),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
@@ -915,6 +927,7 @@ public class SampleDataSeeder {
                 pub("wt-s-3"), prv("wt-s-3"),
                 "Order and rate", null,
                 "Drag to reorder, then rate some statements.",
+                seedBlocks("wt-s-3", "Drag to reorder, then rate some statements."),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.BAR_VERTICAL, true, 3, true,
@@ -965,6 +978,7 @@ public class SampleDataSeeder {
                 pub("wt-s-4"), prv("wt-s-4"),
                 "Audience interaction", null,
                 "Vote on the funniest answer, then ask anything.",
+                seedBlocks("wt-s-4", "Vote on the funniest answer, then ask anything."),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.PIE_CHART, false, 1, true,
@@ -998,7 +1012,7 @@ public class SampleDataSeeder {
                 false, true, null, ResponseMode.ACCEPTING_RESPONSES,
                 false, null, 0, null,
                 45, "Audience asks freely; you pin the ones you want to address.",
-                null, null, null, null, MediaPosition.NONE,
+                null, null, null, null, null, null, MediaPosition.NONE,
                 false, 0,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
@@ -1007,6 +1021,7 @@ public class SampleDataSeeder {
                 pub("wt-s-5"), prv("wt-s-5"),
                 "Visual round", null,
                 "Tap cells, place a pin, pick an image.",
+                seedBlocks("wt-s-5", "Tap cells, place a pin, pick an image."),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
@@ -1071,6 +1086,7 @@ public class SampleDataSeeder {
                 pub("wt-s-end"), prv("wt-s-end"),
                 "Thanks for playing!", null,
                 "That's every element type. Now go build your own deck.",
+                seedBlocks("wt-s-end", "That's every element type. Now go build your own deck."),
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 8, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,

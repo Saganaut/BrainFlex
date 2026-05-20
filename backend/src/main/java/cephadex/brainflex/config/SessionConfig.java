@@ -27,14 +27,11 @@ package cephadex.brainflex.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
-import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
 
 @Configuration
 @Profile("!test")
-@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800, // 30 minutes
-        redisNamespace = "brainflex:session")
 public class SessionConfig {
 
     @Bean

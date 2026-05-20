@@ -51,7 +51,7 @@ public final class DeckElementCloner {
         return switch (element) {
             case Slide s -> new Slide(
                     id, s.slideKind(), s.publicKey(), s.privateKey(),
-                    s.title(), s.styledTitle(), s.body(),
+                    s.title(), s.styledTitle(), s.body(), s.blocks(),
                     s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
                     s.displaySeconds(), s.speakerNotes(), s.background(),
                     s.image(), s.videoUrl(), s.audioUrl(), s.videoAssetId(), s.audioAssetId(), s.mediaPosition(),
@@ -212,7 +212,7 @@ public final class DeckElementCloner {
         return switch (element) {
             case Slide s -> new Slide(
                     s.id(), s.slideKind(), s.publicKey(), s.privateKey(),
-                    s.title(), s.styledTitle(), s.body(),
+                    s.title(), s.styledTitle(), s.body(), s.blocks(),
                     s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
                     s.displaySeconds(), s.speakerNotes(), s.background(),
                     s.image(), s.videoUrl(), s.audioUrl(), s.videoAssetId(), s.audioAssetId(), s.mediaPosition(),

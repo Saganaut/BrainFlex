@@ -35,7 +35,14 @@ public record Slide(
         String privateKey,
         String title,
         Map<String, Object> styledTitle,
-        String body,                  // markdown-friendly; rendered as plain text for v1
+        // Legacy single rich-text body. Replaced by `blocks` (chunk 10c); kept
+        // for one release as a fallback so existing decks render until the
+        // SlideBlocksMigrationRunner backfills `blocks` from `body`. The
+        // {@link #effectiveBlocks()} helper hides this fallback from callers.
+        String body,
+        // Polymorphic stacked content (chunk 10c). When set, takes precedence
+        // over `body`. Null/empty + non-empty `body` is the unmigrated shape.
+        List<SlideBlock> blocks,
         boolean scored,
         boolean survey,
         Integer multipleSelections,
@@ -78,5 +85,25 @@ public record Slide(
     @Override
     public ElementKind kind() {
         return ElementKind.SLIDE;
+    }
+
+    /**
+     * Returns the authoritative block list for rendering. When `blocks` is
+     * populated, hands it back unchanged. When `blocks` is null/empty but
+     * `body` carries a non-empty legacy value, wraps the body string in a
+     * single {@link BodyBlock} so renderers (and the host preview) can stay on
+     * a single read path. Returns an empty list when both are unset.
+     *
+     * Intentionally does not mutate the record — the migration runner is the
+     * one place that persists the wrap.
+     */
+    public List<SlideBlock> effectiveBlocks() {
+        if (blocks != null && !blocks.isEmpty()) {
+            return blocks;
+        }
+        if (body != null && !body.isBlank()) {
+            return List.of(new BodyBlock("legacy-body-" + (id == null ? "anon" : id), body));
+        }
+        return List.of();
     }
 }

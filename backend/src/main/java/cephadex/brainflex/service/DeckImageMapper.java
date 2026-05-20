@@ -22,6 +22,7 @@ import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
 import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.element.ImageBlock;
 import cephadex.brainflex.model.element.MatchingPair;
 import cephadex.brainflex.model.element.MatchingQuestion;
 import cephadex.brainflex.model.element.McqOption;
@@ -33,6 +34,7 @@ import cephadex.brainflex.model.element.RankingItem;
 import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
+import cephadex.brainflex.model.element.SlideBlock;
 import cephadex.brainflex.model.element.TextQuestion;
 import cephadex.brainflex.model.element.WordCloudQuestion;
 
@@ -64,7 +66,7 @@ public final class DeckImageMapper {
         return switch (element) {
             case Slide s -> new Slide(
                     s.id(), s.slideKind(), s.publicKey(), s.privateKey(),
-                    s.title(), s.styledTitle(), s.body(),
+                    s.title(), s.styledTitle(), s.body(), mapBlocks(s.blocks(), op),
                     s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
                     s.displaySeconds(), s.speakerNotes(),
                     applyNullable(s.background(), op), applyNullable(s.image(), op),
@@ -240,6 +242,13 @@ public final class DeckImageMapper {
         visitNullable(element.image(), visitor);
         visitNullable(element.background(), visitor);
         switch (element) {
+            case Slide s -> {
+                if (s.blocks() != null) {
+                    for (SlideBlock block : s.blocks()) {
+                        if (block instanceof ImageBlock ib) visitNullable(ib.image(), visitor);
+                    }
+                }
+            }
             case McqQuestion q -> {
                 if (q.options() != null) {
                     for (McqOption opt : q.options()) visitNullable(opt.image(), visitor);
@@ -305,6 +314,21 @@ public final class DeckImageMapper {
     private static GridCellsConfig mapCells(GridCellsConfig cells, UnaryOperator<Image> op) {
         if (cells == null) return null;
         return cells.withBackingImage(applyNullable(cells.backingImage(), op));
+    }
+
+    /** Re-emit each SlideBlock with its embedded image (if any) transformed.
+     *  Non-ImageBlock kinds pass through unchanged. */
+    private static List<SlideBlock> mapBlocks(List<SlideBlock> blocks, UnaryOperator<Image> op) {
+        if (blocks == null) return null;
+        List<SlideBlock> mapped = new ArrayList<>(blocks.size());
+        for (SlideBlock block : blocks) {
+            if (block instanceof ImageBlock ib) {
+                mapped.add(ib.withImage(applyNullable(ib.image(), op)));
+            } else {
+                mapped.add(block);
+            }
+        }
+        return mapped;
     }
 
     private static Image applyNullable(Image image, UnaryOperator<Image> op) {

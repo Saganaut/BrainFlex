@@ -1917,6 +1917,9 @@ export type ScalesQuestion = {
     reactionsEnabled?: boolean;
     version?: number;
   };
+export type SlideBlock = {
+  kind: string;
+};
 export type Slide = {
   kind: "Slide";
 } & DeckElementBase & {
@@ -1929,6 +1932,7 @@ export type Slide = {
       [key: string]: object;
     };
     body?: string;
+    blocks?: SlideBlock[];
     scored?: boolean;
     survey?: boolean;
     multipleSelections?: number;

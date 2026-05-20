@@ -57,4 +57,21 @@ public class Membership {
      */
     private String stripeCustomerId;
     private String stripeSubscriptionId;
+
+    /**
+     * Number of interactive sessions this user has hosted in the current
+     * billing period. Bumped by {@link cephadex.brainflex.service.GameHistoryService}
+     * when a session finishes; consulted by quota gates when tiered limits
+     * are introduced. Rolls over to 1 on the first finish of a new calendar
+     * month — see {@link #monthlyCountPeriodStart}.
+     */
+    private int monthlyInteractiveSessionCount = 0;
+
+    /**
+     * Start-of-month timestamp for the current counter window. Null until the
+     * first session finish writes a value. The roll-over check compares
+     * year+month against the incoming session's {@code playedAt}; we never
+     * back-fill missed months.
+     */
+    private LocalDateTime monthlyCountPeriodStart;
 }

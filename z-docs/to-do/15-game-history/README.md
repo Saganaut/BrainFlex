@@ -1,6 +1,6 @@
 # 15 — Game history
 
-**Status:** Not started
+**Status:** Backend done; frontend deferred to the holistic chunk-13 player-UI pass
 **Depends on:** 13 (`PlayerAnswer.timeTakenMs`, streak fields)
 **Unblocks:** 16 (analytics), 17 (achievements trigger from history events)
 
@@ -65,13 +65,13 @@ Indexes:
 
 ## Checklist
 
-- [ ] `GameHistoryEntry` model + repo + indexes
-- [ ] `GameHistoryService.recordFinish` writes per-player + host entries
-- [ ] `PlayerStats` updates wired in
-- [ ] Backfill script
-- [ ] Endpoints + tests
-- [ ] History tab on profile page
-- [ ] "Your best" widget on deck detail page
-- [ ] Stats summary cards
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `GameHistoryEntry` model + repo + indexes
+- [x] `GameHistoryService.recordFinish` writes per-player + host entries
+- [x] `PlayerStats` updates wired in *(currentStreak now a never-resetting tally of games played; days-played reset rule dropped per user)*
+- [x] Backfill script *(`GameHistoryBackfillMigration`, gated on `--migrate.game-history=true`)*
+- [x] Endpoints + tests
+- [ ] History tab on profile page *(frontend — deferred)*
+- [ ] "Your best" widget on deck detail page *(frontend — deferred)*
+- [ ] Stats summary cards *(frontend — deferred)*
+- [ ] Frontend codegen + lint *(deferred)*
+- [x] Backend tests pass

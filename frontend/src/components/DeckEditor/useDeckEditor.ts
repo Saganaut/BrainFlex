@@ -70,7 +70,11 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         id,
         slideKind: "CONTENT",
         title: "New slide",
+        // `body` stays for one-release backwards compat; new slides default to
+        // an empty `blocks` list (chunk 10c). The block-based editor renders
+        // an "Add block" affordance when the list is empty.
         body: "",
+        blocks: [],
         scored: false,
         survey: false,
         displaySeconds: 0,

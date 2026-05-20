@@ -16,5 +16,7 @@ public interface InteractiveSessionChatMessageRepository extends MongoRepository
     Page<InteractiveSessionChatMessage> findAllByInteractiveSessionIdOrderBySentAtDesc(
             String interactiveSessionId, Pageable pageable);
 
+    long countByInteractiveSessionId(String interactiveSessionId);
+
     void deleteByInteractiveSessionId(String interactiveSessionId);
 }

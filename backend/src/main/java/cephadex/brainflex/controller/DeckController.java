@@ -50,6 +50,7 @@ import cephadex.brainflex.dto.RateDeckRequest;
 import cephadex.brainflex.dto.UpdateCommentRequest;
 import cephadex.brainflex.dto.UpdateDeckRequest;
 import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.DeckAnalytics;
 import cephadex.brainflex.model.DeckComment;
 import cephadex.brainflex.model.DeckRating;
 import cephadex.brainflex.model.User;
@@ -63,6 +64,7 @@ import cephadex.brainflex.dto.TransferOwnershipRequest;
 import cephadex.brainflex.dto.UpdateCollaboratorRoleRequest;
 import cephadex.brainflex.model.DeckCollaborator;
 import cephadex.brainflex.service.AuthorizationService;
+import cephadex.brainflex.service.DeckAnalyticsService;
 import cephadex.brainflex.service.DeckCollaboratorService;
 import cephadex.brainflex.service.DeckCommentService;
 import cephadex.brainflex.service.DeckFavoriteService;
@@ -86,6 +88,7 @@ public class DeckController {
     private final DeckRatingService deckRatingService;
     private final DeckCommentService deckCommentService;
     private final DeckCollaboratorService deckCollaboratorService;
+    private final DeckAnalyticsService deckAnalyticsService;
     private final AuthorizationService authorizationService;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
@@ -101,6 +104,7 @@ public class DeckController {
             DeckRatingService deckRatingService,
             DeckCommentService deckCommentService,
             DeckCollaboratorService deckCollaboratorService,
+            DeckAnalyticsService deckAnalyticsService,
             AuthorizationService authorizationService,
             DeckRepository deckRepository,
             UserRepository userRepository,
@@ -114,6 +118,7 @@ public class DeckController {
         this.deckRatingService = deckRatingService;
         this.deckCommentService = deckCommentService;
         this.deckCollaboratorService = deckCollaboratorService;
+        this.deckAnalyticsService = deckAnalyticsService;
         this.authorizationService = authorizationService;
         this.deckRepository = deckRepository;
         this.userRepository = userRepository;
@@ -714,6 +719,24 @@ public class DeckController {
         return hydrateAndWrap(
                 deckService.moveMcqOption(id, elementId, optionId, to, caller),
                 caller);
+    }
+
+    /**
+     * Chunk 16 — Per-deck rolled-up analytics. Auth: owner or EDITOR
+     * collaborator only (system decks are blocked because they have no owner).
+     * Returns a zero-default {@link DeckAnalytics} when the deck has never been
+     * played so the dashboard can render an empty-state shell without a 404.
+     */
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping("/{id}/analytics")
+    public DeckAnalytics getDeckAnalytics(@PathVariable String id, Authentication authentication) {
+        User caller = resolveUser(authentication);
+        authorizationService.requireDeckEditable(id, caller);
+        DeckAnalytics analytics = deckAnalyticsService.findByDeckId(id);
+        if (analytics != null) return analytics;
+        DeckAnalytics empty = new DeckAnalytics();
+        empty.setDeckId(id);
+        return empty;
     }
 
     /**

@@ -23,6 +23,9 @@ import {
   type DeckCommentDto,
   type DeckDto,
   type ExploreDecksApiArg,
+  type InteractiveSessionChatMessageDto,
+  type InteractiveSessionDto,
+  type ListChatApiArg,
   type ListCommentsApiArg,
   type ListMyFavoritesApiArg,
   type ListRatingsApiArg,
@@ -553,6 +556,131 @@ const optimisticDeleteMyRating = async (
   }
 };
 
+/**
+ * Splice an authoritative {@link InteractiveSessionDto} into every cached
+ * `getInteractiveSession` view for the same roomCode. Team mutations
+ * (create/update/delete/movePlayer) all return the whole session so the
+ * lobby + scoreboard re-render without a refetch and the per-player
+ * teamId stays in sync with the team list.
+ */
+const syncInteractiveSessionCache = async (
+  roomCode: string,
+  api: CacheSyncApi,
+) => {
+  try {
+    const { data } = await api.queryFulfilled;
+    api.dispatch(
+      BrainFlex.util.upsertQueryData(
+        "getInteractiveSession",
+        { roomCode },
+        data as InteractiveSessionDto,
+      ),
+    );
+  } catch {
+    // Mutation rejected — leave the cache alone; the caller surfaces error UX.
+  }
+};
+
+/**
+ * Optimistic chat send. Appends a synthetic message into every cached page
+ * of `listChat` for the room so the panel renders instantly; on fulfill the
+ * STOMP /chat broadcast (handled in the slice) carries the canonical row, and
+ * the optimistic id is replaced when the real id arrives. On reject we drop
+ * the synthetic message so a failed send doesn't strand a phantom row.
+ */
+interface ChatSendApi {
+  dispatch: (action: unknown) => unknown;
+  getState: () => WithApiQueries;
+  queryFulfilled: Promise<{ data: InteractiveSessionChatMessageDto }>;
+}
+
+const optimisticSendChat = async (
+  arg: { roomCode: string; chatSendRequest: { body: string } },
+  api: ChatSendApi,
+) => {
+  const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const optimistic: InteractiveSessionChatMessageDto = {
+    id: tempId,
+    body: arg.chatSendRequest.body,
+    sentAt: new Date().toISOString(),
+    moderated: false,
+  };
+  const patches: { undo: () => void }[] = [];
+  const queries = api.getState().api?.queries ?? {};
+  for (const entry of Object.values(queries)) {
+    if (entry?.endpointName !== "listChat") continue;
+    const queryArg = (entry.originalArgs ?? {}) as ListChatApiArg;
+    if (queryArg.roomCode !== arg.roomCode) continue;
+    patches.push(
+      api.dispatch(
+        BrainFlex.util.updateQueryData("listChat", queryArg, (draft) => {
+          draft.push(optimistic);
+        }),
+      ) as { undo: () => void },
+    );
+  }
+  try {
+    const { data } = await api.queryFulfilled;
+    for (const entry of Object.values(queries)) {
+      if (entry?.endpointName !== "listChat") continue;
+      const queryArg = (entry.originalArgs ?? {}) as ListChatApiArg;
+      if (queryArg.roomCode !== arg.roomCode) continue;
+      api.dispatch(
+        BrainFlex.util.updateQueryData("listChat", queryArg, (draft) => {
+          const idx = draft.findIndex((m) => m.id === tempId);
+          if (idx >= 0) draft[idx] = data;
+          else draft.push(data);
+        }),
+      );
+    }
+  } catch {
+    for (const p of patches) p.undo();
+  }
+};
+
+/**
+ * Patch the moderated flag on a chat row across every cached `listChat` page
+ * for the room when the host hides a message. The server also rebroadcasts on
+ * STOMP /chat, so this is mostly belt-and-suspenders for the caller-side
+ * cache (the moderating host's own panel).
+ */
+const optimisticModerateChat = async (
+  arg: { roomCode: string; messageId: string },
+  api: ChatSendApi,
+) => {
+  const patches: { undo: () => void }[] = [];
+  const queries = api.getState().api?.queries ?? {};
+  for (const entry of Object.values(queries)) {
+    if (entry?.endpointName !== "listChat") continue;
+    const queryArg = (entry.originalArgs ?? {}) as ListChatApiArg;
+    if (queryArg.roomCode !== arg.roomCode) continue;
+    patches.push(
+      api.dispatch(
+        BrainFlex.util.updateQueryData("listChat", queryArg, (draft) => {
+          const row = draft.find((m) => m.id === arg.messageId);
+          if (row) row.moderated = true;
+        }),
+      ) as { undo: () => void },
+    );
+  }
+  try {
+    const { data } = await api.queryFulfilled;
+    for (const entry of Object.values(queries)) {
+      if (entry?.endpointName !== "listChat") continue;
+      const queryArg = (entry.originalArgs ?? {}) as ListChatApiArg;
+      if (queryArg.roomCode !== arg.roomCode) continue;
+      api.dispatch(
+        BrainFlex.util.updateQueryData("listChat", queryArg, (draft) => {
+          const idx = draft.findIndex((m) => m.id === arg.messageId);
+          if (idx >= 0) draft[idx] = data;
+        }),
+      );
+    }
+  } catch {
+    for (const p of patches) p.undo();
+  }
+};
+
 BrainFlex.enhanceEndpoints({
   endpoints: {
     addElement: {
@@ -621,6 +749,35 @@ BrainFlex.enhanceEndpoints({
     },
     deleteMyRating: {
       onQueryStarted: (arg, api) => optimisticDeleteMyRating(arg, api),
+    },
+    // Team mutations all return the full session DTO; splice into the
+    // getInteractiveSession cache so the lobby team picker and the scoreboard
+    // team badges update without a refetch. The /teams STOMP broadcast still
+    // patches the slice for everyone in the room, but this keeps the
+    // mutating client itself smooth even if its socket is briefly disconnected.
+    createTeam: {
+      onQueryStarted: (arg, api) =>
+        syncInteractiveSessionCache(arg.roomCode, api),
+    },
+    updateTeam: {
+      onQueryStarted: (arg, api) =>
+        syncInteractiveSessionCache(arg.roomCode, api),
+    },
+    deleteTeam: {
+      onQueryStarted: (arg, api) =>
+        syncInteractiveSessionCache(arg.roomCode, api),
+    },
+    movePlayerToTeam: {
+      onQueryStarted: (arg, api) =>
+        syncInteractiveSessionCache(arg.roomCode, api),
+    },
+    // Audience chat: optimistic append for the sender, moderation flip for
+    // the host. STOMP broadcasts reconcile both for every other viewer.
+    sendChat: {
+      onQueryStarted: (arg, api) => optimisticSendChat(arg, api),
+    },
+    moderateChat: {
+      onQueryStarted: (arg, api) => optimisticModerateChat(arg, api),
     },
     transferOwnership: {
       onQueryStarted: async (arg, api) => {

@@ -24,6 +24,14 @@ const DEFAULT_MAX_PLAYERS = 8;
 const DEFAULT_ALLOW_GUESTS = true;
 const DEFAULT_ALLOW_LATE_JOIN = false;
 const DEFAULT_SHOW_SCORES_IMMEDIATELY = true;
+const DEFAULT_REACTIONS_ENABLED = true;
+const DEFAULT_CHAT_ENABLED = true;
+const DEFAULT_TEAM_MODE = false;
+const DEFAULT_TEAM_COUNT = 4;
+const DEFAULT_AUTO_BALANCE_TEAMS = true;
+const DEFAULT_ANONYMOUS_MODE = false;
+const TEAM_COUNT_MIN = 2;
+const TEAM_COUNT_MAX = 8;
 
 interface SettingsState {
   totalRounds: number;
@@ -35,6 +43,13 @@ interface SettingsState {
   allowGuests: boolean;
   allowLateJoin: boolean;
   showScoresImmediately: boolean;
+  reactionsEnabled: boolean;
+  chatEnabled: boolean;
+  teamMode: boolean;
+  teamCount: number;
+  autoBalanceTeams: boolean;
+  anonymousMode: boolean;
+  customRoomCode: string;
 }
 
 const PLATFORM_DEFAULTS: SettingsState = {
@@ -46,6 +61,13 @@ const PLATFORM_DEFAULTS: SettingsState = {
   allowGuests: DEFAULT_ALLOW_GUESTS,
   allowLateJoin: DEFAULT_ALLOW_LATE_JOIN,
   showScoresImmediately: DEFAULT_SHOW_SCORES_IMMEDIATELY,
+  reactionsEnabled: DEFAULT_REACTIONS_ENABLED,
+  chatEnabled: DEFAULT_CHAT_ENABLED,
+  teamMode: DEFAULT_TEAM_MODE,
+  teamCount: DEFAULT_TEAM_COUNT,
+  autoBalanceTeams: DEFAULT_AUTO_BALANCE_TEAMS,
+  anonymousMode: DEFAULT_ANONYMOUS_MODE,
+  customRoomCode: "",
 };
 
 interface SettingsFormProps {
@@ -165,6 +187,102 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
               }}
             />
           </label>
+
+          <label className={styles.setting}>
+            <span>Enable emoji reactions</span>
+            <Checkbox
+              checked={settings.reactionsEnabled}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ reactionsEnabled: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Enable audience chat</span>
+            <Checkbox
+              checked={settings.chatEnabled}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ chatEnabled: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Team mode</span>
+            <Checkbox
+              checked={settings.teamMode}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ teamMode: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Number of teams</span>
+            <Input
+              type='number'
+              min={TEAM_COUNT_MIN}
+              max={TEAM_COUNT_MAX}
+              value={settings.teamCount}
+              disabled={!settings.teamMode}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ teamCount: e.target.valueAsNumber });
+              }}
+              className={styles.numberInput}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Auto-balance teams as players join</span>
+            <Checkbox
+              checked={settings.autoBalanceTeams}
+              disabled={!settings.teamMode}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ autoBalanceTeams: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>
+              Anonymous mode
+              <span className={styles.settingHint}>
+                {" "}
+                — hide player names on the scoreboard
+              </span>
+            </span>
+            <Checkbox
+              checked={settings.anonymousMode}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ anonymousMode: e.target.checked });
+              }}
+            />
+          </label>
+
+          {/* TODO(backend): the request DTO accepts customRoomCode but the
+              service doesn't currently validate uniqueness — a memorable code
+              that collides with an existing live session will be rejected
+              with a generic 400. Surface that explicitly once the server
+              owns the collision check. */}
+          <label className={styles.setting}>
+            <span>
+              Custom room code
+              <span className={styles.settingHint}>
+                {" "}
+                — leave blank for a random 6-char code
+              </span>
+            </span>
+            <Input
+              type='text'
+              maxLength={12}
+              value={settings.customRoomCode}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ customRoomCode: e.target.value.toUpperCase() });
+              }}
+              className={styles.numberInput}
+            />
+          </label>
         </div>
       </details>
     </div>
@@ -204,6 +322,13 @@ const CreateGamePage = () => {
       allowLateJoin: d.allowLateJoin ?? DEFAULT_ALLOW_LATE_JOIN,
       showScoresImmediately:
         d.showScoresImmediately ?? DEFAULT_SHOW_SCORES_IMMEDIATELY,
+      reactionsEnabled: d.reactionsEnabled ?? DEFAULT_REACTIONS_ENABLED,
+      chatEnabled: d.chatEnabled ?? DEFAULT_CHAT_ENABLED,
+      teamMode: d.teamMode ?? DEFAULT_TEAM_MODE,
+      teamCount: d.teamCount ?? DEFAULT_TEAM_COUNT,
+      autoBalanceTeams: d.autoBalanceTeams ?? DEFAULT_AUTO_BALANCE_TEAMS,
+      anonymousMode: DEFAULT_ANONYMOUS_MODE,
+      customRoomCode: "",
     });
     setSeededFromDeckId(deck.id);
   }
@@ -214,6 +339,7 @@ const CreateGamePage = () => {
   const submit = async () => {
     if (!deckId) return;
     try {
+      const trimmedRoomCode = settings.customRoomCode.trim();
       const session = await createGame({
         createInteractiveSessionRequest: {
           deckId,
@@ -225,6 +351,15 @@ const CreateGamePage = () => {
           allowGuests: settings.allowGuests,
           allowLateJoin: settings.allowLateJoin,
           showScoresImmediately: settings.showScoresImmediately,
+          reactionsEnabled: settings.reactionsEnabled,
+          chatEnabled: settings.chatEnabled,
+          teamMode: settings.teamMode,
+          teamCount: settings.teamMode ? settings.teamCount : undefined,
+          autoBalanceTeams: settings.teamMode
+            ? settings.autoBalanceTeams
+            : undefined,
+          anonymousMode: settings.anonymousMode,
+          customRoomCode: trimmedRoomCode.length > 0 ? trimmedRoomCode : undefined,
         },
       }).unwrap();
       if (session.roomCode) {

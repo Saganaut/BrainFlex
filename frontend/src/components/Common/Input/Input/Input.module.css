@@ -4,9 +4,10 @@
 
 .input {
   position: relative;
+  display: flex;
+  width: 100%;
 
   input {
-    width: 300px;
     color: var(--text-secondary);
 
     &.error {

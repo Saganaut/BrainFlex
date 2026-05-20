@@ -92,12 +92,9 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 
 These items were intentionally left out of the chunk that nominally owns them because they don't fit until a different chunk lands first. Each one is unblocked by a specific later chunk; revisit when that chunk starts so the per-kind work all lands in one consistent pass.
 
-- **Per-kind player surfaces (chunks 07, 08, 09).** Chunks 07 / 08 / 09 shipped the backend + author editor for Word Cloud, Allocation, Matching, and Drawing, but not the **player canvas** or the **reveal view** for any of them — `PlayPage` has no per-kind dispatch yet, so building one element's player view in isolation would establish a pattern the other kinds wouldn't match. Specifically still TODO:
-  - Drawing player canvas (Pointer events, single-finger draw, undo, clear, palette swatches, submit on commit)
-  - Drawing stroke downsampling before submit (Douglas-Peucker pass; mentioned in `09-element-drawing/README.md`)
-  - Drawing reveal grid + lightbox + Best Answer voting wiring
-  - Word Cloud / Allocation / Matching player surfaces (parity items, same gap)
-  - A per-kind player dispatch in `frontend/src/pages/GamePage/PlayPage.tsx` (mirrors `SlideDisplay.tsx` on the author side)
+- **Per-kind player surfaces (chunk 08).** Chunk 08 shipped the backend + author editor for Allocation ("100 points") and Matching ("puzzle pairs"), but `ElementRenderer` has no case for either — they fall through to the default `return null` branch, so a player sees nothing on those rounds. (Word Cloud — chunk 07 — and Drawing — chunk 09 — both have full player + reveal surfaces.) Specifically still TODO:
+  - Allocation player surface (slider/stepper per option that sums to 100; reveal shows the room-aggregate vs. correct allocation)
+  - Matching player surface (drag-pair or tap-to-pair UX; reveal shows correct pairings highlighted)
 
   These naturally cluster with **chunk 13** (InteractiveSession settings & player additions) since that chunk already touches the player UI. Re-open this list when starting chunk 13.
 

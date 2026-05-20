@@ -6,9 +6,12 @@ package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import cephadex.brainflex.model.GalleryImage;
+import cephadex.brainflex.model.element.ImageSize;
 import cephadex.brainflex.model.element.ImageVariant;
 
 public class GalleryImageDTO {
@@ -19,17 +22,17 @@ public class GalleryImageDTO {
             String ownerId,
             String organizationId,
             List<String> tags,
-            List<ImageVariant> variants,
+            Map<ImageSize, ImageVariant> variants,
             LocalDateTime createdAt) {
 
-        public GalleryImageResponse(GalleryImage image, List<ImageVariant> variants) {
+        public GalleryImageResponse(GalleryImage image, Map<ImageSize, ImageVariant> variants) {
             this(
                     image.getId(),
                     image.getName(),
                     image.getOwnerId(),
                     image.getOrganizationId(),
                     image.getTags() == null ? new ArrayList<>() : image.getTags(),
-                    variants == null ? List.of() : variants,
+                    variants == null ? Collections.emptyMap() : variants,
                     image.getCreatedAt());
         }
     }

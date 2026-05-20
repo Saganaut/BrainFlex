@@ -12,10 +12,12 @@ import { useInteractiveSession } from "../../../hooks/useInteractiveSession";
 import { useInteractiveSessionWebSocket } from "../../../hooks/useInteractiveSessionWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
+import { TeamPicker } from "../TeamPicker/TeamPicker";
 import { resolveInteractiveSessionBackground } from "../../../utils/deckImages";
 import styles from "./Lobby.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
+import { useAppSelector } from "../../../store/hooks";
 
 interface LobbyProps {
   roomCode: string;
@@ -47,6 +49,14 @@ const Lobby = ({ roomCode }: LobbyProps) => {
       : undefined;
   const isHost = !!userId && session?.hostUserId === userId;
   const players = game.players;
+  // Team-mode lobby (chunk 12). The slice keeps teams in sync with both the
+  // setSession refresh and STOMP /teams broadcasts, so we read from there
+  // rather than session.teams to also catch live joins.
+  const teams = useAppSelector((s) => s.interactiveSession.teams);
+  const teamMode = useAppSelector((s) => s.interactiveSession.teamMode);
+  const autoBalanceTeams = useAppSelector(
+    (s) => s.interactiveSession.autoBalanceTeams,
+  );
 
   // If the host boots us (or anything else removes us from the player list),
   // navigate home rather than stranding the user on an empty lobby.
@@ -88,6 +98,17 @@ const Lobby = ({ roomCode }: LobbyProps) => {
           <span className={styles.codeHint}>Share this with friends</span>
         </div>
       </div>
+
+      {teamMode && (
+        <TeamPicker
+          roomCode={roomCode}
+          teams={teams}
+          players={players}
+          currentUserId={userId}
+          isHost={isHost}
+          autoBalanceTeams={autoBalanceTeams}
+        />
+      )}
 
       <div className={styles.playerSection}>
         <h2 className={styles.playerHeading}>

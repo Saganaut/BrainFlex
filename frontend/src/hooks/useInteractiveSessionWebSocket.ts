@@ -19,6 +19,9 @@ import {
   votePhaseStarted,
   voteProgressReceived,
   wordCloudUpdated,
+  chatMessageReceived,
+  reactionReceived,
+  teamUpdateReceived,
   type RoundStartPayload,
   type RoundResultPayload,
   type SessionEndedPayload,
@@ -26,8 +29,13 @@ import {
   type AnswerProgressPayload,
   type PresencePayload,
   type WordCloudUpdatePayload,
+  type ReactionPayload,
+  type TeamUpdatePayload,
 } from "../store/interactiveSessionSlice";
-import type { InteractiveSessionDto } from "../store/BrainFlexApi";
+import type {
+  InteractiveSessionDto,
+  InteractiveSessionChatMessageDto,
+} from "../store/BrainFlexApi";
 import type { AnswerPayload } from "../types/elements";
 import type {
   VotePhaseStartPayload,
@@ -35,6 +43,7 @@ import type {
 } from "../types/bestAnswer";
 
 export function useInteractiveSessionWebSocket(roomCode: string | null) {
+  console.log("using interactive session start");
   const dispatch = useAppDispatch();
   const clientRef = useRef<Client | null>(null);
 
@@ -45,42 +54,97 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
       webSocketFactory: () => new SockJS(`${apiBaseUrl}/ws`),
       reconnectDelay: 3000,
       onConnect: () => {
-        client.subscribe(`/topic/interactive-session/${roomCode}/lobby`, (msg) => {
-          dispatch(setSession(JSON.parse(msg.body) as InteractiveSessionDto));
-        });
-        client.subscribe(`/topic/interactive-session/${roomCode}/round`, (msg) => {
-          dispatch(roundStarted(JSON.parse(msg.body) as RoundStartPayload));
-        });
-        client.subscribe(`/topic/interactive-session/${roomCode}/roundResult`, (msg) => {
-          dispatch(
-            roundResultReceived(JSON.parse(msg.body) as RoundResultPayload),
-          );
-        });
-        client.subscribe(`/topic/interactive-session/${roomCode}/ended`, (msg) => {
-          dispatch(sessionEnded(JSON.parse(msg.body) as SessionEndedPayload));
-        });
-        client.subscribe(`/topic/interactive-session/${roomCode}/answered`, (msg) => {
-          dispatch(
-            answerProgressReceived(
-              JSON.parse(msg.body) as AnswerProgressPayload,
-            ),
-          );
-        });
-        client.subscribe(`/topic/interactive-session/${roomCode}/votePhase`, (msg) => {
-          dispatch(
-            votePhaseStarted(JSON.parse(msg.body) as VotePhaseStartPayload),
-          );
-        });
-        client.subscribe(`/topic/interactive-session/${roomCode}/voted`, (msg) => {
-          dispatch(
-            voteProgressReceived(JSON.parse(msg.body) as VoteProgressPayload),
-          );
-        });
-        client.subscribe(`/topic/interactive-session/${roomCode}/wordCloud`, (msg) => {
-          dispatch(
-            wordCloudUpdated(JSON.parse(msg.body) as WordCloudUpdatePayload),
-          );
-        });
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/lobby`,
+          (msg) => {
+            dispatch(setSession(JSON.parse(msg.body) as InteractiveSessionDto));
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/round`,
+          (msg) => {
+            dispatch(roundStarted(JSON.parse(msg.body) as RoundStartPayload));
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/roundResult`,
+          (msg) => {
+            dispatch(
+              roundResultReceived(JSON.parse(msg.body) as RoundResultPayload),
+            );
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/ended`,
+          (msg) => {
+            dispatch(sessionEnded(JSON.parse(msg.body) as SessionEndedPayload));
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/answered`,
+          (msg) => {
+            dispatch(
+              answerProgressReceived(
+                JSON.parse(msg.body) as AnswerProgressPayload,
+              ),
+            );
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/votePhase`,
+          (msg) => {
+            dispatch(
+              votePhaseStarted(JSON.parse(msg.body) as VotePhaseStartPayload),
+            );
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/voted`,
+          (msg) => {
+            dispatch(
+              voteProgressReceived(JSON.parse(msg.body) as VoteProgressPayload),
+            );
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/wordCloud`,
+          (msg) => {
+            dispatch(
+              wordCloudUpdated(JSON.parse(msg.body) as WordCloudUpdatePayload),
+            );
+          },
+        );
+        // Audience engagement (chunk 11): emoji bursts feed ReactionRain on
+        // the host view, chat broadcasts feed ChatPanel for everyone. The
+        // chat topic carries both new sends AND moderation flips — the slice
+        // dedupes on message id so a moderated rebroadcast updates the
+        // existing row in place.
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/reaction`,
+          (msg) => {
+            dispatch(reactionReceived(JSON.parse(msg.body) as ReactionPayload));
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/chat`,
+          (msg) => {
+            dispatch(
+              chatMessageReceived(
+                JSON.parse(msg.body) as InteractiveSessionChatMessageDto,
+              ),
+            );
+          },
+        );
+        // Team mode (chunk 12): full team list + membership map on every
+        // change; clients replace state rather than merging deltas.
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/teams`,
+          (msg) => {
+            dispatch(
+              teamUpdateReceived(JSON.parse(msg.body) as TeamUpdatePayload),
+            );
+          },
+        );
         client.subscribe(`/topic/presence`, (msg) => {
           dispatch(presenceUpdated(JSON.parse(msg.body) as PresencePayload));
         });
@@ -111,6 +175,7 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
 
   return {
     sendStart: useCallback(() => {
+      console.log("sending starT");
       send(`/app/interactive-session/${roomCode}/start`);
     }, [roomCode, send]),
 
@@ -120,7 +185,10 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
      */
     sendAnswer: useCallback(
       (elementId: string, payload: AnswerPayload) => {
-        send(`/app/interactive-session/${roomCode}/answer`, { elementId, payload });
+        send(`/app/interactive-session/${roomCode}/answer`, {
+          elementId,
+          payload,
+        });
       },
       [roomCode, send],
     ),
@@ -128,7 +196,10 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
     /** Cast a vote during the VOTE phase of a Best Answer round. */
     sendVote: useCallback(
       (elementId: string, submissionId: string) => {
-        send(`/app/interactive-session/${roomCode}/vote`, { elementId, submissionId });
+        send(`/app/interactive-session/${roomCode}/vote`, {
+          elementId,
+          submissionId,
+        });
       },
       [roomCode, send],
     ),

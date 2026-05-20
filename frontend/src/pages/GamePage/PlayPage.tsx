@@ -3,10 +3,14 @@
 // the round-result overlay, and the post-round → next-round timer chrome.
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { ChatPanel } from "../../components/Games/ChatPanel/ChatPanel";
 import { ElementRenderer } from "../../components/Games/ElementRenderer/ElementRenderer";
 import { QuestionCard } from "../../components/Games/QuestionCard/QuestionCard";
+import { ReactionBar } from "../../components/Games/ReactionBar/ReactionBar";
+import { ReactionRain } from "../../components/Games/ReactionRain/ReactionRain";
 import { RoundResult } from "../../components/Games/RoundResult/RoundResult";
 import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
+import { TeamLeaderboard } from "../../components/Games/TeamLeaderboard/TeamLeaderboard";
 import { VotePanel } from "../../components/Games/VotePanel/VotePanel";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
@@ -53,6 +57,15 @@ const PlayPage = () => {
   const interactiveSessionUnlimited = (session?.settings?.timePerQuestion ?? 1) === 0;
   const hideScoresDuringPlay =
     session?.settings?.showScoresImmediately === false;
+  // Chunk 11 / 12 surfaces — gated by per-session settings + the live state
+  // of teams[]. Defaults match the backend: reactions + chat default on,
+  // teamMode + teams default empty / off.
+  const reactionsEnabled = session?.settings?.reactionsEnabled !== false;
+  const chatEnabled = session?.settings?.chatEnabled !== false;
+  const teams = session?.teams ?? [];
+  const teamMode =
+    (session?.teamMode ?? session?.settings?.teamMode ?? false) &&
+    teams.length > 0;
 
   useEffect(() => {
     if (session) dispatch(setSession(session));
@@ -172,6 +185,14 @@ const PlayPage = () => {
       <div className={styles.waiting} style={bgStyle}>
         <WsErrorBanner />
         <p className={styles.waitingMsg}>Waiting for the first element…</p>
+        {teamMode && (
+          <TeamLeaderboard
+            teams={teams}
+            players={game.players}
+            currentUserId={userId}
+            hideScores={hideScoresDuringPlay}
+          />
+        )}
         <ScoreBoard
           players={game.players}
           currentUserId={userId}
@@ -181,6 +202,7 @@ const PlayPage = () => {
           onBootPlayer={(id) => {
             void handleBoot(id);
           }}
+          teams={teamMode ? teams : undefined}
         />
       </div>
     );
@@ -242,8 +264,23 @@ const PlayPage = () => {
             onSubmit={handleAnswer}
           />
         )}
+        {/* Player-side reaction bar — sits below the active element so a
+            tap doesn't accidentally interfere with answer submission. Hidden
+            for the host (the host sees ReactionRain instead) and gated by
+            the per-session reactionsEnabled flag. */}
+        {!isHost && reactionsEnabled && !isSlide && (
+          <ReactionBar roomCode={roomCode} />
+        )}
       </div>
       <aside className={styles.sidebar}>
+        {teamMode && (
+          <TeamLeaderboard
+            teams={teams}
+            players={game.players}
+            currentUserId={userId}
+            hideScores={hideScoresDuringPlay}
+          />
+        )}
         <ScoreBoard
           players={game.players}
           currentUserId={userId}
@@ -260,7 +297,15 @@ const PlayPage = () => {
           onBootPlayer={(id) => {
             void handleBoot(id);
           }}
+          teams={teamMode ? teams : undefined}
         />
+        {chatEnabled && (
+          <ChatPanel
+            roomCode={roomCode}
+            isHost={isHost}
+            currentUserId={userId}
+          />
+        )}
         {isHost && (
           <Btn
             type='button'
@@ -273,6 +318,9 @@ const PlayPage = () => {
           </Btn>
         )}
       </aside>
+      {/* Host-only emoji burst overlay. Pointer-events: none so it doesn't
+          intercept clicks on the underlying scoreboard / end-game button. */}
+      {isHost && reactionsEnabled && <ReactionRain />}
       {game.roundResult && (
         <RoundResult
           result={game.roundResult}

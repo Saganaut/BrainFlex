@@ -1,0 +1,144 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+
+  .headerRow {
+    display: flex;
+    align-items: center;
+    gap: var(--gap-md);
+  }
+
+  .heading {
+    font-size: var(--font-size-md);
+    flex: 1;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: var(--gap-md);
+  }
+
+  .empty {
+    color: var(--text-secondary);
+    font-size: var(--font-size-sm);
+    padding: var(--p-md);
+    grid-column: 1 / -1;
+    text-align: center;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--p-md);
+    border: var(--border-size-sm) solid var(--border-subtle);
+    border-left: var(--border-size-lg) solid var(--team-color);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+
+    &.cardMine {
+      border-color: var(--border-focus);
+      border-left-color: var(--team-color);
+    }
+
+    .cardHeader {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+    }
+
+    .colorDot {
+      width: 12px;
+      height: 12px;
+      border-radius: var(--radius-full);
+      background: var(--team-color);
+      flex-shrink: 0;
+    }
+
+    .cardName {
+      flex: 1;
+      font-weight: 700;
+      font-size: var(--font-size-base);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cardCount {
+      font-size: var(--font-size-xs);
+      color: var(--text-secondary);
+      padding: 0 var(--space-2);
+      border: var(--border-size-sm) solid var(--border-subtle);
+      border-radius: var(--radius-full);
+    }
+
+    .editInput {
+      flex: 1;
+    }
+
+    .swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-1);
+    }
+
+    .swatch {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: var(--radius-full);
+      border: var(--border-size-sm) solid transparent;
+      cursor: pointer;
+
+      &.swatchSelected {
+        border-color: var(--border-focus);
+      }
+
+      &:focus-visible {
+        border-color: var(--border-focus);
+        outline: none;
+      }
+    }
+
+    .memberList {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .member {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+    }
+
+    .memberEmpty {
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: var(--font-size-sm);
+    }
+
+    .cardActions {
+      display: flex;
+      gap: var(--gap-sm);
+      align-items: center;
+      margin-top: auto;
+      flex-wrap: wrap;
+    }
+
+    .youTag {
+      font-size: var(--font-size-xs);
+      color: var(--text-success);
+      border: var(--border-size-sm) solid var(--border-success);
+      border-radius: var(--radius-sm);
+      padding: 0 var(--space-1);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+  }
+}

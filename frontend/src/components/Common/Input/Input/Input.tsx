@@ -12,11 +12,11 @@ import shared from "../Input.module.css";
 import styles from "./Input.module.css";
 
 interface InputProps
-  extends InputBaseProps,
-    React.InputHTMLAttributes<HTMLInputElement> {
+  extends InputBaseProps, React.InputHTMLAttributes<HTMLInputElement> {
   variant?: BtnVariant;
   labelPosition?: "labelAbove" | "labelInFront";
   fullWidth?: boolean;
+  withPadding?: boolean;
   ref?: React.RefObject<HTMLInputElement | null>;
 }
 
@@ -33,6 +33,7 @@ const Input = ({
   className,
   ariaLabel,
   id,
+  withPadding = true,
   ref,
   ...rest
 }: InputProps) => {
@@ -44,6 +45,8 @@ const Input = ({
         shared[labelPosition],
         fullWidth && shared.fullWidth,
         className,
+
+        withPadding && styles.withBottomPadding,
       ]
         .filter(Boolean)
         .join(" ")}>

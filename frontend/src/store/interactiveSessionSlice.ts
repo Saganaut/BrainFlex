@@ -12,8 +12,10 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type {
   InteractiveSessionDto,
+  InteractiveSessionChatMessageDto,
   PlayerPlacement,
   InteractiveSessionPlayerDto,
+  Team,
 } from "./BrainFlexApi";
 import type { AnswerPayload, DeckElement } from "../types/elements";
 import type {
@@ -76,6 +78,41 @@ export interface PresencePayload {
   online: boolean;
 }
 
+/**
+ * One live reaction burst the host animates in ReactionRain. The slice
+ * keeps a short rolling window — components consume from the tail and the
+ * window is trimmed in {@link reactionReceived} so memory doesn't grow
+ * unbounded over a long game.
+ */
+export interface LiveReaction {
+  id: string;
+  emoji: string;
+  userName?: string;
+  /** Monotonic local timestamp (Date.now()) when the reaction was queued. */
+  queuedAt: number;
+}
+
+export interface ReactionPayload {
+  id: string;
+  elementId?: string;
+  userId?: string;
+  userName?: string;
+  guest?: boolean;
+  emoji: string;
+  offsetMs?: number;
+  sentAt?: string;
+}
+
+export interface TeamUpdatePayload {
+  teams: Team[];
+  memberships: { userId: string; teamId: string }[];
+}
+
+/** Max in-flight live reactions kept in the slice. Older bursts drop off. */
+const LIVE_REACTION_WINDOW = 40;
+/** Max chat history retained client-side. Older messages drop off. */
+const CHAT_HISTORY_WINDOW = 200;
+
 interface InteractiveSessionState {
   roomCode: string | null;
   status: InteractiveSessionDto["status"] | null;
@@ -110,6 +147,25 @@ interface InteractiveSessionState {
   // rounds and on every non-WordCloud round. Updated by `wordCloudUpdated`,
   // which the server emits on every submission and once on round complete.
   wordCloudCounts: Record<string, number>;
+
+  // ---- Audience engagement (chunk 11) ----
+  // Trimmed history of chat messages for this session. Initial load comes from
+  // useListChatQuery; STOMP /chat broadcasts append (or patch in place when
+  // the message is already present and the server is rebroadcasting a
+  // moderation flip).
+  chat: InteractiveSessionChatMessageDto[];
+  // Rolling window of recent reaction bursts. ReactionRain reads this and
+  // animates each new entry; the window is trimmed so a long game doesn't
+  // pile up megabytes of payloads in the store.
+  liveReactions: LiveReaction[];
+
+  // ---- Teams (chunk 12) ----
+  // Mirrors InteractiveSessionDto.teams; TeamUpdateMessage broadcasts patch
+  // both this and the per-player teamId in place so the lobby + scoreboard
+  // re-render without refetching the whole session.
+  teams: Team[];
+  teamMode: boolean;
+  autoBalanceTeams: boolean;
 }
 
 const initialState: InteractiveSessionState = {
@@ -133,6 +189,11 @@ const initialState: InteractiveSessionState = {
   myVote: null,
   votedThisRound: [],
   wordCloudCounts: {},
+  chat: [],
+  liveReactions: [],
+  teams: [],
+  teamMode: false,
+  autoBalanceTeams: false,
 };
 
 export const interactiveSessionSlice = createSlice({
@@ -146,6 +207,10 @@ export const interactiveSessionSlice = createSlice({
       state.players = s.players ?? [];
       state.totalRounds = s.settings?.totalRounds ?? 0;
       state.round = s.currentRound ?? 0;
+      state.teams = s.teams ?? [];
+      state.teamMode = s.teamMode ?? s.settings?.teamMode ?? false;
+      state.autoBalanceTeams =
+        s.autoBalanceTeams ?? s.settings?.autoBalanceTeams ?? false;
     },
 
     roundStarted(state, action: PayloadAction<RoundStartPayload>) {
@@ -249,6 +314,93 @@ export const interactiveSessionSlice = createSlice({
       state.wsError = null;
     },
 
+    /**
+     * Seed chat history on PlayPage/Lobby mount. Replaces the current
+     * client-side buffer; trims to the retention window so a host hopping
+     * between sessions doesn't accumulate stale rows.
+     */
+    chatHistoryLoaded(
+      state,
+      action: PayloadAction<InteractiveSessionChatMessageDto[]>,
+    ) {
+      const sorted = [...action.payload].sort((a, b) => {
+        const ta = a.sentAt ? new Date(a.sentAt).getTime() : 0;
+        const tb = b.sentAt ? new Date(b.sentAt).getTime() : 0;
+        return ta - tb;
+      });
+      state.chat = sorted.slice(-CHAT_HISTORY_WINDOW);
+    },
+
+    /**
+     * STOMP /chat broadcast. Used for both new sends AND moderation flips —
+     * the server rebroadcasts the same DTO with moderated=true when the host
+     * hides a message. We dedupe on id so the optimistic send (from the
+     * apiEnhancements onQueryStarted) doesn't render twice when the broadcast
+     * arrives.
+     */
+    chatMessageReceived(
+      state,
+      action: PayloadAction<InteractiveSessionChatMessageDto>,
+    ) {
+      const msg = action.payload;
+      if (!msg.id) {
+        state.chat.push(msg);
+      } else {
+        const idx = state.chat.findIndex((m) => m.id === msg.id);
+        if (idx >= 0) state.chat[idx] = msg;
+        else state.chat.push(msg);
+      }
+      if (state.chat.length > CHAT_HISTORY_WINDOW) {
+        state.chat = state.chat.slice(-CHAT_HISTORY_WINDOW);
+      }
+    },
+
+    /**
+     * STOMP /reaction burst. Appends to the rolling window — ReactionRain
+     * subscribes via useAppSelector and animates each new entry. Older entries
+     * fall off when the window is exceeded; the host view itself drops the
+     * DOM nodes when the CSS animation completes.
+     */
+    reactionReceived(state, action: PayloadAction<ReactionPayload>) {
+      const p = action.payload;
+      state.liveReactions.push({
+        id: p.id,
+        emoji: p.emoji,
+        userName: p.userName,
+        queuedAt: Date.now(),
+      });
+      if (state.liveReactions.length > LIVE_REACTION_WINDOW) {
+        state.liveReactions = state.liveReactions.slice(-LIVE_REACTION_WINDOW);
+      }
+    },
+
+    /**
+     * Drops a single live reaction once ReactionRain finishes animating it.
+     * Keeps the slice from holding onto already-rendered entries.
+     */
+    reactionConsumed(state, action: PayloadAction<string>) {
+      state.liveReactions = state.liveReactions.filter(
+        (r) => r.id !== action.payload,
+      );
+    },
+
+    /**
+     * STOMP /teams broadcast. Replaces the team list outright and patches the
+     * teamId on every affected player in place; clients reconcile from this
+     * snapshot rather than merging deltas.
+     */
+    teamUpdateReceived(state, action: PayloadAction<TeamUpdatePayload>) {
+      state.teams = action.payload.teams;
+      const byUserId = new Map(
+        action.payload.memberships.map((m) => [m.userId, m.teamId]),
+      );
+      for (const player of state.players) {
+        if (player.userId && byUserId.has(player.userId)) {
+          player.teamId = byUserId.get(player.userId) ?? undefined;
+        }
+      }
+    },
+
     resetSession() {
       return initialState;
     },
@@ -270,6 +422,11 @@ export const {
   voteSubmittedLocally,
   voteProgressReceived,
   wordCloudUpdated,
+  chatHistoryLoaded,
+  chatMessageReceived,
+  reactionReceived,
+  reactionConsumed,
+  teamUpdateReceived,
 } = interactiveSessionSlice.actions;
 
 export default interactiveSessionSlice.reducer;

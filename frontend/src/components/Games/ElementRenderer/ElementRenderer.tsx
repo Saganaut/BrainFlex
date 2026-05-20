@@ -15,10 +15,15 @@ import { NumberAnswerInput } from "../NumberAnswerInput/NumberAnswerInput";
 import { PlaceholderAnswer } from "../PlaceholderAnswer/PlaceholderAnswer";
 import { WordCloudInput } from "../WordCloudInput/WordCloudInput";
 import { WordCloud } from "../WordCloud/WordCloud";
+import { DrawingCanvas } from "../DrawingCanvas/DrawingCanvas";
+import { DrawingReveal } from "../DrawingReveal/DrawingReveal";
+import type { DrawingRevealEntry } from "../DrawingReveal/DrawingReveal";
 import { useAppSelector } from "../../../store/hooks";
 import type {
   AnswerPayload,
   DeckElement,
+  DrawingQuestion,
+  Stroke,
   WordCloudQuestion,
 } from "../../../types/elements";
 import styles from "./ElementRenderer.module.css";
@@ -147,6 +152,22 @@ const ElementRenderer = ({
       );
     }
 
+    case "DrawingQuestion": {
+      const myStrokes =
+        mySubmission?.kind === "DrawingAnswer"
+          ? (mySubmission.strokes ?? [])
+          : null;
+      return (
+        <DrawingView
+          element={liveElement}
+          submittedStrokes={myStrokes}
+          revealed={roundResultElement !== null}
+          disabled={disabled}
+          onSubmit={onSubmit}
+        />
+      );
+    }
+
     case "RankingQuestion":
     case "ScalesQuestion":
     case "QAndAQuestion":
@@ -203,6 +224,63 @@ const WordCloudView = ({
         />
       )}
     </div>
+  );
+};
+
+/**
+ * Renderer for an active or revealed Drawing round.
+ *
+ * During SUBMIT the local player gets the live `DrawingCanvas`. After the
+ * round reveals, the grid of every player's drawing replaces the canvas —
+ * results pulled from `roundResult.playerResults` so the same data feeds
+ * both the per-player tally in `RoundResult` and this surface.
+ */
+interface DrawingViewProps {
+  element: DrawingQuestion;
+  submittedStrokes: Stroke[] | null;
+  revealed: boolean;
+  disabled: boolean;
+  onSubmit: (payload: AnswerPayload) => void;
+}
+
+const DrawingView = ({
+  element,
+  submittedStrokes,
+  revealed,
+  disabled,
+  onSubmit,
+}: DrawingViewProps) => {
+  const playerResults = useAppSelector(
+    (s) => s.interactiveSession.roundResult?.playerResults ?? null,
+  );
+
+  if (revealed) {
+    const entries: DrawingRevealEntry[] = (playerResults ?? [])
+      .map((r) => {
+        if (r.payload?.kind !== "DrawingAnswer") return null;
+        return {
+          id: r.userId,
+          authorName: r.userName,
+          strokes: r.payload.strokes ?? [],
+        };
+      })
+      .filter((e): e is DrawingRevealEntry => e !== null);
+    return (
+      <DrawingReveal
+        element={element}
+        entries={entries}
+        emptyLabel='No drawings submitted this round.'
+      />
+    );
+  }
+
+  return (
+    <DrawingCanvas
+      element={element}
+      submittedStrokes={submittedStrokes}
+      disabled={disabled}
+      onSubmit={onSubmit}
+    />
   );
 };
 

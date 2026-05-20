@@ -1,6 +1,6 @@
-/* Vertical theme picker drawer body. Fits inside the 320px drawer; rows are
-   button-shaped tiles with mini-swatches on the left so the user can scan
-   palettes at a glance. */
+/* Style panel body. Sized to live inside the 320px right-sidebar drawer.
+   Two sections: deck-wide theme (dropdown + new-theme button) and per-slide
+   style (content/background image tiles). */
 
 .panel {
   display: flex;
@@ -23,82 +23,66 @@
   margin: 0;
 }
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+.newBtn {
+  align-self: stretch;
 }
 
-.row {
+.imagePicker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.imagePickerLabel {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.imageTile {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background: transparent;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: var(--bg-subtle);
   border: var(--border-size-sm) solid var(--edge-canvas);
   border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
+  overflow: hidden;
   cursor: pointer;
-  text-align: left;
-  transition:
-    border-color var(--duration-fast) var(--ease-out),
-    background-color var(--duration-fast) var(--ease-out);
+  padding: 0;
+  transition: border-color var(--duration-fast) var(--ease-out);
 
   &:hover {
     border-color: var(--action-hover);
-    background-color: var(--bg-subtle);
+  }
+
+  & img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 }
 
-.rowActive {
-  border-color: var(--border-brand);
-  background-color: var(--bg-subtle);
-}
-
-.swatch {
+.imageTileEmpty {
   display: inline-flex;
-  width: 32px;
-  height: 24px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  flex-shrink: 0;
-  border: var(--border-size-sm) solid var(--border-subtle);
-}
-
-.swatchPrimary {
-  flex: 2;
-}
-
-.swatchAccent {
-  flex: 1;
-}
-
-.rowLabel {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.activeBadge,
-.orgBadge {
-  font-size: var(--font-size-xs);
-  padding: var(--space-half) var(--space-2);
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-}
-
-.activeBadge {
-  background-color: var(--border-brand);
-  color: var(--bg-brand);
-}
-
-.orgBadge {
-  background-color: var(--bg-surface-raised);
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
   color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+
+  & svg {
+    width: 24px;
+    height: 24px;
+  }
 }
 
-.newBtn {
-  align-self: stretch;
+.imageClear {
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  background: var(--bg-surface-raised);
+  border-radius: var(--radius-full);
 }

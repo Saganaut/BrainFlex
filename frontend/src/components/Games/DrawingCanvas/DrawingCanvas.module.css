@@ -1,0 +1,125 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+
+  .canvasFrame {
+    position: relative;
+    width: 100%;
+    border-radius: var(--radius-lg);
+    border: var(--border-size-md) solid var(--edge-strong);
+    background: var(--bg-surface-raised);
+    overflow: hidden;
+  }
+
+  .canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+
+  .lockedBadge {
+    position: absolute;
+    inset: auto 0 var(--space-3) 0;
+    margin-inline: auto;
+    width: max-content;
+    max-width: calc(100% - var(--space-6));
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-full);
+    background: var(--bg-surface-inverted);
+    color: var(--text-primary-inverted);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-raised);
+    border: var(--border-size-sm) solid var(--edge-subtle);
+  }
+
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .swatch {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-full);
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .swatchSelected {
+    border-color: var(--edge-strong);
+    outline: 2px solid var(--bg-surface);
+    outline-offset: -4px;
+  }
+
+  .swatch:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .thicknessRow {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+  }
+
+  .thickness {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border-radius: var(--radius-md);
+    background: var(--bg-surface);
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+
+  .thicknessSelected {
+    border-color: var(--edge-strong);
+  }
+
+  .thickness:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .thicknessDot {
+    display: inline-block;
+    border-radius: var(--radius-full);
+  }
+
+  .actions {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    margin-left: auto;
+  }
+
+  .counts {
+    margin: 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    text-align: right;
+  }
+}

@@ -1,7 +1,7 @@
 // Account settings dashboard. Tabs split unrelated concerns (profile, theme,
 // organizations, danger zone) so the page doesn't grow into a single long
 // scrolling form as we add settings.
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useCloseAccountMutation,
   useGetCurrentUserQuery,
@@ -54,6 +54,26 @@ const AccountPage = () => {
     useUploadProfileImageMutation();
   const [closeAccount, { isLoading: isClosing }] = useCloseAccountMutation();
   const confirm = useConfirm();
+
+  // Auto-detect the browser timezone the first time we see a registered user
+  // without one set. Single-shot per page mount; we don't retry if the PATCH
+  // fails so a flaky backend can't pin the user in a request loop.
+  const hasAttemptedTzDetect = useRef(false);
+  useEffect(() => {
+    if (!registeredUser?.id) return;
+    if (registeredUser.timezone) return;
+    if (hasAttemptedTzDetect.current) return;
+    hasAttemptedTzDetect.current = true;
+    const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (!browserTz) return;
+    void updateProfile({ updateProfileRequest: { timezone: browserTz } })
+      .unwrap()
+      .then(() => refetch())
+      .catch(() => {
+        // Swallow: read-only display will keep showing "Detecting…". The user
+        // can reload to retry, and the field is not load-bearing for anything else yet.
+      });
+  }, [registeredUser?.id, registeredUser?.timezone, updateProfile, refetch]);
 
   if (!registeredUser) return null;
 
@@ -162,6 +182,29 @@ const AccountPage = () => {
         {newsletterSuccess && (
           <p className={styles.success}>Preference saved.</p>
         )}
+      </section>
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Account info</h2>
+        <dl className={styles.infoList}>
+          <div className={styles.infoRow}>
+            <dt className={styles.infoLabel}>Timezone</dt>
+            <dd className={styles.infoValue}>
+              {registeredUser.timezone ?? "Detecting…"}
+            </dd>
+          </div>
+          <div className={styles.infoRow}>
+            <dt className={styles.infoLabel}>Email verified</dt>
+            <dd className={styles.infoValue}>
+              {registeredUser.emailVerifiedAt
+                ? new Date(registeredUser.emailVerifiedAt).toLocaleDateString(
+                    undefined,
+                    { year: "numeric", month: "short", day: "numeric" },
+                  )
+                : "Not yet verified"}
+            </dd>
+          </div>
+        </dl>
       </section>
     </>
   );

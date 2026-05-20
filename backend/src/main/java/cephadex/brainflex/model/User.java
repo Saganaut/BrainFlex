@@ -60,6 +60,17 @@ public class User {
      *  which AuthoritiesService recomputes on every login. */
     private Set<UserRole> roles = EnumSet.of(UserRole.USER);
 
+    /** IANA timezone string (e.g. "America/Los_Angeles"). Auto-detected from
+     *  the browser on first login; user-overridable via {@code PATCH /api/users/me}.
+     *  Null until set — read paths should fall back to UTC. */
+    private String timezone;
+
+    /** Stamped on first authenticated session where Google asserts the email
+     *  is verified (i.e. any successful OAuth login). Null for guests and for
+     *  legacy registered users who haven't logged in since this field
+     *  landed — both backfill on next login. Idempotent: never overwritten. */
+    private LocalDateTime emailVerifiedAt;
+
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt = LocalDateTime.now();
 }

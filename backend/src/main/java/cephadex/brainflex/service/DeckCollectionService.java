@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -46,6 +47,7 @@ import cephadex.brainflex.model.DeckCollection;
 import cephadex.brainflex.model.GalleryImage;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.element.ImageSize;
 import cephadex.brainflex.model.element.ImageVariant;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.repository.DeckCollectionRepository;
@@ -89,13 +91,13 @@ public class DeckCollectionService {
         if (cover.useExternalImg()) return;
         String galleryId = cover.internalImgId();
         if (galleryId == null || galleryId.isBlank()) {
-            col.setCover(cover.withVariants(Collections.emptyList()));
+            col.setCover(cover.withVariants(Map.of()));
             return;
         }
         GalleryImage record = galleryImageRepository.findById(galleryId).orElse(null);
-        List<ImageVariant> fresh = (record != null && record.getVariants() != null && !record.getVariants().isEmpty())
+        Map<ImageSize, ImageVariant> fresh = (record != null && record.getVariants() != null && !record.getVariants().isEmpty())
                 ? s3Service.refreshGalleryImage(galleryId, record.getVariants())
-                : Collections.emptyList();
+                : Map.of();
         col.setCover(cover.withVariants(fresh));
     }
 
@@ -324,6 +326,6 @@ public class DeckCollectionService {
     private static Image normalizeImage(Image image) {
         if (image == null) return null;
         if (image.useExternalImg()) return image;
-        return image.withVariants(Collections.emptyList());
+        return image.withVariants(Map.of());
     }
 }

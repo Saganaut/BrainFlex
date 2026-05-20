@@ -78,9 +78,17 @@ const SlideDisplay = () => {
         return <div>No slide selected</div>;
     }
   };
+  console.log("image", element?.image);
 
+  const imgUrl = null;
   return (
-    <div className={styles.slideDisplay}>
+    <div
+      className={styles.slideDisplay}
+      style={
+        {
+          "--background-image": `url("${imgUrl}")`,
+        } as React.CSSProperties
+      }>
       <div className={styles.slideHeader}>
         <CephadexLogo size={"md"} />{" "}
         {element?.kind && <SlideTypeGraphicSvg kind={element.kind} />}

@@ -1,7 +1,12 @@
 package cephadex.brainflex.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.time.LocalDateTime;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,6 +19,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.RegisterRequest;
+import cephadex.brainflex.dto.UpdateProfileRequest;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 
@@ -69,6 +75,89 @@ class UserServiceTest {
         assertEquals("test@example.com", result.getEmail());
         assertEquals("testuser", result.getUserName());
         assertEquals(false, result.getIsGuest());
+        assertNotNull(result.getEmailVerifiedAt(),
+                "Google OAuth implies a verified email, so the timestamp should be set on register");
+    }
+
+    @Test
+    void register_WhenReopeningClosedAccount_BackfillsEmailVerifiedAtWhenNull() {
+        User closed = new User();
+        closed.setId("u1");
+        closed.setGoogleId("google123");
+        closed.setIsClosed(true);
+        closed.setEmailVerifiedAt(null);
+
+        when(oAuth2User.getAttribute("sub")).thenReturn("google123");
+        when(oAuth2User.getAttribute("name")).thenReturn("Test User");
+        when(oAuth2User.getAttribute("picture")).thenReturn("pic.jpg");
+        when(userRepository.findByGoogleId("google123")).thenReturn(java.util.Optional.of(closed));
+        when(userRepository.findByUserName("testuser")).thenReturn(java.util.Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RegisterRequest request = new RegisterRequest("testuser", true);
+        User result = userService.register(oAuth2User, request);
+
+        assertNotNull(result.getEmailVerifiedAt());
+    }
+
+    @Test
+    void register_WhenReopeningClosedAccount_PreservesExistingEmailVerifiedAt() {
+        LocalDateTime original = LocalDateTime.of(2024, 1, 15, 10, 30);
+        User closed = new User();
+        closed.setId("u1");
+        closed.setGoogleId("google123");
+        closed.setIsClosed(true);
+        closed.setEmailVerifiedAt(original);
+
+        when(oAuth2User.getAttribute("sub")).thenReturn("google123");
+        when(oAuth2User.getAttribute("name")).thenReturn("Test User");
+        when(oAuth2User.getAttribute("picture")).thenReturn("pic.jpg");
+        when(userRepository.findByGoogleId("google123")).thenReturn(java.util.Optional.of(closed));
+        when(userRepository.findByUserName("testuser")).thenReturn(java.util.Optional.empty());
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        RegisterRequest request = new RegisterRequest("testuser", true);
+        User result = userService.register(oAuth2User, request);
+
+        assertEquals(original, result.getEmailVerifiedAt(),
+                "Once stamped, emailVerifiedAt is immutable — reopening should not overwrite it");
+    }
+
+    @Test
+    void updateProfile_AppliesTimezoneWhenProvided() {
+        User user = new User();
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.updateProfile(
+                user, new UpdateProfileRequest(null, null, null, "America/Los_Angeles"));
+
+        assertEquals("America/Los_Angeles", result.getTimezone());
+    }
+
+    @Test
+    void updateProfile_ClearsTimezoneWhenBlank() {
+        User user = new User();
+        user.setTimezone("America/Los_Angeles");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        User result = userService.updateProfile(
+                user, new UpdateProfileRequest(null, null, null, ""));
+
+        assertNull(result.getTimezone(),
+                "Blank string clears the override so the read path can fall back to UTC");
+    }
+
+    @Test
+    void updateProfile_LeavesTimezoneUnchangedWhenNull() {
+        User user = new User();
+        user.setTimezone("America/Los_Angeles");
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // null means "client did not send the field" — preserves existing value
+        User result = userService.updateProfile(
+                user, new UpdateProfileRequest(null, true, null, null));
+
+        assertEquals("America/Los_Angeles", result.getTimezone());
     }
 
     @Test

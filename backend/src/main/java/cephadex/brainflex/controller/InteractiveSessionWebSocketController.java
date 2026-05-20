@@ -64,7 +64,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Host transitions the interactiveSession from LOBBY → IN_PROGRESS and fires the first question. */
-    @MessageMapping("/interactiveSession/{roomCode}/start")
+    @MessageMapping("/interactive-session/{roomCode}/start")
     public void startGame(
             @DestinationVariable String roomCode,
             Principal principal) {
@@ -72,7 +72,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Player submits their answer for the current round. */
-    @MessageMapping("/interactiveSession/{roomCode}/answer")
+    @MessageMapping("/interactive-session/{roomCode}/answer")
     public void submitAnswer(
             @DestinationVariable String roomCode,
             @Payload AnswerSubmitRequest request,
@@ -81,7 +81,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Player votes for an anonymous submission during VOTE phase (Best Answer mode). */
-    @MessageMapping("/interactiveSession/{roomCode}/vote")
+    @MessageMapping("/interactive-session/{roomCode}/vote")
     public void submitVote(
             @DestinationVariable String roomCode,
             @Payload VoteSubmitRequest request,
@@ -93,7 +93,7 @@ public class InteractiveSessionWebSocketController {
      * Host advances to the next question in TURN_BASED mode.
      * No-op in SIMULTANEOUS mode (auto-advances after BETWEEN_ROUNDS_DELAY_SECONDS).
      */
-    @MessageMapping("/interactiveSession/{roomCode}/nextRound")
+    @MessageMapping("/interactive-session/{roomCode}/nextRound")
     public void nextRound(
             @DestinationVariable String roomCode,
             Principal principal) {
@@ -101,7 +101,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Player voluntarily leaves the interactiveSession; broadcasts updated lobby state. */
-    @MessageMapping("/interactiveSession/{roomCode}/leave")
+    @MessageMapping("/interactive-session/{roomCode}/leave")
     public void leaveGame(
             @DestinationVariable String roomCode,
             Principal principal) {
@@ -109,7 +109,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Host removes a player from the interactiveSession. */
-    @MessageMapping("/interactiveSession/{roomCode}/boot")
+    @MessageMapping("/interactive-session/{roomCode}/boot")
     public void bootPlayer(
             @DestinationVariable String roomCode,
             @Payload BootPlayerRequest request,
@@ -118,7 +118,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Host ends the interactiveSession mid-game; computes final placements from current state. */
-    @MessageMapping("/interactiveSession/{roomCode}/end")
+    @MessageMapping("/interactive-session/{roomCode}/end")
     public void endInteractiveSession(
             @DestinationVariable String roomCode,
             Principal principal) {
@@ -126,7 +126,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Audience emoji burst; broadcast to /topic/interactive-session/{roomCode}/reaction. */
-    @MessageMapping("/interactiveSession/{roomCode}/reaction")
+    @MessageMapping("/interactive-session/{roomCode}/reaction")
     public void sendReaction(
             @DestinationVariable String roomCode,
             @Payload ReactionSendRequest request,
@@ -135,7 +135,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Audience chat message; broadcast to /topic/interactive-session/{roomCode}/chat. */
-    @MessageMapping("/interactiveSession/{roomCode}/chat")
+    @MessageMapping("/interactive-session/{roomCode}/chat")
     public void sendChat(
             @DestinationVariable String roomCode,
             @Payload ChatSendRequest request,
@@ -144,7 +144,7 @@ public class InteractiveSessionWebSocketController {
     }
 
     /** Host moderates (hides) one chat message; rebroadcast on /topic/interactive-session/{roomCode}/chat. */
-    @MessageMapping("/interactiveSession/{roomCode}/chat/moderate")
+    @MessageMapping("/interactive-session/{roomCode}/chat/moderate")
     public void moderateChat(
             @DestinationVariable String roomCode,
             @Payload ModerateChatRequest request,

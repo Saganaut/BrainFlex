@@ -9,6 +9,7 @@ package cephadex.brainflex.controller;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -123,7 +124,7 @@ public class GalleryController {
         image.setVariants(stored);
 
         GalleryImage saved = galleryImageRepository.save(image);
-        List<ImageVariant> fresh = s3Service.refreshGalleryImage(saved.getId(), saved.getVariants());
+        Map<ImageSize, ImageVariant> fresh = s3Service.refreshGalleryImage(saved.getId(), saved.getVariants());
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new GalleryImageDTO.GalleryImageResponse(saved, fresh));
     }
@@ -169,8 +170,8 @@ public class GalleryController {
 
     // ── helpers ────────────────────────────────────────────────────────────────
 
-    private List<ImageVariant> refresh(GalleryImage image) {
-        if (image.getVariants() == null || image.getVariants().isEmpty()) return List.of();
+    private Map<ImageSize, ImageVariant> refresh(GalleryImage image) {
+        if (image.getVariants() == null || image.getVariants().isEmpty()) return Collections.emptyMap();
         return s3Service.refreshGalleryImage(image.getId(), image.getVariants());
     }
 

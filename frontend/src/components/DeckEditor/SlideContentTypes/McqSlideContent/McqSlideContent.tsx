@@ -74,8 +74,7 @@ const McqSlideContent = () => {
     <SlideContentWrapper
       footer={
         <p className={hasCorrectAnswer ? styles.footerPlaceholder : undefined}>
-          Not setting a correct answer means this slide is not scoreable in a
-          game interactiveSession.
+          Not setting a correct answer means this slide is not scoreable.
         </p>
       }>
       <div className={styles.slideHeader}>

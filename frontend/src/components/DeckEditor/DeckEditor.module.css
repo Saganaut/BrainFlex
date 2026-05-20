@@ -25,8 +25,17 @@
     border-top: var(--border-size-sm) solid var(--color, var(--text-primary));
 
     .leftControlButtons {
+      width: 100%;
       display: flex;
       gap: var(--space-2);
+    }
+
+    .titleDeck {
+      max-width: 800px;
+
+      input {
+        font-size: var(--font-size-lg);
+      }
     }
 
     .rightControlButtons {

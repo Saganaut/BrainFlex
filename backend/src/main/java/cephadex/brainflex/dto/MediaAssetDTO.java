@@ -1,27 +1,30 @@
 // Wire types for the media asset API. MediaAssetResponse carries the hydrated
-// presentation: presigned URL list (image variants), single presigned URL
+// presentation: presigned URL map (image variants), single presigned URL
 // (audio/video file), or the literal embed URL (video embed). Callers should
 // always re-read after a mutation to pick up fresh URLs.
 package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import cephadex.brainflex.model.MediaAsset;
+import cephadex.brainflex.model.element.ImageSize;
 import cephadex.brainflex.model.element.ImageVariant;
 import cephadex.brainflex.model.enums.MediaKind;
 
 public class MediaAssetDTO {
 
-    /** Presentation shape: variants list for IMAGE, single url for AUDIO / VIDEO_FILE / VIDEO_EMBED. */
+    /** Presentation shape: variants map for IMAGE, single url for AUDIO / VIDEO_FILE / VIDEO_EMBED. */
     public record MediaAssetResponse(
             String id,
             MediaKind kind,
             String name,
             String ownerId,
             String organizationId,
-            List<ImageVariant> variants,
+            Map<ImageSize, ImageVariant> variants,
             String url,
             long sizeBytes,
             Integer width,
@@ -34,14 +37,14 @@ public class MediaAssetDTO {
             List<String> tags,
             LocalDateTime createdAt) {
 
-        public MediaAssetResponse(MediaAsset asset, List<ImageVariant> variants, String url) {
+        public MediaAssetResponse(MediaAsset asset, Map<ImageSize, ImageVariant> variants, String url) {
             this(
                     asset.getId(),
                     asset.getKind(),
                     asset.getName(),
                     asset.getOwnerId(),
                     asset.getOrganizationId(),
-                    variants == null ? List.of() : variants,
+                    variants == null ? Collections.emptyMap() : variants,
                     url,
                     asset.getSizeBytes(),
                     asset.getWidth(),

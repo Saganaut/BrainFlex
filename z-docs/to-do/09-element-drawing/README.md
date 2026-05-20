@@ -1,6 +1,6 @@
 # 09 — Drawing element kind
 
-**Status:** Backend + author editor shipped (matching the scope of chunks 07 / 08). Player canvas, reveal grid, and stroke downsampling are deferred to a future "play surface" chunk that builds the per-kind player views in one pass — there is no per-kind player dispatch in `PlayPage` yet, so shipping the Drawing player canvas alone would need wiring no other element kind has either.
+**Status:** Done. Backend, author editor, player canvas (Pointer events, palette + thickness, undo, clear, Douglas-Peucker downsampling on submit), and reveal grid (per-player thumbnails + click-to-lightbox + Best-Answer voting via `DrawingPreview` cards in `VotePanel`) all ship in this chunk.
 **Depends on:** Nothing strict; 19 (MediaAsset) if you want to allow image underlays via the new uploader
 **Unblocks:** 16 (analytics)
 
@@ -85,9 +85,9 @@ Stroke (embedded record)
 - [x] Per-answer byte cap (matches the WordCloud "silently drop" pattern — `submitAnswer` is a STOMP void, so a 400 is not the natural response shape; the question's `maxStrokesPerPlayer` / `maxPointsPerStroke` and `app.drawing.max-payload-bytes` (default 256 KB) all reject without storage or broadcast)
 - [x] `buildNewElement` DRAWING case
 - [x] Drawing editor component
-- [ ] Drawing player canvas (pointer events, undo, clear, palette) — deferred with the rest of the per-kind player surfaces
-- [ ] Drawing reveal grid + lightbox — deferred with the per-kind player surfaces
-- [x] Best-answer-mode wiring (already inherited via the shared `bestAnswerMode` chrome on every `DeckElement`; no extra wiring needed)
-- [ ] Stroke downsampling pre-submit — lives on the (deferred) player canvas
+- [x] Drawing player canvas (`DrawingCanvas` — Pointer events, palette swatches resolved through tokens.css, thickness picker, undo, clear, locked-when-submitted; coords captured in logical canvas units so a phone sketch reads identically on a 4K host)
+- [x] Drawing reveal grid + lightbox (`DrawingReveal` + `DrawingPreview` + `DrawingLightbox`; the grid is also rendered when the round is a Best-Answer round, with `VotePanel` swapping its text cards for `DrawingPreview` thumbnails and `RoundResult.BestAnswerReveal` doing the same for the de-anonymized tally)
+- [x] Best-answer-mode wiring (already inherited via the shared `bestAnswerMode` chrome on every `DeckElement`; the player surface uses it via `VotePanel`'s Drawing-specific grid)
+- [x] Stroke downsampling pre-submit (`downsampleStrokes` in `DrawingCanvas/drawingUtils.ts` — Douglas-Peucker with epsilon scaled to ¼ of stroke thickness; runs only on submit)
 - [x] Frontend codegen + lint
 - [x] Backend tests pass

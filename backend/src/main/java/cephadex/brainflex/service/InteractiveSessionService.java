@@ -125,6 +125,7 @@ public class InteractiveSessionService {
     private final AvatarService avatarService;
     private final ApplicationEventPublisher events;
     private final GameHistoryService gameHistoryService;
+    private final DeckAnalyticsService deckAnalyticsService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     private static final int CHAT_MAX_BODY = 500;
@@ -161,6 +162,7 @@ public class InteractiveSessionService {
             AvatarService avatarService,
             ApplicationEventPublisher events,
             GameHistoryService gameHistoryService,
+            DeckAnalyticsService deckAnalyticsService,
             ObjectMapper objectMapper,
             @Lazy SimpMessagingTemplate messagingTemplate) {
         this.interactiveSessionRepository = interactiveSessionRepository;
@@ -178,6 +180,7 @@ public class InteractiveSessionService {
         this.avatarService = avatarService;
         this.events = events;
         this.gameHistoryService = gameHistoryService;
+        this.deckAnalyticsService = deckAnalyticsService;
         this.objectMapper = objectMapper;
         this.messagingTemplate = messagingTemplate;
     }
@@ -1206,6 +1209,12 @@ public class InteractiveSessionService {
         // rolled-up snapshot.
         gameHistoryService.recordFinish(session, placements);
 
+        // Chunk 16 — fold this finish into the per-deck analytics rollup.
+        // The service swallows exceptions internally so a broken bucket can't
+        // break game-end; we still call it last so any failure here doesn't
+        // skip the history write above.
+        deckAnalyticsService.recordGame(session);
+
         for (PlayerPlacement p : placements) {
             if (!p.isGuest())
                 updateStatsAfterGame(p.getUserId(), p.getFinalScore());
@@ -1498,8 +1507,7 @@ public class InteractiveSessionService {
 
     private static String urlOf(Image image) {
         if (image == null) return null;
-        var largest = image.largestVariant();
-        return largest == null ? null : largest.url();
+        return image.largestUrl();
     }
 
     // ---- Audience engagement (chunk 11) ----

@@ -3,6 +3,7 @@ package cephadex.brainflex.config;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -186,11 +187,19 @@ public class SecurityConfig {
                 request.getSession(false).removeAttribute("guestId");
             }
 
-            boolean userExists = userRepository.findByGoogleId(googleId)
-                    .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()))
-                    .isPresent();
+            var existingOpt = userRepository.findByGoogleId(googleId)
+                    .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()));
+            // Lazy backfill so users created before emailVerifiedAt landed pick it up
+            // on their next Google login. Reaching this branch means OIDC succeeded —
+            // Google's token is our verification signal.
+            existingOpt.ifPresent(u -> {
+                if (u.getEmailVerifiedAt() == null) {
+                    u.setEmailVerifiedAt(LocalDateTime.now());
+                    userRepository.save(u);
+                }
+            });
 
-            if (userExists) {
+            if (existingOpt.isPresent()) {
                 String redirectUrl = sessionReturnUrl != null ? sessionReturnUrl : "http://localhost:5173/";
                 getRedirectStrategy().sendRedirect(request, response, redirectUrl);
                 return;
@@ -204,6 +213,7 @@ public class SecurityConfig {
                         guestUser.setEmail(oAuth2User.getAttribute("email"));
                         guestUser.setName(oAuth2User.getAttribute("name"));
                         guestUser.setPictureUrl(oAuth2User.getAttribute("picture"));
+                        guestUser.setEmailVerifiedAt(LocalDateTime.now());
                         userRepository.save(guestUser);
                     }
                 });

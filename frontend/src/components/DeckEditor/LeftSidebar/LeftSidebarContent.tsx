@@ -41,7 +41,7 @@ const LeftSidebarContent = () => {
   const { isFullScreen } = useFullScreen();
   const handleNewSlideClick = () => {
     openModal({
-      title: "Add a new element",
+      title: "Choose a slide type",
       content: (
         <NewElementPicker
           onPick={(kind: ElementKind) => {

@@ -2,6 +2,7 @@ package cephadex.brainflex.service;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class S3Service {
         return uploadAll(GALLERY_PREFIX, imageId, variants);
     }
 
-    public List<ImageVariant> refreshGalleryImage(String imageId, List<StoredImageVariant> stored) {
+    public Map<ImageSize, ImageVariant> refreshGalleryImage(String imageId, List<StoredImageVariant> stored) {
         return refreshAll(GALLERY_PREFIX, imageId, stored);
     }
 
@@ -70,7 +71,7 @@ public class S3Service {
         return uploadAll(AVATAR_PREFIX, userId, variants);
     }
 
-    public List<ImageVariant> refreshAvatar(String userId, List<StoredImageVariant> stored) {
+    public Map<ImageSize, ImageVariant> refreshAvatar(String userId, List<StoredImageVariant> stored) {
         return refreshAll(AVATAR_PREFIX, userId, stored);
     }
 
@@ -80,7 +81,7 @@ public class S3Service {
         return uploadAll(THEME_LOGO_PREFIX, themeId, variants);
     }
 
-    public List<ImageVariant> refreshThemeLogo(String themeId, List<StoredImageVariant> stored) {
+    public Map<ImageSize, ImageVariant> refreshThemeLogo(String themeId, List<StoredImageVariant> stored) {
         return refreshAll(THEME_LOGO_PREFIX, themeId, stored);
     }
 
@@ -94,7 +95,7 @@ public class S3Service {
         return uploadAll(THEME_BG_PREFIX, themeId, variants);
     }
 
-    public List<ImageVariant> refreshThemeBackground(String themeId, List<StoredImageVariant> stored) {
+    public Map<ImageSize, ImageVariant> refreshThemeBackground(String themeId, List<StoredImageVariant> stored) {
         return refreshAll(THEME_BG_PREFIX, themeId, stored);
     }
 
@@ -112,7 +113,7 @@ public class S3Service {
         return uploadAll(MEDIA_PREFIX, assetId, variants);
     }
 
-    public List<ImageVariant> refreshMediaAssetImage(String assetId, List<StoredImageVariant> stored) {
+    public Map<ImageSize, ImageVariant> refreshMediaAssetImage(String assetId, List<StoredImageVariant> stored) {
         return refreshAll(MEDIA_PREFIX, assetId, stored);
     }
 
@@ -165,13 +166,13 @@ public class S3Service {
         return stored;
     }
 
-    private List<ImageVariant> refreshAll(String prefix, String entityId, List<StoredImageVariant> stored) {
-        if (stored == null || stored.isEmpty()) return List.of();
-        List<ImageVariant> out = new ArrayList<>(stored.size());
+    private Map<ImageSize, ImageVariant> refreshAll(String prefix, String entityId, List<StoredImageVariant> stored) {
+        if (stored == null || stored.isEmpty()) return Map.of();
+        Map<ImageSize, ImageVariant> out = new EnumMap<>(ImageSize.class);
         for (StoredImageVariant v : stored) {
             if (v == null || v.size() == null) continue;
             String url = generatePresignedUrl(variantKey(prefix, entityId, v.size()));
-            out.add(new ImageVariant(v.size(), url, v.width(), v.height()));
+            out.put(v.size(), new ImageVariant(url, v.width(), v.height()));
         }
         return out;
     }

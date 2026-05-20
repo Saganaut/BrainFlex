@@ -4,26 +4,26 @@
  * place-on-image target, ranking item images, ...) and on user/theme records.
  *
  * Source of truth depends on `useExternalImg`:
- *   - true  → author pasted an external URL. The single entry in `variants`
- *             holds the literal URL and is persisted as-is. `internalImgId`
- *             is ignored.
+ *   - true  → author pasted an external URL. `externalUrl` holds the literal
+ *             URL and is persisted as-is. `internalImgId` is ignored and
+ *             `variants` is empty.
  *   - false → image was chosen from the user's gallery (or uploaded as an
  *             avatar / theme image, where the entity id plays the same role).
  *             `internalImgId` is the GalleryImage id and is the source of
- *             truth; `variants` is transport-only — DeckImageHydrationService
- *             (and the equivalent paths for avatars/themes) refreshes all five
- *             presigned URLs on every response. Whatever the client sends for
- *             `variants` on a write is discarded by the persistence layer.
+ *             truth; `variants` is transport-only — the hydrators refresh all
+ *             five presigned URLs on every response. Whatever the client
+ *             sends for `variants` on a write is discarded by the persistence
+ *             layer. `externalUrl` is null.
  *
- * `variants` always carries one renderable URL per ImageSize tier (xs/sm/md/
- * lg/xl) for internal images, and exactly one entry for external images
- * (whose actual size is unknown). An empty `variants` list means "no image"
- * and renderers fall back to a Lorem Picsum placeholder seeded on the parent
+ * `variants` is a map keyed by `ImageSize` (XS/SM/MD/LG/XL) for internal
+ * images. An empty map plus null `externalUrl` means "no image" and
+ * renderers fall back to a Lorem Picsum placeholder seeded on the parent
  * element/option id.
  */
 package cephadex.brainflex.model.element;
 
-import java.util.List;
+import java.util.EnumMap;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -31,51 +31,62 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record Image(
         boolean useExternalImg,
         String internalImgId,
-        List<ImageVariant> variants) {
+        String externalUrl,
+        Map<ImageSize, ImageVariant> variants) {
 
-    /** Replace `variants` (used by the read-time hydrator). */
-    public Image withVariants(List<ImageVariant> variants) {
-        return new Image(useExternalImg, internalImgId, variants);
+    /** Replace `variants` (used by the read-time hydrators). */
+    public Image withVariants(Map<ImageSize, ImageVariant> variants) {
+        return new Image(useExternalImg, internalImgId, externalUrl, variants);
     }
 
-    /** Externally-hosted URL (paste-link, picsum placeholder, etc.). One
-     *  variant, size unknown — we don't fetch the URL to measure it. */
+    /** Externally-hosted URL (paste-link, picsum placeholder, etc.). */
     public static Image external(String url) {
-        return new Image(true, null, List.of(new ImageVariant(null, url, 0, 0)));
+        return new Image(true, null, url, Map.of());
     }
 
     /** Gallery-backed image. `variants` is populated by the hydrator on read. */
     public static Image internal(String galleryImageId) {
-        return new Image(false, galleryImageId, List.of());
+        return new Image(false, galleryImageId, null, Map.of());
     }
 
     /** Neutral "no image set" value. */
     public static Image empty() {
-        return new Image(true, null, List.of());
+        return new Image(true, null, null, Map.of());
     }
 
-    /** True when the image carries no renderable variants. */
+    /** True when the image carries no renderable URL (no external URL and no
+     *  hydrated variants with a usable URL). */
     public boolean isBlank() {
+        if (useExternalImg) {
+            return externalUrl == null || externalUrl.isBlank();
+        }
         if (variants == null || variants.isEmpty()) return true;
-        for (ImageVariant v : variants) {
+        for (ImageVariant v : variants.values()) {
             if (v != null && v.url() != null && !v.url().isBlank()) return false;
         }
         return true;
     }
 
-    /** Largest available variant (xl when present, else the last in the list).
-     *  Used by renderers that want the highest-quality URL available. */
-    public ImageVariant largestVariant() {
-        if (variants == null || variants.isEmpty()) return null;
-        ImageVariant best = null;
-        for (ImageVariant v : variants) {
-            if (v == null || v.url() == null || v.url().isBlank()) continue;
-            if (best == null) { best = v; continue; }
-            ImageSize bestSize = best.size();
-            ImageSize candidateSize = v.size();
-            if (bestSize == null) { best = v; continue; }
-            if (candidateSize != null && candidateSize.ordinal() > bestSize.ordinal()) best = v;
+    /** Largest renderable URL we have. For external images this is the
+     *  externalUrl; for internal images it walks XL→XS and returns the first
+     *  hydrated variant. Null when the image is blank. */
+    public String largestUrl() {
+        if (useExternalImg) {
+            return (externalUrl != null && !externalUrl.isBlank()) ? externalUrl : null;
         }
-        return best;
+        if (variants == null || variants.isEmpty()) return null;
+        ImageSize[] sizes = ImageSize.values();
+        for (int i = sizes.length - 1; i >= 0; i--) {
+            ImageVariant v = variants.get(sizes[i]);
+            if (v != null && v.url() != null && !v.url().isBlank()) return v.url();
+        }
+        return null;
+    }
+
+    /** Build a fresh EnumMap-backed variants container. EnumMap preserves
+     *  enum ordinal order in iteration, so hydrators that walk it produce
+     *  xs→xl output naturally. */
+    public static Map<ImageSize, ImageVariant> newVariants() {
+        return new EnumMap<>(ImageSize.class);
     }
 }

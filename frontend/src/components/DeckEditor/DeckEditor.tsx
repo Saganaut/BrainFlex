@@ -8,6 +8,8 @@
 import { useNavigate } from "@tanstack/react-router";
 
 import { Btn } from "../Common/Buttons/Btn";
+import { SplitBtn } from "../Common/Buttons/SplitBtn/SplitBtn";
+import { DropdownMenuItem } from "../Menus/DropdownMenu";
 import { LeftSidebarContent } from "./LeftSidebar/LeftSidebarContent";
 import { PublishStatusControl } from "./PublishStatusControl";
 import { RightSidebarContent } from "./RightSidebar/RightSidebarContent";
@@ -23,8 +25,6 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useStartInteractiveSession } from "@/hooks/useStartInteractiveSession";
 import {
   ArrowsPointingOutIcon,
-  CalendarIcon,
-  EyeIcon,
   PlayIcon,
   ShareIcon,
 } from "@heroicons/react/24/outline";
@@ -47,7 +47,11 @@ const DeckEditor = () => {
     userState.state === "registered" ? userState.user.id : undefined;
   const { data: deck } = useGetDeckQuery({ id: deckId });
   const callerIsOwner = deck?.myRole === "OWNER";
-  const { quickStart, isStarting, error: startError } = useStartInteractiveSession();
+  const {
+    quickStart,
+    isStarting,
+    error: startError,
+  } = useStartInteractiveSession();
 
   const handleShareClick = () => {
     openModal({
@@ -93,67 +97,63 @@ const DeckEditor = () => {
               <ArrowsPointingOutIcon
                 style={{ width: "1rem", height: "1rem" }}
               />
-            </Btn>
+            </Btn>{" "}
+            <Input
+              ariaLabel='Deck title'
+              value={titleDraft}
+              placeholder='Untitled Deck'
+              className={styles.titleDeck}
+              maxLength={100}
+              onChange={(e) => {
+                setTitleDraft(e.target.value);
+              }}
+              isBordered={false}
+              onBlur={commitTitle}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") e.currentTarget.blur();
+                if (e.key === "Escape") {
+                  setTitleDraft(serverName);
+                  e.currentTarget.blur();
+                }
+              }}
+            />
           </div>
-          <Input
-            aria-label='Deck title'
-            value={titleDraft}
-            placeholder='Untitled Deck'
-            maxLength={100}
-            onChange={(e) => {
-              setTitleDraft(e.target.value);
-            }}
-            isbordered={false}
-            onBlur={commitTitle}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") e.currentTarget.blur();
-              if (e.key === "Escape") {
-                setTitleDraft(serverName);
-                e.currentTarget.blur();
-              }
-            }}
-          />
+
           <div className={styles.rightControlButtons}>
             <PublishStatusControl />
-            <Btn
-              size={"md"}
-              shape={"pill"}
-              variant={"default"}
-              onClick={handleShareClick}>
+            <Btn size={"md"} shape={"pill"} onClick={handleShareClick}>
               <ShareIcon style={{ width: "1rem", height: "1rem" }} />
               Share
             </Btn>
-            <Btn
-              size={"md"}
-              shape={"pill"}
-              variant={"default"}
-              onClick={() => {
-                // TODO: open the deck preview view (read-only renderer)
-                console.log("preview deck", serverName);
-              }}>
-              <EyeIcon style={{ width: "1rem", height: "1rem" }} />
-              Preview
-            </Btn>
-            <Btn
-              size={"md"}
-              shape={"pill"}
-              variant={"default"}
-              onClick={handleScheduleClick}>
-              <CalendarIcon style={{ width: "1rem", height: "1rem" }} />
-              Schedule
-            </Btn>
-            <Btn
+            <SplitBtn
               size={"md"}
               shape={"pill"}
               variant={"brand"}
               disabled={isStarting}
-              aria-describedby={startError ? "start-interactiveSession-error" : undefined}
+              aria-describedby={
+                startError ? "start-interactiveSession-error" : undefined
+              }
               onClick={() => {
                 void quickStart(deckId);
-              }}>
+              }}
+              menuAriaLabel='More start options'
+              menuItems={
+                <>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      // TODO: open the deck preview view (read-only renderer)
+                      console.log("preview deck", serverName);
+                    }}>
+                    Preview
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleScheduleClick}>
+                    Schedule
+                  </DropdownMenuItem>
+                </>
+              }>
               <PlayIcon style={{ width: "1rem", height: "1rem" }} />
               {isStarting ? "Starting…" : "Start"}
-            </Btn>
+            </SplitBtn>
             {startError && (
               <span
                 id='start-interactiveSession-error'

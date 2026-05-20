@@ -1,10 +1,12 @@
 package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Collections;
+import java.util.Map;
 
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.element.ImageSize;
 import cephadex.brainflex.model.element.ImageVariant;
 
 public class ThemeDTO {
@@ -64,14 +66,12 @@ public class ThemeDTO {
     }
 
     private static String largestUrl(Image image) {
-        if (image == null) return null;
-        ImageVariant largest = image.largestVariant();
-        return largest == null ? null : largest.url();
+        return image == null ? null : image.largestUrl();
     }
 
     /** Helper for callers that don't have variants to hydrate (e.g. unit
      *  tests, light-weight list-page responses). */
-    public static List<ImageVariant> noVariants() {
-        return List.of();
+    public static Map<ImageSize, ImageVariant> noVariants() {
+        return Collections.emptyMap();
     }
 }

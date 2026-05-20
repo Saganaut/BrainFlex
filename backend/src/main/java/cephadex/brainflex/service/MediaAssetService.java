@@ -237,9 +237,9 @@ public class MediaAssetService {
         return new MediaAssetDTO.MediaAssetResponse(asset, refreshVariants(asset), refreshUrl(asset));
     }
 
-    private List<ImageVariant> refreshVariants(MediaAsset asset) {
-        if (asset.getKind() != MediaKind.IMAGE) return List.of();
-        if (asset.getVariants() == null || asset.getVariants().isEmpty()) return List.of();
+    private Map<ImageSize, ImageVariant> refreshVariants(MediaAsset asset) {
+        if (asset.getKind() != MediaKind.IMAGE) return Map.of();
+        if (asset.getVariants() == null || asset.getVariants().isEmpty()) return Map.of();
         return s3Service.refreshMediaAssetImage(asset.getId(), asset.getVariants());
     }
 

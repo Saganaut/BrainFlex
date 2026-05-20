@@ -606,11 +606,32 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.updateProfileRequest,
       }),
     }),
+    listUserHistory: build.query<
+      ListUserHistoryApiResponse,
+      ListUserHistoryApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/users/${queryArg.userId}/history`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
     getUserProfile: build.query<
       GetUserProfileApiResponse,
       GetUserProfileApiArg
     >({
       query: (queryArg) => ({ url: `/api/users/${queryArg.id}` }),
+    }),
+    listMyHistory: build.query<ListMyHistoryApiResponse, ListMyHistoryApiArg>({
+      query: (queryArg) => ({
+        url: `/api/users/me/history`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
     }),
     listMyFavorites: build.query<
       ListMyFavoritesApiResponse,
@@ -710,6 +731,24 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     getMyRating: build.query<GetMyRatingApiResponse, GetMyRatingApiArg>({
       query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/rating/mine` }),
+    }),
+    getDeckAnalytics: build.query<
+      GetDeckAnalyticsApiResponse,
+      GetDeckAnalyticsApiArg
+    >({
+      query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/analytics` }),
+    }),
+    listMyHistoryForDeck: build.query<
+      ListMyHistoryForDeckApiResponse,
+      ListMyHistoryForDeckApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/decks/${queryArg.deckId}/history/mine`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
     }),
     listReplies: build.query<ListRepliesApiResponse, ListRepliesApiArg>({
       query: (queryArg) => ({
@@ -1205,9 +1244,20 @@ export type UpdateProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type UpdateProfileApiArg = {
   updateProfileRequest: UpdateProfileRequest;
 };
+export type ListUserHistoryApiResponse = /** status 200 OK */ GameHistoryPage;
+export type ListUserHistoryApiArg = {
+  userId: string;
+  page?: number;
+  size?: number;
+};
 export type GetUserProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type GetUserProfileApiArg = {
   id: string;
+};
+export type ListMyHistoryApiResponse = /** status 200 OK */ GameHistoryPage;
+export type ListMyHistoryApiArg = {
+  page?: number;
+  size?: number;
 };
 export type ListMyFavoritesApiResponse = /** status 200 OK */ DeckFavoritesPage;
 export type ListMyFavoritesApiArg = {
@@ -1271,6 +1321,17 @@ export type GetMyRatingApiResponse = /** status 200 OK */ DeckRatingDto;
 export type GetMyRatingApiArg = {
   id: string;
 };
+export type GetDeckAnalyticsApiResponse = /** status 200 OK */ DeckAnalytics;
+export type GetDeckAnalyticsApiArg = {
+  id: string;
+};
+export type ListMyHistoryForDeckApiResponse =
+  /** status 200 OK */ GameHistoryPage;
+export type ListMyHistoryForDeckApiArg = {
+  deckId: string;
+  page?: number;
+  size?: number;
+};
 export type ListRepliesApiResponse = /** status 200 OK */ DeckCommentsPage;
 export type ListRepliesApiArg = {
   deckId: string;
@@ -1315,7 +1376,6 @@ export type RemoveDeckFromCollectionApiArg = {
   deckId: string;
 };
 export type ImageVariant = {
-  size?: "XS" | "SM" | "MD" | "LG" | "XL";
   url?: string;
   width?: number;
   height?: number;
@@ -1323,7 +1383,10 @@ export type ImageVariant = {
 export type Image = {
   useExternalImg?: boolean;
   internalImgId?: string;
-  variants?: ImageVariant[];
+  externalUrl?: string;
+  variants?: {
+    [key: string]: ImageVariant;
+  };
   blank?: boolean;
 };
 export type ThemeResponse = {
@@ -2326,6 +2389,8 @@ export type Membership = {
   sourceOrganizationId?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+  monthlyInteractiveSessionCount?: number;
+  monthlyCountPeriodStart?: string;
 };
 export type RegisteredUser = {
   id?: string;
@@ -2341,6 +2406,8 @@ export type RegisteredUser = {
   newsletter?: boolean;
   organizationIds?: string[];
   activeThemeId?: string;
+  timezone?: string;
+  emailVerifiedAt?: string;
   lastLogin?: string;
   createdAt?: string;
 };
@@ -2538,6 +2605,36 @@ export type UpdateProfileRequest = {
   pictureUrl?: string;
   newsletter?: boolean;
   activeThemeId?: string;
+  timezone?: string;
+};
+export type GameHistoryDto = {
+  id?: string;
+  interactiveSessionId?: string;
+  deckId?: string;
+  deckName?: string;
+  hostUserId?: string;
+  hostName?: string;
+  finalScore?: number;
+  placement?: number;
+  totalQuestions?: number;
+  correctAnswers?: number;
+  longestStreak?: number;
+  currentStreakAtEnd?: number;
+  accuracy?: number;
+  reactionsSent?: number;
+  durationMs?: number;
+  teamId?: string;
+  teamName?: string;
+  wasHost?: boolean;
+  wasGuest?: boolean;
+  playedAt?: string;
+};
+export type GameHistoryPage = {
+  items?: GameHistoryDto[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  hasMore?: boolean;
 };
 export type DeckFavoritesPage = {
   items?: DeckDto[];
@@ -2701,6 +2798,31 @@ export type DeckRatingsPage = {
   ratingCount?: number;
   starDistribution?: number[];
 };
+export type ElementStats = {
+  presentedCount?: number;
+  answeredCount?: number;
+  correctCount?: number;
+  totalTimeMs?: number;
+  averageTimeMs?: number;
+  distribution?: {
+    [key: string]: number;
+  };
+  reactionsReceived?: number;
+  chatMessagesDuringRound?: number;
+};
+export type DeckAnalytics = {
+  deckId?: string;
+  totalPlays?: number;
+  totalPlayers?: number;
+  averageScore?: number;
+  averageAccuracy?: number;
+  averageDurationMs?: number;
+  perElement?: {
+    [key: string]: ElementStats;
+  };
+  lastPlayedAt?: string;
+  updatedAt?: string;
+};
 export type DeckExploreResponse = {
   items?: DeckDto[];
   page?: number;
@@ -2814,8 +2936,12 @@ export const {
   useRegisterMutation,
   useGuestLoginMutation,
   useUpdateProfileMutation,
+  useListUserHistoryQuery,
+  useLazyListUserHistoryQuery,
   useGetUserProfileQuery,
   useLazyGetUserProfileQuery,
+  useListMyHistoryQuery,
+  useLazyListMyHistoryQuery,
   useListMyFavoritesQuery,
   useLazyListMyFavoritesQuery,
   useGetLeaderboardQuery,
@@ -2843,6 +2969,10 @@ export const {
   useLazyListRatingsQuery,
   useGetMyRatingQuery,
   useLazyGetMyRatingQuery,
+  useGetDeckAnalyticsQuery,
+  useLazyGetDeckAnalyticsQuery,
+  useListMyHistoryForDeckQuery,
+  useLazyListMyHistoryForDeckQuery,
   useListRepliesQuery,
   useLazyListRepliesQuery,
   useListMyDecksQuery,

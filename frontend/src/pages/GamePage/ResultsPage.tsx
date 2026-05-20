@@ -82,7 +82,11 @@ const ResultsPage = () => {
       </div>
 
       {view === "standings" ? (
-        <GameOver placements={placements} currentUserId={userId} />
+        <GameOver
+          placements={placements}
+          currentUserId={userId}
+          teams={session?.teams ?? []}
+        />
       ) : reviewLoading ? (
         <p className={styles.loadingMsg}>Loading review…</p>
       ) : review ? (

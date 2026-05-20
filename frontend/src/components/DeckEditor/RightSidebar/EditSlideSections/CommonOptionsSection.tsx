@@ -82,12 +82,13 @@ const CommonOptionsSection = () => {
 
   if (!element) return null;
 
-  const buildPatch = (overrides: Partial<DeckElement>): DeckElement => ({
-    ...element,
-    mediaCaption,
-    altText,
-    ...overrides,
-  } as DeckElement);
+  const buildPatch = (overrides: Partial<DeckElement>): DeckElement =>
+    ({
+      ...element,
+      mediaCaption,
+      altText,
+      ...overrides,
+    }) as DeckElement;
 
   const elId = element.id ?? "";
 
@@ -107,12 +108,11 @@ const CommonOptionsSection = () => {
         }}
         onBlur={flush}
       />
-      <TextArea
+      <Input
         id={`common-alt-text-${elId}`}
         label='Image alt text'
         value={altText}
         placeholder='Described for screen readers…'
-        rows={2}
         onChange={(e) => {
           const next = e.target.value;
           setAltText(next);

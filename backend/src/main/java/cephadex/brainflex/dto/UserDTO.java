@@ -7,7 +7,6 @@ import cephadex.brainflex.model.Membership;
 import cephadex.brainflex.model.PlayerStats;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.element.ImageVariant;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(oneOf = { UserDTO.GuestUser.class, UserDTO.RegisteredUser.class })
@@ -63,6 +62,8 @@ public sealed interface UserDTO {
             Boolean newsletter,
             List<String> organizationIds,
             String activeThemeId,
+            String timezone,
+            LocalDateTime emailVerifiedAt,
             LocalDateTime lastLogin,
             LocalDateTime createdAt)
             implements UserDTO, View {
@@ -82,6 +83,8 @@ public sealed interface UserDTO {
                     user.getNewsletter(),
                     user.getOrganizationIds() == null ? List.of() : List.copyOf(user.getOrganizationIds()),
                     user.getActiveThemeId(),
+                    user.getTimezone(),
+                    user.getEmailVerifiedAt(),
                     user.getLastLogin(),
                     user.getCreatedAt());
         }
@@ -91,9 +94,9 @@ public sealed interface UserDTO {
      *  the image carries no variants. Null when both are blank. */
     static String largestUrl(Image picture, String fallback) {
         if (picture != null) {
-            ImageVariant largest = picture.largestVariant();
-            if (largest != null && largest.url() != null && !largest.url().isBlank()) {
-                return largest.url();
+            String largest = picture.largestUrl();
+            if (largest != null && !largest.isBlank()) {
+                return largest;
             }
         }
         return fallback;

@@ -78,10 +78,7 @@ const TextSlideContent = () => {
       description='Players type a free-form answer; match against the canonical answer and any variants.'
       footer={
         !correctAnswer.trim() ? (
-          <p>
-            Not setting a correct answer means this slide is not scoreable in a
-            game interactiveSession.
-          </p>
+          <p>Not setting a correct answer means this slide is not scoreable.</p>
         ) : null
       }>
       <RichTextInput

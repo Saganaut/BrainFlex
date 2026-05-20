@@ -20,13 +20,16 @@ input[type="radio"] {
 }
 
 .inputContainer {
-  display: flex;
   flex-direction: row;
-  padding-bottom: var(--space-6);
   align-items: center;
   justify-content: space-between;
-  width: fit-content;
   gap: var(--gap-xl);
+  display: flex;
+  width: 100%;
+
+  &.withBottomPadding {
+    padding-bottom: var(--space-6);
+  }
 
   &.labelAbove {
     flex-direction: column;
@@ -59,8 +62,11 @@ input[type="radio"] {
   }
 
   input {
-    border: var(--border-size-sm) solid var(--border-color, var(--border-default));
+    border: var(--border-size-sm) solid
+      var(--border-color, var(--border-default));
     border-radius: var(--radius-md);
+    display: flex;
+    width: 100%;
 
     &.noBorders {
       border-color: transparent;

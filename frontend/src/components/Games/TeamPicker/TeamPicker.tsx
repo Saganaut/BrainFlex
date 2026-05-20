@@ -1,0 +1,321 @@
+/**
+ * Lobby team picker (chunk 12).
+ *
+ * Renders a grid of team cards when {@code session.teamMode} is on. Each
+ * card shows the team's color, name, member list, and member count. Players
+ * tap a card to move themselves via useMovePlayerToTeamMutation; the host
+ * gets inline create / rename / recolor / delete controls plus an
+ * "Auto-assign me" button when autoBalanceTeams is enabled and the player
+ * doesn't yet have a team.
+ *
+ * Team membership is sourced from the slice (which is fed by both the
+ * authoritative session DTO and STOMP /teams broadcasts), so concurrent
+ * joins from other players reflect live without polling.
+ *
+ * Out of scope for this PR: drag-and-drop moves and a richer per-player
+ * "move to team" dropdown for hosts. The roadmap calls these out
+ * explicitly as follow-up; the tap-to-join flow covers the Mentimeter /
+ * Kahoot core team-mode UX.
+ */
+import { useState } from "react";
+import { Btn } from "@/components/Common/Buttons/Btn";
+import { Input } from "@/components/Common/Input/Input/Input";
+import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
+import {
+  useCreateTeamMutation,
+  useUpdateTeamMutation,
+  useDeleteTeamMutation,
+  useMovePlayerToTeamMutation,
+  type Team,
+  type InteractiveSessionPlayerDto,
+} from "../../../store/BrainFlexApi";
+import styles from "./TeamPicker.module.css";
+
+interface TeamPickerProps {
+  roomCode: string;
+  teams: Team[];
+  players: InteractiveSessionPlayerDto[];
+  currentUserId?: string;
+  isHost: boolean;
+  autoBalanceTeams: boolean;
+}
+
+/**
+ * Curated swatches the host can pick from when creating or recoloring a
+ * team. Kept short on purpose — eight is enough to differentiate, more
+ * would require a full color picker UI.
+ */
+const TEAM_COLOR_PRESETS = [
+  "#e11d48",
+  "#f97316",
+  "#facc15",
+  "#22c55e",
+  "#14b8a6",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+] as const;
+
+const TeamPicker = ({
+  roomCode,
+  teams,
+  players,
+  currentUserId,
+  isHost,
+  autoBalanceTeams,
+}: TeamPickerProps) => {
+  const [movePlayerToTeam] = useMovePlayerToTeamMutation();
+  const [createTeam, { isLoading: creating }] = useCreateTeamMutation();
+  const confirm = useConfirm();
+
+  // The current player's team membership, used to highlight the active card
+  // and to gate the "Auto-assign me" affordance.
+  const myTeamId = currentUserId
+    ? players.find((p) => p.userId === currentUserId)?.teamId
+    : undefined;
+
+  const handleJoin = (teamId: string | undefined) => {
+    if (!currentUserId || !teamId || teamId === myTeamId) return;
+    void movePlayerToTeam({
+      roomCode,
+      userId: currentUserId,
+      teamMoveRequest: { teamId },
+    });
+  };
+
+  const handleAutoAssign = () => {
+    if (!currentUserId) return;
+    // Sentinel value the backend treats as "auto-balance me into the
+    // smallest team" — mirrors the lobby join path's autoBalance branch.
+    void movePlayerToTeam({
+      roomCode,
+      userId: currentUserId,
+      teamMoveRequest: { teamId: "__AUTO__" },
+    });
+  };
+
+  const handleCreate = () => {
+    const nextColor =
+      TEAM_COLOR_PRESETS[teams.length % TEAM_COLOR_PRESETS.length];
+    void createTeam({
+      roomCode,
+      teamCrudRequest: {
+        name: `Team ${teams.length + 1}`,
+        color: nextColor,
+      },
+    });
+  };
+
+  return (
+    <div className={styles.wrap}>
+      <div className={styles.headerRow}>
+        <h2 className={styles.heading}>Teams ({teams.length})</h2>
+        {isHost && (
+          <Btn
+            size='sm'
+            type='button'
+            onClick={handleCreate}
+            disabled={creating}>
+            + Add team
+          </Btn>
+        )}
+        {!myTeamId && autoBalanceTeams && (
+          <Btn size='sm' type='button' onClick={handleAutoAssign}>
+            Auto-assign me
+          </Btn>
+        )}
+      </div>
+      <div className={styles.grid}>
+        {teams.map((team) => (
+          <TeamCard
+            key={team.id}
+            team={team}
+            members={players.filter((p) => p.teamId === team.id)}
+            isMyTeam={!!myTeamId && myTeamId === team.id}
+            isHost={isHost}
+            onJoin={() => {
+              handleJoin(team.id);
+            }}
+            onDeleteConfirm={confirm}
+            roomCode={roomCode}
+          />
+        ))}
+        {teams.length === 0 && (
+          <p className={styles.empty}>
+            {isHost
+              ? "No teams yet. Add one to get started."
+              : "Waiting for the host to set up teams…"}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
+interface TeamCardProps {
+  team: Team;
+  members: InteractiveSessionPlayerDto[];
+  isMyTeam: boolean;
+  isHost: boolean;
+  onJoin: () => void;
+  onDeleteConfirm: ReturnType<typeof useConfirm>;
+  roomCode: string;
+}
+
+const TeamCard = ({
+  team,
+  members,
+  isMyTeam,
+  isHost,
+  onJoin,
+  onDeleteConfirm,
+  roomCode,
+}: TeamCardProps) => {
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState(team.name ?? "");
+  const [draftColor, setDraftColor] = useState(
+    team.color ?? TEAM_COLOR_PRESETS[0],
+  );
+  const [updateTeam, { isLoading: updating }] = useUpdateTeamMutation();
+  const [deleteTeam, { isLoading: deleting }] = useDeleteTeamMutation();
+
+  const startEdit = () => {
+    setDraftName(team.name ?? "");
+    setDraftColor(team.color ?? TEAM_COLOR_PRESETS[0]);
+    setEditing(true);
+  };
+
+  const saveEdit = () => {
+    if (!team.id) return;
+    void updateTeam({
+      roomCode,
+      teamId: team.id,
+      teamCrudRequest: { name: draftName.trim() || team.name, color: draftColor },
+    });
+    setEditing(false);
+  };
+
+  const handleDelete = async () => {
+    if (!team.id) return;
+    const ok = await onDeleteConfirm({
+      title: "Delete team",
+      message: `Delete "${team.name ?? "this team"}"? Members will be reassigned to other teams.`,
+      confirmLabel: "Delete",
+      variant: "danger",
+    });
+    if (!ok) return;
+    void deleteTeam({ roomCode, teamId: team.id });
+  };
+
+  const cardStyle: React.CSSProperties = {
+    "--team-color": team.color ?? "var(--bg-subtle)",
+  } as React.CSSProperties;
+
+  return (
+    <div
+      className={`${styles.card} ${isMyTeam ? styles.cardMine : ""}`}
+      style={cardStyle}>
+      <div className={styles.cardHeader}>
+        <span className={styles.colorDot} aria-hidden='true' />
+        {editing && isHost ? (
+          <Input
+            type='text'
+            value={draftName}
+            maxLength={32}
+            autoFocus
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              setDraftName(e.target.value);
+            }}
+            className={styles.editInput}
+          />
+        ) : (
+          <span className={styles.cardName}>{team.name}</span>
+        )}
+        <span className={styles.cardCount}>{members.length}</span>
+      </div>
+
+      {editing && isHost && (
+        <div className={styles.swatches} role='group' aria-label='Team color'>
+          {TEAM_COLOR_PRESETS.map((c) => (
+            <button
+              key={c}
+              type='button'
+              className={`${styles.swatch} ${draftColor === c ? styles.swatchSelected : ""}`}
+              style={{ background: c }}
+              aria-label={`Color ${c}`}
+              onClick={() => {
+                setDraftColor(c);
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {members.length > 0 ? (
+        <ul className={styles.memberList}>
+          {members.map((m) => (
+            <li key={m.userId} className={styles.member}>
+              {m.userName ?? "?"}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className={styles.memberEmpty}>No members yet.</p>
+      )}
+
+      <div className={styles.cardActions}>
+        {!editing && !isMyTeam && (
+          <Btn size='sm' type='button' onClick={onJoin}>
+            Join
+          </Btn>
+        )}
+        {!editing && isMyTeam && (
+          <span className={styles.youTag}>You</span>
+        )}
+        {isHost && !editing && (
+          <Btn
+            size='sm'
+            type='button'
+            variant='secondary'
+            onClick={startEdit}>
+            Edit
+          </Btn>
+        )}
+        {isHost && !editing && (
+          <Btn
+            size='sm'
+            type='button'
+            variant='error'
+            disabled={deleting}
+            onClick={() => {
+              void handleDelete();
+            }}>
+            Delete
+          </Btn>
+        )}
+        {editing && (
+          <>
+            <Btn
+              size='sm'
+              type='button'
+              disabled={updating}
+              onClick={saveEdit}>
+              Save
+            </Btn>
+            <Btn
+              size='sm'
+              type='button'
+              variant='secondary'
+              onClick={() => {
+                setEditing(false);
+              }}>
+              Cancel
+            </Btn>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export { TeamPicker };

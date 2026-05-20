@@ -7,6 +7,7 @@
  * tally arrives later as part of the round result.
  */
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { DrawingPreview } from "../DrawingReveal/DrawingReveal";
 import type { AnswerPayload, DeckElement } from "../../../types/elements";
 import type { AnonymizedSubmission } from "../../../types/bestAnswer";
 import styles from "./VotePanel.module.css";
@@ -50,6 +51,34 @@ const VotePanel = ({
 
       {submissions.length === 0 ? (
         <p className={styles.empty}>No submissions to vote on.</p>
+      ) : isDrawingPanel(element) ? (
+        <ul className={styles.drawingGrid}>
+          {submissions.map((s) => {
+            const isMine = myVote === s.submissionId;
+            const strokes =
+              s.payload.kind === "DrawingAnswer"
+                ? (s.payload.strokes ?? [])
+                : [];
+            return (
+              <li key={s.submissionId}>
+                <button
+                  type='button'
+                  disabled={disabled}
+                  onClick={() => {
+                    onVote(s.submissionId);
+                  }}
+                  aria-label='Vote for this drawing'
+                  className={`${styles.drawingCard} ${isMine ? styles.cardSelected : ""}`}>
+                  <DrawingPreview
+                    element={element}
+                    strokes={strokes}
+                    pixelWidth={320}
+                  />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       ) : (
         <ul className={styles.list}>
           {submissions.map((s) => {
@@ -81,6 +110,16 @@ const VotePanel = ({
     </div>
   );
 };
+
+/**
+ * Type guard for the Drawing element kind. When true the vote grid switches
+ * from inline text cards to a thumbnail grid of mini canvases — text doesn't
+ * carry enough signal to vote on a sketch.
+ */
+const isDrawingPanel = (
+  element: DeckElement,
+): element is Extract<DeckElement, { kind: "DrawingQuestion" }> =>
+  element.kind === "DrawingQuestion";
 
 /**
  * Formats an anonymized submission for display. For MCQ we look up the option

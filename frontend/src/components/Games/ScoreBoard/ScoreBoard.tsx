@@ -10,7 +10,10 @@
  */
 import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./ScoreBoard.module.css";
-import type { InteractiveSessionPlayerDto } from "../../../store/BrainFlexApi";
+import type {
+  InteractiveSessionPlayerDto,
+  Team,
+} from "../../../store/BrainFlexApi";
 
 export interface ScoreBoardProps {
   players: InteractiveSessionPlayerDto[];
@@ -26,6 +29,10 @@ export interface ScoreBoardProps {
   isHost?: boolean;
   // Called when the host clicks Boot on another player's row.
   onBootPlayer?: (userId: string) => void;
+  // Team-mode chunk 12: when populated, each player row renders a small
+  // team color dot + name chip under their score. Falsy/empty disables the
+  // affordance entirely so individual mode is unaffected.
+  teams?: Team[];
 }
 
 const ScoreBoard = ({
@@ -36,6 +43,7 @@ const ScoreBoard = ({
   offlineUserIds,
   isHost,
   onBootPlayer,
+  teams,
 }: ScoreBoardProps) => {
   const sorted = hideScores
     ? players
@@ -44,6 +52,8 @@ const ScoreBoard = ({
   const answeredSet = new Set(answeredUserIds ?? []);
   const offlineSet = new Set(offlineUserIds ?? []);
   const showAnswered = !!answeredUserIds;
+  const teamById = new Map((teams ?? []).map((t) => [t.id ?? "", t]));
+  const teamModeActive = teamById.size > 0;
 
   return (
     <div className={styles.board}>
@@ -54,12 +64,28 @@ const ScoreBoard = ({
           const isSelf = playerId === currentUserId;
           const answered = !!playerId && answeredSet.has(playerId);
           const isOffline = !!playerId && offlineSet.has(playerId);
+          const team = teamModeActive && p.teamId ? teamById.get(p.teamId) : null;
           return (
             <li
               key={playerId}
               className={`${styles.row} ${isSelf ? styles.me : ""} ${isOffline ? styles.offline : ""}`}>
               {!hideScores && <span className={styles.rank}>{i + 1}</span>}
-              <span className={styles.name}>{p.userName}</span>
+              <span className={styles.name}>
+                {p.userName}
+                {team && (
+                  <span
+                    className={styles.teamChip}
+                    style={
+                      {
+                        "--team-color": team.color ?? "var(--bg-subtle)",
+                      } as React.CSSProperties
+                    }
+                    title={team.name ?? "Team"}>
+                    <span className={styles.teamDot} aria-hidden='true' />
+                    {team.name}
+                  </span>
+                )}
+              </span>
               {p.isGuest && <span className={styles.guest}>guest</span>}
               {isOffline && (
                 <span className={styles.offlineLabel} title='Disconnected'>

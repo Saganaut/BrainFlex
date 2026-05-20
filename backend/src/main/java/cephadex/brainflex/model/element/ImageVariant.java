@@ -1,15 +1,14 @@
-// One sized rendition of an image. Every Image carries a list of these so
-// renderers can pick the right resolution for the slot they're filling
-// (xs for tiny inline thumbnails, xl for the full-screen preview).
+// One sized rendition of an image. Carried as the value of the map on
+// `Image.variants`, keyed by `ImageSize` — the key is the source of truth
+// for the tier, so this record only stores the renderable URL and the
+// actual pixel dimensions of the resized asset (which may be smaller than
+// the tier's nominal target if the source was smaller).
 //
-// `size` is null only for legacy or external images whose dimensions we
-// don't know. `width`/`height` are 0 when unknown. `url` is always either a
-// fresh presigned S3 URL (internal images, regenerated on read) or the
-// literal author-pasted URL (external images, persisted as-is).
+// `url` is always a fresh presigned S3 URL (regenerated on every read by
+// the hydrators). `width`/`height` are 0 only when unknown.
 package cephadex.brainflex.model.element;
 
 public record ImageVariant(
-        ImageSize size,
         String url,
         int width,
         int height) {

@@ -44,6 +44,8 @@ public class UserService {
             existing.setPictureUrl(oAuth2User.getAttribute("picture"));
             existing.setName(oAuth2User.getAttribute("name"));
             existing.setLastLogin(LocalDateTime.now());
+            if (existing.getEmailVerifiedAt() == null)
+                existing.setEmailVerifiedAt(LocalDateTime.now());
             return userRepository.save(existing);
         }
 
@@ -59,6 +61,7 @@ public class UserService {
         user.setIsGuest(false);
         user.setNewsletter(request.newsletter());
         user.setLastLogin(LocalDateTime.now());
+        user.setEmailVerifiedAt(LocalDateTime.now());
 
         return userRepository.save(user);
     }
@@ -88,6 +91,11 @@ public class UserService {
         }
         if (request.activeThemeId() != null) {
             user.setActiveThemeId(request.activeThemeId().isBlank() ? null : request.activeThemeId());
+        }
+        // Empty string clears the override (back to "no preference / UTC fallback");
+        // null means "client did not send the field" and is a no-op.
+        if (request.timezone() != null) {
+            user.setTimezone(request.timezone().isBlank() ? null : request.timezone());
         }
         return userRepository.save(user);
     }

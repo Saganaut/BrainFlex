@@ -2,6 +2,7 @@
    the add-slide modal. */
 
 .grid {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
   gap: var(--space-3);

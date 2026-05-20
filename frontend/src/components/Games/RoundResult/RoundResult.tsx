@@ -12,6 +12,7 @@ import type { RoundResultPayload } from "../../../store/interactiveSessionSlice"
 import type { AnswerPayload, DeckElement } from "../../../types/elements";
 import type { BestAnswerOutcome } from "../../../types/bestAnswer";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { DrawingPreview } from "../DrawingReveal/DrawingReveal";
 
 interface RoundResultProps {
   result: RoundResultPayload;
@@ -135,6 +136,11 @@ const BestAnswerReveal = ({ outcome, element }: BestAnswerRevealProps) => {
       <ol className={styles.tallyList}>
         {ranked.map((t) => {
           const isWinner = winnerSet.has(t.userId);
+          const drawing =
+            element.kind === "DrawingQuestion" &&
+            t.payload.kind === "DrawingAnswer"
+              ? t.payload
+              : null;
           return (
             <li
               key={t.submissionId}
@@ -143,9 +149,20 @@ const BestAnswerReveal = ({ outcome, element }: BestAnswerRevealProps) => {
                 {isWinner && <span className={styles.crown}>★ </span>}
                 {t.userName}
               </span>
-              <span className={styles.tallyText}>
-                {humanReadableAnswer(element, t.payload) ?? "(no submission)"}
-              </span>
+              {drawing && element.kind === "DrawingQuestion" ? (
+                <span className={styles.tallyDrawing}>
+                  <DrawingPreview
+                    element={element}
+                    strokes={drawing.strokes ?? []}
+                    pixelWidth={240}
+                    ariaLabel={`${t.userName}'s drawing`}
+                  />
+                </span>
+              ) : (
+                <span className={styles.tallyText}>
+                  {humanReadableAnswer(element, t.payload) ?? "(no submission)"}
+                </span>
+              )}
               <span className={styles.tallyCount}>
                 {t.voteCount} {t.voteCount === 1 ? "vote" : "votes"}
               </span>
@@ -199,6 +216,10 @@ const humanReadableAnswer = (
         return opt?.text ?? null;
       }
       return oid ?? null;
+    }
+    case "DrawingAnswer": {
+      const strokeCount = payload.strokes?.length ?? 0;
+      return strokeCount > 0 ? "(drawing)" : "(blank)";
     }
     default:
       return null;

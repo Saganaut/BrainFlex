@@ -3,7 +3,6 @@
 // apiEnhancements keeps the pill fresh after any of the lifecycle
 // mutations resolve) and dispatches the matching mutation on click.
 import { getRouteApi } from "@tanstack/react-router";
-import { useState } from "react";
 import {
   useArchiveDeckMutation,
   useGetDeckQuery,
@@ -12,6 +11,10 @@ import {
 } from "@/store/BrainFlexApi";
 import { Btn } from "../Common/Buttons/Btn";
 import { Badge } from "../Common/Badge";
+import {
+  DropdownMenu,
+  DropdownMenuItem,
+} from "@/components/Menus/DropdownMenu";
 import styles from "./PublishStatusControl.module.css";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
@@ -34,7 +37,6 @@ const PublishStatusControl = () => {
   const [publishDeck, publishState] = usePublishDeckMutation();
   const [unpublishDeck, unpublishState] = useUnpublishDeckMutation();
   const [archiveDeck, archiveState] = useArchiveDeckMutation();
-  const [archiveOpen, setArchiveOpen] = useState(false);
 
   // Default to DRAFT so the button renders something useful while the deck
   // is loading or for legacy decks that pre-date publishStatus.
@@ -45,20 +47,25 @@ const PublishStatusControl = () => {
     archiveState.isLoading;
 
   const handlePublish = () => {
-    void publishDeck({ id: deckId }).unwrap().catch((err: unknown) => {
-      console.error("Failed to publish deck", err);
-    });
+    void publishDeck({ id: deckId })
+      .unwrap()
+      .catch((err: unknown) => {
+        console.error("Failed to publish deck", err);
+      });
   };
   const handleUnpublish = () => {
-    void unpublishDeck({ id: deckId }).unwrap().catch((err: unknown) => {
-      console.error("Failed to unpublish deck", err);
-    });
+    void unpublishDeck({ id: deckId })
+      .unwrap()
+      .catch((err: unknown) => {
+        console.error("Failed to unpublish deck", err);
+      });
   };
   const handleArchive = () => {
-    setArchiveOpen(false);
-    void archiveDeck({ id: deckId }).unwrap().catch((err: unknown) => {
-      console.error("Failed to archive deck", err);
-    });
+    void archiveDeck({ id: deckId })
+      .unwrap()
+      .catch((err: unknown) => {
+        console.error("Failed to archive deck", err);
+      });
   };
 
   return (
@@ -67,60 +74,35 @@ const PublishStatusControl = () => {
         variant={STATUS_BADGE_VARIANT[status]}
         label={STATUS_LABEL[status]}
       />
-      {status === "DRAFT" && (
-        <Btn
-          size='md'
-          shape='pill'
-          variant='default'
-          disabled={busy}
-          onClick={handlePublish}>
-          Publish
-        </Btn>
-      )}
-      {status === "PUBLISHED" && (
-        <>
+
+      <DropdownMenu
+        position='top-right'
+        trigger={(toggle) => (
           <Btn
             size='md'
             shape='pill'
-            variant='default'
+            variant='primary'
             disabled={busy}
-            onClick={handleUnpublish}>
-            Unpublish
+            onClick={() => {
+              toggle();
+            }}>
+            ⋯
           </Btn>
-          <div className={styles.archiveSlot}>
-            <Btn
-              size='md'
-              shape='pill'
-              variant='default'
-              aria-haspopup='menu'
-              aria-expanded={archiveOpen}
-              disabled={busy}
-              onClick={() => {
-                setArchiveOpen((open) => !open);
-              }}>
-              ⋯
-            </Btn>
-            {archiveOpen && (
-              <div role='menu' className={styles.archiveMenu}>
-                <button
-                  type='button'
-                  role='menuitem'
-                  className={styles.archiveItem}
-                  onClick={handleArchive}>
-                  Archive deck
-                </button>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+        )}>
+        <DropdownMenuItem onClick={handleArchive}>
+          Archive deck
+        </DropdownMenuItem>
+        {status === "DRAFT" && (
+          <DropdownMenuItem onClick={handlePublish}>Publish</DropdownMenuItem>
+        )}
+        {status === "PUBLISHED" && (
+          <DropdownMenuItem onClick={handleUnpublish}>
+            Unpublish
+          </DropdownMenuItem>
+        )}
+      </DropdownMenu>
       {status === "ARCHIVED" && (
-        <Btn
-          size='md'
-          shape='pill'
-          variant='default'
-          disabled={busy}
-          onClick={handlePublish}>
+        <Btn size='md' shape='pill' disabled={busy} onClick={handlePublish}>
           Republish
         </Btn>
       )}

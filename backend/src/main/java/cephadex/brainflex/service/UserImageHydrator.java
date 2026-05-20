@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.element.ImageVariant;
 
 @Service
 public class UserImageHydrator {
@@ -29,7 +28,8 @@ public class UserImageHydrator {
     public Image pictureImageOf(User user) {
         if (user == null) return Image.empty();
         if (user.getPictureVariants() != null && !user.getPictureVariants().isEmpty()) {
-            return new Image(false, null, s3Service.refreshAvatar(user.getId(), user.getPictureVariants()));
+            return new Image(false, null, null,
+                    s3Service.refreshAvatar(user.getId(), user.getPictureVariants()));
         }
         String external = user.getPictureUrl();
         if (external != null && !external.isBlank()) {
@@ -46,8 +46,7 @@ public class UserImageHydrator {
     public String pictureUrlOf(User user) {
         Image picture = pictureImageOf(user);
         if (picture == null) return null;
-        ImageVariant largest = picture.largestVariant();
-        return largest == null ? null : largest.url();
+        return picture.largestUrl();
     }
 }
 

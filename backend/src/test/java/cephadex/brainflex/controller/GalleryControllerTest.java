@@ -78,13 +78,14 @@ class GalleryControllerTest {
                 new StoredImageVariant(ImageSize.XL, 2000, 1125));
     }
 
-    private static List<ImageVariant> sampleFreshVariants() {
-        return List.of(
-                new ImageVariant(ImageSize.XS, "https://fresh/xs", 64, 36),
-                new ImageVariant(ImageSize.SM, "https://fresh/sm", 200, 113),
-                new ImageVariant(ImageSize.MD, "https://fresh/md", 600, 338),
-                new ImageVariant(ImageSize.LG, "https://fresh/lg", 1200, 675),
-                new ImageVariant(ImageSize.XL, "https://fresh/xl", 2000, 1125));
+    private static Map<ImageSize, ImageVariant> sampleFreshVariants() {
+        Map<ImageSize, ImageVariant> out = new EnumMap<>(ImageSize.class);
+        out.put(ImageSize.XS, new ImageVariant("https://fresh/xs", 64, 36));
+        out.put(ImageSize.SM, new ImageVariant("https://fresh/sm", 200, 113));
+        out.put(ImageSize.MD, new ImageVariant("https://fresh/md", 600, 338));
+        out.put(ImageSize.LG, new ImageVariant("https://fresh/lg", 1200, 675));
+        out.put(ImageSize.XL, new ImageVariant("https://fresh/xl", 2000, 1125));
+        return out;
     }
 
     private static GalleryImage image(String id, String ownerId, String orgId, String name) {
@@ -114,8 +115,8 @@ class GalleryControllerTest {
                 .andExpect(jsonPath("$[0].id").value("img1"))
                 .andExpect(jsonPath("$[1].id").value("img2"))
                 .andExpect(jsonPath("$[0].variants.length()").value(5))
-                .andExpect(jsonPath("$[0].variants[0].size").value("XS"))
-                .andExpect(jsonPath("$[0].variants[4].url").value("https://fresh/xl"));
+                .andExpect(jsonPath("$[0].variants.XS.url").value("https://fresh/xs"))
+                .andExpect(jsonPath("$[0].variants.XL.url").value("https://fresh/xl"));
     }
 
     @Test
@@ -143,7 +144,7 @@ class GalleryControllerTest {
                 .andExpect(jsonPath("$.name").value("Hero shot"))
                 .andExpect(jsonPath("$.tags.length()").value(3))
                 .andExpect(jsonPath("$.variants.length()").value(5))
-                .andExpect(jsonPath("$.variants[4].url").value("https://fresh/xl"))
+                .andExpect(jsonPath("$.variants.XL.url").value("https://fresh/xl"))
                 .andExpect(jsonPath("$.ownerId").value("u1"));
     }
 

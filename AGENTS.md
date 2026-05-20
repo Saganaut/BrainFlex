@@ -25,15 +25,15 @@ Per-directory READMEs (`backend/README.MD`, `frontend/README.md`, `tools/README.
 
 All project documentation other than this file and the top-level `README.md` lives in **`z-docs/`**. Start at [`z-docs/README.md`](z-docs/README.md) for the full index.
 
-| Where to look                                              | For                                                                |
-| ---------------------------------------------------------- | ------------------------------------------------------------------ |
-| [`z-docs/rules/`](z-docs/rules/README.md)                  | Coding conventions per layer (general / backend / frontend / style / icons) |
-| [`z-docs/features/`](z-docs/features/README.md)            | Per-feature design docs (auth, games, deck editor, membership, data models) |
-| [`z-docs/infrastructure/`](z-docs/infrastructure/README.md) | Docker, MongoDB, Redis, Garage/S3, testing & CI                    |
-| [`z-docs/to-do/`](z-docs/to-do/README.md)                  | Mentimeter/Kahoot parity roadmap (numbered chunks) + general TODO  |
-| [`z-docs/decisions/`](z-docs/decisions/README.md)          | Architecture Decision Records                                      |
-| [`z-docs/runbooks/`](z-docs/runbooks/README.md)            | Operational procedures (seeding, secret rotation, recovery)        |
-| [`z-docs/glossary.md`](z-docs/glossary.md)                 | Domain terms (deck, element, interactive session, theme, MCQ, …)   |
+| Where to look                                               | For                                                                         |
+| ----------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [`z-docs/rules/`](z-docs/rules/README.md)                   | Coding conventions per layer (general / backend / frontend / style / icons) |
+| [`z-docs/features/`](z-docs/features/README.md)             | Per-feature design docs (auth, games, deck editor, membership, data models) |
+| [`z-docs/infrastructure/`](z-docs/infrastructure/README.md) | Docker, MongoDB, Redis, Garage/S3, testing & CI                             |
+| [`z-docs/to-do/`](z-docs/to-do/README.md)                   | Mentimeter/Kahoot parity roadmap (numbered chunks) + general TODO           |
+| [`z-docs/decisions/`](z-docs/decisions/README.md)           | Architecture Decision Records                                               |
+| [`z-docs/runbooks/`](z-docs/runbooks/README.md)             | Operational procedures (seeding, secret rotation, recovery)                 |
+| [`z-docs/glossary.md`](z-docs/glossary.md)                  | Domain terms (deck, element, interactive session, theme, MCQ, …)            |
 
 **Reachability is enforced.** `tools/doc-lint.js` walks the link graph from the root `README.md` and fails on any `.md` file that isn't reachable via standard markdown links. Always link new docs from the appropriate folder's `README.md`. Cross-references must use standard markdown links (e.g. `[BACKEND-RULES](BACKEND-RULES.md)`); the old `@FILENAME.md` convention has been retired.
 
@@ -76,16 +76,16 @@ npx @rtk-query/codegen-openapi openapi-config.cts
 
 ### Frontend
 
-| Concern      | Tool                                                  |
-| ------------ | ----------------------------------------------------- |
-| Framework    | React 19 with React Compiler                          |
-| Language     | TypeScript (strict)                                   |
-| Build        | Vite                                                  |
-| Routing      | TanStack Router (file-based, code-splitting)          |
-| State / Data | Redux Toolkit + RTK Query (RTK Query is the primary cache) |
-| API client   | Auto-generated from OpenAPI schema                    |
-| Styling      | CSS Modules + CSS custom properties (tokens.css)      |
-| Rich text    | TipTap (see [Deck Editor](z-docs/features/deck-editor/README.md)) |
+| Concern      | Tool                                                                        |
+| ------------ | --------------------------------------------------------------------------- |
+| Framework    | React 19 with React Compiler                                                |
+| Language     | TypeScript (strict)                                                         |
+| Build        | Vite                                                                        |
+| Routing      | TanStack Router (file-based, code-splitting)                                |
+| State / Data | Redux Toolkit + RTK Query (RTK Query is the primary cache)                  |
+| API client   | Auto-generated from OpenAPI schema                                          |
+| Styling      | CSS Modules + CSS custom properties (tokens.css)                            |
+| Rich text    | TipTap (see [Deck Editor](z-docs/features/deck-editor/README.md))           |
 | Icons        | SVG via `vite-plugin-svgr` (see [ICONS-RULES](z-docs/rules/ICONS-RULES.md)) |
 
 Conventions: see [FRONTEND-RULES](z-docs/rules/FRONTEND-RULES.md) and [STYLE-RULES](z-docs/rules/STYLE-RULES.md).
@@ -148,16 +148,16 @@ Stacks, CI workflow, and local pre-commit / pre-push hooks: see [Testing & CI](z
 
 ## Key entry points
 
-| File                                                | Purpose                                            |
-| --------------------------------------------------- | -------------------------------------------------- |
-| `frontend/src/store/BrainFlexApi.ts`                | Auto-generated RTK Query API — **do not edit**     |
-| `frontend/src/routes/__root.tsx`                    | Root layout (TanStack Router + shared AuthBar)     |
-| `frontend/src/hooks/useCurrentUser.ts`              | Auth state machine (visitor/guest/registered)      |
-| `frontend/openapi-config.cts`                       | API codegen config                                 |
-| `backend/.../config/SecurityConfig.java`            | Auth, CORS, public routes, OAuth2 success handler  |
-| `backend/.../config/SampleDataSeeder.java`          | Manual sample-data seeder (`scripts/seed-sample-data.sh`) |
-| `compose.yaml`                                      | Docker services (MongoDB, Redis, Garage S3)        |
-| `dev.env`                                           | Local dev secrets (copy from `example.env`)        |
+| File                                       | Purpose                                                   |
+| ------------------------------------------ | --------------------------------------------------------- |
+| `frontend/src/store/BrainFlexApi.ts`       | Auto-generated RTK Query API — **do not edit**            |
+| `frontend/src/routes/__root.tsx`           | Root layout (TanStack Router + shared AuthBar)            |
+| `frontend/src/hooks/useCurrentUser.ts`     | Auth state machine (visitor/guest/registered)             |
+| `frontend/openapi-config.cts`              | API codegen config                                        |
+| `backend/.../config/SecurityConfig.java`   | Auth, CORS, public routes, OAuth2 success handler         |
+| `backend/.../config/SampleDataSeeder.java` | Manual sample-data seeder (`scripts/seed-sample-data.sh`) |
+| `compose.yaml`                             | Docker services (MongoDB, Redis, Garage S3)               |
+| `dev.env`                                  | Local dev secrets (copy from `example.env`)               |
 
 Feature-specific file maps live in each feature doc — e.g. [deck editor key files](z-docs/features/deck-editor/README.md#key-files), [auth key files](z-docs/features/auth/README.md#key-files).
 

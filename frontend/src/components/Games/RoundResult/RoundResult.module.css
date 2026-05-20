@@ -224,6 +224,12 @@
   text-overflow: ellipsis;
 }
 
+.tallyDrawing {
+  display: block;
+  width: 100%;
+  max-width: 12rem;
+}
+
 .tallyCount {
   font-size: var(--font-size-xs);
   color: var(--text-secondary);

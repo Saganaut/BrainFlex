@@ -23,7 +23,6 @@ package cephadex.brainflex.service;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,6 +31,7 @@ import org.springframework.stereotype.Service;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.GalleryImage;
 import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.element.ImageSize;
 import cephadex.brainflex.model.element.ImageVariant;
 import cephadex.brainflex.repository.GalleryImageRepository;
 
@@ -68,12 +68,12 @@ public class DeckImageHydrationService {
     private Image refresh(Image image, Map<String, GalleryImage> byId) {
         if (image.useExternalImg()) return image;
         String id = image.internalImgId();
-        if (id == null || id.isBlank()) return image.withVariants(List.of());
+        if (id == null || id.isBlank()) return image.withVariants(Map.of());
         GalleryImage record = byId.get(id);
         if (record == null || record.getVariants() == null || record.getVariants().isEmpty()) {
-            return image.withVariants(List.of());
+            return image.withVariants(Map.of());
         }
-        List<ImageVariant> fresh = s3Service.refreshGalleryImage(id, record.getVariants());
+        Map<ImageSize, ImageVariant> fresh = s3Service.refreshGalleryImage(id, record.getVariants());
         return image.withVariants(fresh);
     }
 
@@ -94,12 +94,12 @@ public class DeckImageHydrationService {
         if (image == null) return null;
         if (image.useExternalImg()) return image;
         String id = image.internalImgId();
-        if (id == null || id.isBlank()) return image.withVariants(List.of());
+        if (id == null || id.isBlank()) return image.withVariants(Map.of());
         GalleryImage record = galleryImageRepository.findById(id).orElse(null);
         if (record == null || record.getVariants() == null || record.getVariants().isEmpty()) {
-            return image.withVariants(List.of());
+            return image.withVariants(Map.of());
         }
-        List<ImageVariant> fresh = s3Service.refreshGalleryImage(id, record.getVariants());
+        Map<ImageSize, ImageVariant> fresh = s3Service.refreshGalleryImage(id, record.getVariants());
         return image.withVariants(fresh);
     }
 }

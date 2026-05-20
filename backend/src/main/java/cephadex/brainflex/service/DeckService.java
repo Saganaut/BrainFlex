@@ -512,7 +512,7 @@ public class DeckService {
      */
     private static Image stripTransportUrl(Image image) {
         if (image.useExternalImg()) return image;
-        return image.withVariants(java.util.List.of());
+        return image.withVariants(java.util.Map.of());
     }
 
     /** Same rule for top-level Deck.cover / Deck.background. */

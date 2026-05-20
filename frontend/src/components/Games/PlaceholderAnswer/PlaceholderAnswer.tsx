@@ -3,7 +3,7 @@
  * (RANKING, SCALES, Q&A, GRID, PLACE_ON_IMAGE).
  *
  * Shows the question's prompt and a "Skip" button that posts a TimeoutAnswer
- * so the showcase round can still complete cleanly. Replace per-kind as the
+ * so the interactiveSession round can still complete cleanly. Replace per-kind as the
  * dedicated renderers land.
  */
 import { Btn } from "@/components/Common/Buttons/Btn";

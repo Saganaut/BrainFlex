@@ -41,7 +41,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.ShowcaseSettings;
+import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.Tag;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
@@ -169,8 +169,8 @@ public class SampleDataSeeder {
                 "deck_collaborators",
                 "tags",
                 "gallery_images",
-                "showcases",
-                "showcase_results",
+                "interactive_sessions",
+                "interactive_session_results",
                 "audience_submissions",
                 "best_answer_votes");
         System.out.println("--seed.clear=true → dropping collections");
@@ -473,7 +473,7 @@ public class SampleDataSeeder {
                 "second-breakfast");
         deck.setRecommendedPreset(DeckPreset.PULSE);
         deck.setEstimatedDurationMinutes(4);
-        ShowcaseSettings settings = deck.getDefaultSettings();
+        InteractiveSessionSettings settings = deck.getDefaultSettings();
         settings.setScoringEnabled(false);
         settings.setTotalRounds(4);
 
@@ -759,7 +759,7 @@ public class SampleDataSeeder {
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 6, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
-                JoinType.INSTRUCTIONS_BAR, true, ShowResponsesMode.INSTANT,
+                JoinType.INSTRUCTIONS_BAR, true, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
@@ -771,7 +771,7 @@ public class SampleDataSeeder {
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 8, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
-                JoinType.INSTRUCTIONS_BAR, true, ShowResponsesMode.INSTANT,
+                JoinType.INSTRUCTIONS_BAR, true, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
@@ -832,7 +832,7 @@ public class SampleDataSeeder {
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
 
-        ShowcaseSettings defaults = new ShowcaseSettings();
+        InteractiveSessionSettings defaults = new InteractiveSessionSettings();
         defaults.setTotalRounds(16);
         defaults.setScoringEnabled(true);
         defaults.setSpeedBonus(true);
@@ -847,7 +847,7 @@ public class SampleDataSeeder {
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 6, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
-                JoinType.QR_CODE, true, ShowResponsesMode.INSTANT,
+                JoinType.QR_CODE, true, true, ShowResponsesMode.INSTANT,
                 "Join the tour",
                 null,
                 null,
@@ -861,7 +861,7 @@ public class SampleDataSeeder {
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
-                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
+                JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
@@ -917,8 +917,8 @@ public class SampleDataSeeder {
                 "Drag to reorder, then rate some statements.",
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, MediaPosition.NONE,
-                ResultsDisplayType.HISTOGRAM, true, 3, true,
-                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
+                ResultsDisplayType.BAR_VERTICAL, true, 3, true,
+                JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
@@ -968,7 +968,7 @@ public class SampleDataSeeder {
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.PIE_CHART, false, 1, true,
-                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.ON_CLICK,
+                JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.ON_CLICK,
                 null, null,
                 null,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
@@ -1010,7 +1010,7 @@ public class SampleDataSeeder {
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 4, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
-                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.INSTANT,
+                JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
@@ -1074,7 +1074,7 @@ public class SampleDataSeeder {
                 false, false, null, ResponseMode.ACCEPTING_RESPONSES,
                 8, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
-                JoinType.INSTRUCTIONS_BAR, false, ShowResponsesMode.PRIVATE,
+                JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.PRIVATE,
                 null, null,
                 null,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
@@ -1106,7 +1106,7 @@ public class SampleDataSeeder {
         deck.setCreatedAt(LocalDateTime.now());
         deck.setUpdatedAt(LocalDateTime.now());
 
-        ShowcaseSettings defaults = new ShowcaseSettings();
+        InteractiveSessionSettings defaults = new InteractiveSessionSettings();
         defaults.setTotalRounds(8);
         deck.setDefaultSettings(defaults);
 

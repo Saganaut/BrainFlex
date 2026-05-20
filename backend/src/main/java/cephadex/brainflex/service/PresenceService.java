@@ -5,8 +5,8 @@
  * multiple tabs counts multiple times — we maintain a sessionCount per userId and
  * only broadcast online/offline on 0→1 and 1→0 transitions.
  *
- * Broadcasts are sent on the global /topic/presence so any showcase view can filter
- * by its own player list. Per-showcase scoping can be added later if this becomes
+ * Broadcasts are sent on the global /topic/presence so any interactiveSession view can filter
+ * by its own player list. Per-interactiveSession scoping can be added later if this becomes
  * noisy at scale; for the current small footprint, a single topic is simpler.
  */
 package cephadex.brainflex.service;
@@ -29,17 +29,17 @@ public class PresenceService {
 
     private final ConcurrentHashMap<String, Integer> sessionCount = new ConcurrentHashMap<>();
     private final SimpMessagingTemplate messagingTemplate;
-    private final ShowcaseService showcaseService;
+    private final InteractiveSessionService interactiveSessionService;
 
     public PresenceService(SimpMessagingTemplate messagingTemplate,
-                           @Lazy ShowcaseService showcaseService) {
+                           @Lazy InteractiveSessionService interactiveSessionService) {
         this.messagingTemplate = messagingTemplate;
-        this.showcaseService = showcaseService;
+        this.interactiveSessionService = interactiveSessionService;
     }
 
     /**
      * Register a new WebSocket session for this user; broadcasts on 0→1 transition
-     * and tells the showcase layer to flip the player's disconnected flag back
+     * and tells the interactiveSession layer to flip the player's disconnected flag back
      * to false on reconnect.
      */
     public void onConnect(String userId) {
@@ -49,14 +49,14 @@ public class PresenceService {
         if (next == 1) {
             log.debug("Presence: {} online", userId);
             broadcast(userId, true);
-            // Chunk 13 — keep ShowcasePlayer.disconnected / lastSeenAt in sync.
-            showcaseService.markPlayerPresence(userId, true);
+            // Chunk 13 — keep InteractiveSessionPlayer.disconnected / lastSeenAt in sync.
+            interactiveSessionService.markPlayerPresence(userId, true);
         }
     }
 
     /**
      * Drop a WebSocket session for this user; broadcasts on last-session → 0
-     * transition and tells the showcase layer to flip the player's
+     * transition and tells the interactiveSession layer to flip the player's
      * disconnected flag to true.
      */
     public void onDisconnect(String userId) {
@@ -67,8 +67,8 @@ public class PresenceService {
             sessionCount.remove(userId);
             log.debug("Presence: {} offline", userId);
             broadcast(userId, false);
-            // Chunk 13 — keep ShowcasePlayer.disconnected / lastSeenAt in sync.
-            showcaseService.markPlayerPresence(userId, false);
+            // Chunk 13 — keep InteractiveSessionPlayer.disconnected / lastSeenAt in sync.
+            interactiveSessionService.markPlayerPresence(userId, false);
         }
     }
 

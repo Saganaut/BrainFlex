@@ -1,13 +1,13 @@
 // Toggle switch built on a visually-hidden checkbox; CSS :has() drives all visual state
 import React, { useId } from "react";
+import type { InputBaseProps } from "../InputBaseProps";
 import shared from "../Input.module.css";
 import styles from "./Toggle.module.css";
 
-interface ToggleProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+interface ToggleProps
+  extends InputBaseProps,
+    React.InputHTMLAttributes<HTMLInputElement> {
   labelPosition?: "labelBefore" | "labelAfter";
-  errorMessage?: string;
-  infoMessage?: string;
 }
 
 const Toggle = ({

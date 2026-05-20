@@ -1,6 +1,6 @@
 /**
  * MongoDB repository for Deck documents. Decks shared publicly are those whose
- * visibility is PUBLIC; the create-showcase template picker uses that filter.
+ * visibility is PUBLIC; the create-interactiveSession template picker uses that filter.
  */
 package cephadex.brainflex.repository;
 

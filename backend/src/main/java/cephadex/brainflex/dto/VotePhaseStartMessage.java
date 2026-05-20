@@ -1,5 +1,5 @@
 /**
- * Broadcast on /topic/showcase/{roomCode}/votePhase when a Best Answer round
+ * Broadcast on /topic/interactive-session/{roomCode}/votePhase when a Best Answer round
  * transitions from SUBMIT to VOTE.
  *
  * Each submission carries only the anonymous `submissionId` + the polymorphic

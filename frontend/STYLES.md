@@ -225,7 +225,7 @@ If a change feels like it doesn't fit any of those, it might be reaching for a n
 | `Toast`           | ✅ Migrated      | Per-component status blocks removed; `data-variant` on the toast element. |
 | `Modal`           | ✅ Migrated      | Added missing `--color`; dialog accepts an optional `variant` prop. |
 | `NavBar`          | ✅ Migrated      | Sextet hover-vars retained as a component-local extension; base triplet variantizable via global `[data-variant]`. |
-| `CreateDashboard` | ✅ Migrated      | Same sextet pattern as NavBar.                            |
+| `DeckEditor` | ✅ Migrated      | Same sextet pattern as NavBar.                            |
 | `Badge`           | ✅ Migrated      | Drops per-component status blocks; default variant stays `info`. |
 | `Input`           | ✅ Partial       | `<input>` border now respects `data-variant`; error message auto-sets `data-variant="error"`. Other form primitives (checkbox/radio/toggle/dropdown/file/huepicker) still hardcode tokens — fine, they don't need variants. |
 | `Forms`           | ➖ Skipped       | Layout container, not a variantizable primitive — left alone. |

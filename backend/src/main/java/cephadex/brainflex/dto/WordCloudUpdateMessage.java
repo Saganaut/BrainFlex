@@ -1,5 +1,5 @@
 /**
- * Broadcast on /topic/showcase/{roomCode}/wordCloud during a Word Cloud round.
+ * Broadcast on /topic/interactive-session/{roomCode}/wordCloud during a Word Cloud round.
  *
  * Sent every time a player submits during SUBMIT (so the cloud animates live)
  * and one final time on REVEAL with the locked-in counts. The payload carries

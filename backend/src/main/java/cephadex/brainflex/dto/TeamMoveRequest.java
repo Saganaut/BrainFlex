@@ -1,7 +1,7 @@
 /**
- * Body for {@code PUT /api/showcases/{roomCode}/players/{userId}/team}.
+ * Body for {@code PUT /api/interactive-sessions/{roomCode}/players/{userId}/team}.
  * The target team is required — there is no "leave team" operation in
- * team-mode showcases.
+ * team-mode interactiveSessions.
  */
 package cephadex.brainflex.dto;
 

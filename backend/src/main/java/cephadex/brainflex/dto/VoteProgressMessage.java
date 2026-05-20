@@ -1,5 +1,5 @@
 /**
- * Broadcast on /topic/showcase/{roomCode}/voted whenever a player casts a vote
+ * Broadcast on /topic/interactive-session/{roomCode}/voted whenever a player casts a vote
  * during VOTE phase. Mirrors `AnswerProgressMessage` for SUBMIT phase — the
  * client uses it to render a "3 of 5 voted" indicator.
  */

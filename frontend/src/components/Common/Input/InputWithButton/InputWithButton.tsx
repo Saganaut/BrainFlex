@@ -1,18 +1,17 @@
 // Text input fused with an action button, used for search or submit-inline patterns
 import React from "react";
 import type { ReactNode } from "react";
+import type { InputBaseProps } from "../InputBaseProps";
 import shared from "../Input.module.css";
 import styles from "./InputWithButton.module.css";
 import { Btn } from "../../Buttons/Btn";
 
 interface InputWithButtonProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  extends InputBaseProps,
+    React.InputHTMLAttributes<HTMLInputElement> {
   labelPosition?: "labelAbove" | "labelInFront";
   buttonLabel?: ReactNode;
   onButtonClick?: () => void;
-  errorMessage?: string;
-  infoMessage?: string;
 }
 
 const InputWithButton = ({

@@ -2,13 +2,16 @@ package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import cephadex.brainflex.model.enums.UserRole;
 import lombok.Data;
 
 @Data // Lombok: generates getters, setters, toString
@@ -51,6 +54,11 @@ public class User {
 
     /** The id of the user's currently active custom Theme (nullable). */
     private String activeThemeId;
+
+    /** Persisted user grants. Every registered user carries USER; MODERATOR and
+     *  ADMIN are added by hand. Distinct from billing-tier / org authorities,
+     *  which AuthoritiesService recomputes on every login. */
+    private Set<UserRole> roles = EnumSet.of(UserRole.USER);
 
     private LocalDateTime lastLogin;
     private LocalDateTime createdAt = LocalDateTime.now();

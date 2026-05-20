@@ -51,7 +51,7 @@ Stroke (embedded record)
   2. Push to S3 as JSON and store the key in `DrawingAnswer.s3Key` instead of inlining strokes.
   - **Recommendation:** start with (1). Add an `@Value("${app.drawing.max-payload-bytes:262144}")` cap and reject oversize answers.
 - `AnswerSubmitRequest` validation — for `DrawingAnswer`, count total points and reject early if it exceeds the per-answer cap.
-- `useCreateDashboard.buildNewElement` — primitive defaults for DRAWING; default `palette` from the design-system token list.
+- `useDeckEditor.buildNewElement` — primitive defaults for DRAWING; default `palette` from the design-system token list.
 
 ## Frontend changes
 

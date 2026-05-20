@@ -6,7 +6,7 @@
 
 ## Scope
 
-Badges that users earn through gameplay. Triggered by events from `GameHistoryEntry` writes (game finish), `ShowcasePlayer` writes (in-game streak hits), and `Reaction` writes. Mostly fire-and-forget — when an achievement triggers, write a `UserAchievement` row and a toast notification.
+Badges that users earn through gameplay. Triggered by events from `GameHistoryEntry` writes (game finish), `InteractiveSessionPlayer` writes (in-game streak hits), and `Reaction` writes. Mostly fire-and-forget — when an achievement triggers, write a `UserAchievement` row and a toast notification.
 
 ## New models
 
@@ -31,7 +31,7 @@ UserAchievement                        @Document("user_achievements")
   @Indexed String userId
   @Indexed String achievementId
   LocalDateTime earnedAt
-  String earnedInShowcaseId            // nullable
+  String earnedInInteractiveSessionId            // nullable
   String earnedInDeckId                // nullable
   // compound unique index (userId, achievementId)
 ```

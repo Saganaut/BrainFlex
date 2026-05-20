@@ -8,7 +8,7 @@
 # Nothing is ever deleted.
 #
 # Pass --clear to also drop the seeded collections (users, organizations,
-# themes, decks, gallery_images, showcases, showcase_results,
+# themes, decks, gallery_images, interactive_sessions, interactive_session_results,
 # audience_submissions, best_answer_votes) before re-seeding. Use this when a
 # schema migration has left stale documents that Spring Data can't
 # deserialize.

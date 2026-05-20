@@ -1,7 +1,7 @@
 # 18 — Notifications
 
 **Status:** Not started
-**Depends on:** Nothing strict; consumes events from 04 (comments), 06 (collab invites), 14 (showcase invites), 17 (achievements)
+**Depends on:** Nothing strict; consumes events from 04 (comments), 06 (collab invites), 14 (interactive session invites), 17 (achievements)
 **Unblocks:** A future in-app inbox / email digest
 
 ## Scope
@@ -19,7 +19,7 @@ Notification                           @Document("notifications")
   String body                          // expanded copy; markdown
   String link                          // in-app route, e.g. /decks/abc123
   String iconUrl                       // nullable — uses a default per kind otherwise
-  Map<String, String> meta             // small kv map: {showcaseId, deckId, commentId, achievementId, ...}
+  Map<String, String> meta             // small kv map: {interactiveSessionId, deckId, commentId, achievementId, ...}
   String actorUserId                   // who triggered it; nullable for system notifications
   String actorName, actorPictureUrl    // denorm
   boolean read
@@ -33,8 +33,8 @@ Indexes:
 
 ```text
 NotificationKind (enum)
-  SHOWCASE_INVITE          // chunk 14
-  SHOWCASE_STARTING_SOON   // chunk 14, scheduled reminder
+  INTERACTIVE_SESSION_INVITE          // chunk 14
+  INTERACTIVE_SESSION_STARTING_SOON   // chunk 14, scheduled reminder
   DECK_COMMENT             // chunk 04 — new top-level comment on your deck
   DECK_COMMENT_REPLY       // chunk 04 — reply to your comment
   DECK_RATING              // chunk 04 — new rating on your deck
@@ -67,8 +67,8 @@ NotificationKind (enum)
   - Chunk 04: `DeckCommentCreatedEvent` → `DECK_COMMENT` or `DECK_COMMENT_REPLY`
   - Chunk 04: `DeckRatingCreatedEvent` → `DECK_RATING`
   - Chunk 06: `DeckCollaboratorInvitedEvent` → `COLLAB_INVITE`
-  - Chunk 14: `ShowcaseInviteSentEvent` → `SHOWCASE_INVITE` (in-app row complements the email)
-  - Chunk 14: `ScheduledShowcaseBootingEvent` → `SHOWCASE_STARTING_SOON` to all invitees, 5 min before boot
+  - Chunk 14: `InteractiveSessionInviteSentEvent` → `INTERACTIVE_SESSION_INVITE` (in-app row complements the email)
+  - Chunk 14: `ScheduledInteractiveSessionBootingEvent` → `INTERACTIVE_SESSION_STARTING_SOON` to all invitees, 5 min before boot
   - Chunk 17: `AchievementEarnedEvent` → `ACHIEVEMENT`
 
 ## Frontend changes

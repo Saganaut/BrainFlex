@@ -5,7 +5,7 @@ Per-feature design docs. One subfolder per feature; each owns its `README.md` pl
 ## Existing
 
 - [Auth](auth/README.md) — Google OAuth + guest sessions, cookie + Redis session store.
-- [Games](games/README.md) — Showcases & decks implementation checklist and notes.
+- [Games](games/README.md) — InteractiveSessions & decks implementation checklist and notes.
 - [Membership](membership/README.md) — Organization membership semantics and flows.
 
 ## Adding a new feature

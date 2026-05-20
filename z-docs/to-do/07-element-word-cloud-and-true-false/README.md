@@ -48,11 +48,11 @@ Add `WORD_CLOUD` and `TRUE_FALSE` to `ElementKind`. Extend the sealed `permits` 
 - `ElementRedactor` — for word cloud, when serving the question to a player, the question itself reveals nothing; for reveal phase, send aggregated word counts not raw submissions per user
 - `DeckElementCloner` — handle both new records in clone-by-value
 - `DeckImageHydrationService` / `DeckImageMapper` — both kinds support `image` / `background`, so the existing common-field mapping covers them; no special media fields
-- New aggregator method in `ShowcaseService` or a new `WordCloudAggregator`:
-  - Returns `Map<String, Integer>` of normalized word → count for the current showcase + element
+- New aggregator method in `InteractiveSessionService` or a new `WordCloudAggregator`:
+  - Returns `Map<String, Integer>` of normalized word → count for the current interactive session + element
   - Normalization: lower-case (if `caseSensitive=false`), trim, drop banned words, strip punctuation
   - Used by both the reveal-phase WebSocket push and the deck-analytics rollup later
-- `useCreateDashboard.ts:buildNewElement` (frontend) needs `WORD_CLOUD` and `TRUE_FALSE` cases with primitive defaults
+- `useDeckEditor.ts:buildNewElement` (frontend) needs `WORD_CLOUD` and `TRUE_FALSE` cases with primitive defaults
 
 ## Frontend changes
 
@@ -60,10 +60,10 @@ Add `WORD_CLOUD` and `TRUE_FALSE` to `ElementKind`. Extend the sealed `permits` 
   - `WordCloudSlideContent.tsx` under `SlideContentTypes/` — prompt + max-submissions + word-length sliders + banned-words chips
   - `TrueFalseSlideContent.tsx` — prompt + radio for the correct answer + explanation
 - `NewElementPicker.tsx` — add two tiles with icons (use Heroicons `ChatBubbleLeftEllipsisIcon` and `CheckBadgeIcon` or pick something distinct)
-- Showcase player view:
+- InteractiveSession player view:
   - True/False: two big buttons
   - Word Cloud: text input + "Submit" button, then show a live-updating word cloud (re-use a lightweight cloud renderer like `react-wordcloud` or render in CSS with sized spans — design decision)
-- Showcase reveal view:
+- InteractiveSession reveal view:
   - Word Cloud reveals the aggregated cloud (already shown live; this is the "final" version)
   - True/False reveals the bar split + correct answer pill
 

@@ -4,20 +4,19 @@
 // of Input so the two read identically in a form. Reuses Input's CSS module
 // so the bordered-text-box chrome stays in one place.
 import React from "react";
+import type { InputBaseProps } from "../InputBaseProps";
 import shared from "../Input.module.css";
 import styles from "../Input/Input.module.css";
 
 interface NumberInputProps
-  extends Omit<
-    React.InputHTMLAttributes<HTMLInputElement>,
-    "value" | "onChange" | "type"
-  > {
+  extends InputBaseProps,
+    Omit<
+      React.InputHTMLAttributes<HTMLInputElement>,
+      "value" | "onChange" | "type"
+    > {
   value: number;
   onChange: (value: number) => void;
-  label?: string;
   labelPosition?: "labelAbove" | "labelInFront";
-  infoMessage?: string;
-  errorMessage?: string;
   fullWidth?: boolean;
 }
 

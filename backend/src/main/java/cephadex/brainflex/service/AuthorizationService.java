@@ -2,7 +2,7 @@
  * Centralizes per-resource ownership checks.
  *
  * Every mutating endpoint that operates on a stored resource (deck, theme,
- * showcase, organization) must call the matching `require*` method here to
+ * interactiveSession, organization) must call the matching `require*` method here to
  * verify the caller may act on it. The helper re-fetches the resource by id
  * and compares the stored owner field to {@code caller.id} — no
  * client-supplied ownership claim is trusted.
@@ -13,7 +13,7 @@
  *
  * Previously these checks were scattered: {@code DeckService.requireOwned} (a
  * private helper), {@code ThemeController.resolveOwnedTheme} (an inline
- * Optional chain), {@code ShowcaseService.cancelShowcase} (an inline
+ * Optional chain), {@code InteractiveSessionService.cancelInteractiveSession} (an inline
  * comparison). Consolidating them here keeps the rule in one place when
  * org-shared editing or tier-aware co-edit rights are added later.
  */
@@ -29,16 +29,18 @@ import java.util.Optional;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.DeckCollaborator;
 import cephadex.brainflex.model.GalleryImage;
+import cephadex.brainflex.model.MediaAsset;
 import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.Showcase;
+import cephadex.brainflex.model.InteractiveSession;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GalleryImageRepository;
+import cephadex.brainflex.repository.MediaAssetRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
-import cephadex.brainflex.repository.ShowcaseRepository;
+import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 
 @Service
@@ -46,23 +48,26 @@ public class AuthorizationService {
 
     private final DeckRepository deckRepository;
     private final ThemeRepository themeRepository;
-    private final ShowcaseRepository showcaseRepository;
+    private final InteractiveSessionRepository interactiveSessionRepository;
     private final OrganizationRepository organizationRepository;
     private final GalleryImageRepository galleryImageRepository;
+    private final MediaAssetRepository mediaAssetRepository;
     private final DeckCollaboratorRepository deckCollaboratorRepository;
 
     public AuthorizationService(
             DeckRepository deckRepository,
             ThemeRepository themeRepository,
-            ShowcaseRepository showcaseRepository,
+            InteractiveSessionRepository interactiveSessionRepository,
             OrganizationRepository organizationRepository,
             GalleryImageRepository galleryImageRepository,
+            MediaAssetRepository mediaAssetRepository,
             DeckCollaboratorRepository deckCollaboratorRepository) {
         this.deckRepository = deckRepository;
         this.themeRepository = themeRepository;
-        this.showcaseRepository = showcaseRepository;
+        this.interactiveSessionRepository = interactiveSessionRepository;
         this.organizationRepository = organizationRepository;
         this.galleryImageRepository = galleryImageRepository;
+        this.mediaAssetRepository = mediaAssetRepository;
         this.deckCollaboratorRepository = deckCollaboratorRepository;
     }
 
@@ -169,13 +174,13 @@ public class AuthorizationService {
         return theme;
     }
 
-    public Showcase requireShowcaseHost(String roomCode, User caller) {
-        Showcase showcase = showcaseRepository.findByRoomCode(roomCode.toUpperCase())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Showcase not found"));
-        if (!caller.getId().equals(showcase.getHostUserId())) {
+    public InteractiveSession requireInteractiveSessionHost(String roomCode, User caller) {
+        InteractiveSession interactiveSession = interactiveSessionRepository.findByRoomCode(roomCode.toUpperCase())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "InteractiveSession not found"));
+        if (!caller.getId().equals(interactiveSession.getHostUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the host can perform this action");
         }
-        return showcase;
+        return interactiveSession;
     }
 
     public Organization requireOrgOwner(String orgId, User caller) {
@@ -206,5 +211,26 @@ public class AuthorizationService {
             if (memberships != null && memberships.contains(orgId)) return image;
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this gallery image");
+    }
+
+    public MediaAsset requireMediaAssetEditable(String assetId, User caller) {
+        MediaAsset asset = mediaAssetRepository.findById(assetId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media asset not found"));
+        if (!caller.getId().equals(asset.getOwnerId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this media asset");
+        }
+        return asset;
+    }
+
+    public MediaAsset requireMediaAssetVisible(String assetId, User caller) {
+        MediaAsset asset = mediaAssetRepository.findById(assetId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media asset not found"));
+        if (caller.getId().equals(asset.getOwnerId())) return asset;
+        String orgId = asset.getOrganizationId();
+        if (orgId != null && !orgId.isBlank()) {
+            List<String> memberships = caller.getOrganizationIds();
+            if (memberships != null && memberships.contains(orgId)) return asset;
+        }
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this media asset");
     }
 }

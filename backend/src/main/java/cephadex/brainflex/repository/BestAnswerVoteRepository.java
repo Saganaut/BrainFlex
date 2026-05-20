@@ -1,5 +1,5 @@
 /**
- * Persistent store for Best-Answer-mode votes during a showcase.
+ * Persistent store for Best-Answer-mode votes during a interactiveSession.
  */
 package cephadex.brainflex.repository;
 
@@ -12,10 +12,10 @@ import cephadex.brainflex.model.BestAnswerVote;
 
 public interface BestAnswerVoteRepository extends MongoRepository<BestAnswerVote, String> {
 
-    List<BestAnswerVote> findByShowcaseIdAndElementId(String showcaseId, String elementId);
+    List<BestAnswerVote> findByInteractiveSessionIdAndElementId(String interactiveSessionId, String elementId);
 
-    Optional<BestAnswerVote> findByShowcaseIdAndElementIdAndVoterUserId(
-            String showcaseId, String elementId, String voterUserId);
+    Optional<BestAnswerVote> findByInteractiveSessionIdAndElementIdAndVoterUserId(
+            String interactiveSessionId, String elementId, String voterUserId);
 
-    void deleteByShowcaseId(String showcaseId);
+    void deleteByInteractiveSessionId(String interactiveSessionId);
 }

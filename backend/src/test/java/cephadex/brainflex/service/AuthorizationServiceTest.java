@@ -25,15 +25,16 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.DeckCollaborator;
 import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.Showcase;
+import cephadex.brainflex.model.InteractiveSession;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GalleryImageRepository;
+import cephadex.brainflex.repository.MediaAssetRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
-import cephadex.brainflex.repository.ShowcaseRepository;
+import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,9 +42,10 @@ class AuthorizationServiceTest {
 
     @Mock private DeckRepository deckRepository;
     @Mock private ThemeRepository themeRepository;
-    @Mock private ShowcaseRepository showcaseRepository;
+    @Mock private InteractiveSessionRepository interactiveSessionRepository;
     @Mock private OrganizationRepository organizationRepository;
     @Mock private GalleryImageRepository galleryImageRepository;
+    @Mock private MediaAssetRepository mediaAssetRepository;
     @Mock private DeckCollaboratorRepository deckCollaboratorRepository;
 
     @InjectMocks private AuthorizationService authorizationService;
@@ -219,51 +221,51 @@ class AuthorizationServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
-    // ---- requireShowcaseHost ----
+    // ---- requireInteractiveSessionHost ----
 
     @Test
-    void requireShowcaseHost_AsHost_ReturnsShowcase() {
-        Showcase showcase = new Showcase();
-        showcase.setRoomCode("ABCD12");
-        showcase.setHostUserId(owner.getId());
-        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(showcase));
+    void requireInteractiveSessionHost_AsHost_ReturnsInteractiveSession() {
+        InteractiveSession interactiveSession = new InteractiveSession();
+        interactiveSession.setRoomCode("ABCD12");
+        interactiveSession.setHostUserId(owner.getId());
+        when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(interactiveSession));
 
-        Showcase result = authorizationService.requireShowcaseHost("ABCD12", owner);
+        InteractiveSession result = authorizationService.requireInteractiveSessionHost("ABCD12", owner);
 
-        assertSame(showcase, result);
+        assertSame(interactiveSession, result);
     }
 
     @Test
-    void requireShowcaseHost_LowercasesRoomCode() {
-        Showcase showcase = new Showcase();
-        showcase.setRoomCode("ABCD12");
-        showcase.setHostUserId(owner.getId());
-        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(showcase));
+    void requireInteractiveSessionHost_LowercasesRoomCode() {
+        InteractiveSession interactiveSession = new InteractiveSession();
+        interactiveSession.setRoomCode("ABCD12");
+        interactiveSession.setHostUserId(owner.getId());
+        when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(interactiveSession));
 
-        Showcase result = authorizationService.requireShowcaseHost("abcd12", owner);
+        InteractiveSession result = authorizationService.requireInteractiveSessionHost("abcd12", owner);
 
-        assertSame(showcase, result);
+        assertSame(interactiveSession, result);
     }
 
     @Test
-    void requireShowcaseHost_AsNonHost_ThrowsForbidden() {
-        Showcase showcase = new Showcase();
-        showcase.setRoomCode("ABCD12");
-        showcase.setHostUserId(owner.getId());
-        when(showcaseRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(showcase));
+    void requireInteractiveSessionHost_AsNonHost_ThrowsForbidden() {
+        InteractiveSession interactiveSession = new InteractiveSession();
+        interactiveSession.setRoomCode("ABCD12");
+        interactiveSession.setHostUserId(owner.getId());
+        when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(interactiveSession));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> authorizationService.requireShowcaseHost("ABCD12", other));
+                () -> authorizationService.requireInteractiveSessionHost("ABCD12", other));
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
     @Test
-    void requireShowcaseHost_WhenMissing_ThrowsNotFound() {
-        when(showcaseRepository.findByRoomCode("MISSIN")).thenReturn(Optional.empty());
+    void requireInteractiveSessionHost_WhenMissing_ThrowsNotFound() {
+        when(interactiveSessionRepository.findByRoomCode("MISSIN")).thenReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> authorizationService.requireShowcaseHost("MISSIN", owner));
+                () -> authorizationService.requireInteractiveSessionHost("MISSIN", owner));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }

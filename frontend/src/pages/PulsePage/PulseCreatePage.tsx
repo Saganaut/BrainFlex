@@ -26,7 +26,7 @@ const PulseCreatePage = () => {
           creating a regular game — the question UI is shared.
         </p>
         <div className={styles.actions}>
-          <Link to='/games/create' viewTransition>
+          <Link to='/decks' viewTransition>
             <Btn>Create a Game Instead</Btn>
           </Link>
           <Link to='/' viewTransition>

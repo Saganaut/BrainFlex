@@ -9,7 +9,7 @@
  * credit by the count of items in their correct position.
  *
  * `shuffleItemsForPresentation` is a per-player presentation flag honoured by
- * ShowcaseService.startRound — when set, each player sees a different (but
+ * InteractiveSessionService.startRound — when set, each player sees a different (but
  * deterministic-on-reconnect) ordering of `items[]`.
  */
 package cephadex.brainflex.model.element;

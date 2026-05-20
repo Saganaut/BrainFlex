@@ -1,8 +1,8 @@
 /**
  * Free-text submission from a player during a Q&A round (or future Best Answer
  * variants that accept open content). Lives in its own collection because
- * submissions span all participants of a showcase and the host moderates them
- * live; embedding on Showcase would force a full write per submission.
+ * submissions span all participants of a interactiveSession and the host moderates them
+ * live; embedding on InteractiveSession would force a full write per submission.
  */
 package cephadex.brainflex.model;
 
@@ -22,7 +22,7 @@ public class AudienceSubmission {
     private String id;
 
     @Indexed
-    private String showcaseId;
+    private String interactiveSessionId;
 
     @Indexed
     private String elementId;

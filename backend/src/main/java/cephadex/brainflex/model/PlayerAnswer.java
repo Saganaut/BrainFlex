@@ -4,7 +4,7 @@
  * etc.) — the scorer branches on the payload variant to compute correctness
  * and point value.
  *
- * Embedded inside ShowcasePlayer so all answers for a player live with their
+ * Embedded inside InteractiveSessionPlayer so all answers for a player live with their
  * session record.
  */
 package cephadex.brainflex.model;

@@ -109,12 +109,12 @@
   color: var(--text-secondary);
 }
 
-.endShowcaseBtn {
+.endInteractiveSessionBtn {
   margin-top: var(--space-3);
   width: 100%;
 }
 
-/* Showcase backgrounds — applied via inline --showcase-bg from the PlayPage.
+/* InteractiveSession backgrounds — applied via inline --interactive-session-bg from the PlayPage.
    The pseudo-element keeps the image behind everything and dims it so the
    foreground stays readable. */
 .play,
@@ -128,7 +128,7 @@
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-image: var(--showcase-bg, none);
+  background-image: var(--interactive-session-bg, none);
   background-size: cover;
   background-position: center;
   opacity: 0.18;

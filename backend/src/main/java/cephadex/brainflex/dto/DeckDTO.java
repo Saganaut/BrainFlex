@@ -1,5 +1,5 @@
 /**
- * Public-facing representation of a Deck for the create-showcase + my-decks UIs.
+ * Public-facing representation of a Deck for the create-interactiveSession + my-decks UIs.
  * The full `elements` list is included here — clients use it to preview decks
  * and (for owners) to drive the editor.
  */
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.ShowcaseSettings;
+import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.enums.CollaboratorRole;
@@ -34,7 +34,7 @@ public record DeckDTO(
         Image cover,
         Image background,
         String themeId,
-        ShowcaseSettings defaultSettings,
+        InteractiveSessionSettings defaultSettings,
         Integer estimatedDurationMinutes,
         int elementCount,
         List<DeckElement> elements,

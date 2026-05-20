@@ -18,7 +18,7 @@ export interface AnonymizedSubmission {
   payload: AnswerPayload;
 }
 
-/** /topic/showcase/{code}/votePhase */
+/** /topic/interactive-session/{code}/votePhase */
 export interface VotePhaseStartPayload {
   round: number;
   element: DeckElement;          // still redacted (no correct answer)
@@ -27,7 +27,7 @@ export interface VotePhaseStartPayload {
   phaseStartedAt: string;
 }
 
-/** /topic/showcase/{code}/voted */
+/** /topic/interactive-session/{code}/voted */
 export interface VoteProgressPayload {
   round: number;
   votedUserIds: string[];

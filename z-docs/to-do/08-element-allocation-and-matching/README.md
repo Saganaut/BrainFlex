@@ -1,6 +1,6 @@
 # 08 — Allocation & Matching element kinds
 
-**Status:** Backend + editor complete (models, scoring, redaction, cloning, image mapping, editor surfaces). Player + reveal views still pending — they'll come with the broader showcase polish in chunks 11–13.
+**Status:** Backend + editor complete (models, scoring, redaction, cloning, image mapping, editor surfaces). Player + reveal views still pending — they'll come with the broader interactive session polish in chunks 11–13.
 **Depends on:** Nothing strict; should land before chunk 16 so analytics knows these kinds
 **Unblocks:** 16 (analytics)
 
@@ -64,7 +64,7 @@ MatchingAnswer     record { Map<String, String> leftIdToRightId }
 - `DeckElementCloner` — both kinds; matching pairs need their own UUIDs regenerated on clone
 - `DeckImageHydrationService` — matching: hydrate `leftImage` + `rightImage` per pair (loop). Allocation has no extra images beyond the per-option `image` already present on `McqOption`.
 - `DeckImageMapper` — same: loop matching pairs.
-- `useCreateDashboard.ts:buildNewElement` — primitive defaults for both kinds; matching seeds with 4 empty pairs
+- `useDeckEditor.ts:buildNewElement` — primitive defaults for both kinds; matching seeds with 4 empty pairs
 
 ## Frontend changes
 
@@ -93,8 +93,8 @@ MatchingAnswer     record { Map<String, String> leftIdToRightId }
 - [x] `ElementRedactor` cases — matching shuffles the pair list (visual right-column shuffle stays a frontend concern; full answer-key hiding needs schema changes deferred to a later pass)
 - [x] `DeckElementCloner` cases — matching pair ids regenerated on clone
 - [x] `DeckImageHydrationService` + `DeckImageMapper` — loop matching pairs (also covers allocation's reused MCQ options)
-- [x] `useCreateDashboard.buildNewElement` cases with primitive defaults
-- [x] Allocation editor (player + reveal views deferred — slated for chunks 11–13 showcase polish)
+- [x] `useDeckEditor.buildNewElement` cases with primitive defaults
+- [x] Allocation editor (player + reveal views deferred — slated for chunks 11–13 interactive session polish)
 - [x] Matching editor (player drag-and-drop + reveal views deferred — see above)
 - [x] `NewElementPicker` tiles
 - [x] Frontend codegen + lint

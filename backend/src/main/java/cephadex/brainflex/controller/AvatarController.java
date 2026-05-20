@@ -1,5 +1,5 @@
 /**
- * Read-only endpoint serving the static preset avatar pool the showcase
+ * Read-only endpoint serving the static preset avatar pool the interactiveSession
  * lobby picker reads on mount.
  *
  * Chunk 13 — the avatar pool is currently a compile-time constant

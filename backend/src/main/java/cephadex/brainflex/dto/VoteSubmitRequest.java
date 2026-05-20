@@ -1,5 +1,5 @@
 /**
- * Client → server payload at /app/showcase/{roomCode}/vote.
+ * Client → server payload at /app/interactive-session/{roomCode}/vote.
  *
  * `elementId` is included so a stale vote (player still on the previous round
  * after the server has advanced) can be safely ignored without crediting it

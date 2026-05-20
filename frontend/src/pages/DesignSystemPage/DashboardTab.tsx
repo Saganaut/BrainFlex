@@ -226,7 +226,7 @@ const DashboardTab = () => {
             />
           </div>
         </Accordion>
-        <Accordion titleBar='Review panel (post-showcase)'>
+        <Accordion titleBar='Review panel (post-interactiveSession)'>
           <div className={styles.cardComponentContainer}>
             <ReviewPanel review={reviewSampleData} />
           </div>

@@ -3,7 +3,7 @@
  * one of the (anonymized) submissions from the SUBMIT phase. Tallies determine
  * which submission wins the bonus.
  *
- * Unique-per-(showcase, element, voter) so the vote is overwritable but final
+ * Unique-per-(interactiveSession, element, voter) so the vote is overwritable but final
  * per voter. (Enforced in the service, not via Mongo unique index, so we can
  * support "change your vote" without a delete-then-insert dance.)
  */
@@ -24,7 +24,7 @@ public class BestAnswerVote {
     private String id;
 
     @Indexed
-    private String showcaseId;
+    private String interactiveSessionId;
 
     @Indexed
     private String elementId;

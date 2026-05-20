@@ -1,7 +1,7 @@
 /**
  * Redis configuration for game state caching.
  * Defines a dedicated ObjectMapper bean (separate from the global Spring MVC one)
- * so we can control exactly how Showcase is serialized to/from JSON in Redis
+ * so we can control exactly how InteractiveSession is serialized to/from JSON in Redis
  * without affecting HTTP response serialization elsewhere.
  */
 package cephadex.brainflex.config;
@@ -20,7 +20,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 public class RedisConfig {
 
     /**
-     * ObjectMapper used exclusively by ShowcaseCacheService for Redis serialization.
+     * ObjectMapper used exclusively by InteractiveSessionCacheService for Redis serialization.
      * Uses field-level access (not getters) so Lombok @Data classes with boolean
      * "isXxx" fields round-trip correctly without getter/setter name mismatches.
      */

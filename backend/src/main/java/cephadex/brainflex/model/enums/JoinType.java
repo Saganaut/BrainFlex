@@ -1,5 +1,5 @@
 /**
- * How participants are told to join the live showcase for this element.
+ * How participants are told to join the live interactiveSession for this element.
  *   INSTRUCTIONS_BAR — a header strip with the join code / URL written out.
  *   QR_CODE          — a scannable QR code (typical for big-screen presentations).
  */

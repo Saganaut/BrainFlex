@@ -59,10 +59,15 @@ public class SecurityConfig {
      * automatically by @EnableMethodSecurity in Spring Security 6.3+, so
      * @PreAuthorize("hasRole('USER')") accepts any USER_* role and
      * @PreAuthorize("hasRole('ORG_MEMBER')") also accepts ORG_OWNER.
+     *
+     * ADMIN implies MODERATOR implies the rest of the user ladder, so any
+     * admin can satisfy a hasRole('MODERATOR') or hasRole('USER') check.
      */
     @Bean
     public RoleHierarchy roleHierarchy() {
         return RoleHierarchyImpl.fromHierarchy("""
+                ROLE_ADMIN > ROLE_MODERATOR
+                ROLE_MODERATOR > ROLE_USER_PREMIUM
                 ROLE_USER_PREMIUM > ROLE_USER_BASIC
                 ROLE_USER_BASIC > ROLE_USER_FREE
                 ROLE_USER_FREE > ROLE_USER
@@ -122,7 +127,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/users/leaderboard/**",
                                 "/api/users/check-username",
-                                "/api/showcases/**",
+                                "/api/interactive-sessions/**",
                                 "/api/decks/**",
                                 "/api/collections/*",
                                 "/api/avatars").permitAll()

@@ -1,7 +1,7 @@
 /**
- * Redux slice for active showcase state.
+ * Redux slice for active interactiveSession state.
  *
- * All WebSocket showcase events (ROUND_START, ROUND_RESULT, GAME_OVER, lobby
+ * All WebSocket interactiveSession events (ROUND_START, ROUND_RESULT, GAME_OVER, lobby
  * updates, presence, answer-progress) are dispatched here so any component can
  * read the current state without prop drilling.
  *
@@ -11,9 +11,9 @@
  */
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type {
-  ShowcaseDto,
+  InteractiveSessionDto,
   PlayerPlacement,
-  ShowcasePlayerDto,
+  InteractiveSessionPlayerDto,
 } from "./BrainFlexApi";
 import type { AnswerPayload, DeckElement } from "../types/elements";
 import type {
@@ -78,8 +78,8 @@ export interface PresencePayload {
 
 interface GameState {
   roomCode: string | null;
-  status: ShowcaseDto["status"] | null;
-  players: ShowcasePlayerDto[];
+  status: InteractiveSessionDto["status"] | null;
+  players: InteractiveSessionPlayerDto[];
   currentElement: DeckElement | null;
   round: number;
   totalRounds: number;
@@ -139,7 +139,7 @@ export const gameSlice = createSlice({
   name: "game",
   initialState,
   reducers: {
-    setSession(state, action: PayloadAction<ShowcaseDto>) {
+    setSession(state, action: PayloadAction<InteractiveSessionDto>) {
       const s = action.payload;
       state.roomCode = s.roomCode ?? null;
       state.status = s.status ?? null;

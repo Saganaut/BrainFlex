@@ -1,4 +1,4 @@
-// Post-showcase results screen — switches between the final standings (GameOver)
+// Post-interactiveSession results screen — switches between the final standings (GameOver)
 // and the per-round review panel via a top-of-page toggle.
 import { getRouteApi } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -7,7 +7,7 @@ import { ReviewPanel } from "../../components/Games/ReviewPanel/ReviewPanel";
 import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useGameSession } from "../../hooks/useGameSession";
 import {
-  useGetShowcaseQuery,
+  useGetInteractiveSessionQuery,
   useGetResultsQuery,
   useGetReviewQuery,
 } from "../../store/BrainFlexApi";
@@ -26,10 +26,10 @@ const ResultsPage = () => {
   const userState = useCurrentUser();
   const game = useGameSession();
 
-  const { data: session } = useGetShowcaseQuery({ roomCode });
+  const { data: session } = useGetInteractiveSessionQuery({ roomCode });
   const { data: gameResult } = useGetResultsQuery({ roomCode });
   // Fetch the review lazily: only the host typically opens it, but for non-Pulse
-  // showcases it's useful for everyone. Suspend nothing — just show a skeleton.
+  // interactiveSessions it's useful for everyone. Suspend nothing — just show a skeleton.
   const { data: review, isLoading: reviewLoading } = useGetReviewQuery({
     roomCode,
   });

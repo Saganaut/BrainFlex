@@ -1,38 +1,28 @@
 /**
- * Env-driven allowlist of user ids that can perform admin-only writes (creating
- * / editing curated tags being the first such operation).
+ * Resolves whether a {@link User} carries admin grants.
  *
- * Reads from the {@code APP_ADMIN_USER_IDS} env var via Spring's relaxed
- * binding (comma-separated). The list is read-only after boot; restart to
- * update. This is a stopgap until a proper {@code UserRole.ADMIN} field
- * lands as part of chunk 20.
+ * Earlier iterations read an env-driven allowlist ({@code APP_ADMIN_USER_IDS});
+ * chunk 20 replaced that with a persisted {@code roles} field on User. This
+ * helper preserves the original call shape ({@code isAdmin(user)}) so the
+ * six existing call sites — and their tests — don't have to change. New
+ * code that just needs forbid-or-allow gating should reach for
+ * {@code @PreAuthorize("hasRole('ADMIN')")} on the controller method
+ * directly; this helper is for the cases that branch on admin-ness inside
+ * the method body (e.g. shaping a CreateTagRequest's curated flag).
  */
 package cephadex.brainflex.config;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.enums.UserRole;
 
-@ConfigurationProperties(prefix = "app.admin")
+@Component
 public class AdminProperties {
 
-    private List<String> userIds = List.of();
-
-    public List<String> getUserIds() {
-        return userIds;
-    }
-
-    public void setUserIds(List<String> userIds) {
-        this.userIds = userIds == null ? List.of() : userIds;
-    }
-
     public boolean isAdmin(User user) {
-        if (user == null || user.getId() == null) return false;
-        Set<String> allow = new HashSet<>(userIds);
-        return allow.contains(user.getId());
+        if (user == null) return false;
+        var roles = user.getRoles();
+        return roles != null && roles.contains(UserRole.ADMIN);
     }
 }

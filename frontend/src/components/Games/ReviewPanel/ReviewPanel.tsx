@@ -1,5 +1,5 @@
 /**
- * Post-showcase review. Paginates through every element played and renders
+ * Post-interactiveSession review. Paginates through every element played and renders
  * per-kind summaries:
  *   SLIDE     — title + body (no answers to aggregate)
  *   MCQ       — horizontal bar chart of option-id counts
@@ -15,7 +15,7 @@ import { useState } from "react";
 import type {
   PlayerRoundDetail,
   RoundReview,
-  ShowcaseReviewDto,
+  InteractiveSessionReviewDto,
 } from "../../../store/BrainFlexApi";
 import type { AnswerPayload, DeckElement } from "../../../types/elements";
 import {
@@ -30,7 +30,7 @@ import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./ReviewPanel.module.css";
 
 export interface ReviewPanelProps {
-  review: ShowcaseReviewDto;
+  review: InteractiveSessionReviewDto;
 }
 
 const ReviewPanel = ({ review }: ReviewPanelProps) => {

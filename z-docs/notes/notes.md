@@ -22,20 +22,20 @@ Trade-off accepted: we lose the ability to query elements globally (e.g., "find 
 
 ❓ Confirm embedded is the right call, OR you want per-kind collections (Slides / McqQuestions / TextQuestions / etc.) referenced from Deck via `List<ElementRef>`. The runtime cost difference is small; the editor UX is meaningfully simpler with embedded.
 
-### 1b. Showcase runtime state
+### 1b. InteractiveSession runtime state
 
-`Showcase` keeps its own collection (as today). It snapshots the deck's element list at create time so authoring a deck mid-showcase doesn't desync clients:
+`InteractiveSession` keeps its own collection (as today). It snapshots the deck's element list at create time so authoring a deck mid-interactive-session doesn't desync clients:
 
 ```
-Showcase.deckSnapshot: List<DeckElement>   // frozen copy
-Showcase.currentRound: int                 // index into deckSnapshot
+InteractiveSession.deckSnapshot: List<DeckElement>   // frozen copy
+InteractiveSession.currentRound: int                 // index into deckSnapshot
 ```
 
 This replaces today's `questionIds: List<String>` indirection — no separate lookups during play.
 
 ### 1c. New top-level collections
 
-These don't live inside `Showcase` because they're high-volume per-round and the host moderates them live:
+These don't live inside `InteractiveSession` because they're high-volume per-round and the host moderates them live:
 
 - **`audience_submissions`** — Q&A and Best Answer submissions
 - **`best_answer_votes`** — votes in the Best Answer second phase
@@ -60,11 +60,11 @@ cephadex.brainflex.model
 │   ├── GridQuestion              (implements Question)
 │   ├── PlaceOnImageQuestion      (implements Question)
 │   └── Question                  (sealed sub-interface for scored types — extends DeckElement)
-├── Showcase                      (collection: showcases)
-├── ShowcaseSettings              (embedded)
-├── ShowcasePlayer                (embedded)
-├── ShowcaseResult                (collection: showcase_results)
-├── PlayerAnswer                  (embedded in ShowcasePlayer)
+├── InteractiveSession                      (collection: interactive sessions)
+├── InteractiveSessionSettings              (embedded)
+├── InteractiveSessionPlayer                (embedded)
+├── InteractiveSessionResult                (collection: interactive_session_results)
+├── PlayerAnswer                  (embedded in InteractiveSessionPlayer)
 │   └── responsePayload: AnswerPayload (sealed)
 ├── answer/                       (sealed answer payloads)
 │   ├── AnswerPayload             (sealed interface)
@@ -78,7 +78,7 @@ cephadex.brainflex.model
 │   └── TimeoutAnswer             (no response)
 ├── AudienceSubmission            (collection: audience_submissions)
 ├── BestAnswerVote                (collection: best_answer_votes)
-└── McqShuffle                    (embedded in Showcase, keyed by element id)
+└── McqShuffle                    (embedded in InteractiveSession, keyed by element id)
 ```
 
 ### 2a. `DeckElement` base contract
@@ -292,8 +292,8 @@ record Deck(
     // content
     List<DeckElement> elements,   // the polymorphic embedded list — order = play order
 
-    // showcase defaults
-    ShowcaseSettings defaultSettings,  // copied into Showcase at create time
+    // interactive session defaults
+    InteractiveSessionSettings defaultSettings,  // copied into InteractiveSession at create time
 
     // history / lineage
     String parentDeckId,          // null unless this was forked
@@ -306,21 +306,21 @@ record Deck(
 
 ❓ Do we want `category` to remain a separate (legacy) field, or fully replace with `tags` + a first-tag-is-primary convention? Lighter to ship without `category`.
 
-### 2d. `Showcase` + answers
+### 2d. `InteractiveSession` + answers
 
 ```java
-record Showcase(
+record InteractiveSession(
     String id,
     String roomCode,
     String inviteToken,
     String hostUserId,
     String deckId,
     List<DeckElement> deckSnapshot,    // frozen copy of the deck's elements at create
-    ShowcaseSettings settings,
-    List<ShowcasePlayer> players,
+    InteractiveSessionSettings settings,
+    List<InteractiveSessionPlayer> players,
     int currentRound,
-    ShowcaseStatus status,             // LOBBY | IN_PROGRESS | FINISHED | CANCELLED
-    ShowcasePhase phase,               // SUBMIT | VOTE | REVEAL  (new — see §3)
+    InteractiveSessionStatus status,             // LOBBY | IN_PROGRESS | FINISHED | CANCELLED
+    InteractiveSessionPhase phase,               // SUBMIT | VOTE | REVEAL  (new — see §3)
     String deckCoverImageUrl,
     String deckBackgroundImageUrl,
     String themeId,
@@ -331,7 +331,7 @@ record Showcase(
     LocalDateTime roundStartedAt
 ) {}
 
-record ShowcasePlayer(
+record InteractiveSessionPlayer(
     String userId,
     String userName,
     String pictureUrl,
@@ -368,7 +368,7 @@ record TimeoutAnswer() implements AnswerPayload {} // sentinel for "didn't submi
 @Document("audience_submissions")
 record AudienceSubmission(
     String id,
-    String showcaseId,
+    String interactiveSessionId,
     String elementId,             // Q&A or Best-Answer-mode question
     String userId,
     String text,                  // primary content; for non-text Best Answer modes we'd extend
@@ -380,7 +380,7 @@ record AudienceSubmission(
 @Document("best_answer_votes")
 record BestAnswerVote(
     String id,
-    String showcaseId,
+    String interactiveSessionId,
     String elementId,
     String submissionId,          // FK to AudienceSubmission
     String voterUserId,
@@ -391,8 +391,8 @@ record BestAnswerVote(
 ### 2f. Settings + enums
 
 ```java
-// ShowcaseSettings — close to today's shape, with the cleanups already in place
-record ShowcaseSettings(
+// InteractiveSessionSettings — close to today's shape, with the cleanups already in place
+record InteractiveSessionSettings(
     int maxPlayers,
     int totalRounds,              // upper bound; clamped to elements.size at create
     int timePerQuestion,          // 0 = unlimited (replaces removed noTimer)
@@ -411,7 +411,7 @@ enum SlideKind   { TITLE, SECTION, CALLOUT, CONTENT, END }
 enum MediaPosition { TOP, BOTTOM, BACKGROUND, NONE }
 enum DeckVisibility { PRIVATE, UNLISTED, ORG, PUBLIC }
 enum DeckPreset    { GAME, PULSE, PRESENTATION }
-enum ShowcasePhase { SUBMIT, VOTE, REVEAL }
+enum InteractiveSessionPhase { SUBMIT, VOTE, REVEAL }
 enum SubmissionStatus { PENDING, PINNED, DISMISSED }
 enum RankingScoring { EXACT, PARTIAL }
 enum PlaceScoring   { BINARY, LINEAR }
@@ -423,24 +423,24 @@ enum PlaceScoring   { BINARY, LINEAR }
 
 ### 3a. MCQ shuffling becomes ID-based, not index-based
 
-Today: shuffle stored on `Showcase.mcqShuffles` so server can map shuffled-position-N → original-index. Each option is identified by its position, which is fragile.
+Today: shuffle stored on `InteractiveSession.mcqShuffles` so server can map shuffled-position-N → original-index. Each option is identified by its position, which is fragile.
 
 After: `McqOption.id` is stable; clients submit `McqAnswer(optionId)`. Server scores by comparing to `correctIndex → options[correctIndex].id`. The shuffle is purely presentational — server sends options in any order; ID identifies them. `McqShuffle` can be deleted entirely.
 
-❓ Worth the model simplification? It removes a whole embedded map from `Showcase` and the lazy-shuffle path in the service.
+❓ Worth the model simplification? It removes a whole embedded map from `InteractiveSession` and the lazy-shuffle path in the service.
 
 ### 3b. Best Answer mode reuses existing flow
 
-`Showcase.phase` discriminates:
+`InteractiveSession.phase` discriminates:
 - SUBMIT — current `submitAnswer` flow
 - VOTE — new `submitVote` flow (writes to `best_answer_votes`)
 - REVEAL — round result broadcast; same shape as today but enriched with submissions + vote tallies
 
 Only Questions with `bestAnswerMode = true` ever enter VOTE phase. Default behavior unchanged.
 
-### 3c. Per-element timer overrides showcase setting
+### 3c. Per-element timer overrides interactive session setting
 
-`DeckElement.displaySeconds` is the round/slide duration. ShowcaseSettings.timePerQuestion becomes a hint — used only when the deck author left `displaySeconds = 0` (meaning "use the showcase default"). Order of precedence:
+`DeckElement.displaySeconds` is the round/slide duration. InteractiveSessionSettings.timePerQuestion becomes a hint — used only when the deck author left `displaySeconds = 0` (meaning "use the interactive session default"). Order of precedence:
 
 1. element.displaySeconds > 0 → use that
 2. else if settings.timePerQuestion > 0 → use that
@@ -453,7 +453,7 @@ Only Questions with `bestAnswerMode = true` ever enter VOTE phase. Default behav
 Will be rewritten to use the new structures. Sample decks:
 - "Welcome Tour" — exercises every element kind (slide + each question type with sample content) so the runtime is demoable end-to-end
 - "General Knowledge" — pure trivia (MCQ + Text)
-- "Audience Pulse" — Pulse preset showcase (scales + Q&A + ranking)
+- "Audience Pulse" — Pulse preset interactive session (scales + Q&A + ranking)
 
 ❓ Want me to design the Welcome Tour explicitly in this doc before we execute, or do you want to author it yourself once the models land?
 
@@ -467,8 +467,8 @@ OpenAPI will emit the polymorphic types; RTK Query codegen should handle the dis
 
 Everything is wiped, nothing migrated. Concretely:
 
-1. **Backend**: delete `Question.java`, `McqShuffle.java`, replace with the new model tree under `model/element/`, `model/answer/`. Rewrite `Showcase.java`, `ShowcaseService.java`, `DeckService.java`, `ShowcaseReviewDTO.java`. Drop the old DTOs that conflate question types.
-2. **DataSeeder**: rewrite. Drops `decks`, `questions`, `showcases`, `showcase_results`, `audience_submissions`, `best_answer_votes` collections on startup (dev-only — gated by a `seed.reset=true` property) before re-seeding.
+1. **Backend**: delete `Question.java`, `McqShuffle.java`, replace with the new model tree under `model/element/`, `model/answer/`. Rewrite `InteractiveSession.java`, `InteractiveSessionService.java`, `DeckService.java`, `InteractiveSessionReviewDTO.java`. Drop the old DTOs that conflate question types.
+2. **DataSeeder**: rewrite. Drops `decks`, `questions`, `interactive sessions`, `interactive_session_results`, `audience_submissions`, `best_answer_votes` collections on startup (dev-only — gated by a `seed.reset=true` property) before re-seeding.
 3. **Frontend**: rewrite the gameplay components to consume the discriminated union. Pack editor stays as your work — but I'll update the types so your new authoring screens compile.
 4. **GAMES.md**: rewrite §0 to reflect the new shape (it currently describes the field-additions path; after this rework most ☐s become ✅ for "model captures it").
 
@@ -479,7 +479,7 @@ Everything is wiped, nothing migrated. Concretely:
 - **1a** Embedded element list ✅
 - **2c** Drop legacy `category` field — tags only ✅
 - **3a** Drop `shuffleMcqOptions` runtime entirely — instead add an editor button "Shuffle answers" that reorders `McqQuestion.options` (and updates `correctOptionId`) in place. Server then sends options in whatever order they're stored. ✅ — `McqOption.id` still stable so scoring is by option-id, but no per-round shuffle state anywhere.
-- **3c** Per-element `displaySeconds` always overrides `ShowcaseSettings.timePerQuestion` ✅
+- **3c** Per-element `displaySeconds` always overrides `InteractiveSessionSettings.timePerQuestion` ✅
 - **3d** Welcome Tour deck spec'd below ✅
 
 ## Scaling note
@@ -519,12 +519,12 @@ For asset URLs we use Lorem Picsum throughout — the user can swap any in later
 
 ## Execution order
 
-1. **Backend models** — new sealed hierarchies under `model/element/`, `model/answer/`; new enums; rewrite Deck, Showcase, ShowcaseSettings, PlayerAnswer. Delete `Question.java`, `McqShuffle.java`.
-2. **Backend repos + services** — DeckRepository unchanged interface; DeckService + ShowcaseService rewritten to walk the embedded element list; review aggregator handles all kinds via a polymorphic `aggregate(...)` per element.
-3. **Backend DTOs** — DeckDTO with embedded `List<DeckElementDTO>` (sealed mirror of the model union); ShowcaseDTO carries `List<DeckElementDTO> deckSnapshot`.
-4. **DataSeeder** — drops `decks`, `showcases`, `showcase_results`, `audience_submissions`, `best_answer_votes` collections on startup behind a `seed.reset=true` Spring property (default true in dev). Seeds the Welcome Tour deck + a small General Knowledge deck for variety.
-5. **WebSocket protocol** — `Showcase.phase` (SUBMIT/VOTE/REVEAL) added; new `/app/showcase/{code}/vote` handler; new `/topic/showcase/{code}/voteStart` + `voteResult` topics.
-6. **Backend tests** — rewritten against the new shapes; CreateShowcaseRequest test sites updated.
+1. **Backend models** — new sealed hierarchies under `model/element/`, `model/answer/`; new enums; rewrite Deck, InteractiveSession, InteractiveSessionSettings, PlayerAnswer. Delete `Question.java`, `McqShuffle.java`.
+2. **Backend repos + services** — DeckRepository unchanged interface; DeckService + InteractiveSessionService rewritten to walk the embedded element list; review aggregator handles all kinds via a polymorphic `aggregate(...)` per element.
+3. **Backend DTOs** — DeckDTO with embedded `List<DeckElementDTO>` (sealed mirror of the model union); InteractiveSessionDTO carries `List<DeckElementDTO> deckSnapshot`.
+4. **DataSeeder** — drops `decks`, `interactive sessions`, `interactive_session_results`, `audience_submissions`, `best_answer_votes` collections on startup behind a `seed.reset=true` Spring property (default true in dev). Seeds the Welcome Tour deck + a small General Knowledge deck for variety.
+5. **WebSocket protocol** — `InteractiveSession.phase` (SUBMIT/VOTE/REVEAL) added; new `/app/interactive-session/{code}/vote` handler; new `/topic/interactive-session/{code}/voteStart` + `voteResult` topics.
+6. **Backend tests** — rewritten against the new shapes; CreateInteractiveSessionRequest test sites updated.
 7. **Frontend API client** — regenerated; the discriminated union flows through.
 8. **Frontend gameplay** — per-kind renderers: keep MCQ + TEXT + SLIDE renderers, add NUMBER, RANKING, SCALES, Q_AND_A, GRID, PLACE_ON_IMAGE, IMAGE_CHOICE renderers. New `BestAnswerVoteView` for the VOTE phase.
 9. **Frontend review** — ReviewPanel handles each new kind via its own aggregator visualization (histogram for NUMBER, average bar for SCALES, etc.).

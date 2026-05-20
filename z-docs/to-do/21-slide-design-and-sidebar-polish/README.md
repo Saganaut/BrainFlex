@@ -6,11 +6,11 @@
 
 ## Scope
 
-Three right-sidebar panels currently have backend models that are richer than what the UI exposes (or missing a few small fields). This chunk closes those gaps, introduces the reusable **`Design`** value object for theme/slide/showcase background + content imagery, and finishes the unfinished bits of chunks 01 and 04 that the user actually feels when they sit in the editor.
+Three right-sidebar panels currently have backend models that are richer than what the UI exposes (or missing a few small fields). This chunk closes those gaps, introduces the reusable **`Design`** value object for theme/slide/interactive session background + content imagery, and finishes the unfinished bits of chunks 01 and 04 that the user actually feels when they sit in the editor.
 
 The three panels:
 
-- **`EditSlidePanel`** — `frontend/src/components/CreateDashboard/RightSidebar/EditSlidePanel.tsx`
+- **`EditSlidePanel`** — `frontend/src/components/DeckEditor/RightSidebar/EditSlidePanel.tsx`
 - **`DeckCategorizePanel`** — same folder
 - **`DeckReviewsPanel`** — same folder
 
@@ -54,11 +54,11 @@ The field exists (`selectionsPerParticipant: int`, default `1`). Today the edito
 Field exists (`showResultsAsPercentage: boolean`). The Toggle is already wired. Verify:
 
 - Reveal-time renderers (`SlideReveal`, MCQ reveal, etc.) actually read the flag and switch the y-axis label from counts to `%`.
-- Add a test in `ShowcaseServiceTest` or in the renderer's component test.
+- Add a test in `InteractiveSessionServiceTest` or in the renderer's component test.
 
 ### A.4 — Design shape: content image, background image, background color, reset to theme
 
-This is the most significant piece. Introduce a reusable **`Design`** value object that captures the visual chrome a `Theme`, `Slide`, or `Showcase` can override.
+This is the most significant piece. Introduce a reusable **`Design`** value object that captures the visual chrome a `Theme`, `Slide`, or `InteractiveSession` can override.
 
 **New model** (`backend/src/main/java/cephadex/brainflex/model/Design.java`):
 
@@ -79,14 +79,14 @@ Design                              (embeddable record, never persisted standalo
 - On write, prefer the new `design` field; mirror back to the legacy fields for one release so older clients still read.
 - Remove legacy fields in a follow-up after the frontend has fully switched.
 
-**Reuse on `Theme` and `Showcase`:**
+**Reuse on `Theme` and `InteractiveSession`:**
 
 - `Theme` currently owns `logoVariants` + `backgroundVariants`. Add an embedded `Design design` so the theme picker exposes the same shape; map `backgroundVariants` → `design.backgroundImage`.
-- `Showcase` (or `ShowcaseSettings`) gains an optional `Design designOverride` for "Custom branding for this game" — overrides the deck/theme design for the live show.
+- `InteractiveSession` (or `InteractiveSessionSettings`) gains an optional `Design designOverride` for "Custom branding for this game" — overrides the deck/theme design for the live show.
 
 **Frontend:**
 
-- New `DesignEditor` component under `components/Common/DesignEditor/` — reused by `EditSlidePanel`, the theme editor, and the showcase setup form.
+- New `DesignEditor` component under `components/Common/DesignEditor/` — reused by `EditSlidePanel`, the theme editor, and the interactive session setup form.
 - Four controls: Content image (existing `ImagePicker`), Background image (`ImagePicker`), Background color (color swatch grid + hex input), **Reset to theme** button (sets `useThemeBackground = true` and `useThemeColor = true`).
 - Subject to **tokens.css** rules — no hardcoded colors; swatches come from a token-driven palette.
 
@@ -110,8 +110,8 @@ Currently `joinType` is one enum dropdown (`INSTRUCTIONS_BAR | QR_CODE`) and `sh
 `showResponses: ShowResponsesMode` is already there with three values (`INSTANT | ON_CLICK | PRIVATE`) and `EditSlidePanel.tsx` already uses `RadioGroup`. Verify:
 
 - The reveal pipeline actually respects each mode (no live updates when `PRIVATE`; reveal only on host click when `ON_CLICK`).
-- `ShowcaseService.recordAnswer` does **not** broadcast aggregated results when the slide's `showResponses == PRIVATE`.
-- Add tests in `ShowcaseServiceTest`.
+- `InteractiveSessionService.recordAnswer` does **not** broadcast aggregated results when the slide's `showResponses == PRIVATE`.
+- Add tests in `InteractiveSessionServiceTest`.
 
 ### A.7 — Title label text input
 
@@ -179,12 +179,12 @@ The panel already has `rateDeck` wired in, but the "Save review" textarea + butt
 - [ ] Chart picker icon row with tooltips replaces the dropdown
 - [ ] `selectionsPerParticipant` accepts `0 = unlimited`; helper text + scorer test
 - [ ] `showResultsAsPercentage` verified end-to-end (reveal renderers honor it)
-- [ ] `Design` record added; embedded on `Slide`, `Theme`, `Showcase`
-- [ ] `DesignEditor` component shared by slide / theme / showcase forms
+- [ ] `Design` record added; embedded on `Slide`, `Theme`, `InteractiveSession`
+- [ ] `DesignEditor` component shared by slide / theme / interactive session forms
 - [ ] `DeckImageMapper` + `DeckImageHydrationService` updated for the new image slots
 - [ ] `showQrCode` boolean added on `Slide`; two-toggle UI replaces the `joinType` dropdown
 - [ ] `joinType` legacy translation on read for one release
-- [ ] `showResponses` modes verified in `ShowcaseService` (private suppresses broadcast)
+- [ ] `showResponses` modes verified in `InteractiveSessionService` (private suppresses broadcast)
 - [ ] `titleLabel` added on `DeckElement` interface + every permits record
 - [ ] `titleLabel` surfaced in slide + question inspectors and rendered in `SlideDisplay` / player views
 

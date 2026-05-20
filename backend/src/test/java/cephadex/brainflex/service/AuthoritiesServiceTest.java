@@ -28,7 +28,10 @@ import cephadex.brainflex.model.Organization;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.MembershipStatus;
 import cephadex.brainflex.model.enums.MembershipTier;
+import cephadex.brainflex.model.enums.UserRole;
 import cephadex.brainflex.repository.OrganizationRepository;
+
+import java.util.EnumSet;
 
 @ExtendWith(MockitoExtension.class)
 class AuthoritiesServiceTest {
@@ -235,5 +238,67 @@ class AuthoritiesServiceTest {
 
         assertFalse(result.contains(AuthoritiesService.ROLE_ORG_MEMBER));
         assertFalse(result.contains(AuthoritiesService.ROLE_ORG_OWNER));
+    }
+
+    @Test
+    void plainUser_DoesNotGetAdminOrModeratorRoles() {
+        User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
+        user.setRoles(EnumSet.of(UserRole.USER));
+
+        Set<String> result = roles(authoritiesService.authoritiesFor(user));
+
+        assertFalse(result.contains(AuthoritiesService.ROLE_ADMIN));
+        assertFalse(result.contains(AuthoritiesService.ROLE_MODERATOR));
+    }
+
+    @Test
+    void moderatorRole_EmitsModeratorAuthority() {
+        User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
+        user.setRoles(EnumSet.of(UserRole.USER, UserRole.MODERATOR));
+
+        Set<String> result = roles(authoritiesService.authoritiesFor(user));
+
+        assertTrue(result.contains(AuthoritiesService.ROLE_MODERATOR));
+        assertFalse(result.contains(AuthoritiesService.ROLE_ADMIN));
+    }
+
+    @Test
+    void adminRole_EmitsAdminAuthority() {
+        User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
+        user.setRoles(EnumSet.of(UserRole.USER, UserRole.ADMIN));
+
+        Set<String> result = roles(authoritiesService.authoritiesFor(user));
+
+        assertTrue(result.contains(AuthoritiesService.ROLE_ADMIN));
+        // MODERATOR is not auto-added here — the RoleHierarchy bean handles
+        // the implication at authorization time, not at authority emission.
+        assertFalse(result.contains(AuthoritiesService.ROLE_MODERATOR));
+    }
+
+    @Test
+    void nullRolesField_DoesNotEmitAdminOrModerator() {
+        User user = registered(MembershipTier.FREE, MembershipStatus.NONE);
+        user.setRoles(null);
+
+        Set<String> result = roles(authoritiesService.authoritiesFor(user));
+
+        assertFalse(result.contains(AuthoritiesService.ROLE_ADMIN));
+        assertFalse(result.contains(AuthoritiesService.ROLE_MODERATOR));
+        // Still gets the baseline registered-user authority.
+        assertTrue(result.contains(AuthoritiesService.ROLE_USER));
+    }
+
+    @Test
+    void guestUser_RolesFieldIgnored() {
+        User guest = new User();
+        guest.setId("guest-1");
+        guest.setIsGuest(true);
+        // A guest doc with a stray ADMIN role shouldn't elevate them — the
+        // guest short-circuit must win.
+        guest.setRoles(EnumSet.of(UserRole.USER, UserRole.ADMIN));
+
+        Set<String> result = roles(authoritiesService.authoritiesFor(guest));
+
+        assertEquals(Set.of(AuthoritiesService.ROLE_GUEST), result);
     }
 }

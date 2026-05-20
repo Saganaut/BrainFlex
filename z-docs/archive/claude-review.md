@@ -123,7 +123,7 @@ and `RadioGroup`. Delete the local `HueSlider`, `hexToOklchHue`, and `.hueRow`/`
 
 ### 2.2 `pages/AccountPage/AccountPage.tsx` rolls its own tabs and file input
 
-- **Tab strip (lines 136-150)** — raw `<button role="tab">`s with custom `tabs/tab/tabActive` classes. `Common/Tabs/Tabs.tsx` already provides keyboard-navigable, ARIA-correct tabs (showcased in DesignSystemPage `1106-1175`).
+- **Tab strip (lines 136-150)** — raw `<button role="tab">`s with custom `tabs/tab/tabActive` classes. `Common/Tabs/Tabs.tsx` already provides keyboard-navigable, ARIA-correct tabs (InteractiveSessiond in DesignSystemPage `1106-1175`).
 - **Hidden `<input type="file">` + ref pattern (lines 163-172)** — identical to the ThemeEditor pattern; should use `Common/Input/FileUpload/FileUpload.tsx`.
 - **72×72 `.avatar` img (AccountPage.module.css:62-68)** — the project has `Common/Avatar/Avatar.tsx` with `size` variants up to `xl` and an `src` prop.
 
@@ -141,7 +141,7 @@ preset and custom rows reuse.
 `ThemeSection.module.css:81-96` defines `.badge`/`.badgeActive`/`.badgeOrg` and
 `ThemeCard.tsx:46, 51` uses them as `<span className={styles.badge}>...`. The
 project has a `Common/Badge.tsx` component with `variant` and `size` props
-(showcased in `DesignSystemPage.tsx:382-392`).
+(InteractiveSessiond in `DesignSystemPage.tsx:382-392`).
 
 ### 2.5 `RichTextInput.tsx` hardcodes hex colors instead of design tokens
 
@@ -226,7 +226,7 @@ folder grows the per-component-folder convention from `Common/` should be applie
 ### 3.6 Console logs left in production code
 
 - `pages/RegisterPage/RegisterPage.tsx:9` — `console.log("search", search);`
-- `CreateDashboard.tsx:87, 98` — `console.log("preview deck", serverName)` / `console.log("start showcase", ...)` next to TODOs
+- `CreateDashboard.tsx:87, 98` — `console.log("preview deck", serverName)` / `console.log("start InteractiveSession", ...)` next to TODOs
 
 These look like debug breadcrumbs that should be removed or replaced with the real handlers tied to the TODO.
 

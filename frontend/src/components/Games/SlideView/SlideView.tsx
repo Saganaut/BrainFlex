@@ -1,5 +1,5 @@
 /**
- * Renders a non-interactive slide during a showcase round (title / section /
+ * Renders a non-interactive slide during a interactiveSession round (title / section /
  * callout / content / end card). The server auto-advances slides on their
  * display timer, so there's nothing for the player to do here — we just show a
  * countdown so the audience knows how long the slide will stay up.

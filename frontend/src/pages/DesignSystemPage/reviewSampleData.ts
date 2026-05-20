@@ -1,9 +1,9 @@
 // Sample data for the design system's ReviewPanel demo.
-// Mirrors the shape returned by GET /api/showcases/{code}/review.
-import type { ShowcaseReviewDto } from "../../store/BrainFlexApi";
+// Mirrors the shape returned by GET /api/interactive-sessions/{code}/review.
+import type { InteractiveSessionReviewDto } from "../../store/BrainFlexApi";
 
-export const reviewSampleData: ShowcaseReviewDto = {
-  showcaseId: "demo-showcase",
+export const reviewSampleData: InteractiveSessionReviewDto = {
+  interactiveSessionId: "demo-interactiveSession",
   roomCode: "DEMO00",
   endedAt: new Date().toISOString(),
   scoringEnabled: true,

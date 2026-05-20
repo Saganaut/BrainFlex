@@ -6,9 +6,9 @@
 
 ## Scope
 
-Per-user history of every showcase they've played in. Drives the "Recent games" UI on the user dashboard, achievement triggers (chunk 17), and feeds into the rolled-up `PlayerStats` numbers.
+Per-user history of every interactive session they've played in. Drives the "Recent games" UI on the user dashboard, achievement triggers (chunk 17), and feeds into the rolled-up `PlayerStats` numbers.
 
-Today, `ShowcaseResult` exists but it's per-game, not per-user. Listing "games this user has played" requires a collection scan. `GameHistoryEntry` is the per-user denormalized index.
+Today, `InteractiveSessionResult` exists but it's per-game, not per-user. Listing "games this user has played" requires a collection scan. `GameHistoryEntry` is the per-user denormalized index.
 
 ## New models
 
@@ -16,7 +16,7 @@ Today, `ShowcaseResult` exists but it's per-game, not per-user. Listing "games t
 GameHistoryEntry                       @Document("game_history")
   @Id String id
   @Indexed String userId
-  @Indexed String showcaseId
+  @Indexed String interactiveSessionId
   String deckId, deckName              // denorm — survives deck deletion
   String hostUserId, hostName
   int finalScore, placement
@@ -24,23 +24,23 @@ GameHistoryEntry                       @Document("game_history")
   int longestStreak, currentStreakAtEnd
   double accuracy
   int reactionsSent
-  long durationMs                      // showcase.endedAt - showcase.startedAt
+  long durationMs                      // interactive session.endedAt - interactive session.startedAt
   String teamId, teamName              // nullable
   boolean wasHost                      // true when the user was the host (counts as a "game I ran")
   boolean wasGuest                     // joined as guest
-  LocalDateTime playedAt               // = showcase.endedAt
+  LocalDateTime playedAt               // = interactive session.endedAt
 ```
 
 Indexes:
 
 - `(userId, playedAt DESC)` — primary list query
-- `(showcaseId)` — for backfill / reconciliation
+- `(interactiveSessionId)` — for backfill / reconciliation
 - `(userId, deckId, playedAt DESC)` — "every time I played this deck"
 
 ## Backend changes
 
 - `GameHistoryRepository`
-- `GameHistoryService.recordFinish(Showcase)` — called from `ShowcaseService.finish()`:
+- `GameHistoryService.recordFinish(InteractiveSession)` — called from `InteractiveSessionService.finish()`:
   - One `GameHistoryEntry` per player (including guests)
   - One additional entry for the host with `wasHost=true` (even if the host didn't play)
   - Also update `User.stats` (`PlayerStats`) for non-guest players: `gamesPlayed++`, `totalPoints += finalScore`, `highScore = max(highScore, finalScore)`, `currentStreak` (game-level streak — consecutive games played; reset if >7 days between games)
@@ -48,7 +48,7 @@ Indexes:
   - `GET /api/users/me/history?page=&size=` — paginated
   - `GET /api/users/{userId}/history?page=&size=` — public profile view (only registered, non-private)
   - `GET /api/decks/{deckId}/history/mine` — every time the caller played this deck (for "your best score" surfacing)
-- Update `Membership` quota tracking: if quotas are in place, bump `monthlyShowcaseCount` when the host's entry writes
+- Update `Membership` quota tracking: if quotas are in place, bump `monthlyInteractiveSessionCount` when the host's entry writes
 
 ## Frontend changes
 
@@ -61,7 +61,7 @@ Indexes:
 
 - **Guests:** write history rows for guests too (use the guest's `userId`). When a guest converts to a registered user via Google sign-in, the existing convert flow updates the row's `wasGuest` field or just stops writing new `wasGuest=true` entries.
 - **Deck deletion:** denorm `deckName` so history rows remain readable after the deck is gone.
-- **Backfill:** one-time script that walks existing `ShowcaseResult` + `Showcase` documents and writes history rows. Idempotent: skip if a row with `(userId, showcaseId)` already exists.
+- **Backfill:** one-time script that walks existing `InteractiveSessionResult` + `InteractiveSession` documents and writes history rows. Idempotent: skip if a row with `(userId, interactiveSessionId)` already exists.
 
 ## Checklist
 

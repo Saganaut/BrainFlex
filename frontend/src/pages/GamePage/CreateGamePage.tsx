@@ -1,26 +1,19 @@
-// CreateGamePage — three-mode fork for starting a game per GAMES.md.
-// Template: pick a system deck, defaults applied, one click to lobby.
-// Custom: pick one of the user's decks, edit settings, then create.
-// Auto: AI question generation (stubbed; backend not yet implemented).
-import { useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import {
-  useCreateShowcaseMutation,
-  useListDecksQuery,
-  useListMyDecksQuery,
-} from "../../store/BrainFlexApi";
-import type { DeckDto } from "../../store/BrainFlexApi";
-import { ActionCard } from "@/components/Common/Cards/ActionCard";
+// CreateGamePage — customize-before-start screen for a known deck. Reached
+// via the chevron menu on a deck's Quick Start button (carries ?deckId=<id>).
+// The deck-picker step lives on /decks now; without a deckId we bounce there.
+import { useEffect, useState } from "react";
+import { getRouteApi, useNavigate, Link } from "@tanstack/react-router";
+
+import { useCreateInteractiveSessionMutation, useGetDeckQuery } from "../../store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
 import { RadioGroup } from "@/components/Common/Input/RadioGroup/RadioGroup";
-import { SelectableTile } from "@/components/Common/SelectableTile/SelectableTile";
 import { extractErrorMessage } from "../../utils/utils";
-import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./Game.module.css";
 
-type Mode = "template" | "custom" | "auto";
+const routeApi = getRouteApi("/_authenticated/games/create");
+
 type GameMode = "SIMULTANEOUS" | "TURN_BASED";
 
 const DEFAULT_ROUNDS = 10;
@@ -31,93 +24,6 @@ const DEFAULT_MAX_PLAYERS = 8;
 const DEFAULT_ALLOW_GUESTS = true;
 const DEFAULT_ALLOW_LATE_JOIN = false;
 const DEFAULT_SHOW_SCORES_IMMEDIATELY = true;
-
-// ─── Deck grid ────────────────────────────────────────────────────────────────
-
-interface DeckGridProps {
-  decks: DeckDto[];
-  selectedDeckId: string | null;
-  onSelect: (id: string) => void;
-  emptyMessage: string;
-}
-
-const DeckGrid = ({
-  decks,
-  selectedDeckId,
-  onSelect,
-  emptyMessage,
-}: DeckGridProps) => {
-  if (decks.length === 0) {
-    return <p className={styles.authMsg}>{emptyMessage}</p>;
-  }
-  return (
-    <div className={styles.deckGrid}>
-      {decks.map((deck) => (
-        <SelectableTile
-          key={deck.id}
-          media={
-            <img
-              src={resolveDeckCover(deck.cover, deck.id)}
-              alt=''
-              loading='lazy'
-            />
-          }
-          title={deck.name ?? ""}
-          meta={`${(deck.elementCount ?? 0).toString()} elements${
-            deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""
-          }`}
-          description={deck.description}
-          selected={selectedDeckId === deck.id}
-          onClick={() => {
-            if (deck.id) onSelect(deck.id);
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-// ─── Mode tabs ────────────────────────────────────────────────────────────────
-
-interface ModeTabsProps {
-  mode: Mode;
-  onChange: (mode: Mode) => void;
-}
-
-const ModeTabs = ({ mode, onChange }: ModeTabsProps) => (
-  <div className={styles.modeTabs} role='tablist' aria-label='Create mode'>
-    <ActionCard
-      onClick={() => {
-        onChange("template");
-      }}
-      selected={mode === "template"}
-      icon='*'
-      title='Template'
-      description='One click to start. Pre-built question decks ready to play.'
-    />
-    <ActionCard
-      onClick={() => {
-        onChange("custom");
-      }}
-      selected={mode === "custom"}
-      icon='#'
-      title='Custom'
-      description='Use a deck you built yourself. Full control over settings.'
-    />
-    <ActionCard
-      onClick={() => {
-        onChange("auto");
-      }}
-      selected={mode === "auto"}
-      icon='~'
-      title='Auto-Generate'
-      description='Type a topic or upload a document. We make the questions.'
-      badge='Soon'
-    />
-  </div>
-);
-
-// ─── Settings ─────────────────────────────────────────────────────────────────
 
 interface SettingsState {
   totalRounds: number;
@@ -131,7 +37,7 @@ interface SettingsState {
   showScoresImmediately: boolean;
 }
 
-const DEFAULT_SETTINGS: SettingsState = {
+const PLATFORM_DEFAULTS: SettingsState = {
   totalRounds: DEFAULT_ROUNDS,
   timePerQuestion: DEFAULT_TIME,
   speedBonus: DEFAULT_SPEED_BONUS,
@@ -265,40 +171,60 @@ const SettingsForm = ({ settings, onChange }: SettingsFormProps) => {
   );
 };
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
 const CreateGamePage = () => {
-  // Gated by /_authenticated — caller is always a registered user here.
   const navigate = useNavigate();
+  const { deckId } = routeApi.useSearch();
 
-  const [mode, setMode] = useState<Mode>("template");
-  const [selectedDeckId, setSelectedDeckId] = useState<string | null>(null);
-  const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
+  // No deck → pick one. /decks is My Decks, which has Quick Start buttons.
+  useEffect(() => {
+    if (!deckId) {
+      void navigate({ to: "/decks", replace: true });
+    }
+  }, [deckId, navigate]);
 
-  const { data: allDecks = [], isLoading: loadingPublic } = useListDecksQuery();
-  const { data: myDecks = [], isLoading: loadingMine } = useListMyDecksQuery();
-  const systemDecks = allDecks.filter((p) => p.isSystem);
+  const { data: deck, isLoading: loadingDeck } = useGetDeckQuery(
+    { id: deckId ?? "" },
+    { skip: !deckId },
+  );
+
+  // Seed the form with the deck's defaultSettings; fall back per-field to
+  // platform defaults. The backend would also cascade nulls if we sent them,
+  // but pre-filling the visible form is what makes "customize" useful.
+  const [settings, setSettings] = useState<SettingsState>(PLATFORM_DEFAULTS);
+  const [seededFromDeckId, setSeededFromDeckId] = useState<string | null>(null);
+  if (deck?.id && deck.id !== seededFromDeckId) {
+    const d = deck.defaultSettings ?? {};
+    setSettings({
+      totalRounds: d.totalRounds ?? DEFAULT_ROUNDS,
+      timePerQuestion: d.timePerQuestion ?? DEFAULT_TIME,
+      speedBonus: d.speedBonus ?? DEFAULT_SPEED_BONUS,
+      gameMode: d.gameMode ?? DEFAULT_GAME_MODE,
+      maxPlayers: d.maxPlayers ?? DEFAULT_MAX_PLAYERS,
+      allowGuests: d.allowGuests ?? DEFAULT_ALLOW_GUESTS,
+      allowLateJoin: d.allowLateJoin ?? DEFAULT_ALLOW_LATE_JOIN,
+      showScoresImmediately:
+        d.showScoresImmediately ?? DEFAULT_SHOW_SCORES_IMMEDIATELY,
+    });
+    setSeededFromDeckId(deck.id);
+  }
 
   const [createGame, { isLoading: creating, error: createError }] =
-    useCreateShowcaseMutation();
+    useCreateInteractiveSessionMutation();
 
-  const startGame = async (
-    deckId: string,
-    overrides?: Partial<SettingsState>,
-  ) => {
-    const cfg = { ...settings, ...overrides };
+  const submit = async () => {
+    if (!deckId) return;
     try {
       const session = await createGame({
-        createShowcaseRequest: {
+        createInteractiveSessionRequest: {
           deckId,
-          totalRounds: cfg.totalRounds,
-          timePerQuestion: cfg.timePerQuestion,
-          speedBonus: cfg.speedBonus,
-          gameMode: cfg.gameMode,
-          maxPlayers: cfg.maxPlayers,
-          allowGuests: cfg.allowGuests,
-          allowLateJoin: cfg.allowLateJoin,
-          showScoresImmediately: cfg.showScoresImmediately,
+          totalRounds: settings.totalRounds,
+          timePerQuestion: settings.timePerQuestion,
+          speedBonus: settings.speedBonus,
+          gameMode: settings.gameMode,
+          maxPlayers: settings.maxPlayers,
+          allowGuests: settings.allowGuests,
+          allowLateJoin: settings.allowLateJoin,
+          showScoresImmediately: settings.showScoresImmediately,
         },
       }).unwrap();
       if (session.roomCode) {
@@ -307,140 +233,51 @@ const CreateGamePage = () => {
           params: { roomCode: session.roomCode },
         });
       }
-    } catch (e) {
-      console.error("Failed to create game", e);
+    } catch (err) {
+      console.error("Failed to create game", err);
     }
   };
 
-  const handleTemplatePick = (deckId: string) => {
-    setSelectedDeckId(deckId);
-    void startGame(deckId, DEFAULT_SETTINGS);
+  const handleSubmit = (e: React.SubmitEvent) => {
+    e.preventDefault();
+    void submit();
   };
 
-  const handleCustomSubmit = (e: React.SubmitEvent) => {
-    e.preventDefault();
-    if (!selectedDeckId) return;
-    void startGame(selectedDeckId);
-  };
+  if (!deckId) return null;
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Create Game</h1>
-      <p className={styles.authMsg}>How do you want to start?</p>
+      <h1 className={styles.title}>Customize your game</h1>
+      <p className={styles.authMsg}>
+        {loadingDeck
+          ? "Loading deck…"
+          : deck?.name
+            ? `Starting "${deck.name}". Adjust the settings, then start.`
+            : "Adjust the settings, then start."}
+      </p>
 
-      <ModeTabs mode={mode} onChange={setMode} />
-
-      {mode === "template" && (
+      <form className={styles.form} onSubmit={handleSubmit}>
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            Pick a template — one click to play
-          </h2>
-          {createError && (
-            <p className={styles.errorMsg} role='alert'>
-              {extractErrorMessage(createError, "Failed to create game.")}
-            </p>
-          )}
-          {loadingPublic ? (
-            <p className={styles.authMsg}>Loading templates…</p>
-          ) : (
-            <DeckGrid
-              decks={systemDecks}
-              selectedDeckId={selectedDeckId}
-              onSelect={handleTemplatePick}
-              emptyMessage='No templates available yet.'
-            />
-          )}
-          {creating && <p className={styles.authMsg}>Creating game…</p>}
-          <p className={styles.helperText}>
-            Want different settings?{" "}
-            <button
-              type='button'
-              className={styles.linkBtn}
-              onClick={() => {
-                setMode("custom");
-              }}>
-              Switch to Custom
-            </button>
-            .
+          <h2 className={styles.sectionTitle}>Settings</h2>
+          <SettingsForm settings={settings} onChange={setSettings} />
+        </section>
+
+        {createError && (
+          <p className={styles.errorMsg} role='alert'>
+            {extractErrorMessage(createError, "Failed to create game.")}
           </p>
-        </section>
-      )}
+        )}
 
-      {mode === "custom" && (
-        <form className={styles.form} onSubmit={handleCustomSubmit}>
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Choose Your Deck</h2>
-            {loadingMine ? (
-              <p className={styles.authMsg}>Loading your decks…</p>
-            ) : myDecks.length === 0 ? (
-              <div className={styles.emptyDecks}>
-                <p className={styles.authMsg}>
-                  You haven&apos;t created any decks yet.
-                </p>
-                <Link to='/decks' viewTransition>
-                  <Btn type='button'>+ Create Your First Deck</Btn>
-                </Link>
-              </div>
-            ) : (
-              <>
-                <DeckGrid
-                  decks={myDecks}
-                  selectedDeckId={selectedDeckId}
-                  onSelect={setSelectedDeckId}
-                  emptyMessage='No decks yet.'
-                />
-                <Link to='/decks' className={styles.helperText} viewTransition>
-                  + Create a new deck
-                </Link>
-              </>
-            )}
-          </section>
+        <Btn
+          type='submit'
+          className={styles.createBtn}
+          disabled={creating}>
+          {creating ? "Creating…" : "Start Game"}
+        </Btn>
+      </form>
 
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>Settings</h2>
-            <SettingsForm settings={settings} onChange={setSettings} />
-          </section>
-
-          {createError && (
-            <p className={styles.errorMsg} role='alert'>
-              {extractErrorMessage(createError, "Failed to create game.")}
-            </p>
-          )}
-
-          <Btn
-            type='submit'
-            className={styles.createBtn}
-            disabled={!selectedDeckId || creating}>
-            {creating ? "Creating…" : "Create Game"}
-          </Btn>
-        </form>
-      )}
-
-      {mode === "auto" && (
-        <section className={styles.section}>
-          <div className={styles.comingSoon}>
-            <span className={styles.comingIcon} aria-hidden='true'>
-              ~
-            </span>
-            <h2 className={styles.sectionTitle}>Auto-Generate — Coming Soon</h2>
-            <p className={styles.authMsg}>
-              Soon you&apos;ll be able to type a topic, paste a webpage, or
-              upload a PDF, and we&apos;ll build a question deck for you
-              automatically.
-            </p>
-            <Btn
-              type='button'
-              onClick={() => {
-                setMode("template");
-              }}>
-              Use a Template Instead
-            </Btn>
-          </div>
-        </section>
-      )}
-
-      <Link to='/' className={styles.backLink} viewTransition>
-        Back to home
+      <Link to='/decks' className={styles.backLink} viewTransition>
+        Back to My Decks
       </Link>
     </div>
   );

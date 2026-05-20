@@ -1,6 +1,6 @@
 /**
  * Authored collection of elements (slides + questions) that can be played as a
- * Showcase. Elements are embedded directly in the document for atomic reads /
+ * InteractiveSession. Elements are embedded directly in the document for atomic reads /
  * writes; ordering is the natural list order.
  */
 package cephadex.brainflex.model;
@@ -63,11 +63,11 @@ public class Deck {
     // Content — order matters; the runtime walks elements in this order.
     private List<DeckElement> elements = new ArrayList<>();
 
-    // Author-suggested showcase defaults — copied into Showcase.settings at create
+    // Author-suggested interactiveSession defaults — copied into InteractiveSession.settings at create
     // time.
-    private ShowcaseSettings defaultSettings = new ShowcaseSettings();
+    private InteractiveSessionSettings defaultSettings = new InteractiveSessionSettings();
 
-    // Hint for the create-showcase UI; not an enforced limit.
+    // Hint for the create-interactiveSession UI; not an enforced limit.
     private Integer estimatedDurationMinutes;
 
     // Lineage

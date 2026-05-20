@@ -5,7 +5,7 @@
  * still complete cleanly.
  *
  * Returns a `Result(correct, points)` per element + payload combo. Speed
- * bonuses are layered on top by ShowcaseService — this class only computes
+ * bonuses are layered on top by InteractiveSessionService — this class only computes
  * the base score implied by the question's `pointValue`.
  */
 package cephadex.brainflex.service;

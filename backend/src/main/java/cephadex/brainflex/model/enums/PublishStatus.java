@@ -5,7 +5,7 @@
  * - PUBLISHED: author has shipped it. Combined with {@code DeckVisibility=PUBLIC}
  *   this is what shows up in /api/decks/explore.
  * - ARCHIVED: hidden from Explore and the owner's primary deck list but not
- *   destroyed — past Showcases, ratings, and play history still resolve.
+ *   destroyed — past InteractiveSessions, ratings, and play history still resolve.
  */
 package cephadex.brainflex.model.enums;
 

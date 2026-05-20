@@ -1,13 +1,13 @@
 // Common radio input component used in form option groups throughout the app
 import React, { useId } from "react";
+import type { InputBaseProps } from "../InputBaseProps";
 import shared from "../Input.module.css";
 import styles from "./Radio.module.css";
 
-interface RadioProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+interface RadioProps
+  extends InputBaseProps,
+    React.InputHTMLAttributes<HTMLInputElement> {
   labelPosition?: "labelBefore" | "labelAfter";
-  errorMessage?: string;
-  infoMessage?: string;
 }
 
 const Radio = ({

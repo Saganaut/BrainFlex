@@ -1,5 +1,5 @@
 /**
- * Persistent store for player Q&A and Best-Answer-mode submissions during a showcase.
+ * Persistent store for player Q&A and Best-Answer-mode submissions during a interactiveSession.
  */
 package cephadex.brainflex.repository;
 
@@ -11,7 +11,7 @@ import cephadex.brainflex.model.AudienceSubmission;
 
 public interface AudienceSubmissionRepository extends MongoRepository<AudienceSubmission, String> {
 
-    List<AudienceSubmission> findByShowcaseIdAndElementId(String showcaseId, String elementId);
+    List<AudienceSubmission> findByInteractiveSessionIdAndElementId(String interactiveSessionId, String elementId);
 
-    void deleteByShowcaseId(String showcaseId);
+    void deleteByInteractiveSessionId(String interactiveSessionId);
 }

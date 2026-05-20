@@ -1,9 +1,9 @@
 /**
- * Curates the preset avatar pool players choose from in the showcase lobby.
+ * Curates the preset avatar pool players choose from in the interactiveSession lobby.
  *
  * Chunk 13 — Kahoot-style anonymous avatars layered on top of the player's
  * real {@code pictureUrl}. The lobby picker reads {@link #list()}; the
- * showcase service validates incoming {@code avatarKey} values against
+ * interactiveSession service validates incoming {@code avatarKey} values against
  * {@link #has(String)} when a player commits a selection so a client can't
  * post an arbitrary key.
  *

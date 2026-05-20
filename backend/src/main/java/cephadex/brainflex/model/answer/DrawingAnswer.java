@@ -6,7 +6,7 @@
  * Storage strategy is inline on {@link cephadex.brainflex.model.PlayerAnswer}.
  * The size of one submission is bounded by the question's
  * {@code maxStrokesPerPlayer} + {@code maxPointsPerStroke} caps and an
- * additional per-answer byte cap enforced inside ShowcaseService — submissions
+ * additional per-answer byte cap enforced inside InteractiveSessionService — submissions
  * past the byte cap are rejected outright so a single document can't blow
  * past the Mongo 16 MB limit.
  */

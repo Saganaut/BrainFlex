@@ -7,7 +7,7 @@
  * Words sort by count descending so the tallest entries always land first.
  *
  * The cloud is purely a function of `counts`; the live broadcast on
- * /topic/showcase/{roomCode}/wordCloud drives re-renders during SUBMIT and
+ * /topic/interactive-session/{roomCode}/wordCloud drives re-renders during SUBMIT and
  * one final time on REVEAL.
  */
 import styles from "./WordCloud.module.css";

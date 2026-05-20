@@ -1,5 +1,5 @@
 /**
- * Broadcast on /topic/showcase/{roomCode}/roundResult when a round ends.
+ * Broadcast on /topic/interactive-session/{roomCode}/roundResult when a round ends.
  * Carries the un-redacted element (so clients can render the correct answer)
  * plus per-player outcomes. For slide rounds we still send this so clients
  * have a uniform round-completion signal — but `playerResults` is empty and

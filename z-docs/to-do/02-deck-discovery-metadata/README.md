@@ -27,18 +27,18 @@ License           ALL_RIGHTS_RESERVED, CC_BY, CC_BY_SA, CC_BY_NC, CC0
   - `String ageRange` — e.g. `"6-9"`, `"10-12"`, `"13+"`, `"adult"`; nullable
   - `License license` — default `ALL_RIGHTS_RESERVED`
   - `String originalAuthorUserId` — for cloned/forked decks (distinct from `parentDeckId` which is the lineage pointer; this is who first wrote it)
-  - `int playCount` — denormalized; incremented when a Showcase using this deck transitions to FINISHED
+  - `int playCount` — denormalized; incremented when a InteractiveSession using this deck transitions to FINISHED
   - `int viewCount` — denormalized; incremented when `GET /api/decks/{id}` is called by a non-owner
   - `int favoriteCount` — denormalized; updated by chunk 03
   - `double averageRating` — denormalized; updated by chunk 04
   - `int ratingCount` — denormalized; updated by chunk 04
-  - `LocalDateTime lastPlayedAt` — denormalized; updated when a Showcase finishes
+  - `LocalDateTime lastPlayedAt` — denormalized; updated when a InteractiveSession finishes
 
 ## Backend changes
 
 - `DeckService.publish(deckId, userId)` — checks ownership/collaborator role, sets `publishStatus = PUBLISHED` + `publishedAt = now`, validates the deck has at least one scored element (or just allow it — your call)
 - `DeckController` — add `POST /api/decks/{id}/publish`, `POST /api/decks/{id}/unpublish` (sets back to DRAFT), `POST /api/decks/{id}/archive`
-- `ShowcaseService.finish()` — on game end, increment `Deck.playCount` and set `Deck.lastPlayedAt`. Use `$inc` so it's race-free
+- `InteractiveSessionService.finish()` — on game end, increment `Deck.playCount` and set `Deck.lastPlayedAt`. Use `$inc` so it's race-free
 - `DeckController.findById` — increment `viewCount` for non-owner reads only
 - `DeckRepository` — add an index `(publishStatus, visibility, averageRating DESC, playCount DESC)` for Explore ordering
 - New endpoint: `GET /api/decks/explore` — paginated, filterable by `?tagId=`, `?language=`, `?difficulty=`, sortable by `?sort=trending|new|top-rated|most-played`. Only returns `publishStatus = PUBLISHED` + `visibility = PUBLIC` decks.
@@ -60,7 +60,7 @@ License           ALL_RIGHTS_RESERVED, CC_BY, CC_BY_SA, CC_BY_NC, CC0
 - [x] New enums + field additions in `Deck`
 - [x] Migration script for existing decks
 - [x] `publish` / `unpublish` / `archive` endpoints + tests
-- [x] `playCount` increment on Showcase finish (+ test)
+- [x] `playCount` increment on InteractiveSession finish (+ test)
 - [x] `viewCount` increment on non-owner read (+ test)
 - [x] `/api/decks/explore` endpoint + tests
 - [x] Deck card UI updates (rating, plays, language, difficulty)

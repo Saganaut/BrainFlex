@@ -32,14 +32,14 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     updateTeam: build.mutation<UpdateTeamApiResponse, UpdateTeamApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/teams/${queryArg.teamId}`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/teams/${queryArg.teamId}`,
         method: "PUT",
         body: queryArg.teamCrudRequest,
       }),
     }),
     deleteTeam: build.mutation<DeleteTeamApiResponse, DeleteTeamApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/teams/${queryArg.teamId}`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/teams/${queryArg.teamId}`,
         method: "DELETE",
       }),
     }),
@@ -48,14 +48,14 @@ const injectedRtkApi = api.injectEndpoints({
       MovePlayerToTeamApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/players/${queryArg.userId}/team`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/players/${queryArg.userId}/team`,
         method: "PUT",
         body: queryArg.teamMoveRequest,
       }),
     }),
     moderateChat: build.mutation<ModerateChatApiResponse, ModerateChatApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/chat/${queryArg.messageId}/moderate`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/chat/${queryArg.messageId}/moderate`,
         method: "PUT",
       }),
     }),
@@ -237,26 +237,26 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.createTagRequest,
       }),
     }),
-    createShowcase: build.mutation<
-      CreateShowcaseApiResponse,
-      CreateShowcaseApiArg
+    createInteractiveSession: build.mutation<
+      CreateInteractiveSessionApiResponse,
+      CreateInteractiveSessionApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/showcases`,
+        url: `/api/interactive-sessions`,
         method: "POST",
-        body: queryArg.createShowcaseRequest,
+        body: queryArg.createInteractiveSessionRequest,
       }),
     }),
     createTeam: build.mutation<CreateTeamApiResponse, CreateTeamApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/teams`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/teams`,
         method: "POST",
         body: queryArg.teamCrudRequest,
       }),
     }),
     sendReaction: build.mutation<SendReactionApiResponse, SendReactionApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/reactions`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/reactions`,
         method: "POST",
         body: queryArg.reactionSendRequest,
       }),
@@ -266,14 +266,14 @@ const injectedRtkApi = api.injectEndpoints({
       JoinByRoomCodeApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/join`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/join`,
         method: "POST",
-        body: queryArg.joinShowcaseRequest,
+        body: queryArg.joinInteractiveSessionRequest,
       }),
     }),
     listChat: build.query<ListChatApiResponse, ListChatApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/chat`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/chat`,
         params: {
           page: queryArg.page,
           size: queryArg.size,
@@ -282,7 +282,7 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     sendChat: build.mutation<SendChatApiResponse, SendChatApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/chat`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/chat`,
         method: "POST",
         body: queryArg.chatSendRequest,
       }),
@@ -542,26 +542,26 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    getShowcase: build.query<GetShowcaseApiResponse, GetShowcaseApiArg>({
-      query: (queryArg) => ({ url: `/api/showcases/${queryArg.roomCode}` }),
+    getInteractiveSession: build.query<GetInteractiveSessionApiResponse, GetInteractiveSessionApiArg>({
+      query: (queryArg) => ({ url: `/api/interactive-sessions/${queryArg.roomCode}` }),
     }),
-    cancelShowcase: build.mutation<
-      CancelShowcaseApiResponse,
-      CancelShowcaseApiArg
+    cancelInteractiveSession: build.mutation<
+      CancelInteractiveSessionApiResponse,
+      CancelInteractiveSessionApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}`,
         method: "DELETE",
       }),
     }),
     getReview: build.query<GetReviewApiResponse, GetReviewApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/review`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/review`,
       }),
     }),
     getResults: build.query<GetResultsApiResponse, GetResultsApiArg>({
       query: (queryArg) => ({
-        url: `/api/showcases/${queryArg.roomCode}/results`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/results`,
       }),
     }),
     getByInviteToken: build.query<
@@ -569,7 +569,7 @@ const injectedRtkApi = api.injectEndpoints({
       GetByInviteTokenApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/showcases/join/${queryArg.inviteToken}`,
+        url: `/api/interactive-sessions/join/${queryArg.inviteToken}`,
       }),
     }),
     listMyOrgs: build.query<ListMyOrgsApiResponse, ListMyOrgsApiArg>({
@@ -686,25 +686,25 @@ export type DeleteTagApiResponse = unknown;
 export type DeleteTagApiArg = {
   id: string;
 };
-export type UpdateTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type UpdateTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
 export type UpdateTeamApiArg = {
   roomCode: string;
   teamId: string;
   teamCrudRequest: TeamCrudRequest;
 };
-export type DeleteTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type DeleteTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
 export type DeleteTeamApiArg = {
   roomCode: string;
   teamId: string;
 };
-export type MovePlayerToTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type MovePlayerToTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
 export type MovePlayerToTeamApiArg = {
   roomCode: string;
   userId: string;
   teamMoveRequest: TeamMoveRequest;
 };
 export type ModerateChatApiResponse =
-  /** status 200 OK */ ShowcaseChatMessageDto;
+  /** status 200 OK */ InteractiveSessionChatMessageDto;
 export type ModerateChatApiArg = {
   roomCode: string;
   messageId: string;
@@ -839,11 +839,11 @@ export type CreateTagApiResponse = /** status 200 OK */ TagResponse;
 export type CreateTagApiArg = {
   createTagRequest: CreateTagRequest;
 };
-export type CreateShowcaseApiResponse = /** status 200 OK */ ShowcaseDto;
-export type CreateShowcaseApiArg = {
-  createShowcaseRequest: CreateShowcaseRequest;
+export type CreateInteractiveSessionApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type CreateInteractiveSessionApiArg = {
+  createInteractiveSessionRequest: CreateInteractiveSessionRequest;
 };
-export type CreateTeamApiResponse = /** status 200 OK */ ShowcaseDto;
+export type CreateTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
 export type CreateTeamApiArg = {
   roomCode: string;
   teamCrudRequest: TeamCrudRequest;
@@ -853,18 +853,18 @@ export type SendReactionApiArg = {
   roomCode: string;
   reactionSendRequest: ReactionSendRequest;
 };
-export type JoinByRoomCodeApiResponse = /** status 200 OK */ ShowcaseDto;
+export type JoinByRoomCodeApiResponse = /** status 200 OK */ InteractiveSessionDto;
 export type JoinByRoomCodeApiArg = {
   roomCode: string;
-  joinShowcaseRequest: JoinShowcaseRequest;
+  joinInteractiveSessionRequest: JoinInteractiveSessionRequest;
 };
-export type ListChatApiResponse = /** status 200 OK */ ShowcaseChatMessageDto[];
+export type ListChatApiResponse = /** status 200 OK */ InteractiveSessionChatMessageDto[];
 export type ListChatApiArg = {
   roomCode: string;
   page?: number;
   size?: number;
 };
-export type SendChatApiResponse = /** status 200 OK */ ShowcaseChatMessageDto;
+export type SendChatApiResponse = /** status 200 OK */ InteractiveSessionChatMessageDto;
 export type SendChatApiArg = {
   roomCode: string;
   chatSendRequest: ChatSendRequest;
@@ -1034,23 +1034,23 @@ export type CheckUsernameApiResponse = /** status 200 OK */ {
 export type CheckUsernameApiArg = {
   username: string;
 };
-export type GetShowcaseApiResponse = /** status 200 OK */ ShowcaseDto;
-export type GetShowcaseApiArg = {
+export type GetInteractiveSessionApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type GetInteractiveSessionApiArg = {
   roomCode: string;
 };
-export type CancelShowcaseApiResponse = unknown;
-export type CancelShowcaseApiArg = {
+export type CancelInteractiveSessionApiResponse = unknown;
+export type CancelInteractiveSessionApiArg = {
   roomCode: string;
 };
-export type GetReviewApiResponse = /** status 200 OK */ ShowcaseReviewDto;
+export type GetReviewApiResponse = /** status 200 OK */ InteractiveSessionReviewDto;
 export type GetReviewApiArg = {
   roomCode: string;
 };
-export type GetResultsApiResponse = /** status 200 OK */ ShowcaseResult;
+export type GetResultsApiResponse = /** status 200 OK */ InteractiveSessionResult;
 export type GetResultsApiArg = {
   roomCode: string;
 };
-export type GetByInviteTokenApiResponse = /** status 200 OK */ ShowcaseDto;
+export type GetByInviteTokenApiResponse = /** status 200 OK */ InteractiveSessionDto;
 export type GetByInviteTokenApiArg = {
   inviteToken: string;
 };
@@ -1644,12 +1644,24 @@ export type Slide = {
     videoUrl?: string;
     audioUrl?: string;
     mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    resultsDisplayType?: "DEFAULT" | "HISTOGRAM" | "PIE_CHART";
+    // Chunk 21 — manually extended to BAR_HORIZONTAL/BAR_VERTICAL/WORD_CLOUD.
+    // HISTOGRAM is a deprecated read-only alias for BAR_VERTICAL (legacy data).
+    // Re-verify after `npx @rtk-query/codegen-openapi openapi-config.cts`.
+    resultsDisplayType?:
+      | "DEFAULT"
+      | "BAR_HORIZONTAL"
+      | "BAR_VERTICAL"
+      | "WORD_CLOUD"
+      | "PIE_CHART"
+      | "HISTOGRAM";
     multipleSelectionsEnabled?: boolean;
     selectionsPerParticipant?: number;
     showResultsAsPercentage?: boolean;
     joinType?: "INSTRUCTIONS_BAR" | "QR_CODE";
     showJoinInformation?: boolean;
+    // Chunk 21 — manual: replaces joinType as the QR toggle. Re-verify after
+    // `npx @rtk-query/codegen-openapi openapi-config.cts`.
+    showQrCode?: boolean;
     showResponses?: "INSTANT" | "ON_CLICK" | "PRIVATE";
     heading?: string;
     participantInformation?: {
@@ -1754,7 +1766,7 @@ export type WordCloudQuestion = {
     reactionsEnabled?: boolean;
     version?: number;
   };
-export type ShowcaseSettings = {
+export type InteractiveSessionSettings = {
   maxPlayers?: number;
   totalRounds?: number;
   timePerQuestion?: number;
@@ -1778,7 +1790,7 @@ export type ShowcaseSettings = {
   requireFullName?: boolean;
   spectatorsAllowed?: boolean;
 };
-export type ShowcasePlayerDto = {
+export type InteractiveSessionPlayerDto = {
   userId?: string;
   userName?: string;
   pictureUrl?: string;
@@ -1804,7 +1816,7 @@ export type Team = {
   score?: number;
   memberCount?: number;
 };
-export type ShowcaseDto = {
+export type InteractiveSessionDto = {
   id?: string;
   roomCode?: string;
   inviteToken?: string;
@@ -1832,8 +1844,8 @@ export type ShowcaseDto = {
     | TextQuestion
     | WordCloudQuestion
   )[];
-  settings?: ShowcaseSettings;
-  players?: ShowcasePlayerDto[];
+  settings?: InteractiveSessionSettings;
+  players?: InteractiveSessionPlayerDto[];
   teamMode?: boolean;
   autoBalanceTeams?: boolean;
   teams?: Team[];
@@ -1853,7 +1865,7 @@ export type TeamCrudRequest = {
 export type TeamMoveRequest = {
   teamId: string;
 };
-export type ShowcaseChatMessageDto = {
+export type InteractiveSessionChatMessageDto = {
   id?: string;
   authorUserId?: string;
   authorName?: string;
@@ -1895,7 +1907,7 @@ export type DeckDto = {
   cover?: Image;
   background?: Image;
   themeId?: string;
-  defaultSettings?: ShowcaseSettings;
+  defaultSettings?: InteractiveSessionSettings;
   estimatedDurationMinutes?: number;
   elementCount?: number;
   elements?: (
@@ -2070,7 +2082,7 @@ export type CreateTagRequest = {
   iconUrl?: string;
   curated?: boolean;
 };
-export type CreateShowcaseRequest = {
+export type CreateInteractiveSessionRequest = {
   deckId: string;
   gameMode?: "SIMULTANEOUS" | "TURN_BASED";
   totalRounds?: number;
@@ -2098,7 +2110,7 @@ export type CreateShowcaseRequest = {
 };
 export type Reaction = {
   id?: string;
-  showcaseId?: string;
+  interactiveSessionId?: string;
   elementId?: string;
   userId?: string;
   userName?: string;
@@ -2110,7 +2122,7 @@ export type Reaction = {
 export type ReactionSendRequest = {
   emoji: string;
 };
-export type JoinShowcaseRequest = {
+export type JoinInteractiveSessionRequest = {
   teamId?: string;
   avatarKey?: string;
   colorTag?: string;
@@ -2348,17 +2360,17 @@ export type RoundReview = {
   timedOutCount?: number;
   playerAnswers?: PlayerRoundDetail[];
 };
-export type ShowcaseReviewDto = {
-  showcaseId?: string;
+export type InteractiveSessionReviewDto = {
+  interactiveSessionId?: string;
   roomCode?: string;
   endedAt?: string;
   scoringEnabled?: boolean;
   placements?: PlayerPlacement[];
   rounds?: RoundReview[];
 };
-export type ShowcaseResult = {
+export type InteractiveSessionResult = {
   id?: string;
-  showcaseId?: string;
+  interactiveSessionId?: string;
   placements?: PlayerPlacement[];
   endedAt?: string;
 };
@@ -2439,7 +2451,7 @@ export const {
   useListTagsQuery,
   useLazyListTagsQuery,
   useCreateTagMutation,
-  useCreateShowcaseMutation,
+  useCreateInteractiveSessionMutation,
   useCreateTeamMutation,
   useSendReactionMutation,
   useJoinByRoomCodeMutation,
@@ -2485,9 +2497,9 @@ export const {
   useLazyGetLeaderboardQuery,
   useCheckUsernameQuery,
   useLazyCheckUsernameQuery,
-  useGetShowcaseQuery,
-  useLazyGetShowcaseQuery,
-  useCancelShowcaseMutation,
+  useGetInteractiveSessionQuery,
+  useLazyGetInteractiveSessionQuery,
+  useCancelInteractiveSessionMutation,
   useGetReviewQuery,
   useLazyGetReviewQuery,
   useGetResultsQuery,

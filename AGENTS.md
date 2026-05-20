@@ -55,18 +55,18 @@ All project documentation other than the top-level `README.md` lives in **`z-doc
 
 Top-level category folders (subject to growth):
 
-| Folder                        | Purpose                                                                |
-| ----------------------------- | ---------------------------------------------------------------------- |
-| `z-docs/rules/`               | Coding conventions per layer — start at [`rules/README.md`](z-docs/rules/README.md) |
-| `z-docs/infrastructure/`      | Docker, MongoDB, Redis, Garage/S3, deployment notes                    |
-| `z-docs/features/`            | Per-feature design docs (auth, games, membership, …)                   |
-| `z-docs/to-do/`               | Mentimeter/Kahoot parity roadmap (20 numbered chunks) + general TODO list |
-| `z-docs/notes/`               | Working notes and reference snippets                                   |
-| `z-docs/decisions/`           | Architecture Decision Records (ADRs)                                   |
-| `z-docs/runbooks/`            | Operational procedures (seeding, secret rotation, recovery)            |
-| `z-docs/skills/`              | Claude Code skills for this repo                                       |
-| `z-docs/archive/`             | Deprecated / superseded docs kept for history                          |
-| `z-docs/glossary.md`          | Domain terms (deck, element, showcase, organization, theme, slide, MCQ, …) |
+| Folder                   | Purpose                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------- |
+| `z-docs/rules/`          | Coding conventions per layer — start at [`rules/README.md`](z-docs/rules/README.md)   |
+| `z-docs/infrastructure/` | Docker, MongoDB, Redis, Garage/S3, deployment notes                                   |
+| `z-docs/features/`       | Per-feature design docs (auth, games, membership, …)                                  |
+| `z-docs/to-do/`          | Mentimeter/Kahoot parity roadmap (20 numbered chunks) + general TODO list             |
+| `z-docs/notes/`          | Working notes and reference snippets                                                  |
+| `z-docs/decisions/`      | Architecture Decision Records (ADRs)                                                  |
+| `z-docs/runbooks/`       | Operational procedures (seeding, secret rotation, recovery)                           |
+| `z-docs/skills/`         | Claude Code skills for this repo                                                      |
+| `z-docs/archive/`        | Deprecated / superseded docs kept for history                                         |
+| `z-docs/glossary.md`     | Domain terms (deck, element, interactive session, organization, theme, slide, MCQ, …) |
 
 **Reachability is enforced.** `tools/doc-lint.js` walks the link graph from the root `README.md` and fails on any `.md` file that isn't reachable via a chain of standard markdown links. Always link new docs from the appropriate folder's `README.md` so they stay visible.
 
@@ -188,9 +188,9 @@ App-level fullscreen state lives in `LayoutProvider` (`frontend/src/context/Layo
 
 **Deck editor (`/decks/$deckId/view`):**
 
-The deck-authoring dashboard lives under `frontend/src/components/CreateDashboard/`:
+The deck-authoring dashboard lives under `frontend/src/components/DeckEditor/`:
 
-- `CreateDashboard.tsx` — three-column layout (slide rail | active slide | inspector) and the editor navbar with an inline-editable deck title that commits via `updateDeck` on blur/Enter.
+- `DeckEditor.tsx` — three-column layout (slide rail | active slide | inspector) and the editor navbar with an inline-editable deck title that commits via `updateDeck` on blur/Enter.
 - `LeftSidebar.tsx` — the slide rail. Pulls deck elements live via RTK Query, supports drag-to-reorder (optimistic + `moveElement` mutation), and the "New Slide" button opens a modal containing `NewElementPicker` for choosing which kind of element to add.
 - `NewElementPicker.tsx` — modal body that lists the 10 element kinds using the existing `SlideTypeGraphics` icons. Click → close modal → add element. Modal uses the shared `useModal` context (`frontend/src/context/useModal.tsx`).
 - `SlideThumbnail.tsx` — thumbnail tile with right-click dropdown (delete for now). Carries an HTML `id={elementId}` so the create flow can `getElementById(...).scrollIntoView(...)`; also self-scrolls into view when it becomes the active slide.
@@ -286,12 +286,12 @@ All endpoints are prefixed `/api`.
 
 ### Organization Endpoints (`/api/organizations`) — requires `ROLE_USER`
 
-| Method | Path                              | Description                                                |
-| ------ | --------------------------------- | ---------------------------------------------------------- |
-| GET    | `/api/organizations/mine`         | All organizations the caller belongs to (may be empty)     |
-| POST   | `/api/organizations`              | Create org and add the caller as owner + member            |
-| POST   | `/api/organizations/join`         | Join an org by ID; body: `{ organizationId }` (idempotent) |
-| DELETE | `/api/organizations/{id}/leave`   | Remove the caller from one specific org                    |
+| Method | Path                            | Description                                                |
+| ------ | ------------------------------- | ---------------------------------------------------------- |
+| GET    | `/api/organizations/mine`       | All organizations the caller belongs to (may be empty)     |
+| POST   | `/api/organizations`            | Create org and add the caller as owner + member            |
+| POST   | `/api/organizations/join`       | Join an org by ID; body: `{ organizationId }` (idempotent) |
+| DELETE | `/api/organizations/{id}/leave` | Remove the caller from one specific org                    |
 
 ---
 
@@ -466,49 +466,49 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 
 ## Key Files
 
-| File                                                  | Purpose                                                           |
-| ----------------------------------------------------- | ----------------------------------------------------------------- |
-| `frontend/src/store/BrainFlexApi.ts`                  | Auto-generated RTK Query API — **do not edit**                    |
-| `frontend/src/store/store.ts`                         | Redux store config                                                |
-| `frontend/src/routes/__root.tsx`                      | Root layout with shared AuthBar                                   |
-| `frontend/src/routes/register.tsx`                    | New-user registration route                                       |
-| `frontend/src/components/Common/AuthBar.tsx`          | Login / logout / guest play UI                                    |
-| `frontend/src/components/Leaderboard/index.tsx`       | Leaderboard UI                                                    |
-| `frontend/src/components/PlayerInfo/index.tsx`        | Player info UI component                                          |
-| `frontend/src/hooks/useCurrentUser.ts`                | Custom hook for current user authentication                       |
-| `frontend/src/hooks/useTheme.ts`                      | Light/dark mode + huePrimary/hueAccent, persisted to localStorage |
-| `frontend/src/types/typeguards.ts`                    | TypeScript type guards for user types                             |
-| `frontend/src/utils/utils.ts`                         | Utility functions (e.g., camelToNormalCase)                       |
-| `frontend/src/pages/AccountPage/ThemeSection.tsx`     | Theme settings UI (presets + custom themes)                       |
-| `frontend/src/pages/AccountPage/ThemeEditor.tsx`      | Create/edit theme form with image upload                          |
-| `frontend/src/pages/AccountPage/ThemeCard.tsx`        | Single theme card with activate/edit/delete                       |
-| `frontend/src/pages/AccountPage/OrgSection.tsx`       | Organization create/join/leave UI                                 |
-| `frontend/src/pages/DesignSystemPage/ThemePicker.tsx` | Hue sliders for live design-system exploration                    |
-| `frontend/src/pages/DesignSystemPage/FormsSection.tsx` | Form-primitives showcase (incl. `RichTextInput`)                 |
-| `frontend/src/components/Common/Input/RichTextInput.tsx` | TipTap-backed input with focus toolbar + inline link editor   |
-| `frontend/src/components/CreateDashboard/CreateDashboard.tsx` | Top-level deck editor layout (navbar + 3-col canvas)      |
-| `frontend/src/components/CreateDashboard/LeftSidebar.tsx` | Slide rail: add-via-picker, drag-reorder, live deck.elements  |
-| `frontend/src/components/CreateDashboard/NewElementPicker.tsx` | Modal body with 10 element-kind tiles                    |
-| `frontend/src/components/CreateDashboard/SlideThumbnail.tsx` | Slide tile (right-click menu, scrolls into view on select) |
-| `frontend/src/components/CreateDashboard/SlideDisplay.tsx` | Routes to the right `<KindSlideContent>` by `element.kind`    |
-| `frontend/src/components/CreateDashboard/SlideContentTypes/useElementEditor.ts` | Shared deck-query + debounced commit hook       |
-| `frontend/src/components/CreateDashboard/useCreateDashboard.ts` | Hook for sidebar state: drag end, add element, build defaults |
-| `frontend/src/hooks/useDebouncedCommit.ts`            | Generic schedule / flush / cancel debouncer for server commits    |
-| `frontend/src/context/ModalProvider.tsx` / `useModal.tsx` | App-wide modal: `openModal({ title, content })` / `closeModal()` |
-| `frontend/src/context/LayoutProvider.tsx` / `useFullScreen.tsx` | App-level fullscreen state + global ESC handler + floating exit button |
-| `frontend/src/store/apiEnhancements.ts`               | `onQueryStarted` cache-sync for element/deck mutations            |
-| `frontend/src/routes/my-decks/create.tsx`             | Optimistic deck-create: UUID + cache seed + navigate              |
-| `frontend/openapi-config.cts`                         | Config for API codegen                                            |
-| `backend/.../config/SecurityConfig.java`              | Auth, CORS, public routes                                         |
-| `backend/.../config/SampleDataSeeder.java`            | Manual sample data seeder (run via `scripts/seed-sample-data.sh`) |
-| `scripts/seed-sample-data.sh`                         | Trigger manual MongoDB sample-data seed (idempotent per collection)|
-| `backend/.../dto/UserDTO.java`                        | Sealed DTO interface (GuestUser / RegisteredUser)                 |
-| `backend/.../repository/UserRepository.java`          | MongoDB queries                                                   |
-| `backend/.../controller/ThemeController.java`         | REST endpoints at `/api/themes`                                   |
-| `backend/.../controller/OrganizationController.java`  | REST endpoints at `/api/organizations`                            |
-| `compose.yaml`                                        | Docker services (MongoDB, Redis)                                  |
-| `dev.env`                                             | Local dev secrets (not committed to git — copy from `example.env`) |
-| `backend/src/test/resources/application-test.properties` | Test-profile env var overrides (test-safe values, no real secrets) |
+| File                                                                       | Purpose                                                                |
+| -------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `frontend/src/store/BrainFlexApi.ts`                                       | Auto-generated RTK Query API — **do not edit**                         |
+| `frontend/src/store/store.ts`                                              | Redux store config                                                     |
+| `frontend/src/routes/__root.tsx`                                           | Root layout with shared AuthBar                                        |
+| `frontend/src/routes/register.tsx`                                         | New-user registration route                                            |
+| `frontend/src/components/Common/AuthBar.tsx`                               | Login / logout / guest play UI                                         |
+| `frontend/src/components/Leaderboard/index.tsx`                            | Leaderboard UI                                                         |
+| `frontend/src/components/PlayerInfo/index.tsx`                             | Player info UI component                                               |
+| `frontend/src/hooks/useCurrentUser.ts`                                     | Custom hook for current user authentication                            |
+| `frontend/src/hooks/useTheme.ts`                                           | Light/dark mode + huePrimary/hueAccent, persisted to localStorage      |
+| `frontend/src/types/typeguards.ts`                                         | TypeScript type guards for user types                                  |
+| `frontend/src/utils/utils.ts`                                              | Utility functions (e.g., camelToNormalCase)                            |
+| `frontend/src/pages/AccountPage/ThemeSection.tsx`                          | Theme settings UI (presets + custom themes)                            |
+| `frontend/src/pages/AccountPage/ThemeEditor.tsx`                           | Create/edit theme form with image upload                               |
+| `frontend/src/pages/AccountPage/ThemeCard.tsx`                             | Single theme card with activate/edit/delete                            |
+| `frontend/src/pages/AccountPage/OrgSection.tsx`                            | Organization create/join/leave UI                                      |
+| `frontend/src/pages/DesignSystemPage/ThemePicker.tsx`                      | Hue sliders for live design-system exploration                         |
+| `frontend/src/pages/DesignSystemPage/FormsSection.tsx`                     | Form-primitives InteractiveSession (incl. `RichTextInput`)             |
+| `frontend/src/components/Common/Input/RichTextInput.tsx`                   | TipTap-backed input with focus toolbar + inline link editor            |
+| `frontend/src/components/DeckEditor/DeckEditor.tsx`                        | Top-level deck editor layout (navbar + 3-col canvas)                   |
+| `frontend/src/components/DeckEditor/LeftSidebar.tsx`                       | Slide rail: add-via-picker, drag-reorder, live deck.elements           |
+| `frontend/src/components/DeckEditor/NewElementPicker.tsx`                  | Modal body with 10 element-kind tiles                                  |
+| `frontend/src/components/DeckEditor/SlideThumbnail.tsx`                    | Slide tile (right-click menu, scrolls into view on select)             |
+| `frontend/src/components/DeckEditor/SlideDisplay.tsx`                      | Routes to the right `<KindSlideContent>` by `element.kind`             |
+| `frontend/src/components/DeckEditor/SlideContentTypes/useElementEditor.ts` | Shared deck-query + debounced commit hook                              |
+| `frontend/src/components/DeckEditor/useDeckEditor.ts`                      | Hook for sidebar state: drag end, add element, build defaults          |
+| `frontend/src/hooks/useDebouncedCommit.ts`                                 | Generic schedule / flush / cancel debouncer for server commits         |
+| `frontend/src/context/ModalProvider.tsx` / `useModal.tsx`                  | App-wide modal: `openModal({ title, content })` / `closeModal()`       |
+| `frontend/src/context/LayoutProvider.tsx` / `useFullScreen.tsx`            | App-level fullscreen state + global ESC handler + floating exit button |
+| `frontend/src/store/apiEnhancements.ts`                                    | `onQueryStarted` cache-sync for element/deck mutations                 |
+| `frontend/src/routes/my-decks/create.tsx`                                  | Optimistic deck-create: UUID + cache seed + navigate                   |
+| `frontend/openapi-config.cts`                                              | Config for API codegen                                                 |
+| `backend/.../config/SecurityConfig.java`                                   | Auth, CORS, public routes                                              |
+| `backend/.../config/SampleDataSeeder.java`                                 | Manual sample data seeder (run via `scripts/seed-sample-data.sh`)      |
+| `scripts/seed-sample-data.sh`                                              | Trigger manual MongoDB sample-data seed (idempotent per collection)    |
+| `backend/.../dto/UserDTO.java`                                             | Sealed DTO interface (GuestUser / RegisteredUser)                      |
+| `backend/.../repository/UserRepository.java`                               | MongoDB queries                                                        |
+| `backend/.../controller/ThemeController.java`                              | REST endpoints at `/api/themes`                                        |
+| `backend/.../controller/OrganizationController.java`                       | REST endpoints at `/api/organizations`                                 |
+| `compose.yaml`                                                             | Docker services (MongoDB, Redis)                                       |
+| `dev.env`                                                                  | Local dev secrets (not committed to git — copy from `example.env`)     |
+| `backend/src/test/resources/application-test.properties`                   | Test-profile env var overrides (test-safe values, no real secrets)     |
 
 ---
 
@@ -520,7 +520,7 @@ Co-locate test files with the component they test (e.g., `Btn.test.tsx` next to 
 - WebSocket support is included as a dependency but no WebSocket endpoints are implemented yet.
 - There is no `.env` file in the repo. For local development, copy `example.env` to `dev.env` and fill in real credentials. `DotenvEnvironmentPostProcessor` loads `dev.env` (or `.env`) at runtime but silently skips if neither exists — tests do not rely on it at all.
 - Backend tests require Docker to be running (`docker compose up -d`) because `@SpringBootTest` controller tests connect to the real local MongoDB and Redis.
-- **MCQ multi-correct**: `McqQuestion.correctOptionIds` is a `List<String>` (any non-empty subset of `options[].id` counts as correct). Older code/data may have used a single `correctOptionId`; the field was renamed when multi-correct landed. MCQs with an empty `correctOptionIds` list are author-allowed but excluded from scored game modes — the editor surfaces a warning ("Not setting a correct answer means this slide is not scoreable in a game showcase"). MCQ options can also carry images (`McqOption.imageUrl` / `galleryImageId`), which replaces the retired `ImageChoiceQuestion` kind.
+- **MCQ multi-correct**: `McqQuestion.correctOptionIds` is a `List<String>` (any non-empty subset of `options[].id` counts as correct). Older code/data may have used a single `correctOptionId`; the field was renamed when multi-correct landed. MCQs with an empty `correctOptionIds` list are author-allowed but excluded from scored game modes — the editor surfaces a warning ("Not setting a correct answer means this slide is not scoreable in a game interactive session"). MCQ options can also carry images (`McqOption.imageUrl` / `galleryImageId`), which replaces the retired `ImageChoiceQuestion` kind.
 - **`BrainFlexApi.ts` hand-edits**: avoid them. A one-off hand-edit was needed when MCQ became multi-correct (the codegen file lagged the backend rename until the user could run `npm run generate-api`). The field carries a comment explaining the reason. After any codegen run, re-verify `McqQuestion.correctOptionIds?: string[]`.
 - **Lorem Picsum image placeholders**: image fields without an uploaded asset render `https://picsum.photos/seed/${id}/...`. The seed is the element/option id so renders stay stable. Every editor with image fields also has a raw-URL input so authors can paste a hosted URL. Grep for `placeholderImageUrl` to find every site to migrate when the media picker ships.
-- **Element-payload primitives**: every backend question/slide record uses primitive `int`/`double`/`boolean` for shared chrome (`displaySeconds`, `pointValue`, `bestAnswerMode`, `bestAnswerBonus`, `multipleCorrect`, `caseSensitive`, etc.). Jackson can't deserialize `null` into a primitive, so every `addElement` payload from the frontend must include defaults for these. `useCreateDashboard.ts:buildNewElement` already does this per kind; copy the same pattern for any new element kind or any payload-construction site.
+- **Element-payload primitives**: every backend question/slide record uses primitive `int`/`double`/`boolean` for shared chrome (`displaySeconds`, `pointValue`, `bestAnswerMode`, `bestAnswerBonus`, `multipleCorrect`, `caseSensitive`, etc.). Jackson can't deserialize `null` into a primitive, so every `addElement` payload from the frontend must include defaults for these. `useDeckEditor.ts:buildNewElement` already does this per kind; copy the same pattern for any new element kind or any payload-construction site.

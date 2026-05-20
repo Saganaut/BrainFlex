@@ -15,7 +15,7 @@
  * limit but is no longer the source of truth for scoring eligibility.
  *
  * `shuffleOptions` is a per-player presentation flag honoured by
- * ShowcaseService.startRound — when set, each player sees a different (but
+ * InteractiveSessionService.startRound — when set, each player sees a different (but
  * deterministic-on-reconnect) ordering of `options[]`.
  */
 package cephadex.brainflex.model.element;

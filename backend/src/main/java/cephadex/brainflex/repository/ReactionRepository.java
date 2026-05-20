@@ -1,5 +1,5 @@
 /**
- * Persistent store for audience reactions sent during a showcase. Live
+ * Persistent store for audience reactions sent during a interactiveSession. Live
  * rendering reads aggregate counts from Redis; this collection backs replays
  * and analytics.
  */
@@ -13,9 +13,9 @@ import cephadex.brainflex.model.Reaction;
 
 public interface ReactionRepository extends MongoRepository<Reaction, String> {
 
-    Page<Reaction> findAllByShowcaseIdOrderBySentAtDesc(String showcaseId, Pageable pageable);
+    Page<Reaction> findAllByInteractiveSessionIdOrderBySentAtDesc(String interactiveSessionId, Pageable pageable);
 
-    long countByShowcaseIdAndElementId(String showcaseId, String elementId);
+    long countByInteractiveSessionIdAndElementId(String interactiveSessionId, String elementId);
 
-    void deleteByShowcaseId(String showcaseId);
+    void deleteByInteractiveSessionId(String interactiveSessionId);
 }

@@ -1,9 +1,9 @@
-import { CreateDashboard } from "@/components/CreateDashboard/CreateDashboard";
+import { DeckEditor } from "@/components/DeckEditor/DeckEditor";
 
 const DeckViewPage = () => {
   return (
     <>
-      <CreateDashboard />
+      <DeckEditor />
     </>
   );
 };

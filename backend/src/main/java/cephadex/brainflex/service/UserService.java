@@ -130,7 +130,7 @@ public class UserService {
 
     /**
      * Applies end-of-game stat changes to a registered user.
-     * Called by ShowcaseService after each game finishes; guests are excluded
+     * Called by InteractiveSessionService after each game finishes; guests are excluded
      * because their accounts are ephemeral and not tracked on the leaderboard.
      */
     public void updateStatsAfterGame(String userId, int finalScore, boolean won) {

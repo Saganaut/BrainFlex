@@ -10,10 +10,10 @@
  */
 import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./ScoreBoard.module.css";
-import type { ShowcasePlayerDto } from "../../../store/BrainFlexApi";
+import type { InteractiveSessionPlayerDto } from "../../../store/BrainFlexApi";
 
 export interface ScoreBoardProps {
-  players: ShowcasePlayerDto[];
+  players: InteractiveSessionPlayerDto[];
   currentUserId?: string;
   // When true the host configured scores to stay hidden during play — render the
   // player list with no rank ordering and no point values.
@@ -86,7 +86,7 @@ const ScoreBoard = ({
                   onClick={() => {
                     onBootPlayer(playerId);
                   }}
-                  aria-label={`Remove ${p.userName ?? "player"} from the showcase`}>
+                  aria-label={`Remove ${p.userName ?? "player"} from the interactiveSession`}>
                   Boot
                 </Btn>
               )}

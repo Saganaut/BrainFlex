@@ -283,7 +283,7 @@ public class DeckService {
 
     /**
      * Archive removes a deck from Explore and the owner's primary list without
-     * deleting it. Past Showcases and ratings still resolve by id.
+     * deleting it. Past InteractiveSessions and ratings still resolve by id.
      */
     public Deck archive(String id, User caller) {
         Deck deck = requireOwned(id, caller);
@@ -355,7 +355,7 @@ public class DeckService {
 
     /**
      * Atomically bump {@code playCount} and stamp {@code lastPlayedAt}. Called
-     * from ShowcaseService.endGame so two showcases finishing on the same
+     * from InteractiveSessionService.endGame so two interactiveSessions finishing on the same
      * deck simultaneously don't lose a count via read-modify-write.
      */
     public void incrementPlayCount(String deckId) {

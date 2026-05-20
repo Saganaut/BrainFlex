@@ -12,7 +12,7 @@
  * The shuffler operates on the already-redacted element returned by
  * {@link ElementRedactor}: it never reads correct-answer fields and never
  * exposes per-player ordering to anyone but the target player. The base
- * topic broadcast ({@code /topic/showcase/{roomCode}/round}) keeps the
+ * topic broadcast ({@code /topic/interactive-session/{roomCode}/round}) keeps the
  * authoring order so the host/projector view stays canonical.
  *
  * Kinds without an order-sensitive presentation list (Slide, TextQuestion,

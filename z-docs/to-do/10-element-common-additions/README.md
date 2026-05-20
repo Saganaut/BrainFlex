@@ -1,6 +1,6 @@
 # 10 — Common element additions
 
-**Status:** Per-kind backend additions + scorer landed (2026-05-19). Cross-cutting provenance / tagIds / version / reactionsEnabled / mediaCaption / altText fields landed across every DeckElement permits record (10b, 2026-05-19). Editor inspector controls (per-kind sections + cross-cutting Common/Tags sections + provenance footer) landed under `CreateDashboard/RightSidebar/EditSlideSections/` (2026-05-19). Deterministic per-player shuffle on round start landed (2026-05-19) via `ElementShuffler` + per-user STOMP fan-out in `ShowcaseService.broadcastRoundStart`. SlideBlock refactor still deferred — see Checklist below.
+**Status:** Per-kind backend additions + scorer landed (2026-05-19). Cross-cutting provenance / tagIds / version / reactionsEnabled / mediaCaption / altText fields landed across every DeckElement permits record (10b, 2026-05-19). Editor inspector controls (per-kind sections + cross-cutting Common/Tags sections + provenance footer) landed under `DeckEditor/RightSidebar/EditSlideSections/` (2026-05-19). Deterministic per-player shuffle on round start landed (2026-05-19) via `ElementShuffler` + per-user STOMP fan-out in `InteractiveSessionService.broadcastRoundStart`. SlideBlock refactor still deferred — see Checklist below.
 **Depends on:** 01 (tags) for per-question `tagIds`
 **Unblocks:** 16 (analytics can group by tag), question-bank features later
 
@@ -93,10 +93,10 @@ Also add `Integer autoAdvanceSeconds` to `Slide` — null = host advances manual
   - `TextQuestion`: when `fuzzyMatch`, do Levenshtein comparison against `correctAnswer` + `acceptedVariants`
   - `McqQuestion`: when `allowMultipleSelect=false` and `optionIds.size() > 1`, reject the answer as malformed (or trim to first id, but rejection is cleaner)
   - `NumberQuestion`: when `minValue`/`maxValue` set, reject answers outside the range as invalid (no scoring)
-- `ShowcaseService.startRound`:
+- `InteractiveSessionService.startRound`:
   - If `mcq.shuffleOptions`, send a per-player shuffled order of `options[]` (deterministic on `roomCode + elementId + playerId` so the same player sees the same shuffle on reconnect)
   - If `ranking.shuffleItemsForPresentation`, same pattern for `items[]`
-- `useCreateDashboard.buildNewElement` — set sensible defaults for every new field per kind
+- `useDeckEditor.buildNewElement` — set sensible defaults for every new field per kind
 
 ## Frontend changes
 
@@ -118,7 +118,7 @@ Also add `Integer autoAdvanceSeconds` to `Slide` — null = host advances manual
 - [ ] `SlideBlock` polymorphic record + Slide migration to `blocks[]` *(deferred: large refactor — chunk 10c)*
 - [x] `Slide.autoAdvanceSeconds`
 - [x] `ElementScorer` updates (fuzzy match, range validation, multi-select rejection)
-- [x] `ShowcaseService.startRound` deterministic per-player shuffle — `ElementShuffler.shuffleForPlayer(element, roomCode, userId)` seeds `Random` on the (room, element, player) triple; `broadcastRoundStart` keeps the canonical `/topic/.../round` broadcast for the host view and fans out a personalized `RoundStartMessage` to `/user/queue/showcase/{room}/round` for each player when the element opts in (`McqQuestion.shuffleOptions` / `RankingQuestion.shuffleItemsForPresentation`). Reconnects re-emit the same arrangement since the seed is stateless. Frontend per-player subscription lands with chunk 13's player-UI pass.
+- [x] `InteractiveSessionService.startRound` deterministic per-player shuffle — `ElementShuffler.shuffleForPlayer(element, roomCode, userId)` seeds `Random` on the (room, element, player) triple; `broadcastRoundStart` keeps the canonical `/topic/.../round` broadcast for the host view and fans out a personalized `RoundStartMessage` to `/user/queue/interactive session/{room}/round` for each player when the element opts in (`McqQuestion.shuffleOptions` / `RankingQuestion.shuffleItemsForPresentation`). Reconnects re-emit the same arrangement since the seed is stateless. Frontend per-player subscription lands with chunk 13's player-UI pass.
 - [ ] One-time migration script *(deferred — only needed when SlideBlock / provenance backfill is required for an existing prod corpus; dev seed data resets via the seeder)*
 - [x] Editor inspector controls per kind — `EditSlidePanel` is now a per-kind dispatcher; `EditSlideSections/{Mcq,Text,Number,Ranking,QAndA,Slide}OptionsSection.tsx` carry the chunk-10 fields, and `Slide.autoAdvanceSeconds` is exposed under a new "Pacing" section
 - [x] Cross-cutting inspector controls (mediaCaption, altText, reactionsEnabled, per-element tagIds) — `EditSlideSections/CommonOptionsSection.tsx` + `ElementTagsSection.tsx`

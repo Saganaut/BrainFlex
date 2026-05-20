@@ -1,5 +1,5 @@
 /**
- * Broadcast on /topic/showcase/{roomCode}/round when a new round begins.
+ * Broadcast on /topic/interactive-session/{roomCode}/round when a new round begins.
  *
  * The `element` is the redacted view — correct-answer fields are nulled out so
  * a clever client can't read them off the wire before submitting. The full

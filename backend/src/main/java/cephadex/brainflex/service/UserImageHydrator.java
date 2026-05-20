@@ -39,7 +39,7 @@ public class UserImageHydrator {
     }
 
     /** Largest URL we can produce for the user at this moment. Used by call
-     *  sites that store a single avatar URL inline (comments, showcase
+     *  sites that store a single avatar URL inline (comments, interactiveSession
      *  players, ratings, …). For uploaded avatars this is a fresh presigned
      *  URL to the xl rendition; for OAuth users it's the externally-hosted
      *  Google URL. Null when neither source exists. */

@@ -71,7 +71,7 @@ public final class DeckImageMapper {
                     s.videoUrl(), s.audioUrl(), s.mediaPosition(),
                     s.resultsDisplayType(), s.multipleSelectionsEnabled(),
                     s.selectionsPerParticipant(), s.showResultsAsPercentage(),
-                    s.joinType(), s.showJoinInformation(), s.showResponses(),
+                    s.joinType(), s.showJoinInformation(), s.showQrCode(), s.showResponses(),
                     s.heading(), s.participantInformation(),
                     s.autoAdvanceSeconds(),
                     s.createdByUserId(), s.lastEditedByUserId(), s.createdAt(), s.updatedAt(),

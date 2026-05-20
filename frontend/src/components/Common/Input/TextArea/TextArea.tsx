@@ -3,18 +3,16 @@
 // cells like MCQ option cards), `isBordered={false}` drops the visible border
 // so the field reads as plain text until focused.
 import React from "react";
+import type { InputBaseProps } from "../InputBaseProps";
 import shared from "../Input.module.css";
 import styles from "./TextArea.module.css";
 
 interface TextAreaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  extends InputBaseProps,
+    React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   variant?: "default";
-  infoMessage?: string;
-  errorMessage?: string;
-  label?: string;
   labelPosition?: "labelAbove" | "labelInFront";
   fullWidth?: boolean;
-  isBordered?: boolean;
   // `autoGrow={false}` opts out of `field-sizing: content` so the field
   // fills its container instead of growing with content. Hosts using
   // this typically pair it with `useFitText` to shrink the font.

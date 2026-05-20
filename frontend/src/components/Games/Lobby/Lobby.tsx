@@ -1,18 +1,18 @@
 /**
  * Pre-game waiting room — shows joined players, the shareable room code,
  * and (for the host) the Start Game button. Real-time player-list updates
- * arrive via /topic/showcase/{roomCode}/lobby; the WebSocket is managed here.
+ * arrive via /topic/interactive-session/{roomCode}/lobby; the WebSocket is managed here.
  */
 import { useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAppDispatch } from "../../../store/hooks";
 import { setSession } from "../../../store/gameSlice";
-import { useGetShowcaseQuery } from "../../../store/BrainFlexApi";
+import { useGetInteractiveSessionQuery } from "../../../store/BrainFlexApi";
 import { useGameSession } from "../../../hooks/useGameSession";
 import { useGameWebSocket } from "../../../hooks/useGameWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
-import { resolveShowcaseBackground } from "../../../utils/deckImages";
+import { resolveInteractiveSessionBackground } from "../../../utils/deckImages";
 import styles from "./Lobby.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
@@ -29,7 +29,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   const { sendStart, sendLeave, sendBoot } = useGameWebSocket(roomCode);
   const confirm = useConfirm();
 
-  const { data: session } = useGetShowcaseQuery({ roomCode });
+  const { data: session } = useGetInteractiveSessionQuery({ roomCode });
 
   useEffect(() => {
     if (session) dispatch(setSession(session));
@@ -69,7 +69,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     sendBoot(targetUserId);
   };
 
-  const backgroundUrl = resolveShowcaseBackground(
+  const backgroundUrl = resolveInteractiveSessionBackground(
     session?.deckBackgroundImageUrl,
     session?.deckId,
   );
@@ -78,7 +78,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     <div
       className={styles.lobby}
       style={
-        { "--showcase-bg": `url(${backgroundUrl})` } as React.CSSProperties
+        { "--interactive-session-bg": `url(${backgroundUrl})` } as React.CSSProperties
       }>
       <div className={styles.header}>
         <h1 className={styles.title}>Lobby</h1>

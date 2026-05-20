@@ -40,6 +40,7 @@ import cephadex.brainflex.model.Membership;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.MembershipStatus;
 import cephadex.brainflex.model.enums.MembershipTier;
+import cephadex.brainflex.model.enums.UserRole;
 import cephadex.brainflex.repository.OrganizationRepository;
 
 @Service
@@ -52,6 +53,8 @@ public class AuthoritiesService {
     public static final String ROLE_USER_PREMIUM = "ROLE_USER_PREMIUM";
     public static final String ROLE_ORG_MEMBER = "ROLE_ORG_MEMBER";
     public static final String ROLE_ORG_OWNER = "ROLE_ORG_OWNER";
+    public static final String ROLE_MODERATOR = "ROLE_MODERATOR";
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
 
     private final OrganizationRepository organizationRepository;
 
@@ -84,6 +87,19 @@ public class AuthoritiesService {
                         auths.add(new SimpleGrantedAuthority(ROLE_ORG_OWNER));
                     }
                 });
+            }
+        }
+
+        // Persisted user grants. The role hierarchy in SecurityConfig makes
+        // ADMIN imply MODERATOR, so we emit each present grant independently
+        // rather than collapsing them here.
+        var userRoles = user.getRoles();
+        if (userRoles != null) {
+            if (userRoles.contains(UserRole.MODERATOR)) {
+                auths.add(new SimpleGrantedAuthority(ROLE_MODERATOR));
+            }
+            if (userRoles.contains(UserRole.ADMIN)) {
+                auths.add(new SimpleGrantedAuthority(ROLE_ADMIN));
             }
         }
 

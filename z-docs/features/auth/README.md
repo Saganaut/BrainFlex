@@ -254,7 +254,7 @@ Public (declared in `SecurityConfig.java`):
   `/oauth2/**`, `/ws/**`
 - `/api/auth/login`, `/api/auth/me`, `/api/auth/guest`
 - `GET /api/users/leaderboard/**`, `GET /api/users/check-username`,
-  `GET /api/showcases/**`, `GET /api/decks/**`, `GET /api/collections/*`
+  `GET /api/interactive-sessions/**`, `GET /api/decks/**`, `GET /api/collections/*`
 
 Everything else is `.authenticated()`. The exception handler returns a plain
 `401` (no redirect), which the frontend's `baseQueryWithAuthPrompt`

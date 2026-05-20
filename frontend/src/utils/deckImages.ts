@@ -6,7 +6,7 @@
  *   element override (future) → deck value → Lorem Picsum placeholder seeded by id.
  *
  * Theme-driven backgrounds will slot in between "deck" and "Lorem Picsum" once
- * the showcase passes the host's active theme through to clients.
+ * the interactiveSession passes the host's active theme through to clients.
  */
 import type { Image } from "@/store/BrainFlexApi";
 import { resolveImageUrl } from "@/utils/image";
@@ -31,11 +31,11 @@ export const resolveDeckCover = (
   return url ?? picsumUrl(seed, COVER_WIDTH, COVER_HEIGHT);
 };
 
-/** Returns the showcase background URL, with Lorem Picsum as the placeholder
- *  fallback. Takes a plain string because the Showcase model snapshots a
+/** Returns the interactiveSession background URL, with Lorem Picsum as the placeholder
+ *  fallback. Takes a plain string because the InteractiveSession model snapshots a
  *  single URL at session-create time (the largest variant URL frozen at that
  *  moment) — there are no per-tier variants to choose from at play time. */
-export const resolveShowcaseBackground = (
+export const resolveInteractiveSessionBackground = (
   deckBackgroundUrl: string | null | undefined,
   deckId: string | null | undefined,
 ): string => {

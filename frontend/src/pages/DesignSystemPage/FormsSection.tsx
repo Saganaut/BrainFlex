@@ -1,4 +1,4 @@
-// Form components showcase for the design system page.
+// Form components InteractiveSession for the design system page.
 // Shows every Common/Input primitive with controlled state so they're interactive.
 import { useState } from "react";
 import { Input } from "../../components/Common/Input/Input/Input";
@@ -175,12 +175,7 @@ const FormsSection = () => {
                 setToggleNotifs(e.target.checked);
               }}
             />
-            <Toggle
-              label='Disabled'
-              id='ds-toggle-3'
-              checked={true}
-              disabled
-            />
+            <Toggle label='Disabled' id='ds-toggle-3' checked={true} disabled />
           </div>
 
           <h4>Radio Group</h4>
@@ -197,7 +192,9 @@ const FormsSection = () => {
               legend='Disabled'
               options={GAME_MODE_OPTIONS}
               value='team'
-              onChange={() => { /* disabled */ }}
+              onChange={() => {
+                /* disabled */
+              }}
               disabled
             />
           </div>

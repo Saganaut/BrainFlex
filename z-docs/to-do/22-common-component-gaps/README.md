@@ -9,7 +9,7 @@
 Most of the `frontend/src/components/Common/` family is already populated (Avatar, Badge, Buttons, Cards, ConfirmDialog, Divider, EmptyState, GalleryPicker, Input, Loader, Modal, ProgressBar, SelectableTile, Skeleton, StarRating, Tabs, Tag, TagPicker, Toast, Tooltip). Two gaps remain from the original `todo.md`:
 
 1. **Pagination** — there is no reusable pager. `CommentThread` rolls its own "Show more" affordance, and `Leaderboard` does manual page-state. Replace both with a shared component once it ships.
-2. **Inline Alert / Banner** — `Toast` covers transient notifications and `WsErrorBanner` is showcase-specific. There's nothing for inline form feedback (e.g. "Image is too large — please pick something under 5 MB") that should sit next to a field rather than fly across the screen.
+2. **Inline Alert / Banner** — `Toast` covers transient notifications and `WsErrorBanner` is interactive session-specific. There's nothing for inline form feedback (e.g. "Image is too large — please pick something under 5 MB") that should sit next to a field rather than fly across the screen.
 
 ## Part A — `Pagination`
 
@@ -68,7 +68,7 @@ This is *inline* feedback — placed where it logically belongs in the form/page
 
 ## Cross-cutting concerns
 
-- **Design system page** — both components must appear in the design-system page at `/design-system` with usage examples in every severity / variant. The page already has a `FormsSection` and other showcases; add `PaginationSection` and `AlertSection`.
+- **Design system page** — both components must appear in the design-system page at `/design-system` with usage examples in every severity / variant. The page already has a `FormsSection` and other interactive sessions; add `PaginationSection` and `AlertSection`.
 - **Tests** — co-located vitest + RTL: page-navigation behavior for Pagination (clicking arrows, jumping to a page number) and severity-to-role mapping for Alert.
 - **Token discipline** — both components must use semantic tokens only. Reference [feedback_semantic_tokens_only](../../../.claude/projects/-home-balooski-Repos-brainflex/memory/feedback_semantic_tokens_only.md).
 

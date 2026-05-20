@@ -53,8 +53,9 @@ public record Slide(
         boolean multipleSelectionsEnabled,
         int selectionsPerParticipant,
         boolean showResultsAsPercentage,
-        JoinType joinType,
+        JoinType joinType,            // legacy — read-only; new writes use showQrCode + showJoinInformation
         boolean showJoinInformation,
+        boolean showQrCode,           // chunk 21 — independent of showJoinInformation
         ShowResponsesMode showResponses,
         String heading,
         Map<String, Object> participantInformation,  // TipTap/ProseMirror rich-text doc

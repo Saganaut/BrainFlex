@@ -1,5 +1,5 @@
-// Live showcase round screen. Drives polymorphic element rendering via
-// ElementRenderer, the host controls (boot / end showcase), the scoreboard,
+// Live interactiveSession round screen. Drives polymorphic element rendering via
+// ElementRenderer, the host controls (boot / end interactiveSession), the scoreboard,
 // the round-result overlay, and the post-round → next-round timer chrome.
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
@@ -14,8 +14,8 @@ import { useGameSession } from "../../hooks/useGameSession";
 import { useGameWebSocket } from "../../hooks/useGameWebSocket";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
-import { useGetShowcaseQuery } from "../../store/BrainFlexApi";
-import { resolveShowcaseBackground } from "../../utils/deckImages";
+import { useGetInteractiveSessionQuery } from "../../store/BrainFlexApi";
+import { resolveInteractiveSessionBackground } from "../../utils/deckImages";
 import { largestUrl } from "@/utils/image";
 import {
   setSession,
@@ -34,9 +34,9 @@ const PlayPage = () => {
   const dispatch = useAppDispatch();
   const userState = useCurrentUser();
   const game = useGameSession();
-  const { sendAnswer, sendVote, sendNextRound, sendBoot, sendEndShowcase } =
+  const { sendAnswer, sendVote, sendNextRound, sendBoot, sendEndInteractiveSession } =
     useGameWebSocket(roomCode);
-  const { data: session } = useGetShowcaseQuery({ roomCode });
+  const { data: session } = useGetInteractiveSessionQuery({ roomCode });
   const [timeRemaining, setTimeRemaining] = useState(0);
   const confirm = useConfirm();
 
@@ -50,7 +50,7 @@ const PlayPage = () => {
   // Host disables the question timer by setting timePerQuestion = 0.
   // Per-element displaySeconds always overrides on the server; the frontend
   // here just respects "is there any countdown?" for the QuestionCard chrome.
-  const showcaseUnlimited = (session?.settings?.timePerQuestion ?? 1) === 0;
+  const interactiveSessionUnlimited = (session?.settings?.timePerQuestion ?? 1) === 0;
   const hideScoresDuringPlay =
     session?.settings?.showScoresImmediately === false;
 
@@ -80,7 +80,7 @@ const PlayPage = () => {
   const handleBoot = async (targetUserId: string) => {
     const ok = await confirm({
       title: "Remove player",
-      message: "Remove this player from the showcase?",
+      message: "Remove this player from the interactiveSession?",
       confirmLabel: "Remove",
       variant: "danger",
     });
@@ -88,20 +88,20 @@ const PlayPage = () => {
     sendBoot(targetUserId);
   };
 
-  const handleEndShowcase = async () => {
+  const handleEndInteractiveSession = async () => {
     const ok = await confirm({
-      title: "End showcase",
-      message: "End the showcase now? Scores so far will be final.",
-      confirmLabel: "End showcase",
+      title: "End interactiveSession",
+      message: "End the interactiveSession now? Scores so far will be final.",
+      confirmLabel: "End interactiveSession",
       variant: "danger",
     });
     if (!ok) return;
-    sendEndShowcase();
+    sendEndInteractiveSession();
   };
 
   // Per-phase timer countdown.
   //   SUBMIT phase — count down from roundStartedAt using the effective
-  //                  per-element / per-showcase question duration.
+  //                  per-element / per-interactiveSession question duration.
   //   VOTE phase   — count down from votePhaseStartedAt using votePhaseSeconds.
   //   roundResult set — pause; the overlay handles the post-round timing.
   useEffect(() => {
@@ -119,7 +119,7 @@ const PlayPage = () => {
       const elementSeconds = game.currentElement.displaySeconds ?? 0;
       const effective = elementSeconds > 0
         ? elementSeconds
-        : showcaseUnlimited ? 0 : (session?.settings?.timePerQuestion ?? 0);
+        : interactiveSessionUnlimited ? 0 : (session?.settings?.timePerQuestion ?? 0);
       if (effective <= 0 && !isSlide) return;
       totalSeconds = effective > 0 ? effective : 8; // slide fallback
       start = new Date(game.roundStartedAt).getTime();
@@ -143,7 +143,7 @@ const PlayPage = () => {
     game.phase,
     game.votePhaseStartedAt,
     game.votePhaseSeconds,
-    showcaseUnlimited,
+    interactiveSessionUnlimited,
     session,
   ]);
 
@@ -159,12 +159,12 @@ const PlayPage = () => {
     sendVote(game.currentElement.id ?? "", submissionId);
   };
 
-  const backgroundUrl = resolveShowcaseBackground(
+  const backgroundUrl = resolveInteractiveSessionBackground(
     session?.deckBackgroundImageUrl,
     session?.deckId,
   );
   const bgStyle: React.CSSProperties = {
-    "--showcase-bg": `url(${backgroundUrl})`,
+    "--interactive-session-bg": `url(${backgroundUrl})`,
   } as React.CSSProperties;
 
   if (!game.currentElement) {
@@ -193,7 +193,7 @@ const PlayPage = () => {
   const showCountdownChrome = !isSlide && (
     isVotePhase
       ? game.votePhaseSeconds > 0
-      : (elementSeconds > 0 || !showcaseUnlimited)
+      : (elementSeconds > 0 || !interactiveSessionUnlimited)
   );
   const questionCardTimeLimit = isVotePhase
     ? game.votePhaseSeconds
@@ -265,11 +265,11 @@ const PlayPage = () => {
           <Btn
             type='button'
             variant='error'
-            className={styles.endShowcaseBtn}
+            className={styles.endInteractiveSessionBtn}
             onClick={() => {
-              void handleEndShowcase();
+              void handleEndInteractiveSession();
             }}>
-            End Showcase
+            End InteractiveSession
           </Btn>
         )}
       </aside>

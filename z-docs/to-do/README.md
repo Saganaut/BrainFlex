@@ -31,10 +31,10 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 
 ### Live game polish
 
-- [x] **11** — [Showcase reactions & chat](./11-showcase-reactions-and-chat/README.md) — emoji reactions + audience chat *(backend + codegen done; player/host UI deferred to chunk 13)*
-- [x] **12** — [Showcase teams](./12-showcase-teams/README.md) — team mode + team leaderboard *(backend + codegen done; lobby team picker / team leaderboard / team podium deferred to chunk 13)*
-- [x] **13** — [Showcase settings & player additions](./13-showcase-settings-and-player-additions/README.md) — shuffle, auto-advance, podium, avatars, streaks, answer timing *(backend + codegen done; lobby avatar picker / streak indicator / autoAdvance ring / placement card UI deferred to the holistic chunk-13 player-UI pass)*
-- [ ] **14** — [Scheduled showcases & invites](./14-scheduled-showcases-and-invites/README.md) — schedule a game and email invites
+- [x] **11** — [InteractiveSession reactions & chat](./11-interactive-session-reactions-and-chat/README.md) — emoji reactions + audience chat *(backend + codegen done; player/host UI deferred to chunk 13)*
+- [x] **12** — [InteractiveSession teams](./12-interactive-session-teams/README.md) — team mode + team leaderboard *(backend + codegen done; lobby team picker / team leaderboard / team podium deferred to chunk 13)*
+- [x] **13** — [InteractiveSession settings & player additions](./13-interactive-session-settings-and-player-additions/README.md) — shuffle, auto-advance, podium, avatars, streaks, answer timing *(backend + codegen done; lobby avatar picker / streak indicator / autoAdvance ring / placement card UI deferred to the holistic chunk-13 player-UI pass)*
+- [ ] **14** — [Scheduled interactive sessions & invites](./14-scheduled-interactive-sessions-and-invites/README.md) — schedule a game and email invites
 
 ### Analytics & reporting
 
@@ -55,7 +55,7 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 ### Editor shell & shared components
 
 - [ ] **22** — [Common-component gaps](./22-common-component-gaps/README.md) — Pagination + inline Alert/Banner; sweep existing one-off error spans
-- [ ] **23** — [Deck editor shell polish](./23-deck-editor-shell-polish/README.md) — Preview / Start (showcase) navbar buttons, new-deck first-slide skeleton, right-sidebar vertical icon rail + drawer-on-drawer (Edit slide / Theme / Participants / Sharing)
+- [ ] **23** — [Deck editor shell polish](./23-deck-editor-shell-polish/README.md) — Preview / Start (interactive session) navbar buttons, new-deck first-slide skeleton, right-sidebar vertical icon rail + drawer-on-drawer (Edit slide / Theme / Participants / Sharing)
 
 ## Dependency graph
 
@@ -67,7 +67,7 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 02 ──> 06
 07, 08, 09 are independent of each other (each adds a new ElementKind + AnswerPayload)
 07–10 should land before 16 so analytics knows about every element kind
-11 ──> 13 (reactionsSent counter on ShowcasePlayer)
+11 ──> 13 (reactionsSent counter on InteractiveSessionPlayer)
 12 ──> 13 (teamMode flag)
 13 ──> 15 ──> 16 (game history & analytics need timeTakenMs / streak fields)
 15 ──> 17 (achievement triggers read GameHistoryEntry)
@@ -82,9 +82,9 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 ## Cross-cutting reminders
 
 - **Don't edit `BrainFlexApi.ts` by hand** — regenerate via `npx @rtk-query/codegen-openapi openapi-config.cts` after every backend model change.
-- **`enhanceEndpoints` for cache sync** — every new mutation that affects deck/showcase state needs a matching `onQueryStarted` in `frontend/src/store/apiEnhancements.ts`.
+- **`enhanceEndpoints` for cache sync** — every new mutation that affects deck/interactive session state needs a matching `onQueryStarted` in `frontend/src/store/apiEnhancements.ts`.
 - **Sealed types** — `DeckElement` and `AnswerPayload` are sealed. When you add a new element kind you must extend the `permits` list **and** handle it in `ElementScorer`, `ElementRedactor`, `DeckElementCloner`, `DeckImageHydrationService`, and `DeckImageMapper`.
-- **Element payload primitives** — every payload must include defaults for `displaySeconds`, `pointValue`, `bestAnswerMode`, `bestAnswerBonus`, etc. (Jackson can't deserialize `null` into a primitive). See `useCreateDashboard.ts:buildNewElement`.
+- **Element payload primitives** — every payload must include defaults for `displaySeconds`, `pointValue`, `bestAnswerMode`, `bestAnswerBonus`, etc. (Jackson can't deserialize `null` into a primitive). See `useDeckEditor.ts:buildNewElement`.
 - **Tests** — every chunk must add tests. Service tests go under `src/test/.../service/`, controller tests under `src/test/.../controller/`. Mock `MongoTemplate` correctly (see existing `HealthControllerTest`).
 - **Tokens** — every new piece of UI uses the design tokens from `frontend/src/tokens.css`. No hardcoded colors, no `box-shadow`, no palette references in components.
 
@@ -99,24 +99,24 @@ These items were intentionally left out of the chunk that nominally owns them be
   - Word Cloud / Allocation / Matching player surfaces (parity items, same gap)
   - A per-kind player dispatch in `frontend/src/pages/GamePage/PlayPage.tsx` (mirrors `SlideDisplay.tsx` on the author side)
 
-  These naturally cluster with **chunk 13** (Showcase settings & player additions) since that chunk already touches the player UI. Re-open this list when starting chunk 13.
+  These naturally cluster with **chunk 13** (InteractiveSession settings & player additions) since that chunk already touches the player UI. Re-open this list when starting chunk 13.
 
-- **Team-mode UI (chunk 12).** Chunk 12 shipped the backend (`Team` embedded model, `Showcase.teams` + `teamMode` + `autoBalanceTeams`, `ShowcaseSettings.teamMode`/`teamCount`/`autoBalanceTeams`, `ShowcasePlayer.teamId`, `PlayerPlacement.teamId`, deterministic team seeding + auto-balance join + manual join, per-answer team-score recompute + Best-Answer reveal recompute, host CRUD endpoints, `TeamUpdateMessage` STOMP broadcasts) and the codegen hooks (`useCreateTeamMutation` / `useUpdateTeamMutation` / `useDeleteTeamMutation` / `useMovePlayerToTeamMutation` plus the optional `JoinShowcaseRequest` body), but **no team-mode UI**. Specifically still TODO:
+- **Team-mode UI (chunk 12).** Chunk 12 shipped the backend (`Team` embedded model, `InteractiveSession.teams` + `teamMode` + `autoBalanceTeams`, `InteractiveSessionSettings.teamMode`/`teamCount`/`autoBalanceTeams`, `InteractiveSessionPlayer.teamId`, `PlayerPlacement.teamId`, deterministic team seeding + auto-balance join + manual join, per-answer team-score recompute + Best-Answer reveal recompute, host CRUD endpoints, `TeamUpdateMessage` STOMP broadcasts) and the codegen hooks (`useCreateTeamMutation` / `useUpdateTeamMutation` / `useDeleteTeamMutation` / `useMovePlayerToTeamMutation` plus the optional `JoinInteractiveSessionRequest` body), but **no team-mode UI**. Specifically still TODO:
   - Team-mode toggle + team-count slider on `CreateGamePage.tsx`
   - Lobby team picker grid (one card per team with color, name, current member list; "Auto-assign" button when `autoBalanceTeams`)
   - Host team edit affordances (create/rename/recolor/delete; move-player drop target)
   - Team badge under the player's score on `PlayPage.tsx`
   - Team leaderboard alternating with individual leaderboard between rounds
   - Team podium on the results page (top 3 teams + per-team MVP)
-  - Subscribe to `/topic/showcase/{roomCode}/teams` in `useGameWebSocket` so team scores tick live
+  - Subscribe to `/topic/interactive-session/{roomCode}/teams` in `useGameWebSocket` so team scores tick live
 
   These cluster with **chunk 13** for the same reason as chunks 7–9 and chunk 11: chunk 13 is the holistic player-UI pass, so building the team-mode shell in isolation would establish a layout pattern the other deferred work would have to match.
 
-- **Showcase settings & player additions UI (chunk 13).** Chunk 13 shipped the backend (field additions on Showcase / ShowcaseSettings / ShowcasePlayer / PlayerAnswer / PlayerPlacement, `customRoomCode` validation + collision check, `shuffleQuestions` at game start, `shuffleAnswers` gated by settings on top of the chunk-10 per-element flag, `speedBonusAwarded` split out of base points, `currentStreak`/`longestStreak`/`accuracy` updates, `autoAdvance` scheduling for TURN_BASED mode, 16-preset `AvatarService` + `GET /api/avatars` + lobby join wiring, `PresenceService` → `ShowcasePlayer.disconnected`/`lastSeenAt`) and the codegen hooks, but **the player + host UI is deferred**. Specifically still TODO:
-  - Showcase create form: "Advanced" section exposing all new toggles (anonymousMode, customRoomCode, shuffleQuestions, shuffleAnswers, autoAdvance, podiumDuration, lobbyCountdownSeconds, requireFullName, spectatorsAllowed)
+- **InteractiveSession settings & player additions UI (chunk 13).** Chunk 13 shipped the backend (field additions on InteractiveSession / InteractiveSessionSettings / InteractiveSessionPlayer / PlayerAnswer / PlayerPlacement, `customRoomCode` validation + collision check, `shuffleQuestions` at game start, `shuffleAnswers` gated by settings on top of the chunk-10 per-element flag, `speedBonusAwarded` split out of base points, `currentStreak`/`longestStreak`/`accuracy` updates, `autoAdvance` scheduling for TURN_BASED mode, 16-preset `AvatarService` + `GET /api/avatars` + lobby join wiring, `PresenceService` → `InteractiveSessionPlayer.disconnected`/`lastSeenAt`) and the codegen hooks, but **the player + host UI is deferred**. Specifically still TODO:
+  - InteractiveSession create form: "Advanced" section exposing all new toggles (anonymousMode, customRoomCode, shuffleQuestions, shuffleAnswers, autoAdvance, podiumDuration, lobbyCountdownSeconds, requireFullName, spectatorsAllowed)
   - Lobby avatar picker — grid backed by `useListAvatarsQuery`
   - Streak indicator on `PlayPage` ("3x streak 🔥")
-  - Host autoAdvance progress ring (uses the new `Showcase.lobbyOpenedAt` + `settings.podiumDuration`)
+  - Host autoAdvance progress ring (uses the new `InteractiveSession.lobbyOpenedAt` + `settings.podiumDuration`)
   - Per-player `accuracy` / `longestStreak` / `speedBonusTotal` chips on the placement card
   - Custom room code displayed prominently in the lobby header (denormalized `hostName` / `hostAvatarUrl` also available)
 
@@ -124,7 +124,7 @@ These items were intentionally left out of the chunk that nominally owns them be
 
 - **Audience engagement UI (chunk 11).** Chunk 11 shipped the backend (models, REST + STOMP, rate limiting, emoji allow-list, Redis aggregation, host moderation) and the codegen hooks (`useSendReactionMutation` / `useSendChatMutation` / `useListChatQuery` / `useModerateChatMutation`), but **no player or host UI**. Specifically still TODO:
   - `ReactionBar` on the player view (six default emojis + long-press picker, sends via STOMP or REST fallback)
-  - `ReactionRain` on the host view (subscribes to `/topic/showcase/{roomCode}/reaction`, animates emoji bursts using CSS transforms + RAF)
+  - `ReactionRain` on the host view (subscribes to `/topic/interactive-session/{roomCode}/reaction`, animates emoji bursts using CSS transforms + RAF)
   - `ChatPanel` sidebar (host + player views, toggleable, last-50 replay on mount, host messages styled distinctively)
   - Host moderation interaction (hover-to-hide, server flips `moderated=true`, non-hosts re-render the row as "(hidden by host)")
   - Optimistic chat send + STOMP reconcile (apiEnhancements `onQueryStarted` for `sendChat`)

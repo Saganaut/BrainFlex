@@ -1,6 +1,6 @@
 # 20 — User / Organization / Theme / Membership additions
 
-**Status:** Not started
+**Status:** In progress (UserRole + admin gating slice landed)
 **Depends on:** Nothing strict; field additions stand alone
 **Unblocks:** UX polish, real role-gating, plan tiers
 
@@ -27,7 +27,7 @@ User (additions only)
 ```text
 NotificationPrefs (embedded record)
   Map<NotificationKind, Boolean> inApp      // default true for all
-  Map<NotificationKind, Boolean> email      // default false except SHOWCASE_INVITE, COLLAB_INVITE, ORG_INVITE
+  Map<NotificationKind, Boolean> email      // default false except INTERACTIVE_SESSION_INVITE, COLLAB_INVITE, ORG_INVITE
   boolean weeklyDigestEmail                 // default true
   boolean marketingEmail                    // default = User.newsletter
 ```
@@ -66,7 +66,7 @@ Organization (additions only)
   String inviteCode                    // join without explicit ID share; rotatable
   boolean allowPublicJoin              // default false; if true, anyone with the inviteCode can join
   int memberCount                      // denorm
-  String defaultThemeId                // theme applied to new members' Showcases unless overridden
+  String defaultThemeId                // theme applied to new members' InteractiveSessions unless overridden
   LocalDateTime updatedAt
 ```
 
@@ -95,12 +95,12 @@ Frontend `useTheme.ts` reads `tokenOverrides` and writes them onto `:root` as in
 ```text
 Membership / OrganizationPlan (additions only)
   Set<String> featureFlags             // "reactions", "team-mode", "analytics-pro", "ai-generation", ...
-  int monthlyShowcaseCount             // bumped when a Showcase finishes
-  int monthlyShowcaseLimit             // 0 = unlimited; soft quota
+  int monthlyInteractiveSessionCount             // bumped when a InteractiveSession finishes
+  int monthlyInteractiveSessionLimit             // 0 = unlimited; soft quota
   LocalDateTime quotaResetsAt          // first of next month UTC
 ```
 
-`MembershipService.canStartShowcase(userId)` returns false if `monthlyShowcaseCount >= monthlyShowcaseLimit > 0`. Surface the quota in the UI ("3 / 10 games this month — upgrade for unlimited").
+`MembershipService.canStartInteractiveSession(userId)` returns false if `monthlyInteractiveSessionCount >= monthlyInteractiveSessionLimit > 0`. Surface the quota in the UI ("3 / 10 games this month — upgrade for unlimited").
 
 ## GalleryImage additions (if not migrated to MediaAsset in chunk 19)
 
@@ -139,13 +139,13 @@ AudienceSubmission (additions only)
 
 ## Checklist
 
-- [ ] `User` additions + migration for existing users
-- [ ] `NotificationPrefs` + `UserRole` + admin endpoint gating
+- [ ] `User` additions + migration for existing users *(partial — `roles` field + backfill migration landed; remaining: `displayName`, `customAvatarUrl`, `bio`, `location`, `websiteUrl`, `locale`, `timezone`, `tagInterests`, `emailVerifiedAt`)*
+- [ ] `NotificationPrefs` + `UserRole` + admin endpoint gating *(partial — `UserRole` enum, `User.roles`, `ROLE_ADMIN` / `ROLE_MODERATOR` authorities, `AdminProperties` now reads from `User.roles` (env-var allowlist removed). Remaining: `NotificationPrefs` embedded record + endpoints; migrating remaining `adminProperties.isAdmin` callers to `@PreAuthorize("hasRole('ADMIN')")` where they're pure forbid-or-allow)*
 - [ ] `PlayerStats` extensions + weekly/monthly reset cron
 - [ ] `Organization` additions + endpoints + email-domain auto-join
 - [ ] `Theme` additions + frontend token override application
 - [ ] `Membership` / `OrganizationPlan` feature flags + quota
-- [ ] `MembershipService.canStartShowcase` + UI quota surface
+- [ ] `MembershipService.canStartInteractiveSession` + UI quota surface
 - [ ] `GalleryImage` additions (if not migrated to `MediaAsset`)
 - [ ] `BestAnswerVote.weight`
 - [ ] `AudienceSubmission` moderation fields

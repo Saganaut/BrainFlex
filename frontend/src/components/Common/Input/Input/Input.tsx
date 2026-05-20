@@ -2,47 +2,39 @@
 // className on the <input>; `errorMessage` (when set) forces variant="error" so
 // the input border tint and helper text tint together. `fullWidth` lets the
 // input fill its container instead of the default 300px (used inside tight
-// editor cells like MCQ option cards).
+// editor cells like MCQ option cards). `className` merges onto the outer
+// wrapper (matches RichTextInput); `ariaLabel` is forwarded to the underlying
+// <input>. All other native input attributes flow through via `...rest`.
 import React from "react";
 import type { BtnVariant } from "../../Buttons/BtnTypes";
+import type { InputBaseProps } from "../InputBaseProps";
 import shared from "../Input.module.css";
 import styles from "./Input.module.css";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps
+  extends InputBaseProps,
+    React.InputHTMLAttributes<HTMLInputElement> {
   variant?: BtnVariant;
-  infoMessage?: string;
-  errorMessage?: string;
-  label?: string;
   labelPosition?: "labelAbove" | "labelInFront";
-  checked?: boolean;
   fullWidth?: boolean;
   ref?: React.RefObject<HTMLInputElement | null>;
-  isBordered?: boolean;
 }
 
 /** We can optionally display some information below the input field, if an error message is relevant it will temporary replace the info **/
 const Input = ({
-  value,
-  ref,
-  onChange,
-  onBlur,
-  maxLength,
-  type,
-  id,
-  name,
-  variant = "default",
+  variant = "primary",
   infoMessage,
   label,
   labelPosition = "labelAbove",
   errorMessage,
-  placeholder,
   checked = false,
-  disabled,
   fullWidth = false,
   isBordered = true,
-  min,
-  max,
-  step,
+  className,
+  ariaLabel,
+  id,
+  ref,
+  ...rest
 }: InputProps) => {
   const inputVariant: BtnVariant = errorMessage != null ? "error" : variant;
   return (
@@ -50,35 +42,27 @@ const Input = ({
       className={[
         shared.inputContainer,
         shared[labelPosition],
-        fullWidth ? shared.fullWidth : "",
+        fullWidth && shared.fullWidth,
+        className,
       ]
         .filter(Boolean)
         .join(" ")}>
       {label && <label htmlFor={id}>{label}</label>}
       <div
-        className={[styles.input, fullWidth ? styles.fullWidth : ""]
+        className={[styles.input, fullWidth && styles.fullWidth]
           .filter(Boolean)
           .join(" ")}>
         <input
-          type={type}
-          ref={ref}
+          {...rest}
           id={id}
-          name={name}
-          value={value}
-          onChange={onChange}
-          onBlur={onBlur}
-          maxLength={maxLength}
-          placeholder={placeholder}
-          disabled={disabled}
-          min={min}
-          max={max}
-          step={step}
+          ref={ref}
+          aria-label={ariaLabel}
           className={[
-            inputVariant !== "default" && inputVariant !== "brand"
-              ? styles[inputVariant]
-              : undefined,
-            isBordered ? "" : shared.noBorders,
-          ].join(" ")}
+            inputVariant !== "brand" && styles[inputVariant],
+            !isBordered && shared.noBorders,
+          ]
+            .filter(Boolean)
+            .join(" ")}
         />
 
         {(errorMessage != null || infoMessage != null) && (

@@ -121,7 +121,7 @@ public class DeckController {
         this.userImageHydrator = userImageHydrator;
     }
 
-    /** All public decks. Used by the create-showcase template picker. */
+    /** All public decks. Used by the create-interactiveSession template picker. */
     @GetMapping
     public List<DeckDTO> listDecks(Authentication authentication) {
         List<Deck> decks = deckService.listPublic();

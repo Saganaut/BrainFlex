@@ -173,7 +173,7 @@ const ElementRenderer = ({
  * Renderer for an active Word Cloud round. The live cloud sits above the
  * input (and replaces the input once the player submits). Pulls the
  * aggregated counts straight from the game slice — populated by the
- * /topic/showcase/{roomCode}/wordCloud broadcast.
+ * /topic/interactive-session/{roomCode}/wordCloud broadcast.
  */
 interface WordCloudViewProps {
   element: WordCloudQuestion;

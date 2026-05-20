@@ -1,13 +1,13 @@
 // Common checkbox input component used in forms throughout the app
 import React, { useId } from "react";
+import type { InputBaseProps } from "../InputBaseProps";
 import shared from "../Input.module.css";
 import styles from "./Checkbox.module.css";
 
-interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: React.ReactNode;
+interface CheckboxProps
+  extends InputBaseProps,
+    React.InputHTMLAttributes<HTMLInputElement> {
   labelPosition?: "labelBefore" | "labelAfter";
-  errorMessage?: string;
-  infoMessage?: string;
 }
 
 const Checkbox = ({

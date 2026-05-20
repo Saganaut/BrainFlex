@@ -205,6 +205,17 @@ class ElementScorerTest {
         assertEquals(0, result.points());
     }
 
+    @Test
+    void mcq_multiSelect_maxSelectionsZeroIsUnlimited() {
+        // chunk 21 — author may set Slide.selectionsPerParticipant = 0 ("unlimited")
+        // which maps to McqQuestion.maxSelections = 0. The cap check must NOT
+        // reject a submission just because it exceeds the correct-set size;
+        // only a set-mismatch should zero the result.
+        var result = ElementScorer.score(mcq(true, 0), new McqAnswer(List.of("a", "b", "c")));
+        assertFalse(result.correct()); // c isn't correct, set mismatch
+        assertEquals(0, result.points());
+    }
+
     private static NumberQuestion number(Double min, Double max) {
         return new NumberQuestion(
                 "num-1", "pub", "priv", "Title", null,

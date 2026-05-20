@@ -71,7 +71,7 @@ S3 key conventions per kind:
 
 - Generalize the existing image picker into `MediaPicker` that can be invoked with a `kind` filter
 - Audio/video upload buttons in the deck editor — "Add audio" / "Add video" / "Add video link"
-- Lobby music dropdown in the showcase create form (filters `kind=AUDIO`)
+- Lobby music dropdown in the interactive session create form (filters `kind=AUDIO`)
 - Inspector audio player widget on slides that have an `audioAssetId`
 - Video embed renderer for `VIDEO_EMBED` URLs (YouTube + Vimeo iframe sources only — allowlist)
 
@@ -91,7 +91,7 @@ S3 key conventions per kind:
 - [ ] DeckElement `videoAssetId` / `audioAssetId` fields with backwards-compat fallback to string URLs
 - [ ] `MediaPicker` component (kind-filterable)
 - [ ] Audio/video upload buttons in editor
-- [ ] Lobby music dropdown in showcase create form (when chunk 13 lands)
+- [ ] Lobby music dropdown in interactive session create form (when chunk 13 lands)
 - [ ] Audio/video render on slides
 - [ ] Video embed allowlist (YouTube, Vimeo)
 - [ ] Frontend codegen + lint

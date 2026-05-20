@@ -13,6 +13,7 @@ import {
 import type { DeckDto, Slide } from "../../store/BrainFlexApi";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { DeckActionButton } from "@/components/Common/Buttons/DeckActionButton/DeckActionButton";
 import { Badge } from "@/components/Common/Badge";
 import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
 import {
@@ -111,7 +112,7 @@ const DeckDiscoveryRow = ({ deck }: { deck: DeckDto }) => {
  * `addElement` call after the deck is created — that way the slide stays
  * selected and visible without a flicker between optimistic and confirmed state.
  */
-// Primitive defaults must mirror useCreateDashboard.buildNewElement — Jackson
+// Primitive defaults must mirror useDeckEditor.buildNewElement — Jackson
 // cannot deserialize null into the backend's primitive boolean/int fields.
 const buildFirstSlide = (id: string): Slide => ({
   kind: "Slide",
@@ -129,6 +130,7 @@ const buildFirstSlide = (id: string): Slide => ({
   showResultsAsPercentage: false,
   joinType: "INSTRUCTIONS_BAR",
   showJoinInformation: true,
+  showQrCode: false,
   showResponses: "INSTANT",
   tagIds: [],
   reactionsEnabled: true,
@@ -216,23 +218,28 @@ const DeckCard = ({
           {deck.description && (
             <span className={styles.cardDesc}>{deck.description}</span>
           )}
-          {editable && deck.id && (
+          {deck.id && (
             <div className={styles.cardActions}>
-              <Link
-                to='/decks/$deckId/edit'
-                params={{ deckId: deck.id }}
-                search={{ questionId: undefined }}
-                viewTransition>
-                <Btn size='sm'>Edit</Btn>
-              </Link>
-              <Btn
-                size='sm'
-                variant='error'
-                onClick={() => {
-                  if (deck.id) onDelete?.(deck.id);
-                }}>
-                Delete
-              </Btn>
+              <DeckActionButton deckId={deck.id} size='sm' />
+              {editable && (
+                <>
+                  <Link
+                    to='/decks/$deckId/edit'
+                    params={{ deckId: deck.id }}
+                    search={{ questionId: undefined }}
+                    viewTransition>
+                    <Btn size='sm'>Edit</Btn>
+                  </Link>
+                  <Btn
+                    size='sm'
+                    variant='error'
+                    onClick={() => {
+                      if (deck.id) onDelete?.(deck.id);
+                    }}>
+                    Delete
+                  </Btn>
+                </>
+              )}
             </div>
           )}
         </div>

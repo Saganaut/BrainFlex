@@ -27,9 +27,6 @@ const NavBar = () => {
         <Link to='/pricing' viewTransition>
           Pricing
         </Link>
-        <Link to='/games/create' viewTransition>
-          New Game
-        </Link>
         {userState.state === "registered" && (
           <Link to='/decks' viewTransition>
             My Decks

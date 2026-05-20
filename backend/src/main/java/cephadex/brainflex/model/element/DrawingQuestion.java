@@ -9,7 +9,7 @@
  * {@code PlayerAnswer.payload}. {@code maxStrokesPerPlayer} and
  * {@code maxPointsPerStroke} bound a single submission so the document
  * doesn't blow past Mongo's 16 MB limit, and a per-answer byte cap (see
- * ShowcaseService) rejects oversize submissions outright.
+ * InteractiveSessionService) rejects oversize submissions outright.
  *
  * {@code canvasWidth} / {@code canvasHeight} are logical (not pixel) units —
  * the client scales strokes to whatever pixel canvas it renders. {@code

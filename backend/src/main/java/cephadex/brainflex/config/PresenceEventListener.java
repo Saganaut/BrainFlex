@@ -3,7 +3,7 @@
  *
  * SessionConnectedEvent fires once the STOMP CONNECT frame is accepted and the
  * principal is bound to the WebSocket session. SessionDisconnectEvent fires on the
- * DISCONNECT frame or socket close. Principal naming mirrors ShowcaseService:
+ * DISCONNECT frame or socket close. Principal naming mirrors InteractiveSessionService:
  * registered users use their Google ID; guests use "guest:<id>".
  */
 package cephadex.brainflex.config;

@@ -5,13 +5,10 @@ import java.util.TimeZone;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
-import cephadex.brainflex.config.AdminProperties;
 import jakarta.annotation.PostConstruct;
 
 @SpringBootApplication
-@EnableConfigurationProperties(AdminProperties.class)
 public class BrainflexApplication {
 
 	public static void main(String[] args) {

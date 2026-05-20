@@ -57,7 +57,7 @@ import type { BillingCycle } from "../../components/Pricing/BillingToggle/Billin
 import { FeatureList } from "../../components/Pricing/FeatureList/FeatureList";
 import { PRICING_TIERS } from "../PricingPage/data";
 import { slideTypeGraphics } from "../../components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
-import { SlideContentWrapper } from "../../components/CreateDashboard/SlideContentTypes/SlideContentWrapper";
+import { SlideContentWrapper } from "../../components/DeckEditor/SlideContentTypes/SlideContentWrapper";
 import {
   NotFoundPage,
   ServerErrorPage,
@@ -385,7 +385,7 @@ const CommonTab = () => {
                   </p>
                   <p style={{ margin: 0, color: "var(--text-secondary)" }}>
                     Use this shell from every editor in
-                    <code> CreateDashboard/SlideContentTypes/</code>.
+                    <code> DeckEditor/SlideContentTypes/</code>.
                   </p>
                 </SlideContentWrapper>
               </div>

@@ -15,7 +15,7 @@ This is a read-amplification feature: writes happen on every game finish, reads 
 ```text
 DeckAnalytics                          @Document("deck_analytics")
   @Id String deckId                    // shares id with Deck (1:1)
-  int totalPlays                       // = sum across all ShowcaseResults for this deck
+  int totalPlays                       // = sum across all InteractiveSessionResults for this deck
   int totalPlayers                     // distinct players (across plays); maintain via HyperLogLog or accept duplicates
   double averageScore                  // mean finalScore
   double averageAccuracy               // mean accuracy
@@ -55,7 +55,7 @@ ElementStats (embedded record)
 ## Backend changes
 
 - `DeckAnalyticsRepository`, `DeckAnalyticsService`
-- `DeckAnalyticsService.recordGame(Showcase)` — called from `ShowcaseService.finish()` after `GameHistoryService.recordFinish`:
+- `DeckAnalyticsService.recordGame(InteractiveSession)` — called from `InteractiveSessionService.finish()` after `GameHistoryService.recordFinish`:
   - `$inc` totalPlays
   - Recompute running averages incrementally (`new_avg = old_avg + (x - old_avg) / n`)
   - For each element in the deck snapshot, update its `ElementStats`:
@@ -67,7 +67,7 @@ ElementStats (embedded record)
   - `GET /api/decks/{id}/analytics` — full rollup; **auth: owner or `EDITOR` collaborator only**
   - `GET /api/decks/{id}/analytics/csv` — CSV export
   - `GET /api/decks/{id}/analytics/pdf` — PDF export (start with HTML→PDF via `flying-saucer-pdf`; gate behind a `pdf-export` feature flag)
-- New `ReportBuilderService` for CSV/PDF generation. Writes to S3 under `reports/{deckId}/{timestamp}.csv` and stamps `Deck.exportedReportUrl` (or similar field on `ShowcaseResult` per-show report).
+- New `ReportBuilderService` for CSV/PDF generation. Writes to S3 under `reports/{deckId}/{timestamp}.csv` and stamps `Deck.exportedReportUrl` (or similar field on `InteractiveSessionResult` per-show report).
 
 ## Frontend changes
 
@@ -84,9 +84,9 @@ ElementStats (embedded record)
 ## Cross-cutting concerns
 
 - **Don't recompute** on every analytics read — the rollup is the source of truth, computed incrementally on write.
-- **Backfill:** one-time job that walks finished `Showcase` rows and feeds them through `recordGame` in chronological order. Reset `DeckAnalytics` first.
+- **Backfill:** one-time job that walks finished `InteractiveSession` rows and feeds them through `recordGame` in chronological order. Reset `DeckAnalytics` first.
 - **Survey-only elements** (WordCloud, Drawing, Allocation, QandA, AllocationQuestion) write `correctCount = 0`. Accuracy calculations should exclude unscored elements.
-- **Granularity:** rolled-up analytics are deck-level. Per-show reports are different — link via `ShowcaseResult.exportedReportUrl` for the per-game CSV.
+- **Granularity:** rolled-up analytics are deck-level. Per-show reports are different — link via `InteractiveSessionResult.exportedReportUrl` for the per-game CSV.
 - **Privacy:** never include personally-identifying info in deck-level analytics — only aggregate counts.
 
 ## Checklist
@@ -98,7 +98,7 @@ ElementStats (embedded record)
 - [ ] `/api/decks/{id}/analytics` endpoint (owner/editor only)
 - [ ] CSV export endpoint
 - [ ] PDF export endpoint (feature-flagged)
-- [ ] Per-show CSV report on `ShowcaseResult.exportedReportUrl`
+- [ ] Per-show CSV report on `InteractiveSessionResult.exportedReportUrl`
 - [ ] Analytics page with KPI strip + per-element charts
 - [ ] Export buttons
 - [ ] Frontend codegen + lint

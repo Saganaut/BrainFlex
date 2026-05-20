@@ -38,6 +38,7 @@ public class S3Service {
     private static final String AVATAR_PREFIX = "profile-images";
     private static final String THEME_LOGO_PREFIX = "theme-logos";
     private static final String THEME_BG_PREFIX = "theme-backgrounds";
+    private static final String MEDIA_PREFIX = "media-assets";
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
@@ -99,6 +100,46 @@ public class S3Service {
 
     public void deleteThemeBackground(String themeId, List<StoredImageVariant> stored) {
         deleteAll(THEME_BG_PREFIX, themeId, stored);
+    }
+
+    // ── Media assets ──────────────────────────────────────────────────────────
+    // Image-kind assets reuse the multi-variant pattern (one WebP per ImageSize
+    // tier under media-assets/{id}/{size}.webp). Audio + video files store a
+    // single passthrough object at media-assets/{id}/file.{ext}. VIDEO_EMBED
+    // never touches S3.
+
+    public List<StoredImageVariant> uploadMediaAssetImage(String assetId, Map<ImageSize, ProcessedVariant> variants) {
+        return uploadAll(MEDIA_PREFIX, assetId, variants);
+    }
+
+    public List<ImageVariant> refreshMediaAssetImage(String assetId, List<StoredImageVariant> stored) {
+        return refreshAll(MEDIA_PREFIX, assetId, stored);
+    }
+
+    public void deleteMediaAssetImage(String assetId, List<StoredImageVariant> stored) {
+        deleteAll(MEDIA_PREFIX, assetId, stored);
+    }
+
+    public void uploadMediaAssetFile(String assetId, String extension, String contentType, byte[] bytes) {
+        s3Client.putObject(
+                PutObjectRequest.builder()
+                        .bucket(props.bucket())
+                        .key(mediaFileKey(assetId, extension))
+                        .contentType(contentType)
+                        .build(),
+                RequestBody.fromBytes(bytes));
+    }
+
+    public String refreshMediaAssetFile(String assetId, String extension) {
+        return generatePresignedUrl(mediaFileKey(assetId, extension));
+    }
+
+    public void deleteMediaAssetFile(String assetId, String extension) {
+        deleteObject(mediaFileKey(assetId, extension));
+    }
+
+    private static String mediaFileKey(String assetId, String extension) {
+        return MEDIA_PREFIX + "/" + assetId + "/file." + extension.toLowerCase(Locale.ROOT);
     }
 
     // ── Internals ─────────────────────────────────────────────────────────────

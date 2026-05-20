@@ -23,4 +23,4 @@ Reachability is enforced by `tools/doc-lint.js`: every `.md` file under the repo
 
 ## Single-file references
 
-- [Glossary](glossary.md) — Domain terms (deck, element, showcase, organization, theme, slide, MCQ, …).
+- [Glossary](glossary.md) — Domain terms (deck, element, interactive session, organization, theme, slide, MCQ, …).

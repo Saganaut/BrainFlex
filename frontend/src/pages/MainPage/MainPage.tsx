@@ -78,10 +78,10 @@ const MainPage = () => {
 
       <section className={styles.cards} aria-label='Primary actions'>
         <ActionCard
-          to='/games/create'
+          to='/decks'
           icon='+'
           title='Create a Game'
-          description='Play head-to-head. Pick a template, your own deck, or auto-generate.'
+          description='Pick a deck from My Decks and hit Play.'
           disabled={!isRegistered}
         />
         <ActionCard

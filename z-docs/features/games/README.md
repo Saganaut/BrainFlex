@@ -1,18 +1,18 @@
-# Showcases & Decks — Implementation Checklist
+# InteractiveSessions & Decks — Implementation Checklist
 
 ## Vocabulary (unified model)
 
 A **Deck** is the authored content: an ordered list of **elements** (questions, slides, sections). It is what the host builds in the editor.
 
-A **Showcase** is a live run of a Deck with a host and participants. Sessions are persisted, broadcast over WebSocket, and have a lifecycle (LOBBY → IN_PROGRESS → FINISHED).
+A **InteractiveSession** is a live run of a Deck with a host and participants. Sessions are persisted, broadcast over WebSocket, and have a lifecycle (LOBBY → IN_PROGRESS → FINISHED).
 
-A Showcase has presets that toggle behavior:
+A InteractiveSession has presets that toggle behavior:
 
 - **Game** preset — `scoringEnabled: true`, leaderboard, GameOver screen. (Default; the only preset surfaced today.)
 - **Pulse** preset — `scoringEnabled: false`, no leaderboard, data-tracking review only. (Authoring surface not yet built.)
 - **Presentation** preset (future) — `scoringEnabled: false`, host paces the deck slide-by-slide, no time pressure.
 
-User-facing routes still split "Create a Game" (`/games/create`) and "Create a Poll" (`/pulse/create`); both ultimately persist `Showcase`s with different presets.
+User-facing routes still split "Create a Game" (`/games/create`) and "Create a Poll" (`/pulse/create`); both ultimately persist `InteractiveSession`s with different presets.
 
 Status legend: ✅ shipped · 🚧 partial · ☐ todo
 
@@ -34,7 +34,7 @@ Status legend: ✅ shipped · 🚧 partial · ☐ todo
 - ✅ `visibility: PRIVATE | UNLISTED | ORG | PUBLIC` — replaced boolean `isPublic`
 - ☐ `themeId` — link to the host's `Theme` so deck inherits color scheme during play
 - ☐ `recommendedPreset: GAME | PULSE | PRESENTATION` — advisory; sets defaults in the create flow
-- ☐ `defaultSettings: ShowcaseSettings` — author-suggested showcase settings auto-applied at create time
+- ☐ `defaultSettings: InteractiveSessionSettings` — author-suggested interactive session settings auto-applied at create time
 - ☐ `estimatedDurationMinutes` — "~10 min" hint for template browsing
 - ☐ `parentDeckId` + `version` — for fork-this-template + history
 - ☐ `updatedAt`
@@ -42,14 +42,14 @@ Status legend: ✅ shipped · 🚧 partial · ☐ todo
 ### Element — shared chrome (every `DeckElement` record)
 
 - ✅ `id`, `kind` (Jackson `@JsonTypeInfo` discriminator)
-- ✅ `displaySeconds` — per-element override; always wins over `Showcase.timePerQuestion`
+- ✅ `displaySeconds` — per-element override; always wins over `InteractiveSession.timePerQuestion`
 - ✅ `hostNotes` — speaker notes; sent only to the host's principal queue (redactor strips for public broadcast)
 - ✅ `backgroundImageUrl` — per-element background override
 - ✅ `imageUrl`, `videoUrl`, `audioUrl` — media URLs
 - ✅ `mediaPosition: NONE | TOP | BOTTOM | BACKGROUND` — author chooses where media renders
 - ☐ `mediaCaption / altText` — accessibility + caption support
 - ☐ `explanation` — post-answer "Here's why" copy
-- ☐ `scoringEnabledOverride` — per-element opt-out from scoring (icebreakers, Pulse-style elements in a Game showcase)
+- ☐ `scoringEnabledOverride` — per-element opt-out from scoring (icebreakers, Pulse-style elements in a Game interactive session)
 - ☐ `updatedAt`
 
 ### Element — type-specific fields (all modeled)
@@ -67,20 +67,20 @@ Status legend: ✅ shipped · 🚧 partial · ☐ todo
 
 ### New collections
 
-- ✅ `AudienceSubmission` — for Q&A and Best Answer mode. `{ id, showcaseId, elementId, userId, payload (AnswerPayload), status: PENDING/PINNED/DISMISSED, upvotes, submittedAt }`. Repository + model shipped; live moderation UI still ☐.
-- ✅ `BestAnswerVote` — `{ id, showcaseId, submissionId, voterUserId, votedAt }`. Repository + model shipped; second-phase runtime still ☐ (see §3a-bis).
+- ✅ `AudienceSubmission` — for Q&A and Best Answer mode. `{ id, interactiveSessionId, elementId, userId, payload (AnswerPayload), status: PENDING/PINNED/DISMISSED, upvotes, submittedAt }`. Repository + model shipped; live moderation UI still ☐.
+- ✅ `BestAnswerVote` — `{ id, interactiveSessionId, submissionId, voterUserId, votedAt }`. Repository + model shipped; second-phase runtime still ☐ (see §3a-bis).
 - ✅ Polymorphic `AnswerPayload` (sealed): `McqAnswer`, `TextAnswer`, `NumberAnswer`, `ImageChoiceAnswer`, `RankingAnswer`, `ScalesAnswer`, `GridAnswer`, `PlaceOnImageAnswer`, `TimeoutAnswer`. Stored on `PlayerAnswer.payload`; scored by `ElementScorer` dispatch.
 
 ### Cross-cutting
 
 - ✅ **Polymorphic scoring** — `ElementScorer.score(DeckElement, AnswerPayload)` dispatches per-kind (case-insensitive text + variants, numeric tolerance, ranking PARTIAL vs EXACT, grid set comparison, place-on-image linear distance vs tolerance)
-- ✅ **Element redaction** — `ElementRedactor` strips correct-answer fields before broadcasting on `/topic/showcase/{code}/round`; un-redacted form goes to the host's principal queue and to the post-round reveal
+- ✅ **Element redaction** — `ElementRedactor` strips correct-answer fields before broadcasting on `/topic/interactive-session/{code}/round`; un-redacted form goes to the host's principal queue and to the post-round reveal
 - ✅ **Frontend shuffle** — server-side `shuffleMcqOptions` was dropped; the editor will own a shuffle / reorder button (cleaner model, no per-session shuffle state)
 - ☐ **Background image cascade** documented and implemented: element → deck → theme → Lorem Picsum placeholder (fields exist; renderer cascade still pending)
-- ☐ **Theme integration into Showcases** — the host's active theme drives colors / fonts for every participant during a showcase
+- ☐ **Theme integration into InteractiveSessions** — the host's active theme drives colors / fonts for every participant during an interactive session
 - ☐ **Element pool sampling** when `totalRounds < deck.size` — currently first-N; future: always include title slide, optionally stratify by difficulty
 - ☐ **Real-time host preview** — host's view shows the correct answer during play
-- ☐ **Element validation / "ready" flag** — draft elements with missing required fields can't be included in a playable showcase
+- ☐ **Element validation / "ready" flag** — draft elements with missing required fields can't be included in a playable interactive session
 - ☐ **Question banks / cross-deck reuse** — elements live inside a single deck today; long term we may want a shared element pool
 - ☐ **Branching** (far future) — "skip Q2 if everyone got Q1 right". Out of scope; flagged to avoid baking incompatible assumptions
 
@@ -141,14 +141,14 @@ A two-phase round modifier that adds social voting on top of any free-form quest
 
 Status:
 - ✅ Modifier flag `bestAnswerMode: boolean` + `bestAnswerBonus: int` modeled on every non-Slide element kind (default `false` / `0` on the `DeckElement` interface; concrete kinds override via their record components)
-- ✅ `AudienceSubmission` + `BestAnswerVote` collections + repositories shipped (reserved for the Q&A moderation flow; the Best Answer round currently keeps submissions on `PlayerAnswer.submissionId` and votes on `ShowcasePlayer.votes` so the round's state travels with the showcase document)
-- ✅ `ShowcasePhase` enum (`SUBMIT | VOTE | REVEAL`) modeled on the showcase
-- ✅ **Phase machine runtime** — `ShowcaseService.completeRound` dispatches on `element.bestAnswerMode()`. Best-answer rounds:
+- ✅ `AudienceSubmission` + `BestAnswerVote` collections + repositories shipped (reserved for the Q&A moderation flow; the Best Answer round currently keeps submissions on `PlayerAnswer.submissionId` and votes on `InteractiveSessionPlayer.votes` so the round's state travels with the interactive session document)
+- ✅ `InteractiveSessionPhase` enum (`SUBMIT | VOTE | REVEAL`) modeled on the interactive session
+- ✅ **Phase machine runtime** — `InteractiveSessionService.completeRound` dispatches on `element.bestAnswerMode()`. Best-answer rounds:
   - SUBMIT — every submitted `PlayerAnswer` gets a server-generated `submissionId`; timed-out players have none and are not vote-eligible
-  - VOTE — `startVotePhase` broadcasts anonymized `{submissionId, payload}` list on `/topic/showcase/{code}/votePhase`; vote timer mirrors the SUBMIT duration
+  - VOTE — `startVotePhase` broadcasts anonymized `{submissionId, payload}` list on `/topic/interactive-session/{code}/votePhase`; vote timer mirrors the SUBMIT duration
   - REVEAL — `completeVotePhase` tallies, awards `bestAnswerBonus` to winner(s) (ties → all tied players get the bonus), broadcasts the standard `RoundResultMessage` with an attached `BestAnswerOutcome { tallies, winnerUserIds, bonusAwarded }`
   - Edge cases: zero vote-eligible submissions skips VOTE; zero votes cast → empty `winnerUserIds`, no bonus
-- ✅ Wire protocol: client sends `/app/showcase/{code}/vote { elementId, submissionId }`; server broadcasts on `/topic/showcase/{code}/voted` (progress) and `/votePhase` (anonymized submissions); REVEAL rides the existing `/roundResult` channel
+- ✅ Wire protocol: client sends `/app/interactive-session/{code}/vote { elementId, submissionId }`; server broadcasts on `/topic/interactive-session/{code}/voted` (progress) and `/votePhase` (anonymized submissions); REVEAL rides the existing `/roundResult` channel
 - ✅ Tests cover SUBMIT → VOTE transition, vote tally + bonus award, and stale-vote rejection
 - ✅ Frontend voting UI — `VotePanel` renders during VOTE phase (anonymized picker with locked-in indicator + voter progress + timer); `RoundResult` extended with `BestAnswerReveal` that ranks tallies, crowns the winner(s), and surfaces the bonus. State lives in `gameSlice` (`phase`, `voteSubmissions`, `myVote`, `votedThisRound`, `votePhaseStartedAt`). PlayPage swaps `ElementRenderer` for `VotePanel` when `phase === "VOTE"` and routes ScoreBoard's progress indicator to the right channel.
 - ☐ Q&A moderation flow (Slido-style host pinning) — separate from Best Answer; reuses `AudienceSubmission` collection
@@ -162,28 +162,28 @@ Backgrounds cascade: **element override → deck default → host's active theme
 - ☐ Audio clip — new `audioUrl` field; play during the question
 - ☐ Per-element `backgroundImageUrl` override
 - ☐ Per-deck `backgroundImageUrl` default
-- ☐ Theme cascade — `Showcase` picks up the host's active theme (`User.activeThemeId`) and broadcasts it so all clients render with the same colors / background
+- ☐ Theme cascade — `InteractiveSession` picks up the host's active theme (`User.activeThemeId`) and broadcasts it so all clients render with the same colors / background
 - ☐ Lorem Picsum placeholder when nothing else is set
 - ☐ `mediaCaption / altText` for accessibility
 
-## 4. Per-showcase settings
+## 4. Per-interactive session settings
 
-Backend: `backend/.../model/ShowcaseSettings.java`. Frontend exposure: `CreateGamePage.tsx`'s "More options" disclosure.
+Backend: `backend/.../model/InteractiveSessionSettings.java`. Frontend exposure: `CreateGamePage.tsx`'s "More options" disclosure.
 
-All settings live in `ShowcaseSettings.java` and are surfaced in the Custom-mode disclosure.
+All settings live in `InteractiveSessionSettings.java` and are surfaced in the Custom-mode disclosure.
 
 - ✅ Total rounds — `totalRounds`
 - ✅ Time per question — `timePerQuestion` (0 = unlimited; replaces the old `noTimer` flag, which has been removed)
 - ✅ Speed bonus — `speedBonus` (disabled in the UI when `timePerQuestion === 0`)
 - ✅ Per-element point value — `pointValue` (on every scored element kind)
-- ✅ Per-element time limit — `displaySeconds` (always overrides the showcase `timePerQuestion`)
+- ✅ Per-element time limit — `displaySeconds` (always overrides the interactive session `timePerQuestion`)
 - ✅ Game mode (simultaneous / turn-based) — `gameMode`
 - ✅ Allow guests — `allowGuests`
 - ✅ Max players — `maxPlayers`
 - ✅ Allow late join — `allowLateJoin`
 - ✅ Hide scores during play — `showScoresImmediately`
 - ✅ Scoring preset — `scoringEnabled` (plumbing only — Game preset sets true; Pulse will set false)
-- ✅ Shuffle MCQ answer order — frontend-only concern now; the deck editor owns a shuffle / reorder button (the server-side `shuffleMcqOptions` setting was dropped during the polymorphic rework to keep showcase state cleaner)
+- ✅ Shuffle MCQ answer order — frontend-only concern now; the deck editor owns a shuffle / reorder button (the server-side `shuffleMcqOptions` setting was dropped during the polymorphic rework to keep interactive session state cleaner)
 - ☐ Reveal correct answer privately as soon as a player submits
 - ☐ Bonus points for correct-guess in Dixit variant
 
@@ -195,13 +195,13 @@ Role-aware control panel + live player list.
 
 - ✅ **Player view**: leave (`sendLeave`), self-boot detection navigates them home
 - ☐ **Player view**: mute sound (sound system itself not yet implemented)
-- ✅ **Host view**: next round (turn-based, existing), end showcase early (`sendEndShowcase`), boot a player (`sendBoot`)
+- ✅ **Host view**: next round (turn-based, existing), end interactive session early (`sendEndInteractiveSession`), boot a player (`sendBoot`)
 
 **Player list (live)**
 
 - ✅ Lobby player list updates over WebSocket — `frontend/src/components/Games/Lobby/Lobby.tsx`
 - ✅ ScoreBoard during play — `frontend/src/components/Games/ScoreBoard/ScoreBoard.tsx`
-- ✅ Per-player "answered ✓ / still thinking" indicator — `/topic/showcase/{code}/answered` broadcast piped into `game.answeredThisRound`
+- ✅ Per-player "answered ✓ / still thinking" indicator — `/topic/interactive-session/{code}/answered` broadcast piped into `game.answeredThisRound`
 - ✅ Host action to boot a player — Lobby + ScoreBoard buttons; server enforces host-only
 - ✅ Disconnected indicator — `PresenceService` tracks STOMP sessions; `/topic/presence` broadcasts on transitions; ScoreBoard + Lobby dim disconnected players with an "offline" badge. Initial snapshot on (re)connect is a known v1 limitation — a user offline before you joined will appear online until they reconnect.
 - ☐ Idle indicator (still connected but inactive) — separate from disconnected
@@ -214,13 +214,13 @@ Role-aware control panel + live player list.
 
 **Reconnect**
 
-- ☐ Clean rehydration of showcase state after a STOMP reconnect
+- ☐ Clean rehydration of interactive session state after a STOMP reconnect
 
-## 6. Round-end & post-showcase data view
+## 6. Round-end & post-interactive-session data view
 
 - ✅ Round result overlay reveals correct answer + per-player outcome — `frontend/src/components/Games/RoundResult/RoundResult.tsx`
 - ✅ Game-over screen shows final placements — `frontend/src/components/Games/GameOver/GameOver.tsx`
-- ✅ **Post-showcase review mode** — `GET /api/showcases/{roomCode}/review` returns per-round aggregates; `ReviewPanel.tsx` paginates through each round
+- ✅ **Post-interactive session review mode** — `GET /api/interactive-sessions/{roomCode}/review` returns per-round aggregates; `ReviewPanel.tsx` paginates through each round
   - ✅ bar chart for MCQ option counts — `components/Common/Charts/BarChart/`
   - ✅ frequency list for TEXT_INPUT submissions (placeholder for future word cloud) — `components/Common/Charts/FrequencyList/`
   - ☐ histogram for guess-the-number (when that type ships)
@@ -233,17 +233,17 @@ Role-aware control panel + live player list.
 
 ## 7. Content authoring (My Decks)
 
-> The deck editor is being **rebuilt** against the polymorphic `DeckElement` model. `DeckEditorPage.tsx` is currently a placeholder stub; the new authoring surface (`CreateDashboard` under `/decks/$deckId/view`) is in flight. Backend element CRUD (`DeckService.addElement / updateElement / deleteElement / moveElement`) is already in place and operates on `Deck.elements` directly.
+> The deck editor is being **rebuilt** against the polymorphic `DeckElement` model. `DeckEditorPage.tsx` is currently a placeholder stub; the new authoring surface (`DeckEditor` under `/decks/$deckId/view`) is in flight. Backend element CRUD (`DeckService.addElement / updateElement / deleteElement / moveElement`) is already in place and operates on `Deck.elements` directly.
 
 - ✅ Create / edit / delete user-owned decks — `frontend/src/pages/MyDecksPage/`
 - ✅ List view shows owned + system decks — `MyDecksPage.tsx`
 - ✅ Immediate refresh after creating a deck (RTK `refetchOnMountOrArgChange`)
 - ✅ Backend element CRUD endpoints (add / update / delete / move within `Deck.elements`)
-- 🚧 Editor dashboard — `CreateDashboard` scaffold landed under `/decks/$deckId/view`; per-kind forms still being authored
+- 🚧 Editor dashboard — `DeckEditor` scaffold landed under `/decks/$deckId/view`; per-kind forms still being authored
 - ☐ **Element ordering** — drag-to-reorder using `DeckService.moveElement`
 - ☐ **Slide authoring** — slide form (title + body + media + optional `hostNotes`) and `slideKind` picker
 - ☐ **Section element** — a non-rendering organizational marker in the editor tree; groups elements for the author's clarity. No mid-run rendering unless followed by an explicit transition slide.
-- ☐ **Element validation / draft state** — incomplete elements can't be included in a playable showcase; "ready" indicator in the editor
+- ☐ **Element validation / draft state** — incomplete elements can't be included in a playable interactive session; "ready" indicator in the editor
 - ☐ **Type selector for the 9 element kinds** — each opens its own field set
 - ☐ Image upload per question (for IMAGE_CHOICE + as decoration)
 - ☐ YouTube URL + audio-clip attachment per question
@@ -289,9 +289,9 @@ Spec: same authoring + runtime as a Game, but scoring off and focus on data trac
 
 - ✅ All new components registered in `frontend/src/pages/DesignSystemPage/DesignSystemPage.tsx`
 - ✅ Design tokens enforced (no hardcoded colors / spacing)
-- ✅ Backend tests cover polymorphic element flow — `ShowcaseServiceTest` (16) exercises MCQ + TEXT + NUMBER scoring, redaction, per-element `displaySeconds` precedence, and timeout handling; 49 backend tests pass
+- ✅ Backend tests cover polymorphic element flow — `InteractiveSessionServiceTest` (16) exercises MCQ + TEXT + NUMBER scoring, redaction, per-element `displaySeconds` precedence, and timeout handling; 49 backend tests pass
 - ☐ Tests for the new editor (waiting on the rebuilt editor surface)
-- ☐ E2E happy-path: create deck → start showcase → answer round → see result → finish
+- ☐ E2E happy-path: create deck → start interactive session → answer round → see result → finish
 
 ---
 
@@ -299,15 +299,15 @@ Spec: same authoring + runtime as a Game, but scoring off and focus on data trac
 
 - Use existing components first; only build new ones when reuse would distort.
 - Every new component must render in the design-system page.
-- Quick-start beats configurability — defaults must be sensible enough that the user can ship a showcase in one click. Customization is discoverable, not mandatory.
-- Per-element settings live on the `DeckElement` record. Per-showcase settings live on `Showcase.settings`.
-- Games and Polls share authoring, gameplay, and the review surface. Only scoring + leaderboard differ, and that difference is a single `scoringEnabled` flag on the showcase.
+- Quick-start beats configurability — defaults must be sensible enough that the user can ship an interactive session in one click. Customization is discoverable, not mandatory.
+- Per-element settings live on the `DeckElement` record. Per-interactive session settings live on `InteractiveSession.settings`.
+- Games and Polls share authoring, gameplay, and the review surface. Only scoring + leaderboard differ, and that difference is a single `scoringEnabled` flag on the interactive session.
 
 ### Specific architectural conventions
 
 - **Background image cascade**: element → deck → host's theme → Lorem Picsum placeholder. Every renderer respects this order so authors can override progressively without losing the fallback.
-- **Scoring opt-out is per-element**: a Game-preset showcase can still contain non-scored elements (Q&A, icebreakers). `DeckElement.scoringEnabledOverride` (when added) always wins over `Showcase.settings.scoringEnabled`.
-- **Host-only payloads**: speaker notes (`hostNotes`) and the correct-answer preview are sent only to the host's principal queue, never on the public `/topic/showcase/{code}/round` broadcast. Mirror the per-user-error queue pattern.
+- **Scoring opt-out is per-element**: a Game-preset interactive session can still contain non-scored elements (Q&A, icebreakers). `DeckElement.scoringEnabledOverride` (when added) always wins over `InteractiveSession.settings.scoringEnabled`.
+- **Host-only payloads**: speaker notes (`hostNotes`) and the correct-answer preview are sent only to the host's principal queue, never on the public `/topic/interactive-session/{code}/round` broadcast. Mirror the per-user-error queue pattern.
 - **Coordinate spaces are normalized**: pin-on-image uses 0–1 normalized coordinates so the question works at any rendered scale. Pin-on-map uses lat/lng + km tolerance.
 - **Polymorphic answer payloads**: every submission is a sealed `AnswerPayload`. New element kinds add a new payload record alongside their scorer/redactor case rather than overloading existing ones.
 - **Slides participate in deck order but not in scoring or round-result aggregation**: the server already enforces this; new types should follow the same "element is in the timeline; not all elements are scored" pattern.

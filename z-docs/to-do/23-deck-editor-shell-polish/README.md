@@ -6,9 +6,9 @@
 
 ## Scope
 
-The deck editor (`/decks/$deckId/view`) renders today through `frontend/src/components/CreateDashboard/CreateDashboard.tsx`. Three pieces of its shell are stubs or missing:
+The deck editor (`/decks/$deckId/view`) renders today through `frontend/src/components/DeckEditor/DeckEditor.tsx`. Three pieces of its shell are stubs or missing:
 
-1. **Editor navbar** — has Preview and Start (showcase) buttons, but both are `console.log` placeholders. Wire them up.
+1. **Editor navbar** — has Preview and Start (interactive session) buttons, but both are `console.log` placeholders. Wire them up.
 2. **Left sidebar (new-deck flow)** — the slide rail is empty until the user adds an element. Render a "first slide" skeleton so the new-deck canvas isn't a blank screen.
 3. **Right sidebar** — currently uses a top-tabs IA (`RightSidebarContent.tsx` flips between `EditSlidePanel`, `ThemePanel`, `DeckCategorizePanel`, `DeckReviewsPanel`, `DeckDiscussionPanel`). The product target is a **vertical icon rail** along the far-right edge with each icon opening a **drawer to its left**. Two of the four target drawers don't exist yet (Participant settings, Sharing preferences).
 
@@ -16,20 +16,20 @@ Chunk 21 modifies the *content* inside `EditSlidePanel` / `DeckCategorizePanel` 
 
 ## Part A — Editor navbar: Preview + Start
 
-**Today** (`CreateDashboard.tsx` ~line 119, 130): both buttons call `console.log("preview deck")` / `console.log("start showcase")`.
+**Today** (`DeckEditor.tsx` ~line 119, 130): both buttons call `console.log("preview deck")` / `console.log("start interactive session")`.
 
 ### A.1 — Preview
 
-- Opens a full-screen modal (use the existing `useFullScreen()` + `Modal` patterns) rendering the deck as a participant would see it, **without** writes back to the server (this is read-only preview, not a live showcase).
+- Opens a full-screen modal (use the existing `useFullScreen()` + `Modal` patterns) rendering the deck as a participant would see it, **without** writes back to the server (this is read-only preview, not a live interactive session).
 - Internally reuse `frontend/src/pages/GamePage/PlayPage.tsx` element renderers in a "preview mode" prop that disables network calls.
 - The preview pulls live state from the `getDeck` cache — no extra fetch.
 - Keyboard: `Esc` exits (the `LayoutProvider` global ESC already does this); ← / → step through slides.
 - Add a top-bar in the preview with the deck title and a slide counter ("Slide 3 / 12").
 
-### A.2 — Start (showcase)
+### A.2 — Start (interactive session)
 
-- Opens the "Create showcase" flow. There is already a `useCreateShowcaseMutation` and a `/showcase/$showcaseId/host` route — wire the button to mint a new showcase, navigate to it, and let the existing lobby take over.
-- If the deck has no elements, show a `Toast` ("Add at least one slide before starting a showcase") and don't navigate.
+- Opens the "Create interactive session" flow. There is already a `useCreateInteractiveSessionMutation` and a `/interactive session/$interactiveSessionId/host` route — wire the button to mint a new interactive session, navigate to it, and let the existing lobby take over.
+- If the deck has no elements, show a `Toast` ("Add at least one slide before starting an interactive session") and don't navigate.
 - Show a loading state on the button while the mutation is in flight (existing `Btn` `loading` prop).
 
 ### A.3 — Tests
@@ -74,7 +74,7 @@ The rail is always visible. Clicking an icon opens its drawer to the left of the
 
 ### C.1 — New shell component
 
-- `frontend/src/components/CreateDashboard/RightSidebar/RightSidebarRail.tsx` — the vertical icon column. ARIA: `nav aria-label="Editor panels"`, each icon is a `<button aria-pressed={...}>` with a `Tooltip`.
+- `frontend/src/components/DeckEditor/RightSidebar/RightSidebarRail.tsx` — the vertical icon column. ARIA: `nav aria-label="Editor panels"`, each icon is a `<button aria-pressed={...}>` with a `Tooltip`.
 - `RightSidebarDrawer.tsx` — the slide-out container that hosts the active panel. Animates in/out (CSS transform; reduced-motion-friendly).
 - `RightSidebarContent.tsx` becomes a thin orchestrator: tracks `openPanelId`, renders `<Rail />` + `<Drawer panelId={openPanelId} />`.
 - Keep the existing module-CSS approach (`RightSidebarContent.module.css`).
@@ -129,7 +129,7 @@ Map the existing panels to the new rail entries:
 
 - [ ] Preview button opens a full-screen read-only preview modal
 - [ ] Preview supports arrow-key slide navigation + Esc close
-- [ ] Start button creates a showcase and navigates to the host route
+- [ ] Start button creates an interactive session and navigates to the host route
 - [ ] Start button disabled (or Toast on click) when deck has no elements
 - [ ] Button-level tests for both buttons
 

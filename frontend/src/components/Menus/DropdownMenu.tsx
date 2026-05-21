@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactElement,
   type ReactNode,
 } from "react";
@@ -84,21 +85,24 @@ const DropdownMenu = ({
     };
   }, []);
 
-  // In cursor mode the panel is fixed-positioned at the click point; the
-  // `position` prop names which corner of the panel sits at the cursor.
-  const cursorStyle: React.CSSProperties | undefined = cursor
-    ? {
-        position: "fixed",
-        top: position.startsWith("top") ? cursor.y : undefined,
-        bottom: position.startsWith("bottom")
-          ? window.innerHeight - cursor.y
-          : undefined,
-        left: position.endsWith("left") ? cursor.x : undefined,
-        right: position.endsWith("right")
-          ? window.innerWidth - cursor.x
-          : undefined,
-      }
+  // In cursor mode the panel is fixed-positioned at the click point. Layout
+  // decisions (position: fixed, which corner attaches where) live in the CSS
+  // module; we only pass the click coordinates through as CSS custom
+  // properties so the structural rules can consume them.
+  const cursorStyle: CSSProperties | undefined = cursor
+    ? ({
+        "--cursor-x": `${String(cursor.x)}px`,
+        "--cursor-y": `${String(cursor.y)}px`,
+      } as CSSProperties)
     : undefined;
+
+  const panelClassName = [
+    styles.panel,
+    cursor && styles.panelAtCursor,
+    positionClassMap[position],
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div
@@ -107,13 +111,7 @@ const DropdownMenu = ({
       {trigger(toggle)}
       {open && (
         <DropdownMenuContext value={closeMenu}>
-          <div
-            className={
-              cursor
-                ? styles.panel
-                : [styles.panel, positionClassMap[position]].join(" ")
-            }
-            style={cursorStyle}>
+          <div className={panelClassName} style={cursorStyle}>
             {children}
           </div>
         </DropdownMenuContext>

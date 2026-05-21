@@ -7,13 +7,14 @@
 // Heavier management (rename / re-tag / delete) lives on the Gallery tab of
 // the Account page so this surface stays a quick browse-and-pick.
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useListMyOrgsQuery, type Image } from "@/store/BrainFlexApi";
 import {
-  useListGalleryImagesQuery,
-  useUploadGalleryImageMutation,
   type GalleryImageResponse,
-} from "@/store/galleryApi";
+  type Image,
+  useListImagesQuery,
+  useUploadImageMutation,
+} from "@/store/BrainFlexApi";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUserOrgs } from "@/hooks/useCurrentUserOrgs";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
@@ -37,12 +38,9 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
   const userState = useCurrentUser();
   const ownerId =
     userState.state === "registered" ? (userState.user.id ?? null) : null;
-  const { data: orgs = [] } = useListMyOrgsQuery(undefined, {
-    skip: userState.state !== "registered",
-  });
-  const { data: images = [], isLoading } = useListGalleryImagesQuery();
-  const [uploadImage, { isLoading: isUploading }] =
-    useUploadGalleryImageMutation();
+  const { data: orgs = [] } = useCurrentUserOrgs();
+  const { data: images = [], isLoading } = useListImagesQuery();
+  const [uploadImage, { isLoading: isUploading }] = useUploadImageMutation();
 
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState<string>(ALL_TAGS_KEY);
@@ -59,7 +57,7 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
   const allTags = useMemo(() => {
     const set = new Set<string>();
     images.forEach((img) => {
-      img.tags.forEach((t) => set.add(t));
+      (img.tags ?? []).forEach((t) => set.add(t));
     });
     return Array.from(set).sort();
   }, [images]);
@@ -67,10 +65,10 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
   const filteredImages = useMemo(() => {
     const q = search.trim().toLowerCase();
     return images.filter((img) => {
-      if (activeTag !== ALL_TAGS_KEY && !img.tags.includes(activeTag))
-        return false;
+      const tags = img.tags ?? [];
+      if (activeTag !== ALL_TAGS_KEY && !tags.includes(activeTag)) return false;
       if (q) {
-        const haystack = `${img.name} ${img.tags.join(" ")}`.toLowerCase();
+        const haystack = `${img.name ?? ""} ${tags.join(" ")}`.toLowerCase();
         if (!haystack.includes(q)) return false;
       }
       return true;
@@ -103,15 +101,24 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
       setUploadError("Choose an image to upload.");
       return;
     }
+    // The generated `uploadImage` mutation types `body` as `{ image: Blob }` and
+    // sends `name`/`tags`/`organizationId` as URL query params. Spring's
+    // @RequestParam picks the multipart part for the `MultipartFile` and the
+    // string params from the query string, so a FormData body with just `image`
+    // is what the wire actually needs — the cast bridges the codegen shape.
     const formData = new FormData();
     formData.append("image", uploadFile);
-    if (uploadName.trim()) formData.append("name", uploadName.trim());
-    if (uploadTags.trim()) formData.append("tags", uploadTags.trim());
-    if (uploadOrgId) formData.append("organizationId", uploadOrgId);
+    const trimmedName = uploadName.trim();
+    const trimmedTags = uploadTags.trim();
 
     setUploadError(null);
     try {
-      const created = await uploadImage({ body: formData }).unwrap();
+      const created = await uploadImage({
+        name: trimmedName || undefined,
+        tags: trimmedTags || undefined,
+        organizationId: uploadOrgId || undefined,
+        body: formData as unknown as { image: Blob },
+      }).unwrap();
       // Reset the form for the next upload, return to browse mode, and pick
       // the newly uploaded image immediately so the author doesn't have to
       // hunt for it in the grid.
@@ -135,6 +142,8 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
 
   const renderTile = (img: GalleryImageResponse) => {
     const isShared = img.ownerId !== ownerId;
+    const name = img.name ?? "Untitled";
+    const tags = img.tags ?? [];
     // Picker tiles are small — SM (200px) is the right tier for the thumb.
     const thumb = variantFor(
       { useExternalImg: false, internalImgId: img.id, variants: img.variants },
@@ -151,16 +160,16 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
           }
         }}>
         {thumb?.url ? (
-          <img src={thumb.url} alt={img.name} className={styles.thumb} />
+          <img src={thumb.url} alt={name} className={styles.thumb} />
         ) : (
           <div className={styles.thumb} aria-hidden='true' />
         )}
-        <span className={styles.tileName} title={img.name}>
-          {img.name}
+        <span className={styles.tileName} title={name}>
+          {name}
         </span>
         <span className={styles.tileMeta}>
           {isShared && <span className={styles.tileBadge}>Org</span>}
-          {img.tags.slice(0, 2).map((t) => (
+          {tags.slice(0, 2).map((t) => (
             <span key={t} className={styles.tileBadge}>
               {t}
             </span>
@@ -184,6 +193,7 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
             <Input
               type='text'
               fullWidth
+              ariaLabel='Search gallery by name or tag'
               placeholder='Search by name or tag…'
               value={search}
               onChange={(e) => {
@@ -205,6 +215,7 @@ const GalleryPicker = ({ onPick, onClose, initialUrl }: GalleryPickerProps) => {
             <Input
               type='text'
               fullWidth
+              ariaLabel='Image URL'
               placeholder='Or paste an image URL'
               value={pasteUrl}
               onChange={(e) => {

@@ -9,13 +9,12 @@ package cephadex.brainflex.dto;
 import java.time.LocalDateTime;
 
 import cephadex.brainflex.model.DeckRating;
+import cephadex.brainflex.model.UserSnapshot;
 
 public record DeckRatingDTO(
         String id,
         String deckId,
-        String userId,
-        String userName,
-        String userPictureUrl,
+        UserSnapshot user,
         int stars,
         String review,
         LocalDateTime createdAt,
@@ -25,9 +24,7 @@ public record DeckRatingDTO(
         return new DeckRatingDTO(
                 rating.getId(),
                 rating.getDeckId(),
-                rating.getUserId(),
-                userName,
-                pictureUrl,
+                UserSnapshot.of(rating.getUserId(), userName, pictureUrl),
                 rating.getStars(),
                 rating.getReview(),
                 rating.getCreatedAt(),

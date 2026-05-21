@@ -22,6 +22,9 @@ import {
   chatMessageReceived,
   reactionReceived,
   teamUpdateReceived,
+  sessionSummaryReceived,
+  responsesRevealed,
+  freezeStateChanged,
   type RoundStartPayload,
   type RoundResultPayload,
   type SessionEndedPayload,
@@ -31,6 +34,8 @@ import {
   type WordCloudUpdatePayload,
   type ReactionPayload,
   type TeamUpdatePayload,
+  type SessionSummaryPayload,
+  type ResponsesRevealedPayload,
 } from "../store/interactiveSessionSlice";
 import type {
   InteractiveSessionDto,
@@ -145,6 +150,31 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
             );
           },
         );
+        // Chunk 24 — PRESENTATION end-of-session aggregation. Mutually
+        // exclusive with /ended on the wire: subscribing to both is safe
+        // because the server only emits one per session based on the frozen
+        // SessionFormat.
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/summary`,
+          (msg) => {
+            dispatch(
+              sessionSummaryReceived(
+                JSON.parse(msg.body) as SessionSummaryPayload,
+              ),
+            );
+          },
+        );
+        // Chunk 24 — host clicked Reveal on an ON_CLICK round. One-shot per
+        // element per session; the slice keeps the elementId so the player
+        // and host UIs flip from "waiting" to "showing responses."
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/responsesRevealed`,
+          (msg) => {
+            dispatch(
+              responsesRevealed(JSON.parse(msg.body) as ResponsesRevealedPayload),
+            );
+          },
+        );
         client.subscribe(`/topic/presence`, (msg) => {
           dispatch(presenceUpdated(JSON.parse(msg.body) as PresencePayload));
         });
@@ -222,5 +252,37 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
     sendEndInteractiveSession: useCallback(() => {
       send(`/app/interactive-session/${roomCode}/end`);
     }, [roomCode, send]),
+
+    /**
+     * Chunk 24 — host manually surfaces the response distribution for the
+     * current round when `showResponses` resolves to ON_CLICK. Server is
+     * idempotent: only the first call per element per session actually
+     * broadcasts. Wire-up also flips the slice's revealedElementIds locally
+     * so the host's own button can disable immediately without a round-trip.
+     */
+    sendRevealNow: useCallback(
+      (elementId: string) => {
+        send(`/app/interactive-session/${roomCode}/reveal`, { elementId });
+        dispatch(responsesRevealed({ round: 0, elementId }));
+      },
+      [roomCode, send, dispatch],
+    ),
+
+    /**
+     * Chunk 24 — host flips the current round's response mode. Affects only
+     * the current run; never mutates the deck. The slice's frozenElementIds
+     * is updated locally so the host's toggle reflects state immediately
+     * even before the lobby DTO rebroadcast lands.
+     */
+    sendFreezeResponses: useCallback(
+      (elementId: string, frozen: boolean) => {
+        send(`/app/interactive-session/${roomCode}/freeze`, {
+          elementId,
+          mode: frozen ? "NOT_ACCEPTING_RESPONSES" : "ACCEPTING_RESPONSES",
+        });
+        dispatch(freezeStateChanged({ elementId, frozen }));
+      },
+      [roomCode, send, dispatch],
+    ),
   };
 }

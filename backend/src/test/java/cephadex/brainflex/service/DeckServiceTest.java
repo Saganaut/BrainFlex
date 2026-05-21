@@ -44,6 +44,7 @@ class DeckServiceTest {
     @Mock private TagService tagService;
     @Mock private MongoTemplate mongoTemplate;
     @Mock private DeckCollaboratorService deckCollaboratorService;
+    @Mock private AchievementService achievementService;
 
     @InjectMocks private DeckService deckService;
 

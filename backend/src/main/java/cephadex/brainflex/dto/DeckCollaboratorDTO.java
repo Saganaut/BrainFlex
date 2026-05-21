@@ -12,30 +12,30 @@ import java.time.LocalDateTime;
 
 import cephadex.brainflex.model.DeckCollaborator;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.model.enums.CollaboratorRole;
 
 public record DeckCollaboratorDTO(
         String id,
         String deckId,
-        String userId,
         String email,
+        UserSnapshot user,
         String userName,
-        String name,
-        String pictureUrl,
         CollaboratorRole role,
         String invitedByUserId,
         LocalDateTime invitedAt,
         LocalDateTime acceptedAt) {
 
     public static DeckCollaboratorDTO of(DeckCollaborator row, User user, String pictureUrl) {
+        UserSnapshot snapshot = user == null
+                ? null
+                : UserSnapshot.of(row.getUserId(), user.getName(), pictureUrl);
         return new DeckCollaboratorDTO(
                 row.getId(),
                 row.getDeckId(),
-                row.getUserId(),
                 row.getEmail(),
+                snapshot,
                 user == null ? null : user.getUserName(),
-                user == null ? null : user.getName(),
-                pictureUrl,
                 row.getRole(),
                 row.getInvitedByUserId(),
                 row.getInvitedAt(),

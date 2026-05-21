@@ -7,7 +7,7 @@ import { join, relative, dirname, resolve } from "path";
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const DEFAULT_CONFIG = {
-  rootDoc: "README.md",
+  rootDoc: "./z-docs/README.md",
   excludeFolders: ["node_modules", ".git"],
   excludeFiles: [],
   ignoreComment: "doc-lint-ignore",

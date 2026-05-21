@@ -47,7 +47,7 @@ const TeamLeaderboard = ({
     : [...teams].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
   return (
-    <div className={styles.board}>
+    <section className={styles.board} aria-label='Teams'>
       <h3 className={styles.title}>{hideScores ? "Teams" : "Teams"}</h3>
       <ol className={styles.list}>
         {sorted.map((team, i) => {
@@ -73,7 +73,7 @@ const TeamLeaderboard = ({
           );
         })}
       </ol>
-    </div>
+    </section>
   );
 };
 

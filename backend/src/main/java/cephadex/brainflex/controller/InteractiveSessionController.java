@@ -26,11 +26,13 @@ import cephadex.brainflex.dto.InteractiveSessionDTO;
 import cephadex.brainflex.dto.InteractiveSessionReviewDTO;
 import cephadex.brainflex.dto.TeamCrudRequest;
 import cephadex.brainflex.dto.TeamMoveRequest;
+import cephadex.brainflex.dto.UpdatePlayerAvatarRequest;
 import cephadex.brainflex.model.Reaction;
 import cephadex.brainflex.model.InteractiveSessionResult;
 import cephadex.brainflex.model.InteractiveSession;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.service.InteractiveSessionService;
+import cephadex.brainflex.service.MembershipService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
 
@@ -40,10 +42,13 @@ public class InteractiveSessionController {
 
     private final InteractiveSessionService gameService;
     private final UserService userService;
+    private final MembershipService membershipService;
 
-    public InteractiveSessionController(InteractiveSessionService gameService, UserService userService) {
+    public InteractiveSessionController(InteractiveSessionService gameService, UserService userService,
+            MembershipService membershipService) {
         this.gameService = gameService;
         this.userService = userService;
+        this.membershipService = membershipService;
     }
 
     /** Create a new game session. Registered users only. */
@@ -56,6 +61,14 @@ public class InteractiveSessionController {
         User host = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
                         "You must be a registered user to create a game"));
+
+        // Chunk 20 — soft monthly quota. 0 limit means unlimited (paid tiers);
+        // the free tier sets a positive cap and the counter is bumped on
+        // game-end by GameHistoryService.recordFinish.
+        if (!membershipService.canStartInteractiveSession(host)) {
+            throw new ResponseStatusException(HttpStatus.PAYMENT_REQUIRED,
+                    "Monthly interactive session limit reached — upgrade for unlimited.");
+        }
 
         InteractiveSession session = gameService.createInteractiveSession(host, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(new InteractiveSessionDTO(session));
@@ -235,6 +248,26 @@ public class InteractiveSessionController {
             Authentication authentication) {
         User host = requireUser(authentication);
         InteractiveSession session = gameService.movePlayerToTeam(roomCode, userId, body.teamId(), host);
+        return ResponseEntity.ok(new InteractiveSessionDTO(session));
+    }
+
+    /**
+     * Chunk 13 — lobby avatar picker. Updates the caller's preset avatar (and
+     * optionally their {@code colorTag}) on the in-lobby player record. Only
+     * valid in LOBBY status; the player must already be in the session.
+     */
+    @PreAuthorize("hasAnyRole('GUEST', 'USER')")
+    @PutMapping("/{roomCode}/me/avatar")
+    public ResponseEntity<InteractiveSessionDTO> updateMyAvatar(
+            @PathVariable String roomCode,
+            @RequestBody UpdatePlayerAvatarRequest body,
+            Authentication authentication) {
+        User player = userService.resolveAnyAuthenticatedUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                        "Authentication required"));
+        InteractiveSession session = gameService.updatePlayerAvatar(roomCode, player.getId(),
+                body == null ? null : body.avatarKey(),
+                body == null ? null : body.colorTag());
         return ResponseEntity.ok(new InteractiveSessionDTO(session));
     }
 

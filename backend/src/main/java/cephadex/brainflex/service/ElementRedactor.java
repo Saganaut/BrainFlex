@@ -6,6 +6,11 @@
  *
  * The REVEAL phase broadcast uses the un-redacted element directly — by that
  * point everyone has submitted and the answer is meant to be visible.
+ *
+ * Chunk 25 — chrome is forwarded unchanged. {@code explanation} (an
+ * answer-spoiling field) lives on each question record, not on chrome, so
+ * each switch arm sets it to {@code null} alongside the kind-specific
+ * answer-key.
  */
 package cephadex.brainflex.service;
 
@@ -36,103 +41,61 @@ public final class ElementRedactor {
         return switch (element) {
             case Slide s -> s; // nothing to redact
             case McqQuestion q -> new McqQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.options(),
+                    q.id(), q.prompt(), q.options(),
                     null,        // correctOptionIds — redacted before reveal
                     q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.chrome());
             case TextQuestion q -> new TextQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(),
+                    q.id(), q.prompt(),
                     null,        // correctAnswer
                     List.of(),   // acceptedVariants
                     q.caseSensitive(),
                     q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.chrome());
             case NumberQuestion q -> new NumberQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(),
+                    q.id(), q.prompt(),
                     0.0,         // correctValue
                     0.0,         // tolerance
                     q.unitLabel(), q.decimalPlaces(),
                     q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.minValue(), q.maxValue(), q.allowNegative(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.chrome());
             case RankingQuestion q -> new RankingQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.items(),
+                    q.id(), q.prompt(), q.items(),
                     List.of(),   // correctOrder
                     q.scoring(),
                     q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
                     q.shuffleItemsForPresentation(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.chrome());
             case ScalesQuestion q -> new ScalesQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.statements(),
+                    q.id(), q.prompt(), q.statements(),
                     q.scaleMin(), q.scaleMax(), q.minLabel(), q.maxLabel(),
                     List.of(),   // correctRatings
                     q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.chrome());
             case QAndAQuestion q -> q; // no answer key to hide
             case GridQuestion q -> new GridQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.rows(), q.cols(), q.cells(),
+                    q.id(), q.prompt(), q.rows(), q.cols(), q.cells(),
                     java.util.Set.of(),  // correctCellIndexes
                     q.multipleCorrect(),
                     q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.chrome());
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.targetImage(),
+                    q.id(), q.prompt(), q.targetImage(),
                     0.0,         // correctX
                     0.0,         // correctY
                     q.tolerance(), q.scoring(),
                     q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                     null,        // explanation
-                    q.displaySeconds(), q.speakerNotes(), q.background(),
-                    q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.chrome());
             case WordCloudQuestion q -> q; // survey: no answer key to hide
             case AllocationQuestion q -> q; // survey: no answer key to hide
             case MatchingQuestion q -> redactMatching(q);
@@ -156,16 +119,10 @@ public final class ElementRedactor {
             Collections.shuffle(shuffled);
         }
         return new MatchingQuestion(
-                q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                q.prompt(), shuffled, q.scoring(),
+                q.id(), q.prompt(), shuffled, q.scoring(),
                 q.pointValue(), q.difficulty(),
-                q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
                 null,        // explanation
-                q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                q.chrome());
     }
 
     /**

@@ -10,10 +10,10 @@ interface LeftSidebarProps {
 const LeftSidebar = ({ children, className }: LeftSidebarProps) => {
   const { isFullScreen } = useFullScreen();
   return (
-    <div
+    <aside
       className={`${styles.leftSidebar} ${isFullScreen ? styles.isCollapsed : " "} ${className}`}>
       {children}
-    </div>
+    </aside>
   );
 };
 

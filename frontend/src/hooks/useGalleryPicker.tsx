@@ -18,9 +18,9 @@
 //
 // The picker self-closes after onPick is invoked.
 import { useCallback } from "react";
-import { useModal } from "@/context/useModal";
 import { GalleryPicker } from "@/components/Common/GalleryPicker/GalleryPicker";
 import type { Image } from "@/store/BrainFlexApi";
+import { usePickerModal } from "./usePickerModal";
 
 type PickHandler = (image: Image) => void;
 
@@ -32,25 +32,25 @@ const useGalleryPicker = (): ((
   onPick: PickHandler,
   options?: OpenPickerOptions,
 ) => void) => {
-  const { openModal, closeModal } = useModal();
+  const openPicker = usePickerModal();
 
   return useCallback(
     (onPick: PickHandler, options?: OpenPickerOptions) => {
-      openModal({
+      openPicker({
         title: "Choose an image",
-        content: (
+        content: (autoClose) => (
           <GalleryPicker
             initialUrl={options?.initialUrl}
             onPick={(image) => {
               onPick(image);
-              closeModal();
+              autoClose();
             }}
-            onClose={closeModal}
+            onClose={autoClose}
           />
         ),
       });
     },
-    [openModal, closeModal],
+    [openPicker],
   );
 };
 

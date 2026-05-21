@@ -11,6 +11,7 @@ import { TextOptionsSection } from "./EditSlideSections/TextOptionsSection";
 import { NumberOptionsSection } from "./EditSlideSections/NumberOptionsSection";
 import { RankingOptionsSection } from "./EditSlideSections/RankingOptionsSection";
 import { QAndAOptionsSection } from "./EditSlideSections/QAndAOptionsSection";
+import { BehaviorSection } from "./EditSlideSections/BehaviorSection";
 import { CommonOptionsSection } from "./EditSlideSections/CommonOptionsSection";
 import { ProvenanceFooter } from "./EditSlideSections/ProvenanceFooter";
 import styles from "./EditSlidePanel.module.css";
@@ -60,13 +61,18 @@ const EditSlidePanel = () => {
   return (
     <div className={styles.panel}>
       <PerKindSection kind={element.kind} />
+      {/* Chunk 24 — shared Behavior section sits between the per-kind
+          options and the universal Common section. Currently hosts the
+          promoted `showResponses` dropdown; future runtime cascade knobs
+          (scoringEnabledOverride, etc.) land here too. */}
+      <BehaviorSection />
       <CommonOptionsSection />
       <ProvenanceFooter
-        createdByUserId={element.createdByUserId}
-        lastEditedByUserId={element.lastEditedByUserId}
-        createdAt={element.createdAt}
-        updatedAt={element.updatedAt}
-        version={element.version}
+        createdByUserId={element.chrome?.createdByUserId}
+        lastEditedByUserId={element.chrome?.lastEditedByUserId}
+        createdAt={element.chrome?.createdAt}
+        updatedAt={element.chrome?.updatedAt}
+        version={element.chrome?.version}
       />
     </div>
   );

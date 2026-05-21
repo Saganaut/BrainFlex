@@ -39,7 +39,8 @@ import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.PlayerPlacement;
 import cephadex.brainflex.model.InteractiveSessionPlayer;
 import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.enums.InteractiveSessionMode;
+import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.enums.AnswerSubmissionMode;
 import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.InteractiveSessionService;
@@ -76,11 +77,10 @@ class InteractiveSessionControllerTest {
                 InteractiveSessionSettings settings = new InteractiveSessionSettings();
                 settings.setTotalRounds(10);
                 settings.setTimePerQuestion(15);
-                settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
+                settings.setAnswerSubmissionMode(AnswerSubmissionMode.SIMULTANEOUS);
 
                 InteractiveSessionPlayer hostPlayer = new InteractiveSessionPlayer();
-                hostPlayer.setUserId("user1");
-                hostPlayer.setUserName("testhost");
+                hostPlayer.setUser(UserSnapshot.of("user1", "testhost"));
 
                 lobbySession = new InteractiveSession();
                 lobbySession.setId("session1");
@@ -100,7 +100,7 @@ class InteractiveSessionControllerTest {
                 when(gameService.createInteractiveSession(any(User.class), any(CreateInteractiveSessionRequest.class)))
                                 .thenReturn(lobbySession);
 
-                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/interactive-sessions")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -113,7 +113,7 @@ class InteractiveSessionControllerTest {
         void createGame_AsUnauthenticated_ReturnsForbidden() throws Exception {
                 when(userRepository.findByGoogleId(anyString())).thenReturn(Optional.empty());
 
-                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/interactive-sessions")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -131,7 +131,7 @@ class InteractiveSessionControllerTest {
                                 })
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
-                                                new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null))))
+                                                new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null))))
                                 .andExpect(status().isForbidden());
         }
 
@@ -217,8 +217,7 @@ class InteractiveSessionControllerTest {
         @Test
         void getResults_WhenGameFinished_ReturnsResults() throws Exception {
                 PlayerPlacement p1 = new PlayerPlacement();
-                p1.setUserId("user1");
-                p1.setUserName("testhost");
+                p1.setUser(UserSnapshot.of("user1", "testhost"));
                 p1.setFinalScore(850);
                 p1.setPlacement(1);
                 p1.setCorrectAnswers(8);
@@ -234,7 +233,7 @@ class InteractiveSessionControllerTest {
 
                 mockMvc.perform(get("/api/interactive-sessions/ABCD12/results"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.placements[0].userName").value("testhost"))
+                                .andExpect(jsonPath("$.placements[0].user.name").value("testhost"))
                                 .andExpect(jsonPath("$.placements[0].finalScore").value(850));
         }
 

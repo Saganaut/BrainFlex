@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -39,13 +38,12 @@ import cephadex.brainflex.config.AdminProperties;
 import cephadex.brainflex.dto.CreateCommentRequest;
 import cephadex.brainflex.dto.CreateDeckRequest;
 import cephadex.brainflex.dto.DeckCommentDTO;
-import cephadex.brainflex.dto.DeckCommentsPage;
 import cephadex.brainflex.dto.DeckDTO;
 import cephadex.brainflex.dto.DeckExploreRequest;
-import cephadex.brainflex.dto.DeckExploreResponse;
 import cephadex.brainflex.dto.DeckFavoriteResponse;
 import cephadex.brainflex.dto.DeckRatingDTO;
 import cephadex.brainflex.dto.DeckRatingsPage;
+import cephadex.brainflex.dto.Page;
 import cephadex.brainflex.dto.RateDeckRequest;
 import cephadex.brainflex.dto.UpdateCommentRequest;
 import cephadex.brainflex.dto.UpdateDeckRequest;
@@ -64,6 +62,7 @@ import cephadex.brainflex.dto.TransferOwnershipRequest;
 import cephadex.brainflex.dto.UpdateCollaboratorRoleRequest;
 import cephadex.brainflex.model.DeckCollaborator;
 import cephadex.brainflex.service.AuthorizationService;
+import cephadex.brainflex.service.DeckAnalyticsReportService;
 import cephadex.brainflex.service.DeckAnalyticsService;
 import cephadex.brainflex.service.DeckCollaboratorService;
 import cephadex.brainflex.service.DeckCommentService;
@@ -89,6 +88,7 @@ public class DeckController {
     private final DeckCommentService deckCommentService;
     private final DeckCollaboratorService deckCollaboratorService;
     private final DeckAnalyticsService deckAnalyticsService;
+    private final DeckAnalyticsReportService deckAnalyticsReportService;
     private final AuthorizationService authorizationService;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
@@ -105,6 +105,7 @@ public class DeckController {
             DeckCommentService deckCommentService,
             DeckCollaboratorService deckCollaboratorService,
             DeckAnalyticsService deckAnalyticsService,
+            DeckAnalyticsReportService deckAnalyticsReportService,
             AuthorizationService authorizationService,
             DeckRepository deckRepository,
             UserRepository userRepository,
@@ -119,6 +120,7 @@ public class DeckController {
         this.deckCommentService = deckCommentService;
         this.deckCollaboratorService = deckCollaboratorService;
         this.deckAnalyticsService = deckAnalyticsService;
+        this.deckAnalyticsReportService = deckAnalyticsReportService;
         this.authorizationService = authorizationService;
         this.deckRepository = deckRepository;
         this.userRepository = userRepository;
@@ -142,7 +144,7 @@ public class DeckController {
      * with the rest of the deck-read surface.
      */
     @GetMapping("/explore")
-    public DeckExploreResponse exploreDecks(
+    public Page<DeckDTO> exploreDecks(
             @RequestParam(name = "tagId", required = false) String tagId,
             @RequestParam(name = "language", required = false) String language,
             @RequestParam(name = "difficulty", required = false) Difficulty difficulty,
@@ -161,7 +163,7 @@ public class DeckController {
                 .map(d -> new DeckDTO(d, favorites.contains(d.getId())))
                 .toList();
         boolean hasMore = (long) (page + 1) * size < result.totalElements();
-        return new DeckExploreResponse(items, page, size, result.totalElements(), hasMore);
+        return new Page<>(items, page, size, result.totalElements(), hasMore);
     }
 
     /**
@@ -341,17 +343,17 @@ public class DeckController {
     /**
      * Admin-only reconciliation: recompute {@code Deck.favoriteCount} from
      * the authoritative count of join rows. Useful when the denorm drifts
-     * after a manual delete or bug.
+     * after a manual delete or bug. Chunk 20 migrated this from the
+     * {@code adminProperties.isAdmin(...)} forbid-or-allow check to a
+     * declarative {@code @PreAuthorize("hasRole('ADMIN')")} gate so non-admins
+     * are rejected at the HTTP layer.
      */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/favorite/recount")
     public DeckFavoriteResponse recountFavorites(
             @PathVariable String id,
             Authentication authentication) {
         User caller = resolveUser(authentication);
-        if (!adminProperties.isAdmin(caller)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
-        }
         // Validate existence first so we don't silently zero a missing deck.
         if (!deckRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found");
@@ -426,7 +428,7 @@ public class DeckController {
         int safeSize = Math.max(1, Math.min(50, size));
         PageRequest pageRequest = PageRequest.of(
                 safePage, safeSize, Sort.by("createdAt").descending());
-        Page<DeckRating> rows = deckRatingService.listForDeck(id, pageRequest);
+        org.springframework.data.domain.Page<DeckRating> rows = deckRatingService.listForDeck(id, pageRequest);
         Map<String, User> userById = lookupUsers(rows.getContent().stream().map(DeckRating::getUserId).toList());
         List<DeckRatingDTO> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckRating row : rows.getContent()) {
@@ -446,7 +448,7 @@ public class DeckController {
 
     /** Paginated top-level comments for a deck, newest first. Public. */
     @GetMapping("/{id}/comments")
-    public DeckCommentsPage listComments(
+    public Page<DeckCommentDTO> listComments(
             @PathVariable String id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -457,7 +459,7 @@ public class DeckController {
         int safeSize = Math.max(1, Math.min(50, size));
         PageRequest pageRequest = PageRequest.of(
                 safePage, safeSize, Sort.by("createdAt").descending());
-        Page<DeckComment> rows = deckCommentService.listTopLevel(id, pageRequest);
+        org.springframework.data.domain.Page<DeckComment> rows = deckCommentService.listTopLevel(id, pageRequest);
         String callerId = caller.map(User::getId).orElse(null);
         List<DeckCommentDTO> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckComment row : rows.getContent()) {
@@ -465,12 +467,12 @@ public class DeckController {
             items.add(DeckCommentDTO.of(row, callerId, replyCount));
         }
         boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
-        return new DeckCommentsPage(items, safePage, safeSize, rows.getTotalElements(), hasMore);
+        return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);
     }
 
     /** Paginated replies to a single top-level comment, oldest first. Public. */
     @GetMapping("/{deckId}/comments/{commentId}/replies")
-    public DeckCommentsPage listReplies(
+    public Page<DeckCommentDTO> listReplies(
             @PathVariable String deckId,
             @PathVariable String commentId,
             @RequestParam(defaultValue = "0") int page,
@@ -482,14 +484,14 @@ public class DeckController {
         int safeSize = Math.max(1, Math.min(50, size));
         PageRequest pageRequest = PageRequest.of(
                 safePage, safeSize, Sort.by("createdAt").ascending());
-        Page<DeckComment> rows = deckCommentService.listReplies(deckId, commentId, pageRequest);
+        org.springframework.data.domain.Page<DeckComment> rows = deckCommentService.listReplies(deckId, commentId, pageRequest);
         String callerId = caller.map(User::getId).orElse(null);
         List<DeckCommentDTO> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckComment row : rows.getContent()) {
             items.add(DeckCommentDTO.of(row, callerId, 0L));
         }
         boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
-        return new DeckCommentsPage(items, safePage, safeSize, rows.getTotalElements(), hasMore);
+        return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -740,6 +742,35 @@ public class DeckController {
     }
 
     /**
+     * Chunk 16 — CSV export of the per-deck rollup. Same auth surface as
+     * {@code /analytics}: owner or EDITOR collaborator. Never-played decks
+     * still produce a header-only CSV so the dashboard's "Export" button
+     * always returns a valid file.
+     *
+     * Returns {@code text/csv} with a Content-Disposition attachment so
+     * browsers save it directly instead of rendering it inline. The body is
+     * built by {@link DeckAnalyticsReportService}; this method only handles
+     * auth and HTTP framing.
+     */
+    @PreAuthorize("hasRole('USER')")
+    @GetMapping(value = "/{id}/analytics/csv", produces = "text/csv;charset=UTF-8")
+    public ResponseEntity<String> getDeckAnalyticsCsv(@PathVariable String id, Authentication authentication) {
+        User caller = resolveUser(authentication);
+        Deck deck = authorizationService.requireDeckEditable(id, caller);
+        DeckAnalytics analytics = deckAnalyticsService.findByDeckId(id);
+        if (analytics == null) {
+            analytics = new DeckAnalytics();
+            analytics.setDeckId(id);
+        }
+        String body = deckAnalyticsReportService.buildCsv(deck, analytics);
+        String filename = deckAnalyticsReportService.suggestedFilename(deck);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                .header("Content-Type", "text/csv;charset=UTF-8")
+                .body(body);
+    }
+
+    /**
      * Run every mutation response through the same hydration pipeline that
      * `getDeck` uses, so the client receives presigned `imgUrl` values on
      * internal images instead of nulls. Without this the editor would have to
@@ -807,7 +838,7 @@ public class DeckController {
      */
     private int[] buildRatingDistribution(String deckId) {
         int[] buckets = new int[5];
-        Page<DeckRating> all = deckRatingService.listForDeck(
+        org.springframework.data.domain.Page<DeckRating> all = deckRatingService.listForDeck(
                 deckId, org.springframework.data.domain.Pageable.unpaged());
         for (DeckRating r : all.getContent()) {
             int stars = r.getStars();

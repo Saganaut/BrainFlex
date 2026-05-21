@@ -30,8 +30,9 @@ import {
   STROKE_THICKNESSES,
   downsampleStrokes,
   renderStrokes,
-  resolvePaletteColor,
 } from "./drawingUtils";
+import { PaletteSwatch } from "./PaletteSwatch";
+import { ThicknessOption } from "./ThicknessOption";
 import styles from "./DrawingCanvas.module.css";
 
 interface DrawingCanvasProps {
@@ -252,55 +253,35 @@ const DrawingCanvas = ({
           className={styles.palette}
           role='radiogroup'
           aria-label='Stroke color'>
-          {palette.map((swatch) => {
-            const selected = swatch === color;
-            return (
-              <button
-                key={swatch}
-                type='button'
-                className={`${styles.swatch} ${selected ? styles.swatchSelected : ""}`}
-                style={{ background: resolvePaletteColor(swatch) }}
-                role='radio'
-                aria-checked={selected}
-                aria-label={`Color ${swatch}`}
-                disabled={locked}
-                onClick={() => {
-                  setColor(swatch);
-                }}
-              />
-            );
-          })}
+          {palette.map((swatch) => (
+            <PaletteSwatch
+              key={swatch}
+              swatch={swatch}
+              selected={swatch === color}
+              disabled={locked}
+              onSelect={() => {
+                setColor(swatch);
+              }}
+            />
+          ))}
         </div>
 
         <div
           className={styles.thicknessRow}
           role='radiogroup'
           aria-label='Stroke thickness'>
-          {STROKE_THICKNESSES.map((t) => {
-            const selected = t === thickness;
-            return (
-              <button
-                key={t}
-                type='button'
-                className={`${styles.thickness} ${selected ? styles.thicknessSelected : ""}`}
-                role='radio'
-                aria-checked={selected}
-                aria-label={`Thickness ${String(t)}`}
-                disabled={locked}
-                onClick={() => {
-                  setThickness(t);
-                }}>
-                <span
-                  className={styles.thicknessDot}
-                  style={{
-                    width: `${String(Math.min(28, t / 2 + 4))}px`,
-                    height: `${String(Math.min(28, t / 2 + 4))}px`,
-                    background: resolvePaletteColor(color),
-                  }}
-                />
-              </button>
-            );
-          })}
+          {STROKE_THICKNESSES.map((t) => (
+            <ThicknessOption
+              key={t}
+              thickness={t}
+              color={color}
+              selected={t === thickness}
+              disabled={locked}
+              onSelect={() => {
+                setThickness(t);
+              }}
+            />
+          ))}
         </div>
 
         <div className={styles.actions}>

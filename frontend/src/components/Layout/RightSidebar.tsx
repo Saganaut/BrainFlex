@@ -9,10 +9,10 @@ interface RightSidebarProps {
 const RightSidebar = ({ className, children }: RightSidebarProps) => {
   const { isFullScreen } = useFullScreen();
   return (
-    <div
+    <aside
       className={`${styles.rightSidebar} ${isFullScreen ? styles.isCollapsed : " "} ${className}`}>
       {children}
-    </div>
+    </aside>
   );
 };
 

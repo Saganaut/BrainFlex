@@ -9,14 +9,26 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
 public class InteractiveSessionPlayer {
-    private String userId;
-    private String userName;
-    private String pictureUrl;
-    private boolean isGuest;
+    /** Denormalized player display snapshot — userId / name / pictureUrl /
+     *  guest. Frozen at join time so the lobby and leaderboard render
+     *  consistently even if the player's profile changes mid-game. */
+    private UserSnapshot user;
+
+    /** Convenience read access through {@link #user}. Kept Lombok-style so internal call
+     *  sites that index by user id read naturally; {@code @JsonIgnore} prevents the
+     *  delegating accessors from leaking back into the wire shape (only the nested
+     *  {@code user} snapshot is serialized). */
+    @JsonIgnore public String getUserId()      { return user == null ? null : user.userId(); }
+    @JsonIgnore public String getUserName()    { return user == null ? null : user.name(); }
+    @JsonIgnore public String getPictureUrl()  { return user == null ? null : user.pictureUrl(); }
+    @JsonIgnore public boolean isGuest()       { return user != null && user.guest(); }
+
     private int score = 0;
 
     // Spring Security principal name captured at join time so the interactiveSession

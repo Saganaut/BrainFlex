@@ -130,78 +130,8 @@
   gap: var(--space-4);
 }
 
-.card {
-  background-color: var(--bg-surface);
-  border: var(--border-size-sm) solid var(--border-default);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  transition: border-color var(--duration-fast) ease-in-out;
-
-  &:hover {
-    border-color: var(--border-focus);
-  }
-}
-
-.cardLink {
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-}
-
-.cardCover {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-}
-
-.cardBody {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-}
-
-.cardName {
-  font-size: var(--font-size-md);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.cardDesc {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-.cardMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-}
-
-.cardMetaItem {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.cardIcon {
-  width: 12px;
-  height: 12px;
-}
-
-.cardTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin-top: var(--space-1);
+.gridItem {
+  display: contents;
 }
 
 .pager {

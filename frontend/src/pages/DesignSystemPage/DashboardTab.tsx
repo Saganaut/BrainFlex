@@ -160,11 +160,13 @@ const DashboardTab = () => {
                 prompt: "Coin a new name for our Mars colony.",
                 pointValue: 0,
                 difficulty: "EASY",
-                bestAnswerMode: true,
-                bestAnswerPoints: 100,
                 caseSensitive: false,
-                displaySeconds: 30,
-                mediaPosition: "NONE",
+                chrome: {
+                  bestAnswerMode: true,
+                  bestAnswerPoints: 100,
+                  displaySeconds: 30,
+                  mediaPosition: "NONE",
+                },
               }}
               submissions={[
                 {
@@ -201,10 +203,12 @@ const DashboardTab = () => {
                 kind: "Slide",
                 id: "design-system-slide",
                 slideKind: "SECTION",
-                title: "Section 2 — Arts & History",
                 body: "Now we'll switch from geography to paintings, plays, and the past.",
-                displaySeconds: 5,
-                mediaPosition: "NONE",
+                chrome: {
+                  title: "Section 2 — Arts & History",
+                  displaySeconds: 5,
+                  mediaPosition: "NONE",
+                },
               }}
             />
           </div>

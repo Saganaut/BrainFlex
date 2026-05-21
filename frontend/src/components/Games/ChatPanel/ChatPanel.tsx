@@ -100,8 +100,10 @@ const ChatPanel = ({
     <aside
       className={`${styles.panel} ${open ? styles.open : styles.closed}`}
       aria-label='Audience chat'>
-      <button
-        type='button'
+      <Btn
+        variant='secondary'
+        fill='ghost'
+        size='sm'
         className={styles.toggleBtn}
         onClick={() => {
           setOpen((v) => !v);
@@ -111,7 +113,7 @@ const ChatPanel = ({
         <span className={styles.toggleChevron} aria-hidden='true'>
           {open ? "▾" : "▴"}
         </span>
-      </button>
+      </Btn>
       {open && (
         <>
           <ol className={styles.list}>
@@ -140,6 +142,7 @@ const ChatPanel = ({
               type='text'
               value={draft}
               maxLength={500}
+              ariaLabel='Chat message'
               placeholder='Say something…'
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setDraft(e.target.value);
@@ -187,13 +190,15 @@ const ChatRow = ({ message, isHost, isOwn, onHide }: ChatRowProps) => {
         {showOriginal ? message.body : "(hidden by host)"}
       </span>
       {isHost && !isModerated && !fromHost && message.id && (
-        <button
-          type='button'
+        <Btn
+          variant='error'
+          fill='ghost'
+          size='xs'
           className={styles.hideBtn}
           onClick={onHide}
           aria-label='Hide this message'>
           Hide
-        </button>
+        </Btn>
       )}
     </li>
   );

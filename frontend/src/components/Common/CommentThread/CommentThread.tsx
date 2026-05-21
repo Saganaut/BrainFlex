@@ -22,6 +22,7 @@ import { HandThumbUpIcon as ThumbOutline } from "@heroicons/react/24/outline";
 import { HandThumbUpIcon as ThumbSolid } from "@heroicons/react/24/solid";
 import { useListRepliesQuery, type DeckCommentDto } from "@/store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { resolveAvatarSrc } from "@/utils/avatarUrl";
 import styles from "./CommentThread.module.css";
 
 interface CommentThreadProps {
@@ -204,7 +205,7 @@ const CommentBody = ({
         {comment.authorPictureUrl != null &&
           comment.authorPictureUrl !== "" && (
             <img
-              src={comment.authorPictureUrl}
+              src={resolveAvatarSrc(comment.authorPictureUrl)}
               alt=''
               className={styles.avatar}
             />
@@ -403,6 +404,7 @@ const CommentEditor = ({
     <div className={styles.editor}>
       <textarea
         className={styles.editorInput}
+        aria-label={placeholder ?? "Comment"}
         placeholder={placeholder}
         value={value}
         onChange={(e) => {

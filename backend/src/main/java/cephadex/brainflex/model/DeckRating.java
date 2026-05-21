@@ -12,8 +12,6 @@
  */
 package cephadex.brainflex.model;
 
-import java.time.LocalDateTime;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -24,7 +22,7 @@ import lombok.Data;
 @Data
 @Document(collection = "deck_ratings")
 @CompoundIndex(name = "deck_user_unique_idx", def = "{'deckId': 1, 'userId': 1}", unique = true)
-public class DeckRating {
+public class DeckRating extends Auditable {
 
     @Id
     private String id;
@@ -40,7 +38,4 @@ public class DeckRating {
 
     /** Optional written review body. Max 2000 chars, enforced server-side. */
     private String review;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
 }

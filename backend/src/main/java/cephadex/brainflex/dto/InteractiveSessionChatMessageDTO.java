@@ -9,14 +9,12 @@ package cephadex.brainflex.dto;
 import java.time.LocalDateTime;
 
 import cephadex.brainflex.model.InteractiveSessionChatMessage;
+import cephadex.brainflex.model.UserSnapshot;
 
 public record InteractiveSessionChatMessageDTO(
         String id,
-        String authorUserId,
-        String authorName,
-        String authorPictureUrl,
+        UserSnapshot author,
         boolean fromHost,
-        boolean guest,
         String body,
         LocalDateTime sentAt,
         boolean moderated,
@@ -33,11 +31,8 @@ public record InteractiveSessionChatMessageDTO(
         boolean hideBody = row.isModerated() && !isHost;
         return new InteractiveSessionChatMessageDTO(
                 row.getId(),
-                row.getAuthorUserId(),
-                row.getAuthorName(),
-                row.getAuthorPictureUrl(),
+                row.getAuthor(),
                 row.isFromHost(),
-                row.isGuest(),
                 hideBody ? "(hidden by host)" : row.getBody(),
                 row.getSentAt(),
                 row.isModerated(),

@@ -46,9 +46,12 @@ const ElementTagsSection = () => {
   const commit = (nextTagIds: string[]) => {
     const stamped: DeckElement = {
       ...element,
-      tagIds: nextTagIds,
-      lastEditedByUserId: currentUserId,
-      version: (element.version ?? 0) + 1,
+      chrome: {
+        ...element.chrome,
+        tagIds: nextTagIds,
+        lastEditedByUserId: currentUserId,
+        version: (element.chrome?.version ?? 0) + 1,
+      },
     };
     void updateElement({
       id: deckId,
@@ -66,7 +69,7 @@ const ElementTagsSection = () => {
       <h4 className={styles.heading}>Slide tags</h4>
       <TagPicker
         creatable
-        value={element.tagIds ?? []}
+        value={element.chrome?.tagIds ?? []}
         onChange={(next) => {
           commit(next);
         }}

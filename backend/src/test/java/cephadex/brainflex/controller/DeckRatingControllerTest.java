@@ -43,6 +43,7 @@ import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.DeckComment;
 import cephadex.brainflex.model.DeckRating;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -111,7 +112,7 @@ class DeckRatingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stars").value(5))
                 .andExpect(jsonPath("$.review").value("great"))
-                .andExpect(jsonPath("$.userName").value("kevin"));
+                .andExpect(jsonPath("$.user.name").value("kevin"));
 
         verify(deckRatingService).upsert("deck-1", "user-1", 5, "great");
     }
@@ -152,7 +153,7 @@ class DeckRatingControllerTest {
         mockMvc.perform(get("/api/decks/deck-1/ratings").param("page", "0").param("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].stars").value(5))
-                .andExpect(jsonPath("$.items[0].userName").value("alice"))
+                .andExpect(jsonPath("$.items[0].user.name").value("alice"))
                 .andExpect(jsonPath("$.averageRating").value(4.2))
                 .andExpect(jsonPath("$.ratingCount").value(5))
                 .andExpect(jsonPath("$.starDistribution[4]").value(1));
@@ -187,8 +188,7 @@ class DeckRatingControllerTest {
         DeckComment row = new DeckComment();
         row.setId("comment-1");
         row.setDeckId("deck-1");
-        row.setAuthorUserId("user-1");
-        row.setAuthorName("kevin");
+        row.setAuthor(UserSnapshot.of("user-1", "kevin"));
         row.setBody("first");
         row.setUpvoterUserIds(new HashSet<>());
         when(deckCommentService.create(eq("deck-1"), eq(caller), eq("first"), eq(null)))
@@ -208,8 +208,7 @@ class DeckRatingControllerTest {
         DeckComment row = new DeckComment();
         row.setId("comment-1");
         row.setDeckId("deck-1");
-        row.setAuthorUserId("user-2");
-        row.setAuthorName("alice");
+        row.setAuthor(UserSnapshot.of("user-2", "alice"));
         row.setBody("nice deck");
         row.setUpvoterUserIds(Set.of("user-1"));
         row.setUpvotes(1);
@@ -230,7 +229,7 @@ class DeckRatingControllerTest {
         DeckComment row = new DeckComment();
         row.setId("comment-1");
         row.setDeckId("deck-1");
-        row.setAuthorUserId("user-2");
+        row.setAuthor(UserSnapshot.of("user-2", null));
         row.setBody("nice");
         row.setUpvoterUserIds(Set.of("user-1"));
         row.setUpvotes(1);

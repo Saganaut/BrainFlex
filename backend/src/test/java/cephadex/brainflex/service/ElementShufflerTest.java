@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
@@ -28,29 +29,17 @@ import cephadex.brainflex.model.enums.ResponseMode;
 
 class ElementShufflerTest {
 
-    private static final String META_USER = null;
-    private static final java.time.LocalDateTime META_TIME = null;
-    private static final List<String> META_TAGS = List.of();
-    private static final String META_CAPTION = null;
-    private static final String META_ALT = null;
-    private static final boolean META_REACTIONS = true;
-    private static final Integer META_VERSION = 1;
-
     private static McqQuestion mcq(String id, boolean shuffleOptions, int optionCount) {
         var opts = new java.util.ArrayList<McqOption>();
         for (int i = 0; i < optionCount; i++) {
             opts.add(new McqOption("opt-" + i, "Option " + i, null, null));
         }
         return new McqQuestion(
-                id, "pub", "priv", "Title", null,
+                id,
                 "Pick one", opts, List.of("opt-0"),
-                100, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 shuffleOptions, false, 0,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                TestElementChromes.scored(id, "Pick one"));
     }
 
     private static RankingQuestion ranking(String id, boolean shuffleItems, int itemCount) {
@@ -59,29 +48,21 @@ class ElementShufflerTest {
             items.add(new RankingItem("item-" + i, "Item " + i, null));
         }
         return new RankingQuestion(
-                id, "pub", "priv", "Title", null,
+                id,
                 "Order these", items, List.of(),
                 RankingScoring.EXACT,
-                100, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 shuffleItems,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                TestElementChromes.scored(id, "Order these"));
     }
 
     private static NumberQuestion number() {
         return new NumberQuestion(
-                "num-1", "pub", "priv", "Title", null,
+                "num-1",
                 "How many?", 42.0, 0.0, "units", 0,
-                100, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 null, null, true,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                TestElementChromes.scored("num-1", "How many?"));
     }
 
     private static List<String> optionIds(DeckElement element) {

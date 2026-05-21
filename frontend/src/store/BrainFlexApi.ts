@@ -1,6 +1,22 @@
 import { emptySplitApi as api } from "./emptyApi";
 const injectedRtkApi = api.injectEndpoints({
   endpoints: (build) => ({
+    getNotificationPrefs: build.query<
+      GetNotificationPrefsApiResponse,
+      GetNotificationPrefsApiArg
+    >({
+      query: () => ({ url: `/api/users/me/notification-prefs` }),
+    }),
+    updateNotificationPrefs: build.mutation<
+      UpdateNotificationPrefsApiResponse,
+      UpdateNotificationPrefsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/users/me/notification-prefs`,
+        method: "PUT",
+        body: queryArg.notificationPrefs,
+      }),
+    }),
     updateTheme: build.mutation<UpdateThemeApiResponse, UpdateThemeApiArg>({
       query: (queryArg) => ({
         url: `/api/themes/${queryArg.id}`,
@@ -48,6 +64,28 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.updateScheduledInteractiveSessionRequest,
       }),
     }),
+    updateOrg: build.mutation<UpdateOrgApiResponse, UpdateOrgApiArg>({
+      query: (queryArg) => ({
+        url: `/api/organizations/${queryArg.id}`,
+        method: "PUT",
+        body: queryArg.updateOrganizationRequest,
+      }),
+    }),
+    markNotificationRead: build.mutation<
+      MarkNotificationReadApiResponse,
+      MarkNotificationReadApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/notifications/${queryArg.id}/read`,
+        method: "PUT",
+      }),
+    }),
+    markAllNotificationsRead: build.mutation<
+      MarkAllNotificationsReadApiResponse,
+      MarkAllNotificationsReadApiArg
+    >({
+      query: () => ({ url: `/api/notifications/read-all`, method: "PUT" }),
+    }),
     getMedia: build.query<GetMediaApiResponse, GetMediaApiArg>({
       query: (queryArg) => ({ url: `/api/media/${queryArg.id}` }),
     }),
@@ -85,6 +123,16 @@ const injectedRtkApi = api.injectEndpoints({
         url: `/api/interactive-sessions/${queryArg.roomCode}/players/${queryArg.userId}/team`,
         method: "PUT",
         body: queryArg.teamMoveRequest,
+      }),
+    }),
+    updateMyAvatar: build.mutation<
+      UpdateMyAvatarApiResponse,
+      UpdateMyAvatarApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/interactive-sessions/${queryArg.roomCode}/me/avatar`,
+        method: "PUT",
+        body: queryArg.updatePlayerAvatarRequest,
       }),
     }),
     moderateChat: build.mutation<ModerateChatApiResponse, ModerateChatApiArg>({
@@ -261,6 +309,7 @@ const injectedRtkApi = api.injectEndpoints({
           curated: queryArg.curated,
           parentTagId: queryArg.parentTagId,
           search: queryArg.search,
+          createdByMe: queryArg.createdByMe,
         },
       }),
     }),
@@ -300,6 +349,20 @@ const injectedRtkApi = api.injectEndpoints({
         method: "POST",
       }),
     }),
+    unsubscribeGet: build.query<
+      UnsubscribeGetApiResponse,
+      UnsubscribeGetApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/public/email/unsubscribe/${queryArg.token}`,
+      }),
+    }),
+    unsubscribe: build.mutation<UnsubscribeApiResponse, UnsubscribeApiArg>({
+      query: (queryArg) => ({
+        url: `/api/public/email/unsubscribe/${queryArg.token}`,
+        method: "POST",
+      }),
+    }),
     createOrg: build.mutation<CreateOrgApiResponse, CreateOrgApiArg>({
       query: (queryArg) => ({
         url: `/api/organizations`,
@@ -307,11 +370,27 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.createOrganizationRequest,
       }),
     }),
+    rotateInviteCode: build.mutation<
+      RotateInviteCodeApiResponse,
+      RotateInviteCodeApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/organizations/${queryArg.id}/invite-code/rotate`,
+        method: "POST",
+      }),
+    }),
     joinOrg: build.mutation<JoinOrgApiResponse, JoinOrgApiArg>({
       query: (queryArg) => ({
         url: `/api/organizations/join`,
         method: "POST",
         body: queryArg.joinOrganizationRequest,
+      }),
+    }),
+    joinByCode: build.mutation<JoinByCodeApiResponse, JoinByCodeApiArg>({
+      query: (queryArg) => ({
+        url: `/api/organizations/join-by-code`,
+        method: "POST",
+        body: queryArg.joinByCodeRequest,
       }),
     }),
     listMedia: build.query<ListMediaApiResponse, ListMediaApiArg>({
@@ -618,6 +697,14 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
+    listAchievementsForUser: build.query<
+      ListAchievementsForUserApiResponse,
+      ListAchievementsForUserApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/users/${queryArg.userId}/achievements`,
+      }),
+    }),
     getUserProfile: build.query<
       GetUserProfileApiResponse,
       GetUserProfileApiArg
@@ -644,6 +731,12 @@ const injectedRtkApi = api.injectEndpoints({
           size: queryArg.size,
         },
       }),
+    }),
+    listMyAchievements: build.query<
+      ListMyAchievementsApiResponse,
+      ListMyAchievementsApiArg
+    >({
+      query: () => ({ url: `/api/users/me/achievements` }),
     }),
     getLeaderboard: build.query<
       GetLeaderboardApiResponse,
@@ -681,6 +774,24 @@ const injectedRtkApi = api.injectEndpoints({
     }),
     listMyOrgs: build.query<ListMyOrgsApiResponse, ListMyOrgsApiArg>({
       query: () => ({ url: `/api/organizations/mine` }),
+    }),
+    listNotifications: build.query<
+      ListNotificationsApiResponse,
+      ListNotificationsApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/notifications`,
+        params: {
+          page: queryArg.page,
+          size: queryArg.size,
+        },
+      }),
+    }),
+    getUnreadNotificationCount: build.query<
+      GetUnreadNotificationCountApiResponse,
+      GetUnreadNotificationCountApiArg
+    >({
+      query: () => ({ url: `/api/notifications/unread-count` }),
     }),
     getInteractiveSession: build.query<
       GetInteractiveSessionApiResponse,
@@ -738,6 +849,12 @@ const injectedRtkApi = api.injectEndpoints({
     >({
       query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/analytics` }),
     }),
+    getDeckAnalyticsCsv: build.query<
+      GetDeckAnalyticsCsvApiResponse,
+      GetDeckAnalyticsCsvApiArg
+    >({
+      query: (queryArg) => ({ url: `/api/decks/${queryArg.id}/analytics/csv` }),
+    }),
     listMyHistoryForDeck: build.query<
       ListMyHistoryForDeckApiResponse,
       ListMyHistoryForDeckApiArg
@@ -787,7 +904,7 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    list: build.query<ListApiResponse, ListApiArg>({
+    listAvatars: build.query<ListAvatarsApiResponse, ListAvatarsApiArg>({
       query: () => ({ url: `/api/avatars` }),
     }),
     getCurrentUser: build.query<
@@ -802,12 +919,25 @@ const injectedRtkApi = api.injectEndpoints({
         params: {
           returnUrl: queryArg.returnUrl,
           guestId: queryArg.guestId,
+          provider: queryArg.provider,
         },
       }),
+    }),
+    listCatalog: build.query<ListCatalogApiResponse, ListCatalogApiArg>({
+      query: () => ({ url: `/api/achievements` }),
     }),
     leaveOrg: build.mutation<LeaveOrgApiResponse, LeaveOrgApiArg>({
       query: (queryArg) => ({
         url: `/api/organizations/${queryArg.id}/leave`,
+        method: "DELETE",
+      }),
+    }),
+    dismissNotification: build.mutation<
+      DismissNotificationApiResponse,
+      DismissNotificationApiArg
+    >({
+      query: (queryArg) => ({
+        url: `/api/notifications/${queryArg.id}`,
         method: "DELETE",
       }),
     }),
@@ -824,6 +954,14 @@ const injectedRtkApi = api.injectEndpoints({
   overrideExisting: false,
 });
 export { injectedRtkApi as BrainFlex };
+export type GetNotificationPrefsApiResponse =
+  /** status 200 OK */ NotificationPrefs;
+export type GetNotificationPrefsApiArg = void;
+export type UpdateNotificationPrefsApiResponse =
+  /** status 200 OK */ NotificationPrefs;
+export type UpdateNotificationPrefsApiArg = {
+  notificationPrefs: NotificationPrefs;
+};
 export type UpdateThemeApiResponse = /** status 200 OK */ ThemeResponse;
 export type UpdateThemeApiArg = {
   id: string;
@@ -857,6 +995,19 @@ export type UpdateScheduledSessionApiArg = {
   id: string;
   updateScheduledInteractiveSessionRequest: UpdateScheduledInteractiveSessionRequest;
 };
+export type UpdateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
+export type UpdateOrgApiArg = {
+  id: string;
+  updateOrganizationRequest: UpdateOrganizationRequest;
+};
+export type MarkNotificationReadApiResponse =
+  /** status 200 OK */ NotificationDto;
+export type MarkNotificationReadApiArg = {
+  id: string;
+};
+export type MarkAllNotificationsReadApiResponse =
+  /** status 200 OK */ UnreadNotificationCount;
+export type MarkAllNotificationsReadApiArg = void;
 export type GetMediaApiResponse = /** status 200 OK */ MediaAssetResponse;
 export type GetMediaApiArg = {
   id: string;
@@ -887,6 +1038,12 @@ export type MovePlayerToTeamApiArg = {
   roomCode: string;
   userId: string;
   teamMoveRequest: TeamMoveRequest;
+};
+export type UpdateMyAvatarApiResponse =
+  /** status 200 OK */ InteractiveSessionDto;
+export type UpdateMyAvatarApiArg = {
+  roomCode: string;
+  updatePlayerAvatarRequest: UpdatePlayerAvatarRequest;
 };
 export type ModerateChatApiResponse =
   /** status 200 OK */ InteractiveSessionChatMessageDto;
@@ -1019,6 +1176,7 @@ export type ListTagsApiArg = {
   curated?: boolean;
   parentTagId?: string;
   search?: string;
+  createdByMe?: boolean;
 };
 export type CreateTagApiResponse = /** status 200 OK */ TagResponse;
 export type CreateTagApiArg = {
@@ -1040,13 +1198,31 @@ export type CancelScheduledSessionApiResponse =
 export type CancelScheduledSessionApiArg = {
   id: string;
 };
+export type UnsubscribeGetApiResponse =
+  /** status 200 OK */ UnsubscribeResponse;
+export type UnsubscribeGetApiArg = {
+  token: string;
+};
+export type UnsubscribeApiResponse = /** status 200 OK */ UnsubscribeResponse;
+export type UnsubscribeApiArg = {
+  token: string;
+};
 export type CreateOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type CreateOrgApiArg = {
   createOrganizationRequest: CreateOrganizationRequest;
 };
+export type RotateInviteCodeApiResponse =
+  /** status 200 OK */ OrganizationResponse;
+export type RotateInviteCodeApiArg = {
+  id: string;
+};
 export type JoinOrgApiResponse = /** status 200 OK */ OrganizationResponse;
 export type JoinOrgApiArg = {
   joinOrganizationRequest: JoinOrganizationRequest;
+};
+export type JoinByCodeApiResponse = /** status 200 OK */ OrganizationResponse;
+export type JoinByCodeApiArg = {
+  joinByCodeRequest: JoinByCodeRequest;
 };
 export type ListMediaApiResponse = /** status 200 OK */ MediaAssetResponse[];
 export type ListMediaApiArg = {
@@ -1177,7 +1353,7 @@ export type MoveElementApiArg = {
   elementId: string;
   to: number;
 };
-export type ListCommentsApiResponse = /** status 200 OK */ DeckCommentsPage;
+export type ListCommentsApiResponse = /** status 200 OK */ PageDeckCommentDto;
 export type ListCommentsApiArg = {
   id: string;
   page?: number;
@@ -1244,26 +1420,35 @@ export type UpdateProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type UpdateProfileApiArg = {
   updateProfileRequest: UpdateProfileRequest;
 };
-export type ListUserHistoryApiResponse = /** status 200 OK */ GameHistoryPage;
+export type ListUserHistoryApiResponse =
+  /** status 200 OK */ PageGameHistoryDto;
 export type ListUserHistoryApiArg = {
   userId: string;
   page?: number;
   size?: number;
 };
+export type ListAchievementsForUserApiResponse =
+  /** status 200 OK */ UserAchievementsPage;
+export type ListAchievementsForUserApiArg = {
+  userId: string;
+};
 export type GetUserProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type GetUserProfileApiArg = {
   id: string;
 };
-export type ListMyHistoryApiResponse = /** status 200 OK */ GameHistoryPage;
+export type ListMyHistoryApiResponse = /** status 200 OK */ PageGameHistoryDto;
 export type ListMyHistoryApiArg = {
   page?: number;
   size?: number;
 };
-export type ListMyFavoritesApiResponse = /** status 200 OK */ DeckFavoritesPage;
+export type ListMyFavoritesApiResponse = /** status 200 OK */ PageDeckDto;
 export type ListMyFavoritesApiArg = {
   page?: number;
   size?: number;
 };
+export type ListMyAchievementsApiResponse =
+  /** status 200 OK */ UserAchievementsPage;
+export type ListMyAchievementsApiArg = void;
 export type GetLeaderboardApiResponse = /** status 200 OK */ GuestUser[];
 export type GetLeaderboardApiArg = {
   page?: number;
@@ -1285,6 +1470,15 @@ export type ListMyScheduledSessionsApiResponse =
 export type ListMyScheduledSessionsApiArg = void;
 export type ListMyOrgsApiResponse = /** status 200 OK */ OrganizationResponse[];
 export type ListMyOrgsApiArg = void;
+export type ListNotificationsApiResponse =
+  /** status 200 OK */ PageNotificationDto;
+export type ListNotificationsApiArg = {
+  page?: number;
+  size?: number;
+};
+export type GetUnreadNotificationCountApiResponse =
+  /** status 200 OK */ UnreadNotificationCount;
+export type GetUnreadNotificationCountApiArg = void;
 export type GetInteractiveSessionApiResponse =
   /** status 200 OK */ InteractiveSessionDto;
 export type GetInteractiveSessionApiArg = {
@@ -1325,14 +1519,18 @@ export type GetDeckAnalyticsApiResponse = /** status 200 OK */ DeckAnalytics;
 export type GetDeckAnalyticsApiArg = {
   id: string;
 };
+export type GetDeckAnalyticsCsvApiResponse = unknown;
+export type GetDeckAnalyticsCsvApiArg = {
+  id: string;
+};
 export type ListMyHistoryForDeckApiResponse =
-  /** status 200 OK */ GameHistoryPage;
+  /** status 200 OK */ PageGameHistoryDto;
 export type ListMyHistoryForDeckApiArg = {
   deckId: string;
   page?: number;
   size?: number;
 };
-export type ListRepliesApiResponse = /** status 200 OK */ DeckCommentsPage;
+export type ListRepliesApiResponse = /** status 200 OK */ PageDeckCommentDto;
 export type ListRepliesApiArg = {
   deckId: string;
   commentId: string;
@@ -1341,7 +1539,7 @@ export type ListRepliesApiArg = {
 };
 export type ListMyDecksApiResponse = /** status 200 OK */ DeckDto[];
 export type ListMyDecksApiArg = void;
-export type ExploreDecksApiResponse = /** status 200 OK */ DeckExploreResponse;
+export type ExploreDecksApiResponse = /** status 200 OK */ PageDeckDto;
 export type ExploreDecksApiArg = {
   tagId?: string;
   language?: string;
@@ -1351,22 +1549,29 @@ export type ExploreDecksApiArg = {
   size?: number;
 };
 export type ListMyCollectionsApiResponse =
-  /** status 200 OK */ DeckCollectionsPage;
+  /** status 200 OK */ PageDeckCollectionDto;
 export type ListMyCollectionsApiArg = {
   page?: number;
   size?: number;
 };
-export type ListApiResponse = /** status 200 OK */ AvatarPreset[];
-export type ListApiArg = void;
+export type ListAvatarsApiResponse = /** status 200 OK */ AvatarPreset[];
+export type ListAvatarsApiArg = void;
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
 export type LoginApiArg = {
   returnUrl?: string;
   guestId?: string;
+  provider?: string;
 };
+export type ListCatalogApiResponse = /** status 200 OK */ AchievementDto[];
+export type ListCatalogApiArg = void;
 export type LeaveOrgApiResponse = unknown;
 export type LeaveOrgApiArg = {
+  id: string;
+};
+export type DismissNotificationApiResponse = unknown;
+export type DismissNotificationApiArg = {
   id: string;
 };
 export type RemoveDeckFromCollectionApiResponse =
@@ -1374,6 +1579,16 @@ export type RemoveDeckFromCollectionApiResponse =
 export type RemoveDeckFromCollectionApiArg = {
   id: string;
   deckId: string;
+};
+export type NotificationPrefs = {
+  inApp?: {
+    [key: string]: boolean;
+  };
+  email?: {
+    [key: string]: boolean;
+  };
+  weeklyDigestEmail?: boolean;
+  marketingEmail?: boolean;
 };
 export type ImageVariant = {
   url?: string;
@@ -1418,6 +1633,7 @@ export type TagResponse = {
   iconUrl?: string;
   deckCount?: number;
   curated?: boolean;
+  createdByUserId?: string;
   children?: TagResponse[];
   createdAt?: string;
   updatedAt?: string;
@@ -1435,7 +1651,7 @@ export type InteractiveSessionSettings = {
   timePerQuestion?: number;
   speedBonus?: boolean;
   allowGuests?: boolean;
-  mode?: "SIMULTANEOUS" | "TURN_BASED";
+  showResponses?: "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
   allowLateJoin?: boolean;
   showScoresImmediately?: boolean;
   scoringEnabled?: boolean;
@@ -1452,6 +1668,12 @@ export type InteractiveSessionSettings = {
   lobbyMusicAssetId?: string;
   requireFullName?: boolean;
   spectatorsAllowed?: boolean;
+  deckCoverImageUrl?: string;
+  deckBackgroundImageUrl?: string;
+  themeId?: string;
+  anonymousMode?: boolean;
+  allowReJoin?: boolean;
+  answerSubmissionMode?: "SIMULTANEOUS" | "TURN_BASED";
 };
 export type ScheduledInteractiveSessionDto = {
   id?: string;
@@ -1475,13 +1697,93 @@ export type UpdateScheduledInteractiveSessionRequest = {
   settings?: InteractiveSessionSettings;
   reminderEmailTemplate?: string;
 };
+export type OrganizationPlan = {
+  tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
+  status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
+  seatLimit?: number;
+  startedAt?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  featureFlags?: string[];
+  monthlyInteractiveSessionLimit?: number;
+  quotaResetsAt?: string;
+};
+export type StoredImageVariant = {
+  size?: "XS" | "SM" | "MD" | "LG" | "XL";
+  width?: number;
+  height?: number;
+};
+export type OrganizationResponse = {
+  id?: string;
+  name?: string;
+  ownerId?: string;
+  plan?: OrganizationPlan;
+  description?: string;
+  logoVariants?: StoredImageVariant[];
+  websiteUrl?: string;
+  location?: string;
+  emailDomain?: string;
+  inviteCode?: string;
+  allowPublicJoin?: boolean;
+  memberCount?: number;
+  defaultThemeId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+export type UpdateOrganizationRequest = {
+  name?: string;
+  description?: string;
+  websiteUrl?: string;
+  location?: string;
+  emailDomain?: string;
+  allowPublicJoin?: boolean;
+  defaultThemeId?: string;
+};
+export type NotificationDto = {
+  id?: string;
+  userId?: string;
+  kind?:
+    | "INTERACTIVE_SESSION_INVITE"
+    | "INTERACTIVE_SESSION_STARTING_SOON"
+    | "DECK_COMMENT"
+    | "DECK_COMMENT_REPLY"
+    | "DECK_RATING"
+    | "DECK_FAVORITED"
+    | "COLLAB_INVITE"
+    | "COLLAB_ACCEPTED"
+    | "ACHIEVEMENT"
+    | "ORG_INVITE"
+    | "ORG_JOINED"
+    | "MENTION"
+    | "SYSTEM";
+  title?: string;
+  body?: string;
+  link?: string;
+  iconUrl?: string;
+  meta?: {
+    [key: string]: string;
+  };
+  actorUserId?: string;
+  actorName?: string;
+  actorPictureUrl?: string;
+  read?: boolean;
+  createdAt?: string;
+  readAt?: string;
+};
+export type UnreadNotificationCount = {
+  count?: number;
+};
 export type MediaAssetResponse = {
   id?: string;
   kind?: "IMAGE" | "AUDIO" | "VIDEO_FILE" | "VIDEO_EMBED";
   name?: string;
   ownerId?: string;
   organizationId?: string;
-  variants?: ImageVariant[];
+  variants?: {
+    [key: string]: ImageVariant;
+  };
   url?: string;
   sizeBytes?: number;
   width?: number;
@@ -1511,16 +1813,45 @@ export type McqOption = {
   image?: Image;
   color?: string;
 };
+export type ElementChrome = {
+  publicKey?: string;
+  privateKey?: string;
+  title?: string;
+  titleLabel?: string;
+  styledTitle?: {
+    [key: string]: object;
+  };
+  scored?: boolean;
+  survey?: boolean;
+  multipleSelections?: number;
+  responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
+  displaySeconds?: number;
+  speakerNotes?: string;
+  background?: Image;
+  image?: Image;
+  videoUrl?: string;
+  audioUrl?: string;
+  videoAssetId?: string;
+  audioAssetId?: string;
+  mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
+  bestAnswerMode?: boolean;
+  bestAnswerTitle?: string;
+  bestAnswerPoints?: number;
+  bestAnswerScoring?: "POINTS_PER_VOTE" | "FLAT_WINNER";
+  createdByUserId?: string;
+  lastEditedByUserId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  tagIds?: string[];
+  mediaCaption?: string;
+  altText?: string;
+  reactionsEnabled?: boolean;
+  version?: number;
+};
 export type AllocationQuestion = {
   kind: "AllocationQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     options?: McqOption[];
     totalPointsToDistribute?: number;
@@ -1528,43 +1859,13 @@ export type AllocationQuestion = {
     enforceExactTotal?: boolean;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type DrawingQuestion = {
   kind: "DrawingQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     backingImage?: Image;
     canvasWidth?: number;
@@ -1574,32 +1875,8 @@ export type DrawingQuestion = {
     palette?: string[];
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type GridCellsConfig = {
   labels?: string[];
@@ -1609,12 +1886,6 @@ export type GridQuestion = {
   kind: "GridQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     rows?: number;
     cols?: number;
@@ -1623,32 +1894,8 @@ export type GridQuestion = {
     multipleCorrect?: boolean;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type MatchingPair = {
   id?: string;
@@ -1661,99 +1908,33 @@ export type MatchingQuestion = {
   kind: "MatchingQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     pairs?: MatchingPair[];
     scoring?: "ALL_OR_NOTHING" | "PARTIAL";
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type McqQuestion = {
   kind: "McqQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     options?: McqOption[];
     correctOptionIds?: string[];
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     shuffleOptions?: boolean;
     allowMultipleSelect?: boolean;
     maxSelections?: number;
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type NumberQuestion = {
   kind: "NumberQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     correctValue?: number;
     tolerance?: number;
@@ -1761,46 +1942,16 @@ export type NumberQuestion = {
     decimalPlaces?: number;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     minValue?: number;
     maxValue?: number;
     allowNegative?: boolean;
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type PlaceOnImageQuestion = {
   kind: "PlaceOnImageQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     targetImage?: Image;
     correctX?: number;
@@ -1809,77 +1960,23 @@ export type PlaceOnImageQuestion = {
     scoring?: "BINARY" | "LINEAR";
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type QAndAQuestion = {
   kind: "QAndAQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     maxSubmissionsPerPlayer?: number;
     allowVoting?: boolean;
     autoApprove?: boolean;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     anonymousSubmissions?: boolean;
     minVotesToShow?: number;
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type RankingItem = {
   id?: string;
@@ -1890,45 +1987,15 @@ export type RankingQuestion = {
   kind: "RankingQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     items?: RankingItem[];
     correctOrder?: string[];
     scoring?: "EXACT" | "PARTIAL";
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     shuffleItemsForPresentation?: boolean;
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type ScaleStatement = {
   id?: string;
@@ -1938,12 +2005,6 @@ export type ScalesQuestion = {
   kind: "ScalesQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     statements?: ScaleStatement[];
     scaleMin?: number;
@@ -1953,32 +2014,8 @@ export type ScalesQuestion = {
     correctRatings?: number[];
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type SlideBlock = {
   kind: string;
@@ -1988,27 +2025,8 @@ export type Slide = {
 } & DeckElementBase & {
     id?: string;
     slideKind?: "TITLE" | "SECTION" | "CALLOUT" | "CONTENT" | "END";
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     body?: string;
     blocks?: SlideBlock[];
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     resultsDisplayType?:
       | "DEFAULT"
       | "BAR_HORIZONTAL"
@@ -2022,79 +2040,35 @@ export type Slide = {
     joinType?: "INSTRUCTIONS_BAR" | "QR_CODE";
     showJoinInformation?: boolean;
     showQrCode?: boolean;
-    showResponses?: "INSTANT" | "ON_CLICK" | "PRIVATE";
+    showResponses?: "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
     heading?: string;
     participantInformation?: {
       [key: string]: object;
     };
     autoAdvanceSeconds?: number;
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type TextQuestion = {
   kind: "TextQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     correctAnswer?: string;
     acceptedVariants?: string[];
     caseSensitive?: boolean;
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
     maxLength?: number;
     trimWhitespace?: boolean;
     fuzzyMatch?: boolean;
     fuzzyDistance?: number;
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type WordCloudQuestion = {
   kind: "WordCloudQuestion";
 } & DeckElementBase & {
     id?: string;
-    publicKey?: string;
-    privateKey?: string;
-    title?: string;
-    styledTitle?: {
-      [key: string]: object;
-    };
     prompt?: string;
     maxSubmissionsPerPlayer?: number;
     maxWordLength?: number;
@@ -2103,32 +2077,8 @@ export type WordCloudQuestion = {
     bannedWords?: string[];
     pointValue?: number;
     difficulty?: "EASY" | "MEDIUM" | "HARD";
-    scored?: boolean;
-    survey?: boolean;
-    multipleSelections?: number;
-    responseMode?: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
-    bestAnswerMode?: boolean;
-    bestAnswerTitle?: string;
-    bestAnswerBonus?: number;
     explanation?: string;
-    displaySeconds?: number;
-    speakerNotes?: string;
-    background?: Image;
-    image?: Image;
-    videoUrl?: string;
-    audioUrl?: string;
-    videoAssetId?: string;
-    audioAssetId?: string;
-    mediaPosition?: "TOP" | "BOTTOM" | "BACKGROUND" | "NONE";
-    createdByUserId?: string;
-    lastEditedByUserId?: string;
-    createdAt?: string;
-    updatedAt?: string;
-    tagIds?: string[];
-    mediaCaption?: string;
-    altText?: string;
-    reactionsEnabled?: boolean;
-    version?: number;
+    chrome?: ElementChrome;
   };
 export type InteractiveSessionPlayerDto = {
   userId?: string;
@@ -2162,13 +2112,11 @@ export type InteractiveSessionDto = {
   inviteToken?: string;
   status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
   phase?: "SUBMIT" | "VOTE" | "REVEAL";
+  format?: "GAME" | "PRESENTATION";
   hostUserId?: string;
   hostName?: string;
   hostAvatarUrl?: string;
   deckId?: string;
-  deckCoverImageUrl?: string;
-  deckBackgroundImageUrl?: string;
-  themeId?: string;
   deckSnapshot?: (
     | AllocationQuestion
     | DrawingQuestion
@@ -2186,15 +2134,15 @@ export type InteractiveSessionDto = {
   )[];
   settings?: InteractiveSessionSettings;
   players?: InteractiveSessionPlayerDto[];
-  teamMode?: boolean;
-  autoBalanceTeams?: boolean;
   teams?: Team[];
-  anonymousMode?: boolean;
   customRoomCode?: string;
-  allowReJoin?: boolean;
   spectatorCount?: number;
   lobbyOpenedAt?: string;
   currentRound?: number;
+  revealedElementIds?: string[];
+  elementResponseModeOverrides?: {
+    [key: string]: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
+  };
   createdAt?: string;
   startedAt?: string;
 };
@@ -2204,6 +2152,10 @@ export type TeamCrudRequest = {
 };
 export type TeamMoveRequest = {
   teamId: string;
+};
+export type UpdatePlayerAvatarRequest = {
+  avatarKey?: string;
+  colorTag?: string;
 };
 export type InteractiveSessionChatMessageDto = {
   id?: string;
@@ -2224,7 +2176,9 @@ export type GalleryImageResponse = {
   ownerId?: string;
   organizationId?: string;
   tags?: string[];
-  variants?: ImageVariant[];
+  variants?: {
+    [key: string]: ImageVariant;
+  };
   createdAt?: string;
 };
 export type UpdateGalleryImageRequest = {
@@ -2243,7 +2197,8 @@ export type DeckDto = {
   subjectTagId?: string;
   isSystem?: boolean;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
-  recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
+  defaultSessionFormat?: "GAME" | "PRESENTATION";
+  defaultShowResponses?: "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
   cover?: Image;
   background?: Image;
   themeId?: string;
@@ -2293,7 +2248,8 @@ export type UpdateDeckRequest = {
   tagIds?: string[];
   subjectTagId?: string;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
-  recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
+  defaultSessionFormat?: "GAME" | "PRESENTATION";
+  defaultShowResponses?: "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
   cover?: Image;
   background?: Image;
   themeId?: string;
@@ -2379,6 +2335,20 @@ export type PlayerStats = {
   highScore?: number;
   totalPoints?: number;
   currentStreak?: number;
+  longestStreak?: number;
+  perfectGames?: number;
+  totalReactionsSent?: number;
+  presentedByKind?: {
+    [key: string]: number;
+  };
+  correctByKind?: {
+    [key: string]: number;
+  };
+  weeklyPoints?: number;
+  monthlyPoints?: number;
+  weeklyPointsResetAt?: string;
+  monthlyPointsResetAt?: string;
+  lastPlayedAt?: string;
 };
 export type Membership = {
   tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
@@ -2391,6 +2361,9 @@ export type Membership = {
   stripeSubscriptionId?: string;
   monthlyInteractiveSessionCount?: number;
   monthlyCountPeriodStart?: string;
+  featureFlags?: string[];
+  monthlyInteractiveSessionLimit?: number;
+  quotaResetsAt?: string;
 };
 export type RegisteredUser = {
   id?: string;
@@ -2445,28 +2418,18 @@ export type InteractiveSessionInviteDto = {
 export type AddInviteRequest = {
   email: string;
 };
-export type OrganizationPlan = {
-  tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
-  status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
-  seatLimit?: number;
-  startedAt?: string;
-  currentPeriodEnd?: string;
-  cancelAtPeriodEnd?: boolean;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
-};
-export type OrganizationResponse = {
-  id?: string;
-  name?: string;
-  ownerId?: string;
-  plan?: OrganizationPlan;
-  createdAt?: string;
+export type UnsubscribeResponse = {
+  email?: string;
+  category?: string;
 };
 export type CreateOrganizationRequest = {
   name?: string;
 };
 export type JoinOrganizationRequest = {
   organizationId?: string;
+};
+export type JoinByCodeRequest = {
+  inviteCode?: string;
 };
 export type CreateEmbedRequest = {
   url?: string;
@@ -2484,7 +2447,9 @@ export type RedeemInviteResponse = {
 };
 export type CreateInteractiveSessionRequest = {
   deckId: string;
-  mode?: "SIMULTANEOUS" | "TURN_BASED";
+  format?: "GAME" | "PRESENTATION";
+  answerSubmissionMode?: "SIMULTANEOUS" | "TURN_BASED";
+  showResponses?: "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
   totalRounds?: number;
   timePerQuestion?: number;
   speedBonus?: boolean;
@@ -2538,7 +2503,8 @@ export type CreateDeckRequest = {
   tagIds?: string[];
   subjectTagId?: string;
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
-  recommendedPreset?: "GAME" | "PULSE" | "PRESENTATION";
+  defaultSessionFormat?: "GAME" | "PRESENTATION";
+  defaultShowResponses?: "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
   cover?: Image;
   background?: Image;
   themeId?: string;
@@ -2553,7 +2519,7 @@ export type DeckFavoriteResponse = {
   isFavorited?: boolean;
   favoriteCount?: number;
 };
-export type DeckCommentsPage = {
+export type PageDeckCommentDto = {
   items?: DeckCommentDto[];
   page?: number;
   size?: number;
@@ -2629,15 +2595,54 @@ export type GameHistoryDto = {
   wasGuest?: boolean;
   playedAt?: string;
 };
-export type GameHistoryPage = {
+export type PageGameHistoryDto = {
   items?: GameHistoryDto[];
   page?: number;
   size?: number;
   totalElements?: number;
   hasMore?: boolean;
 };
-export type DeckFavoritesPage = {
+export type UserAchievementDto = {
+  id?: string;
+  name?: string;
+  description?: string;
+  iconUrl?: string;
+  category?: string;
+  trigger?:
+    | "FIRST_GAME"
+    | "GAMES_PLAYED"
+    | "TOTAL_POINTS"
+    | "HIGH_SCORE"
+    | "STREAK"
+    | "PERFECT_GAME"
+    | "HOST_GAMES"
+    | "DECKS_CREATED"
+    | "DECKS_PUBLISHED"
+    | "FAVORITES_RECEIVED";
+  threshold?: number;
+  rewardPoints?: number;
+  hidden?: boolean;
+  displayOrder?: number;
+  earned?: boolean;
+  earnedAt?: string;
+  earnedInInteractiveSessionId?: string;
+  earnedInDeckId?: string;
+  currentProgress?: number;
+};
+export type UserAchievementsPage = {
+  items?: UserAchievementDto[];
+  earnedCount?: number;
+  totalCount?: number;
+};
+export type PageDeckDto = {
   items?: DeckDto[];
+  page?: number;
+  size?: number;
+  totalElements?: number;
+  hasMore?: boolean;
+};
+export type PageNotificationDto = {
+  items?: NotificationDto[];
   page?: number;
   size?: number;
   totalElements?: number;
@@ -2654,6 +2659,7 @@ export type PlayerPlacement = {
   longestStreak?: number;
   accuracy?: number;
   reactionsSent?: number;
+  speedBonusTotal?: number;
   guest?: boolean;
 };
 export type AnswerPayloadBase = {
@@ -2810,6 +2816,14 @@ export type ElementStats = {
   reactionsReceived?: number;
   chatMessagesDuringRound?: number;
 };
+export type FormatRollup = {
+  sessionCount?: number;
+  participantCount?: number;
+  averageScore?: number;
+  averageAccuracy?: number;
+  averageDurationMs?: number;
+  lastRunAt?: string;
+};
 export type DeckAnalytics = {
   deckId?: string;
   totalPlays?: number;
@@ -2820,17 +2834,12 @@ export type DeckAnalytics = {
   perElement?: {
     [key: string]: ElementStats;
   };
+  gameRollup?: FormatRollup;
+  presentationRollup?: FormatRollup;
   lastPlayedAt?: string;
   updatedAt?: string;
 };
-export type DeckExploreResponse = {
-  items?: DeckDto[];
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  hasMore?: boolean;
-};
-export type DeckCollectionsPage = {
+export type PageDeckCollectionDto = {
   items?: DeckCollectionDto[];
   page?: number;
   size?: number;
@@ -2844,7 +2853,32 @@ export type AvatarPreset = {
   colorTag?: string;
 };
 export type UserDto = GuestUser | RegisteredUser;
+export type AchievementDto = {
+  id?: string;
+  name?: string;
+  description?: string;
+  iconUrl?: string;
+  category?: string;
+  trigger?:
+    | "FIRST_GAME"
+    | "GAMES_PLAYED"
+    | "TOTAL_POINTS"
+    | "HIGH_SCORE"
+    | "STREAK"
+    | "PERFECT_GAME"
+    | "HOST_GAMES"
+    | "DECKS_CREATED"
+    | "DECKS_PUBLISHED"
+    | "FAVORITES_RECEIVED";
+  threshold?: number;
+  rewardPoints?: number;
+  hidden?: boolean;
+  displayOrder?: number;
+};
 export const {
+  useGetNotificationPrefsQuery,
+  useLazyGetNotificationPrefsQuery,
+  useUpdateNotificationPrefsMutation,
   useUpdateThemeMutation,
   useDeleteThemeMutation,
   useGetTagQuery,
@@ -2854,6 +2888,9 @@ export const {
   useGetScheduledSessionQuery,
   useLazyGetScheduledSessionQuery,
   useUpdateScheduledSessionMutation,
+  useUpdateOrgMutation,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
   useGetMediaQuery,
   useLazyGetMediaQuery,
   useUpdateMediaMutation,
@@ -2861,6 +2898,7 @@ export const {
   useUpdateTeamMutation,
   useDeleteTeamMutation,
   useMovePlayerToTeamMutation,
+  useUpdateMyAvatarMutation,
   useModerateChatMutation,
   useUpdateImageMutation,
   useDeleteImageMutation,
@@ -2893,8 +2931,13 @@ export const {
   useCreateScheduledSessionMutation,
   useAddScheduledInviteMutation,
   useCancelScheduledSessionMutation,
+  useUnsubscribeGetQuery,
+  useLazyUnsubscribeGetQuery,
+  useUnsubscribeMutation,
   useCreateOrgMutation,
+  useRotateInviteCodeMutation,
   useJoinOrgMutation,
+  useJoinByCodeMutation,
   useListMediaQuery,
   useLazyListMediaQuery,
   useUploadMediaMutation,
@@ -2938,12 +2981,16 @@ export const {
   useUpdateProfileMutation,
   useListUserHistoryQuery,
   useLazyListUserHistoryQuery,
+  useListAchievementsForUserQuery,
+  useLazyListAchievementsForUserQuery,
   useGetUserProfileQuery,
   useLazyGetUserProfileQuery,
   useListMyHistoryQuery,
   useLazyListMyHistoryQuery,
   useListMyFavoritesQuery,
   useLazyListMyFavoritesQuery,
+  useListMyAchievementsQuery,
+  useLazyListMyAchievementsQuery,
   useGetLeaderboardQuery,
   useLazyGetLeaderboardQuery,
   useCheckUsernameQuery,
@@ -2954,6 +3001,10 @@ export const {
   useLazyListMyScheduledSessionsQuery,
   useListMyOrgsQuery,
   useLazyListMyOrgsQuery,
+  useListNotificationsQuery,
+  useLazyListNotificationsQuery,
+  useGetUnreadNotificationCountQuery,
+  useLazyGetUnreadNotificationCountQuery,
   useGetInteractiveSessionQuery,
   useLazyGetInteractiveSessionQuery,
   useCancelInteractiveSessionMutation,
@@ -2971,6 +3022,8 @@ export const {
   useLazyGetMyRatingQuery,
   useGetDeckAnalyticsQuery,
   useLazyGetDeckAnalyticsQuery,
+  useGetDeckAnalyticsCsvQuery,
+  useLazyGetDeckAnalyticsCsvQuery,
   useListMyHistoryForDeckQuery,
   useLazyListMyHistoryForDeckQuery,
   useListRepliesQuery,
@@ -2981,12 +3034,15 @@ export const {
   useLazyExploreDecksQuery,
   useListMyCollectionsQuery,
   useLazyListMyCollectionsQuery,
-  useListQuery,
-  useLazyListQuery,
+  useListAvatarsQuery,
+  useLazyListAvatarsQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,
   useLazyLoginQuery,
+  useListCatalogQuery,
+  useLazyListCatalogQuery,
   useLeaveOrgMutation,
+  useDismissNotificationMutation,
   useRemoveDeckFromCollectionMutation,
 } = injectedRtkApi;

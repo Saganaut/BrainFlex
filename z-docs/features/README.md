@@ -9,6 +9,7 @@ Per-feature design docs. One subfolder per feature; each owns its `README.md` pl
 - [Deck Editor](deck-editor/README.md) — `/decks/$deckId/view` authoring dashboard architecture (commit pattern, cache sync, RichText, fullscreen).
 - [Data Models](data-models.md) — User / PlayerStats / Organization / Theme MongoDB documents, DTOs, image processing tiers.
 - [Membership](membership/README.md) — Organization membership semantics and flows.
+- [Email](email/README.md) — Outbox-backed dispatch for transactional / system / marketing email; design sketch for the v1 module + future Lambda+SQS swap.
 
 ## Adding a new feature
 

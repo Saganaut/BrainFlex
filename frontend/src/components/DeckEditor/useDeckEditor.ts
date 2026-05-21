@@ -44,23 +44,32 @@ const routeApi = getRouteApi("/decks/$deckId/edit");
  * `addElement` regardless of what the client sends, so we leave them off.
  */
 const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
-  const sharedMetadataDefaults = {
-    tagIds: [],
-    reactionsEnabled: true,
-    version: 1,
-  };
-  const sharedQuestionDefaults = {
-    id,
-    prompt: "",
+  // Chunk 25 — shared chrome lives in a single nested object on every element.
+  // Build a fresh chrome with the universal defaults; per-kind overrides land
+  // alongside it on the element body.
+  const chromeDefaults = (overrides: Partial<{
+    title: string;
+    scored: boolean;
+    survey: boolean;
+    displaySeconds: number;
+  }> = {}) => ({
     title: "",
-    pointValue: 0,
     scored: true,
     survey: false,
     bestAnswerMode: false,
-    bestAnswerBonus: 0,
+    bestAnswerPoints: 0,
     displaySeconds: 0,
     mediaPosition: "NONE" as const,
-    ...sharedMetadataDefaults,
+    tagIds: [],
+    reactionsEnabled: true,
+    version: 1,
+    ...overrides,
+  });
+  const sharedQuestionDefaults = {
+    id,
+    prompt: "",
+    pointValue: 0,
+    chrome: chromeDefaults(),
   };
 
   switch (kind) {
@@ -69,16 +78,11 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         kind: "Slide",
         id,
         slideKind: "CONTENT",
-        title: "New slide",
         // `body` stays for one-release backwards compat; new slides default to
         // an empty `blocks` list (chunk 10c). The block-based editor renders
         // an "Add block" affordance when the list is empty.
         body: "",
         blocks: [],
-        scored: false,
-        survey: false,
-        displaySeconds: 0,
-        mediaPosition: "NONE",
         resultsDisplayType: "DEFAULT",
         multipleSelectionsEnabled: false,
         selectionsPerParticipant: 1,
@@ -87,7 +91,7 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         showJoinInformation: true,
         showQrCode: false,
         showResponses: "INSTANT",
-        ...sharedMetadataDefaults,
+        chrome: chromeDefaults({ title: "New slide", scored: false, survey: false }),
       };
     case "McqQuestion":
       return {
@@ -136,16 +140,15 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
       return {
         kind: "ScalesQuestion",
         ...sharedQuestionDefaults,
+        chrome: chromeDefaults({ scored: false }),
         scaleMin: 1,
         scaleMax: 5,
-        scored: false,
       };
     case "QAndAQuestion":
       return {
         kind: "QAndAQuestion",
         ...sharedQuestionDefaults,
-        scored: false,
-        survey: true,
+        chrome: chromeDefaults({ scored: false, survey: true }),
         maxSubmissionsPerPlayer: 0,
         allowVoting: false,
         autoApprove: false,
@@ -172,8 +175,7 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
       return {
         kind: "WordCloudQuestion",
         ...sharedQuestionDefaults,
-        scored: false,
-        survey: true,
+        chrome: chromeDefaults({ scored: false, survey: true }),
         maxSubmissionsPerPlayer: 3,
         maxWordLength: 30,
         caseSensitive: false,
@@ -184,8 +186,7 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
       return {
         kind: "AllocationQuestion",
         ...sharedQuestionDefaults,
-        scored: false,
-        survey: true,
+        chrome: chromeDefaults({ scored: false, survey: true }),
         // Two starter options so the player view has something to render; the
         // author can add up to MAX_OPTIONS in the editor.
         options: Array.from({ length: 4 }, () => ({
@@ -215,8 +216,7 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
       return {
         kind: "DrawingQuestion",
         ...sharedQuestionDefaults,
-        scored: false,
-        survey: true,
+        chrome: chromeDefaults({ scored: false, survey: true }),
         // 1920x1080 logical units. The player canvas scales strokes from
         // here to whatever pixel canvas it renders — see the README in the
         // chunk for the contract.

@@ -84,12 +84,19 @@
 
 .restRow {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   border: var(--border-size-sm) solid var(--border-subtle);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
+}
+
+.restRowMain {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
 }
 
 .me.restRow {
@@ -112,6 +119,36 @@
 
 .restScore {
   font-weight: 700;
+}
+
+/* Chunk 13 — accuracy / streak / speed / reactions chips under each
+   placement row. Sits below the score line on rest rows, below the
+   score on podium tiles. GameOver.tsx hides individual chips when
+   their value is zero so an inactive player has no chips at all. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: center;
+}
+
+.chip {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  border: var(--border-size-sm) solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+  white-space: nowrap;
+}
+
+.chipStreak {
+  color: var(--text-warning);
+  border-color: var(--border-warning);
+}
+
+.chipSpeed {
+  color: var(--text-success);
+  border-color: var(--border-success);
 }
 
 .footer {

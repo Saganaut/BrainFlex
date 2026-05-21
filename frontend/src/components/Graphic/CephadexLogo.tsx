@@ -7,7 +7,11 @@ interface CephadexLogoProps {
 
 const CephadexLogo = ({ size = "md" }: CephadexLogoProps) => {
   return (
-    <CephadexLogoSvg className={[styles.cephadexLogo, styles[size]].join(" ")} />
+    <CephadexLogoSvg
+      aria-hidden='true'
+      focusable='false'
+      className={[styles.cephadexLogo, styles[size]].join(" ")}
+    />
   );
 };
 

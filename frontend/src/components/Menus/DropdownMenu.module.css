@@ -42,6 +42,36 @@
   left: 0;
 }
 
+/* Cursor mode: the panel is fixed-positioned at the click point. The caller
+   passes the click coords through `--cursor-x` / `--cursor-y` on the element's
+   inline style; the corner picked by `position` decides which two viewport
+   edges the panel hangs from. Rules sit after the trigger-anchored block so
+   equal-specificity selectors resolve in their favor. */
+
+.panelAtCursor {
+  position: fixed;
+}
+
+.panelAtCursor.topRight {
+  top: var(--cursor-y);
+  right: calc(100vw - var(--cursor-x));
+}
+
+.panelAtCursor.topLeft {
+  top: var(--cursor-y);
+  left: var(--cursor-x);
+}
+
+.panelAtCursor.bottomRight {
+  bottom: calc(100vh - var(--cursor-y));
+  right: calc(100vw - var(--cursor-x));
+}
+
+.panelAtCursor.bottomLeft {
+  bottom: calc(100vh - var(--cursor-y));
+  left: var(--cursor-x);
+}
+
 .item {
   padding: var(--space-3) var(--space-4);
   text-align: left;

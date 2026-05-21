@@ -6,32 +6,32 @@
  * "kind" property; Spring Data MongoDB stores its usual `_class` discriminator
  * inside the deck document so reads round-trip without any extra config.
  *
- * Every element carries display-time + media + host-notes fields directly so
- * the runtime can render any kind uniformly without a kind switch for chrome.
+ * Every element carries an {@link ElementChrome chrome} component holding the
+ * universally-shared display / response / media / best-answer / audit fields.
+ * The accessors on this interface delegate to that chrome record so callers
+ * can keep reading {@code element.title()}, {@code element.bestAnswerPoints()},
+ * etc. without knowing the composition.
  *
- * Shared chrome conventions (declared as record components on every kind):
- *   - publicKey / privateKey  short opaque tokens for player-facing and
- *                             host-facing identity (Mentimeter-style)
- *   - title / styledTitle     plain heading + rich-text TipTap/ProseMirror doc
- *   - scored / survey         whether this element awards points and whether
- *                             it's an opinion-style question (no correct answer)
- *   - multipleSelections      null = single-select; n = allow up to n picks
- *   - responseMode            host-controlled accepting/not-accepting toggle
- *   - bestAnswerMode / bestAnswerTitle / bestAnswerBonus
- *                             two-phase SUBMIT to VOTE round modifier
+ * Kind-specific fields stay as record components on each concrete record:
+ *   - {@code prompt}, {@code pointValue}, {@code difficulty}, {@code explanation}
+ *     on questions
+ *   - {@code slideKind}, {@code body}, {@code blocks}, presentation toggles
+ *     on Slide
  */
 package cephadex.brainflex.model.element;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.ResponseMode;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "kind")
 @JsonSubTypes({
@@ -59,144 +59,126 @@ public sealed interface DeckElement
 
     ElementKind kind();
 
+    /** The shared chrome (display / response / media / audit fields). Never null in practice. */
+    ElementChrome chrome();
+
+    // ── Chrome delegate accessors ────────────────────────────────────────────
+    //
+    // Each accessor pulls from {@link #chrome()} so all callers can keep their
+    // existing flat reads (e.g. {@code element.title()}) — the composition is
+    // invisible to consumers. {@code chrome} is expected to be non-null; if a
+    // record ever needs an empty default it should pass a fully-populated
+    // ElementChrome rather than null.
+
     /** Player-facing short opaque token (Mentimeter's `slide_public_key`). */
-    String publicKey();
+    default String publicKey() { return chrome().publicKey(); }
 
     /** Host/admin-facing short opaque token (Mentimeter's `slide_admin_key`). */
-    String privateKey();
+    default String privateKey() { return chrome().privateKey(); }
 
     /** Plain-text heading shown in lists, thumbnails, exports. */
-    String title();
+    default String title() { return chrome().title(); }
 
     /** Rich-text version of `title` — TipTap/ProseMirror JSON doc. Nullable. */
-    Map<String, Object> styledTitle();
+    default Map<String, Object> styledTitle() { return chrome().styledTitle(); }
 
     /** Auto-advance after this many seconds. 0 = host advances manually. */
-    int displaySeconds();
+    default int displaySeconds() { return chrome().displaySeconds(); }
 
     /** Private notes shown only to the host during play. Never broadcast to participants. */
-    String speakerNotes();
+    default String speakerNotes() { return chrome().speakerNotes(); }
 
     /** Element-level background image override; falls back to deck-level. */
-    Image background();
+    default Image background() { return chrome().background(); }
 
-    Image image();
+    default Image image() { return chrome().image(); }
 
-    String videoUrl(); // YouTube link (v1)
+    /** YouTube link (v1). Superseded by {@link #videoAssetId()} when set. */
+    default String videoUrl() { return chrome().videoUrl(); }
 
-    String audioUrl();
+    default String audioUrl() { return chrome().audioUrl(); }
 
-    MediaPosition mediaPosition();
+    /** Optional MediaAsset id (kind=VIDEO_FILE or VIDEO_EMBED). Wins over {@link #videoUrl()} when set. */
+    default String videoAssetId() { return chrome().videoAssetId(); }
+
+    /** Optional MediaAsset id (kind=AUDIO). Wins over {@link #audioUrl()} when set. */
+    default String audioAssetId() { return chrome().audioAssetId(); }
+
+    default MediaPosition mediaPosition() { return chrome().mediaPosition(); }
 
     /**
      * Whether this element contributes to the leaderboard. Slide and Q&A are
      * inherently unscored; Scales is unscored when used as a pulse poll.
      */
-    boolean scored();
+    default boolean scored() { return chrome().scored(); }
 
     /**
      * Opinion-style question with no correct answer (results = distribution,
      * not points). Independent of `scored` — a survey is unscored by definition
      * but a non-survey can also be unscored (e.g. a recap slide).
      */
-    boolean survey();
+    default boolean survey() { return chrome().survey(); }
 
     /**
      * null = single-select (default); n = player may submit up to n picks.
      * Currently honored by MCQ — other kinds ignore it.
      */
-    Integer multipleSelections();
+    default Integer multipleSelections() { return chrome().multipleSelections(); }
 
     /** Host-controlled freeze toggle. NOT_ACCEPTING_RESPONSES rejects submissions. */
-    ResponseMode responseMode();
+    default ResponseMode responseMode() { return chrome().responseMode(); }
 
     /**
-     * Best Answer mode is a two-phase round modifier (SUBMIT to VOTE to REVEAL).
-     * Element kinds that declare these as record components automatically
-     * override these defaults via their generated accessors; Slide (and any
-     * future non-scored kind) inherits the default `false / 0` here.
+     * Bottom of the runtime show-responses cascade (element → deck → session
+     * → format default). Default is {@link ShowResponsesMode#INHERIT}, which
+     * defers to the next level up. Element kinds that need a per-question
+     * override (currently {@link Slide}) declare it as a record component so
+     * the generated accessor wins over this default.
      */
-    default boolean bestAnswerMode() {
-        return false;
+    default ShowResponsesMode showResponses() {
+        return ShowResponsesMode.INHERIT;
     }
+
+    /** Two-phase SUBMIT to VOTE round modifier. */
+    default boolean bestAnswerMode() { return chrome().bestAnswerMode(); }
 
     /** Prompt shown during the VOTE phase, e.g. "Which answer is the funniest?". */
-    default String bestAnswerTitle() {
-        return null;
-    }
+    default String bestAnswerTitle() { return chrome().bestAnswerTitle(); }
 
-    default int bestAnswerBonus() {
-        return 0;
-    }
+    /**
+     * Tunable the resolved {@link cephadex.brainflex.service.bestanswer.BestAnswerScoringStrategy}
+     * consumes — per-vote multiplier under POINTS_PER_VOTE, flat amount under
+     * FLAT_WINNER. Renamed from {@code bestAnswerBonus} in chunk 24.
+     */
+    default int bestAnswerPoints() { return chrome().bestAnswerPoints(); }
 
-    // ---- Provenance + shared metadata (chunk 10b) ----
-    //
-    // Declared as default methods returning safe values; every record declares
-    // these as record components, so the generated accessor overrides the
-    // default. Kept on the interface so future kinds get a working baseline
-    // and callers can read them off any DeckElement without a kind switch.
+    /** Strategy used to award points during the VOTE phase. */
+    default BestAnswerScoring bestAnswerScoring() { return chrome().bestAnswerScoring(); }
 
     /** User who first authored this element. Set by the backend on add; null for system seeds. */
-    default String createdByUserId() {
-        return null;
-    }
+    default String createdByUserId() { return chrome().createdByUserId(); }
 
     /** User who most recently edited this element. Stamped server-side on every update. */
-    default String lastEditedByUserId() {
-        return null;
-    }
+    default String lastEditedByUserId() { return chrome().lastEditedByUserId(); }
 
     /** Timestamp the element was first added to the deck. Stamped server-side. */
-    default LocalDateTime createdAt() {
-        return null;
-    }
+    default LocalDateTime createdAt() { return chrome().createdAt(); }
 
     /** Timestamp of the most recent edit. Stamped server-side on every update. */
-    default LocalDateTime updatedAt() {
-        return null;
-    }
+    default LocalDateTime updatedAt() { return chrome().updatedAt(); }
 
     /** Per-element tag references (independent of the deck's tagIds). Empty by default. */
-    default List<String> tagIds() {
-        return List.of();
-    }
+    default List<String> tagIds() { return chrome().tagIds(); }
 
     /** Caption shown beneath the media slot — author-controlled. */
-    default String mediaCaption() {
-        return null;
-    }
+    default String mediaCaption() { return chrome().mediaCaption(); }
 
     /** Accessibility text for the media slot. */
-    default String altText() {
-        return null;
-    }
+    default String altText() { return chrome().altText(); }
 
     /** When false, audience emoji reactions are suppressed for this element. */
-    default boolean reactionsEnabled() {
-        return true;
-    }
+    default boolean reactionsEnabled() { return chrome().reactionsEnabled(); }
 
     /** Bumped on every server-side save. Clients use it to detect stale edits. */
-    default Integer version() {
-        return 1;
-    }
-
-    // ── MediaAsset references (chunk 19) ──────────────────────────────────────
-    //
-    // Optional pointers at a MediaAsset.id. When set, take precedence over the
-    // legacy {@code videoUrl} / {@code audioUrl} string fields at render time
-    // (renderer should prefer asset-id, fall back to url string). Declared as
-    // default methods returning null so existing records don't need to be
-    // rewritten; kinds that introduce real value for these fields can override
-    // by declaring them as record components.
-
-    /** Optional MediaAsset id (kind=VIDEO_FILE or VIDEO_EMBED). Wins over {@code videoUrl} when set. */
-    default String videoAssetId() {
-        return null;
-    }
-
-    /** Optional MediaAsset id (kind=AUDIO). Wins over {@code audioUrl} when set. */
-    default String audioAssetId() {
-        return null;
-    }
+    default Integer version() { return chrome().version(); }
 }

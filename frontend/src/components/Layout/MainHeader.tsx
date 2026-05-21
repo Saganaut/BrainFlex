@@ -9,11 +9,11 @@ interface MainHeaderProps {
 const MainHeader: React.FC<MainHeaderProps> = ({ id, children }) => {
   const { isFullScreen } = useFullScreen();
   return (
-    <div
+    <header
       id={id}
       className={`${styles.mainHeader} ${isFullScreen ? styles.isCollapsed : ""}`}>
       {children}
-    </div>
+    </header>
   );
 };
 

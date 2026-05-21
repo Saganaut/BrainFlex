@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import cephadex.brainflex.model.GameHistoryEntry;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.GameHistoryService;
 import cephadex.brainflex.service.UserService;
@@ -167,8 +168,7 @@ class GameHistoryControllerTest {
         e.setInteractiveSessionId(sessionId);
         e.setDeckId(deckId);
         e.setDeckName(deckName);
-        e.setHostUserId("host-1");
-        e.setHostName("Kevin");
+        e.setHost(UserSnapshot.of("host-1", "Kevin"));
         e.setFinalScore(score);
         e.setPlacement(placement);
         e.setTotalQuestions(10);

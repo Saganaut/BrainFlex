@@ -4,10 +4,12 @@
  * passes this component as `content` so the global ModalProvider handles
  * framing, backdrop, and close behavior).
  *
- * Today the only provider is Google OAuth (kicks the browser over to the
- * backend's `/api/auth/login`, preserving the current URL as `returnUrl`).
- * Additional providers (passkeys, email magic link, etc.) plug in as extra
- * buttons in this list — keep them visually consistent.
+ * Each provider button kicks the browser over to the backend's
+ * `/api/auth/login?provider=<id>`, preserving the current URL as `returnUrl`
+ * and forwarding any active `guestId` so a guest can be promoted in place.
+ * The backend redirects on to `/oauth2/authorization/<id>` and ultimately
+ * back to the SPA. Additional providers plug in as another entry in
+ * PROVIDERS — keep them visually consistent.
  */
 import { apiBaseUrl } from "@/store/emptyApi";
 import styles from "./LoginModal.module.css";
@@ -45,9 +47,44 @@ const GoogleGlyph = () => (
   </svg>
 );
 
+const DiscordGlyph = () => (
+  <svg
+    width='20'
+    height='20'
+    viewBox='0 0 24 24'
+    aria-hidden='true'
+    focusable='false'>
+    <path
+      fill='#5865F2'
+      d='M20.317 4.369A19.79 19.79 0 0 0 16.558 3.2a.074.074 0 0 0-.079.037c-.34.607-.719 1.4-.984 2.023a18.24 18.24 0 0 0-5.487 0 12.5 12.5 0 0 0-.997-2.023A.077.077 0 0 0 8.932 3.2a19.736 19.736 0 0 0-3.76 1.169.07.07 0 0 0-.032.027C2.534 7.99 1.879 11.508 2.201 14.983a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.21 14.21 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.118 13.118 0 0 1-1.873-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .031-.056c.5-4.022-.838-7.503-3.549-10.586a.06.06 0 0 0-.031-.028zM8.02 12.86c-1.183 0-2.157-1.085-2.157-2.42 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.335-.955 2.42-2.157 2.42zm7.974 0c-1.183 0-2.157-1.085-2.157-2.42 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.335-.946 2.42-2.157 2.42z'
+    />
+  </svg>
+);
+
+const MicrosoftGlyph = () => (
+  <svg
+    width='20'
+    height='20'
+    viewBox='0 0 23 23'
+    aria-hidden='true'
+    focusable='false'>
+    <path fill='#F25022' d='M1 1h10v10H1z' />
+    <path fill='#7FBA00' d='M12 1h10v10H12z' />
+    <path fill='#00A4EF' d='M1 12h10v10H1z' />
+    <path fill='#FFB900' d='M12 12h10v10H12z' />
+  </svg>
+);
+
+const PROVIDERS = [
+  { id: "google", label: "Continue with Google", Glyph: GoogleGlyph },
+  { id: "discord", label: "Continue with Discord", Glyph: DiscordGlyph },
+  { id: "microsoft", label: "Continue with Microsoft", Glyph: MicrosoftGlyph },
+] as const;
+
 const LoginModal = ({ message, returnUrl, guestId }: LoginModalProps) => {
-  const handleGoogleLogin = () => {
+  const handleLogin = (provider: string) => {
     const loginUrl = new URL(`${apiBaseUrl}/api/auth/login`);
+    loginUrl.searchParams.set("provider", provider);
     loginUrl.searchParams.set("returnUrl", returnUrl ?? window.location.href);
     if (guestId) loginUrl.searchParams.set("guestId", guestId);
     window.location.href = loginUrl.toString();
@@ -59,15 +96,18 @@ const LoginModal = ({ message, returnUrl, guestId }: LoginModalProps) => {
         {message ?? "Sign in to continue."}
       </p>
       <div className={styles.providers}>
-        <button
-          type='button'
-          className={styles.providerBtn}
-          onClick={handleGoogleLogin}>
-          <span className={styles.providerIcon} aria-hidden='true'>
-            <GoogleGlyph />
-          </span>
-          <span>Continue with Google</span>
-        </button>
+        {PROVIDERS.map(({ id, label, Glyph }) => (
+          <button
+            key={id}
+            type='button'
+            className={styles.providerBtn}
+            onClick={() => handleLogin(id)}>
+            <span className={styles.providerIcon} aria-hidden='true'>
+              <Glyph />
+            </span>
+            <span>{label}</span>
+          </button>
+        ))}
       </div>
     </div>
   );

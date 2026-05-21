@@ -115,6 +115,31 @@
     .member {
       font-size: var(--font-size-sm);
       color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+    }
+
+    .memberName {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .moveSelect {
+      font-size: var(--font-size-xs);
+      padding: 0 var(--space-1);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      border: var(--border-size-sm) solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+
+      &:focus-visible {
+        border-color: var(--border-focus);
+        outline: none;
+      }
     }
 
     .memberEmpty {

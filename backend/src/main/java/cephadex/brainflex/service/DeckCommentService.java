@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -32,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.model.DeckComment;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.repository.DeckCommentRepository;
 
 @Service
@@ -43,14 +45,17 @@ public class DeckCommentService {
     private final DeckCommentRepository commentRepository;
     private final MongoTemplate mongoTemplate;
     private final UserImageHydrator userImageHydrator;
+    private final ApplicationEventPublisher events;
 
     public DeckCommentService(
             DeckCommentRepository commentRepository,
             MongoTemplate mongoTemplate,
-            UserImageHydrator userImageHydrator) {
+            UserImageHydrator userImageHydrator,
+            ApplicationEventPublisher events) {
         this.commentRepository = commentRepository;
         this.mongoTemplate = mongoTemplate;
         this.userImageHydrator = userImageHydrator;
+        this.events = events;
     }
 
     /**
@@ -78,18 +83,17 @@ public class DeckCommentService {
         DeckComment row = new DeckComment();
         row.setId(UUID.randomUUID().toString());
         row.setDeckId(deckId);
-        row.setAuthorUserId(author.getId());
-        row.setAuthorName(author.getUserName());
-        row.setAuthorPictureUrl(userImageHydrator.pictureUrlOf(author));
+        row.setAuthor(UserSnapshot.of(author.getId(), author.getUserName(), userImageHydrator.pictureUrlOf(author)));
         row.setParentCommentId(resolvedParent);
         row.setBody(normalizedBody);
         row.setUpvotes(0);
         row.setUpvoterUserIds(new HashSet<>());
         row.setEdited(false);
         row.setDeleted(false);
-        row.setCreatedAt(LocalDateTime.now());
-        row.setUpdatedAt(LocalDateTime.now());
-        return commentRepository.save(row);
+        DeckComment saved = commentRepository.save(row);
+        events.publishEvent(new NotificationEvents.DeckCommentCreatedEvent(
+                deckId, saved.getId(), saved.getParentCommentId(), author.getId()));
+        return saved;
     }
 
     /**
@@ -99,17 +103,15 @@ public class DeckCommentService {
      */
     public DeckComment edit(String deckId, String commentId, User caller, String body) {
         DeckComment row = requireComment(deckId, commentId);
-        if (!caller.getId().equals(row.getAuthorUserId())) {
+        if (!caller.getId().equals(authorIdOf(row))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the author can edit this comment");
         }
         if (row.isDeleted()) {
             throw new ResponseStatusException(HttpStatus.GONE, "Comment has been deleted");
         }
         row.setBody(normalizeBody(body));
-        row.setAuthorName(caller.getUserName());
-        row.setAuthorPictureUrl(userImageHydrator.pictureUrlOf(caller));
+        row.setAuthor(UserSnapshot.of(caller.getId(), caller.getUserName(), userImageHydrator.pictureUrlOf(caller)));
         row.setEdited(true);
-        row.setUpdatedAt(LocalDateTime.now());
         return commentRepository.save(row);
     }
 
@@ -119,14 +121,13 @@ public class DeckCommentService {
      */
     public DeckComment softDelete(String deckId, String commentId, User caller) {
         DeckComment row = requireComment(deckId, commentId);
-        if (!caller.getId().equals(row.getAuthorUserId())) {
+        if (!caller.getId().equals(authorIdOf(row))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the author can delete this comment");
         }
         if (row.isDeleted()) return row;
         row.setDeleted(true);
         row.setBody(REMOVED_BODY);
         row.setDeletedAt(LocalDateTime.now());
-        row.setUpdatedAt(LocalDateTime.now());
         return commentRepository.save(row);
     }
 
@@ -184,6 +185,10 @@ public class DeckCommentService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Comment not found");
         }
         return row;
+    }
+
+    private static String authorIdOf(DeckComment row) {
+        return row.getAuthor() == null ? null : row.getAuthor().userId();
     }
 
     private static String normalizeBody(String body) {

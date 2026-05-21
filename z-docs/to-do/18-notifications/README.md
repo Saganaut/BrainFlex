@@ -1,6 +1,6 @@
 # 18 — Notifications
 
-**Status:** Not started
+**Status:** Done (backend + bell dropdown done; chunk-20 `notificationPrefs` muting deferred)
 **Depends on:** Nothing strict; consumes events from 04 (comments), 06 (collab invites), 14 (interactive session invites), 17 (achievements)
 **Unblocks:** A future in-app inbox / email digest
 
@@ -90,15 +90,15 @@ NotificationKind (enum)
 
 ## Checklist
 
-- [ ] `Notification` model + repo + TTL index
-- [ ] `NotificationKind` enum
-- [ ] `NotificationService.send` writes row + STOMP push
-- [ ] STOMP user-destination configured in `WebSocketConfig`
-- [ ] Spring `ApplicationEvent` listeners for chunks 03/04/06/14/17
-- [ ] Throttle `DECK_FAVORITED` via Redis dedupe key
-- [ ] Endpoints + tests
-- [ ] Bell icon + dropdown component
-- [ ] STOMP subscription + polling fallback
-- [ ] Toast on receive (gated by user pref)
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `Notification` model + repo + TTL index (90d via `@Indexed(expireAfter = "90d")`)
+- [x] `NotificationKind` enum (13 values matching the design)
+- [x] `NotificationService.send` writes row + STOMP push (per-user STOMP destination via `convertAndSendToUser`)
+- [x] STOMP user-destination configured in `WebSocketConfig` (existing `/user/queue/**` config covers it)
+- [x] Spring `ApplicationEvent` listeners for chunks 03/04/06/14/17 (`NotificationEvents` + `NotificationEventListener`, async via `@EnableAsync`)
+- [x] Throttle `DECK_FAVORITED` via Redis dedupe key (`notif:favorited:{deckOwnerId}:{actorId}:{deckId}` with 24h TTL)
+- [x] Endpoints + tests (`/api/notifications` paginated, unread-count, mark/read-all, dismiss)
+- [x] Bell icon + dropdown component (NavBar bell with unread badge + grouped dropdown)
+- [x] STOMP subscription + polling fallback (`useNotificationStream` + RTK Query 60s `pollingInterval`)
+- [ ] Toast on receive (gated by user pref) — deferred until chunk 20 `notificationPrefs` lands
+- [x] Frontend codegen + lint (regenerated `BrainFlexApi.ts`; optimistic cache enhancements in `apiEnhancements.ts`)
+- [x] Backend tests pass (423 tests; new `NotificationServiceTest` + `NotificationControllerTest`)

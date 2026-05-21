@@ -8,10 +8,11 @@ package cephadex.brainflex.dto;
 import java.util.List;
 
 import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;
+import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 import jakarta.validation.constraints.Size;
 
 public record UpdateDeckRequest(
@@ -22,7 +23,8 @@ public record UpdateDeckRequest(
         // Pass an empty string to clear the subject (or pass null to leave it).
         @Size(max = 64) String subjectTagId,
         DeckVisibility visibility,
-        DeckPreset recommendedPreset,
+        SessionFormat defaultSessionFormat,
+        ShowResponsesMode defaultShowResponses,
         Image cover,
         Image background,
         String themeId,

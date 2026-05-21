@@ -12,7 +12,14 @@
 // interface, so the per-element block mounts for any selected element. It's
 // only hidden when no element is selected (e.g. the deck editor is open
 // without a focused slide in the route).
-import type { DeckDto, Image, ThemeResponse } from "@/store/BrainFlexApi";
+import { getRouteApi } from "@tanstack/react-router";
+import {
+  useGetDeckQuery,
+  useUpdateDeckMutation,
+  type DeckDto,
+  type Image,
+  type ThemeResponse,
+} from "@/store/BrainFlexApi";
 import { useThemePicker } from "@/hooks/useThemePicker";
 import { useElementEditor } from "../SlideContentTypes/useElementEditor";
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
@@ -22,6 +29,23 @@ import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
 import { XMarkIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import styles from "./ThemePanel.module.css";
+
+const routeApi = getRouteApi("/decks/$deckId/edit");
+
+type SessionFormat = NonNullable<DeckDto["defaultSessionFormat"]>;
+type ShowResponsesMode = NonNullable<DeckDto["defaultShowResponses"]>;
+
+const FORMAT_OPTIONS: { value: SessionFormat; label: string }[] = [
+  { value: "GAME", label: "Game" },
+  { value: "PRESENTATION", label: "Presentation" },
+];
+
+const SHOW_RESPONSES_OPTIONS: { value: ShowResponsesMode; label: string }[] = [
+  { value: "INHERIT", label: "Inherit (per-element)" },
+  { value: "INSTANT", label: "Instant" },
+  { value: "ON_CLICK", label: "On click" },
+  { value: "PRIVATE", label: "Private" },
+];
 
 const PRESET_PREFIX = "preset:";
 const THEME_PREFIX = "theme:";
@@ -94,29 +118,29 @@ const PerSlideStyle = () => {
     markSynced(element.id);
   }
 
-  if (!element) return null;
+  if (!element) return <div>No element found</div>;
 
   // Spreading a discriminated union and overriding shared fields keeps the
   // `kind` discriminator intact, but TS can't prove that for the union
   // member type, so the cast is required on the way out.
   const handlePickImage = () => {
     openPicker((image) => {
-      commit({ ...element, image });
+      commit({ ...element, chrome: { ...element.chrome, image } });
     });
   };
 
   const handleClearImage = () => {
-    commit({ ...element, image: emptyImage() });
+    commit({ ...element, chrome: { ...element.chrome, image: emptyImage() } });
   };
 
   const handlePickBackground = () => {
     openPicker((background) => {
-      commit({ ...element, background });
+      commit({ ...element, chrome: { ...element.chrome, background } });
     });
   };
 
   const handleClearBackground = () => {
-    commit({ ...element, background: emptyImage() });
+    commit({ ...element, chrome: { ...element.chrome, background: emptyImage() } });
   };
 
   const elId = element.id ?? "";
@@ -126,14 +150,14 @@ const PerSlideStyle = () => {
       <h4 className={styles.heading}>This slide</h4>
       <ImagePicker
         label='Content image'
-        image={element.image}
+        image={element.chrome?.image}
         seed={`${elId}-content`}
         onPick={handlePickImage}
         onClear={handleClearImage}
       />
       <ImagePicker
         label='Background image'
-        image={element.background}
+        image={element.chrome?.background}
         seed={`${elId}-background`}
         onPick={handlePickBackground}
         onClear={handleClearBackground}
@@ -211,8 +235,80 @@ const ThemePanel = () => {
         </Btn>
       </section>
 
+      <SessionDefaultsSection />
+
       <PerSlideStyle />
     </div>
+  );
+};
+
+/**
+ * Chunk 24 — deck-wide chrome defaults. The values written here feed the
+ * top of the runtime cascade: `defaultSessionFormat` pre-fills the host's
+ * format picker on CreateGamePage; `defaultShowResponses` defers to the
+ * per-element value unless the deck wants to pin a value (e.g. an "always
+ * private" poll deck). The host can still override both at start-time —
+ * neither is a constraint.
+ */
+const SessionDefaultsSection = () => {
+  const { deckId } = routeApi.useParams();
+  const { data: deck } = useGetDeckQuery({ id: deckId });
+  const [updateDeck] = useUpdateDeckMutation();
+
+  if (!deck) return null;
+
+  const format: SessionFormat = deck.defaultSessionFormat ?? "GAME";
+  const showResponses: ShowResponsesMode =
+    deck.defaultShowResponses ?? "INHERIT";
+
+  const commitFormat = (next: SessionFormat) => {
+    void updateDeck({
+      id: deckId,
+      updateDeckRequest: { defaultSessionFormat: next },
+    })
+      .unwrap()
+      .catch((err: unknown) => {
+        console.error("Failed to update defaultSessionFormat", err);
+      });
+  };
+
+  const commitShowResponses = (next: ShowResponsesMode) => {
+    void updateDeck({
+      id: deckId,
+      updateDeckRequest: { defaultShowResponses: next },
+    })
+      .unwrap()
+      .catch((err: unknown) => {
+        console.error("Failed to update defaultShowResponses", err);
+      });
+  };
+
+  return (
+    <section className={styles.section}>
+      <h4 className={styles.heading}>Session defaults</h4>
+      <Dropdown
+        options={FORMAT_OPTIONS.map((opt) => ({
+          value: opt.value,
+          label: opt.label,
+        }))}
+        value={[format]}
+        onChange={(values) => {
+          const next = values[0] as SessionFormat | undefined;
+          if (next && next !== format) commitFormat(next);
+        }}
+      />
+      <Dropdown
+        options={SHOW_RESPONSES_OPTIONS.map((opt) => ({
+          value: opt.value,
+          label: opt.label,
+        }))}
+        value={[showResponses]}
+        onChange={(values) => {
+          const next = values[0] as ShowResponsesMode | undefined;
+          if (next && next !== showResponses) commitShowResponses(next);
+        }}
+      />
+    </section>
   );
 };
 

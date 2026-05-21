@@ -21,7 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -34,6 +34,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthoritiesService;
+import cephadex.brainflex.service.OAuthProviderService;
+import cephadex.brainflex.service.OAuthProviderService.ProviderProfile;
+import cephadex.brainflex.service.OrganizationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -44,10 +47,17 @@ public class SecurityConfig {
 
     private final UserRepository userRepository;
     private final AuthoritiesService authoritiesService;
+    private final OAuthProviderService oAuthProviderService;
+    private final OrganizationService organizationService;
 
-    public SecurityConfig(UserRepository userRepository, AuthoritiesService authoritiesService) {
+    public SecurityConfig(UserRepository userRepository,
+                          AuthoritiesService authoritiesService,
+                          OAuthProviderService oAuthProviderService,
+                          OrganizationService organizationService) {
         this.userRepository = userRepository;
         this.authoritiesService = authoritiesService;
+        this.oAuthProviderService = oAuthProviderService;
+        this.organizationService = organizationService;
     }
 
     @Bean
@@ -82,23 +92,32 @@ public class SecurityConfig {
      * For brand-new users the User record does not exist yet (registration
      * happens after the OAuth redirect), so we fall back to a plain ROLE_USER
      * and the tier/org roles are filled in on the next login.
+     *
+     * The {@link OAuth2AuthenticationToken} that carries the registration id
+     * hasn't been built yet at this stage — Spring is still assembling
+     * authorities from raw user-info attributes. We probe each provider's
+     * id attribute ({@code sub} for Google/Microsoft OIDC, {@code id} for
+     * Discord) and then scan every provider column for a match.
      */
     @Bean
     public GrantedAuthoritiesMapper oauthUserAuthoritiesMapper() {
         return (authorities) -> {
             Set<GrantedAuthority> mapped = new HashSet<>(authorities);
-            String googleId = null;
+            String providerId = null;
             for (GrantedAuthority authority : authorities) {
                 if (authority instanceof OAuth2UserAuthority oauthAuth) {
-                    Object sub = oauthAuth.getAttributes().get("sub");
-                    if (sub != null) {
-                        googleId = sub.toString();
+                    var attrs = oauthAuth.getAttributes();
+                    Object sub = attrs.get("sub");
+                    Object discordId = attrs.get("id");
+                    Object candidate = sub != null ? sub : discordId;
+                    if (candidate != null) {
+                        providerId = candidate.toString();
                         break;
                     }
                 }
             }
-            if (googleId != null) {
-                userRepository.findByGoogleId(googleId)
+            if (providerId != null) {
+                oAuthProviderService.findByAnyProviderId(providerId)
                         .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()))
                         .ifPresent(u -> mapped.addAll(authoritiesService.authoritiesFor(u)));
             }
@@ -130,10 +149,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/users/leaderboard/**",
                                 "/api/users/check-username",
+                                "/api/users/*/achievements",
                                 "/api/interactive-sessions/**",
                                 "/api/decks/**",
                                 "/api/collections/*",
-                                "/api/avatars").permitAll()
+                                "/api/avatars",
+                                "/api/achievements").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -142,7 +163,7 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userAuthoritiesMapper(oauthUserAuthoritiesMapper()))
-                        .successHandler(new OAuth2SuccessHandler(userRepository)))
+                        .successHandler(new OAuth2SuccessHandler(userRepository, oAuthProviderService, organizationService)))
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler((request, response, authentication) -> {
@@ -167,17 +188,24 @@ public class SecurityConfig {
 
     private static class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
         private final UserRepository userRepository;
+        private final OAuthProviderService oAuthProviderService;
+        private final OrganizationService organizationService;
 
-        public OAuth2SuccessHandler(UserRepository userRepository) {
+        public OAuth2SuccessHandler(UserRepository userRepository,
+                                    OAuthProviderService oAuthProviderService,
+                                    OrganizationService organizationService) {
             this.userRepository = userRepository;
+            this.oAuthProviderService = oAuthProviderService;
+            this.organizationService = organizationService;
         }
 
         @Override
         public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                 Authentication authentication) throws IOException {
 
-            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-            String googleId = oAuth2User.getAttribute("sub");
+            OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
+            ProviderProfile profile = oAuthProviderService.profileOf(token);
+
             String sessionReturnUrl = null;
             String guestId = null;
             if (request.getSession(false) != null) {
@@ -187,16 +215,23 @@ public class SecurityConfig {
                 request.getSession(false).removeAttribute("guestId");
             }
 
-            var existingOpt = userRepository.findByGoogleId(googleId)
+            var existingOpt = oAuthProviderService
+                    .findByProviderId(profile.provider(), profile.providerId())
                     .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()));
             // Lazy backfill so users created before emailVerifiedAt landed pick it up
-            // on their next Google login. Reaching this branch means OIDC succeeded —
-            // Google's token is our verification signal.
+            // on their next OAuth login. Reaching this branch means the IdP accepted
+            // the credentials — for Google/Microsoft (OIDC) that's a verified-email
+            // signal; Discord's OAuth-only flow only succeeds with a confirmed email
+            // on the account, which is good enough for our purposes.
             existingOpt.ifPresent(u -> {
                 if (u.getEmailVerifiedAt() == null) {
                     u.setEmailVerifiedAt(LocalDateTime.now());
                     userRepository.save(u);
                 }
+                // Chunk 20 — every login is a fresh chance for a domain-claimed
+                // org to pick the user up. The service is idempotent so users
+                // already in every match pay only a single indexed query.
+                organizationService.autoJoinByEmailDomain(u);
             });
 
             if (existingOpt.isPresent()) {
@@ -209,12 +244,16 @@ public class SecurityConfig {
                 userRepository.findById(guestId).ifPresent(guestUser -> {
                     if (guestUser.getIsGuest()) {
                         guestUser.setIsGuest(false);
-                        guestUser.setGoogleId(googleId);
-                        guestUser.setEmail(oAuth2User.getAttribute("email"));
-                        guestUser.setName(oAuth2User.getAttribute("name"));
-                        guestUser.setPictureUrl(oAuth2User.getAttribute("picture"));
+                        oAuthProviderService.setProviderIdOn(guestUser, profile);
+                        guestUser.setEmail(profile.email());
+                        guestUser.setName(profile.name());
+                        guestUser.setPictureUrl(profile.picture());
                         guestUser.setEmailVerifiedAt(LocalDateTime.now());
                         userRepository.save(guestUser);
+                        // Chunk 20 — same auto-join sweep as the existing-user
+                        // branch above, so a guest converting to a registered
+                        // account lands in their email-domain orgs on the spot.
+                        organizationService.autoJoinByEmailDomain(guestUser);
                     }
                 });
                 String redirectUrl = sessionReturnUrl != null ? sessionReturnUrl : "http://localhost:5173/";
@@ -222,15 +261,22 @@ public class SecurityConfig {
                 return;
             }
 
-            String email = oAuth2User.getAttribute("email");
-            String name = oAuth2User.getAttribute("name");
-            String picture = oAuth2User.getAttribute("picture");
-            String targetUrl = UriComponentsBuilder.fromUriString("http://localhost:5173/register")
-                    .queryParam("googleId", googleId)
-                    .queryParam("email", email)
-                    .queryParam("name", name)
-                    .queryParam("picture", picture)
-                    .build().toUriString();
+            // We emit both `provider`+`providerId` (new, multi-provider) and
+            // — for Google only — the legacy `googleId` query param so the
+            // existing /register page on the frontend keeps working without
+            // immediate changes.
+            UriComponentsBuilder builder = UriComponentsBuilder
+                    .fromUriString("http://localhost:5173/register")
+                    .queryParam("provider", profile.provider())
+                    .queryParam("providerId", profile.providerId());
+            if (OAuthProviderService.GOOGLE.equals(profile.provider())) {
+                builder.queryParam("googleId", profile.providerId());
+            }
+            if (profile.email() != null) builder.queryParam("email", profile.email());
+            if (profile.name() != null) builder.queryParam("name", profile.name());
+            if (profile.picture() != null) builder.queryParam("picture", profile.picture());
+
+            String targetUrl = builder.build().toUriString();
             if (sessionReturnUrl != null) {
                 targetUrl += "&returnUrl=" + URLEncoder.encode(sessionReturnUrl, StandardCharsets.UTF_8);
             }

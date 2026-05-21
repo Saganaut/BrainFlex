@@ -1,0 +1,42 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-size-sm) solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+
+  & .label {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  & .qrFrame {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-canvas);
+    border-radius: var(--radius-md);
+    outline: 1px solid var(--edge-surface);
+    outline-offset: -1px;
+    overflow: hidden;
+  }
+
+  & .placeholder {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-align: center;
+    padding: var(--space-3);
+    word-break: break-all;
+  }
+
+  & .caption {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-align: center;
+  }
+}

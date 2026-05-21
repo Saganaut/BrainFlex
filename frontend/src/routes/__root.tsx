@@ -6,6 +6,7 @@ import { ModalProvider } from "../context/ModalProvider";
 import { ToastProvider } from "../context/ToastProvider";
 import { NotFoundPage } from "../pages/ErrorPage/ErrorPage";
 import { AuthPromptBridge } from "../components/Common/LoginModal/AuthPromptBridge";
+import { ActiveThemeBridge } from "../components/Common/ActiveThemeBridge";
 import { Layout } from "@/components/Layout/Layout";
 import { MainHeader } from "@/components/Layout/MainHeader";
 import type { CurrentUserState } from "@/hooks/useCurrentUser";
@@ -21,6 +22,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         <ModalProvider>
           <Layout>
             <AuthPromptBridge />
+            <ActiveThemeBridge />
             <MainHeader children={<NavBar />} />
 
             <Outlet />

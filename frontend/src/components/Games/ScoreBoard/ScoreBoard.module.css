@@ -84,6 +84,15 @@
   padding: 0 var(--space-1);
 }
 
+.streakChip {
+  font-size: var(--font-size-xs);
+  color: var(--text-warning);
+  border: var(--border-size-sm) solid var(--border-warning);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
+  white-space: nowrap;
+}
+
 .score {
   font-weight: 700;
   color: var(--text-success);

@@ -16,7 +16,11 @@
  *   - {@code averageScore} aggregates per (player, game); {@code averageDurationMs}
  *     aggregates per game.
  *   - Reactions + total session chat populate the per-element stats.
- *   - Exceptions in any sub-step do not bubble out of recordGame.
+ *   - Exceptions in any sub-step do not bubble out of recordSessionFinish.
+ *   - PR3 — GAME / PRESENTATION finishes route into the matching
+ *     {@link cephadex.brainflex.model.FormatRollup}; PRESENTATION leaves
+ *     {@code averageScore} alone so unscored sessions don't pollute the
+ *     game-mode score average; mixed decks populate both rollups.
  */
 package cephadex.brainflex.service;
 
@@ -41,15 +45,20 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
+import cephadex.brainflex.model.enums.SessionFormat;
 import cephadex.brainflex.model.DeckAnalytics;
 import cephadex.brainflex.model.ElementStats;
+import cephadex.brainflex.model.FormatRollup;
 import cephadex.brainflex.model.InteractiveSession;
 import cephadex.brainflex.model.InteractiveSessionPlayer;
 import cephadex.brainflex.model.PlayerAnswer;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.DrawingAnswer;
@@ -82,22 +91,25 @@ class DeckAnalyticsServiceTest {
 
     @BeforeEach
     void emptyRollupByDefault() {
-        when(analyticsRepository.findById(anyString())).thenReturn(Optional.empty());
-        when(analyticsRepository.save(any(DeckAnalytics.class)))
+        // Most tests start with an empty rollup and just inspect the captured
+        // save. lenient() because a handful of tests (e.g. null-deck short-circuit)
+        // never reach the repository.
+        lenient().when(analyticsRepository.findById(anyString())).thenReturn(Optional.empty());
+        lenient().when(analyticsRepository.save(any(DeckAnalytics.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
     }
 
     // ── Game-level rollup ────────────────────────────────────────────
 
     @Test
-    void recordGame_FirstPlay_InitializesCountersAndAverages() {
+    void recordSessionFinish_FirstPlay_InitializesCountersAndAverages() {
         InteractiveSession session = baseSession();
         session.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
         session.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 30));
         session.getPlayers().add(playerWithScore("p-1", 100, 0.80));
         session.getPlayers().add(playerWithScore("p-2", 50, 0.40));
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
 
         DeckAnalytics saved = captureSaved();
         assertEquals(1, saved.getTotalPlays());
@@ -106,17 +118,20 @@ class DeckAnalyticsServiceTest {
         assertEquals(0.60, saved.getAverageAccuracy(), 0.0001);
         assertEquals(30L * 60_000L, saved.getAverageDurationMs(), "30 min duration");
         assertEquals(session.getEndedAt(), saved.getLastPlayedAt());
-        assertNotNull(saved.getUpdatedAt());
+        // {@code updatedAt} is now populated by Spring Data's {@code @LastModifiedDate}
+        // hook on real Mongo save; this unit test mocks the repository, so the
+        // auditing infrastructure never fires and the field stays null. Production
+        // behaviour is covered by the integration tests against a live MongoDB.
     }
 
     @Test
-    void recordGame_TwoPlays_AveragesAreRunningWelford() {
+    void recordSessionFinish_TwoPlays_AveragesAreRunningWelford() {
         // First game: one player, score 100.
         InteractiveSession game1 = baseSession();
         game1.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
         game1.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 10));   // 10 min
         game1.getPlayers().add(playerWithScore("p-1", 100, 1.0));
-        service.recordGame(game1);
+        service.recordSessionFinish(game1);
 
         DeckAnalytics afterGame1 = captureSaved();
         // Second game: same deck, returns the stored rollup; one player, score 50.
@@ -125,7 +140,7 @@ class DeckAnalyticsServiceTest {
         game2.setStartedAt(LocalDateTime.of(2026, 5, 21, 8, 0));
         game2.setEndedAt(LocalDateTime.of(2026, 5, 21, 8, 20));   // 20 min
         game2.getPlayers().add(playerWithScore("p-2", 50, 0.5));
-        service.recordGame(game2);
+        service.recordSessionFinish(game2);
 
         DeckAnalytics finalRollup = lastSaved();
         assertEquals(2, finalRollup.getTotalPlays());
@@ -138,12 +153,12 @@ class DeckAnalyticsServiceTest {
     // ── Slide + Q&A + Timeout edge cases ──────────────────────────────
 
     @Test
-    void recordGame_Slide_SkippedFromPerElementRollup() {
+    void recordSessionFinish_Slide_SkippedFromPerElementRollup() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(slide("slide-1"));
         session.getPlayers().add(playerWithScore("p-1", 100, 1.0));
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
 
         DeckAnalytics saved = captureSaved();
         assertFalse(saved.getPerElement().containsKey("slide-1"),
@@ -151,14 +166,14 @@ class DeckAnalyticsServiceTest {
     }
 
     @Test
-    void recordGame_QAndA_PresentedButNoAnswerRollup() {
+    void recordSessionFinish_QAndA_PresentedButNoAnswerRollup() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(qAndA("qa-1"));
         InteractiveSessionPlayer p = playerWithScore("p-1", 0, 0.0);
         // No PlayerAnswer for Q&A — submissions live in audience_submissions.
         session.getPlayers().add(p);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
 
         ElementStats stats = captureSaved().getPerElement().get("qa-1");
         assertEquals(1, stats.getPresentedCount());
@@ -167,14 +182,14 @@ class DeckAnalyticsServiceTest {
     }
 
     @Test
-    void recordGame_TimeoutAnswer_DoesNotCountAsAnswered() {
+    void recordSessionFinish_TimeoutAnswer_DoesNotCountAsAnswered() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("mcq-1"));
         InteractiveSessionPlayer p = playerWithScore("p-1", 0, 0.0);
         p.getAnswers().add(answer("mcq-1", new TimeoutAnswer(), false, 0L));
         session.getPlayers().add(p);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
 
         ElementStats stats = captureSaved().getPerElement().get("mcq-1");
         assertEquals(1, stats.getPresentedCount());
@@ -186,49 +201,49 @@ class DeckAnalyticsServiceTest {
     // ── Per-kind bucketing ─────────────────────────────────────────────
 
     @Test
-    void recordGame_McqAnswer_CountsHitsPerOptionId() {
+    void recordSessionFinish_McqAnswer_CountsHitsPerOptionId() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("mcq-1"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 1500);
         addAnswer(session, "p-2", "mcq-1", new McqAnswer(List.of("opt-b")), false, 2000);
         addAnswer(session, "p-3", "mcq-1", new McqAnswer(List.of("opt-a", "opt-b")), false, 3000);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("mcq-1").getDistribution();
         assertEquals(2, dist.get("opt-a"));
         assertEquals(2, dist.get("opt-b"));
     }
 
     @Test
-    void recordGame_NumberAnswer_BucketsByIntegerFloor() {
+    void recordSessionFinish_NumberAnswer_BucketsByIntegerFloor() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("num-1"));  // kind doesn't matter for bucketing
         addAnswer(session, "p-1", "num-1", new NumberAnswer(42.0), true, 1000);
         addAnswer(session, "p-2", "num-1", new NumberAnswer(42.7), false, 1500);
         addAnswer(session, "p-3", "num-1", new NumberAnswer(50.0), false, 800);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("num-1").getDistribution();
         assertEquals(2, dist.get("42"));
         assertEquals(1, dist.get("50"));
     }
 
     @Test
-    void recordGame_TextAnswer_NormalizesCaseAndTrims() {
+    void recordSessionFinish_TextAnswer_NormalizesCaseAndTrims() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("text-1"));
         addAnswer(session, "p-1", "text-1", new TextAnswer("  Frodo "), true, 0);
         addAnswer(session, "p-2", "text-1", new TextAnswer("frodo"), true, 0);
         addAnswer(session, "p-3", "text-1", new TextAnswer("Sam"), false, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("text-1").getDistribution();
         assertEquals(2, dist.get("frodo"));
         assertEquals(1, dist.get("sam"));
     }
 
     @Test
-    void recordGame_RankingAnswer_SumsPlacementsPerItem() {
+    void recordSessionFinish_RankingAnswer_SumsPlacementsPerItem() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("rank-1"));
         // Player 1 ranks item-x first, item-y second.
@@ -238,14 +253,14 @@ class DeckAnalyticsServiceTest {
         addAnswer(session, "p-2", "rank-1",
                 new RankingAnswer(List.of("item-y", "item-x")), false, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("rank-1").getDistribution();
         assertEquals(1, dist.get("item-x"), "0 + 1 = 1");
         assertEquals(1, dist.get("item-y"), "1 + 0 = 1");
     }
 
     @Test
-    void recordGame_ScalesAnswer_SumsRatingsPerStatement() {
+    void recordSessionFinish_ScalesAnswer_SumsRatingsPerStatement() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("scales-1"));
         addAnswer(session, "p-1", "scales-1",
@@ -253,20 +268,20 @@ class DeckAnalyticsServiceTest {
         addAnswer(session, "p-2", "scales-1",
                 new ScalesAnswer(Map.of("s-a", 4, "s-b", 2)), true, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("scales-1").getDistribution();
         assertEquals(9, dist.get("s-a"));
         assertEquals(5, dist.get("s-b"));
     }
 
     @Test
-    void recordGame_GridAnswer_CountsCellHits() {
+    void recordSessionFinish_GridAnswer_CountsCellHits() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("grid-1"));
         addAnswer(session, "p-1", "grid-1", new GridAnswer(Set.of(3, 5)), true, 0);
         addAnswer(session, "p-2", "grid-1", new GridAnswer(Set.of(3, 7)), false, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("grid-1").getDistribution();
         assertEquals(2, dist.get("3"));
         assertEquals(1, dist.get("5"));
@@ -274,7 +289,7 @@ class DeckAnalyticsServiceTest {
     }
 
     @Test
-    void recordGame_PlaceOnImageAnswer_BucketsTo10x10Grid() {
+    void recordSessionFinish_PlaceOnImageAnswer_BucketsTo10x10Grid() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("place-1"));
         // (0.05, 0.05) → (row 0, col 0); (0.07, 0.04) → also (0, 0); (0.55, 0.95) → (9, 5)
@@ -282,20 +297,20 @@ class DeckAnalyticsServiceTest {
         addAnswer(session, "p-2", "place-1", new PlaceOnImageAnswer(0.07, 0.04), true, 0);
         addAnswer(session, "p-3", "place-1", new PlaceOnImageAnswer(0.55, 0.95), false, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("place-1").getDistribution();
         assertEquals(2, dist.get("0,0"));
         assertEquals(1, dist.get("9,5"));
     }
 
     @Test
-    void recordGame_WordCloudAnswer_NormalizesAndCounts() {
+    void recordSessionFinish_WordCloudAnswer_NormalizesAndCounts() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("wc-1"));
         addAnswer(session, "p-1", "wc-1", new WordCloudAnswer(List.of("Hope", "Faith")), false, 0);
         addAnswer(session, "p-2", "wc-1", new WordCloudAnswer(List.of("hope", "love")), false, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("wc-1").getDistribution();
         assertEquals(2, dist.get("hope"));
         assertEquals(1, dist.get("faith"));
@@ -303,7 +318,7 @@ class DeckAnalyticsServiceTest {
     }
 
     @Test
-    void recordGame_AllocationAnswer_SumsPointsPerOption() {
+    void recordSessionFinish_AllocationAnswer_SumsPointsPerOption() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("alloc-1"));
         addAnswer(session, "p-1", "alloc-1",
@@ -311,14 +326,14 @@ class DeckAnalyticsServiceTest {
         addAnswer(session, "p-2", "alloc-1",
                 new AllocationAnswer(Map.of("opt-a", 30, "opt-b", 70)), false, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("alloc-1").getDistribution();
         assertEquals(90, dist.get("opt-a"));
         assertEquals(110, dist.get("opt-b"));
     }
 
     @Test
-    void recordGame_MatchingAnswer_BucketsByPairString() {
+    void recordSessionFinish_MatchingAnswer_BucketsByPairString() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("match-1"));
         addAnswer(session, "p-1", "match-1",
@@ -326,7 +341,7 @@ class DeckAnalyticsServiceTest {
         addAnswer(session, "p-2", "match-1",
                 new MatchingAnswer(Map.of("L-1", "R-x", "L-2", "R-z")), false, 0);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         Map<String, Integer> dist = captureSaved().getPerElement().get("match-1").getDistribution();
         assertEquals(2, dist.get("L-1>R-x"));
         assertEquals(1, dist.get("L-2>R-y"));
@@ -334,13 +349,13 @@ class DeckAnalyticsServiceTest {
     }
 
     @Test
-    void recordGame_DrawingAnswer_RecordsAnsweredCountButEmptyDistribution() {
+    void recordSessionFinish_DrawingAnswer_RecordsAnsweredCountButEmptyDistribution() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("draw-1"));
         addAnswer(session, "p-1", "draw-1", new DrawingAnswer(List.of()), false, 1000);
         addAnswer(session, "p-2", "draw-1", new DrawingAnswer(List.of()), false, 1500);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         ElementStats stats = captureSaved().getPerElement().get("draw-1");
         assertEquals(2, stats.getAnsweredCount());
         assertTrue(stats.getDistribution().isEmpty(), "Drawing has no per-stroke bucketing");
@@ -350,32 +365,32 @@ class DeckAnalyticsServiceTest {
     // ── Aggregations attached to the element ───────────────────────────
 
     @Test
-    void recordGame_AverageTimeMs_IsTotalDividedByAnsweredCount() {
+    void recordSessionFinish_AverageTimeMs_IsTotalDividedByAnsweredCount() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("mcq-1"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 1000);
         addAnswer(session, "p-2", "mcq-1", new McqAnswer(List.of("opt-a")), true, 3000);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         ElementStats stats = captureSaved().getPerElement().get("mcq-1");
         assertEquals(4000L, stats.getTotalTimeMs());
         assertEquals(2000.0, stats.getAverageTimeMs(), 0.0001);
     }
 
     @Test
-    void recordGame_ReactionRepository_FoldedIntoElementStats() {
+    void recordSessionFinish_ReactionRepository_FoldedIntoElementStats() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("mcq-1"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 0);
         when(reactionRepository.countByInteractiveSessionIdAndElementId("session-1", "mcq-1"))
                 .thenReturn(7L);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         assertEquals(7, captureSaved().getPerElement().get("mcq-1").getReactionsReceived());
     }
 
     @Test
-    void recordGame_TotalSessionChat_AttachesToFirstScoredElement() {
+    void recordSessionFinish_TotalSessionChat_AttachesToFirstScoredElement() {
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(slide("slide-1"));      // skipped
         session.getDeckSnapshot().add(mcqElement("mcq-1"));    // gets the chat count
@@ -384,32 +399,158 @@ class DeckAnalyticsServiceTest {
         addAnswer(session, "p-1", "mcq-2", new McqAnswer(List.of("opt-a")), true, 0);
         when(chatRepository.countByInteractiveSessionId("session-1")).thenReturn(12L);
 
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         DeckAnalytics saved = captureSaved();
         assertEquals(12, saved.getPerElement().get("mcq-1").getChatMessagesDuringRound());
         assertEquals(0, saved.getPerElement().get("mcq-2").getChatMessagesDuringRound());
     }
 
+    // ── PR3 — game / presentation format split ────────────────────────
+
+    @Test
+    void recordSessionFinish_GameOnly_PopulatesGameRollupNotPresentation() {
+        InteractiveSession session = baseSession();
+        session.setFormat(SessionFormat.GAME);
+        session.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
+        session.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 30));
+        session.getPlayers().add(playerWithScore("p-1", 100, 0.80));
+        session.getPlayers().add(playerWithScore("p-2", 50, 0.40));
+
+        service.recordSessionFinish(session);
+
+        DeckAnalytics saved = captureSaved();
+        FormatRollup game = saved.getGameRollup();
+        FormatRollup pres = saved.getPresentationRollup();
+
+        assertNotNull(game, "game rollup should be initialised on first finish");
+        assertEquals(1, game.getSessionCount());
+        assertEquals(2, game.getParticipantCount());
+        assertEquals(75.0, game.getAverageScore(), 0.0001);
+        assertEquals(0.60, game.getAverageAccuracy(), 0.0001);
+        assertEquals(30L * 60_000L, game.getAverageDurationMs());
+        assertEquals(session.getEndedAt(), game.getLastRunAt());
+
+        assertNotNull(pres, "presentation rollup should be initialised (empty) alongside");
+        assertEquals(0, pres.getSessionCount(),
+                "no presentation finishes yet → presentation rollup stays empty");
+        assertEquals(0.0, pres.getAverageScore(), 0.0001);
+        assertNull(pres.getLastRunAt());
+    }
+
+    @Test
+    void recordSessionFinish_PresentationOnly_LeavesScoreAtZero() {
+        // PRESENTATION sessions typically run unscored — averaging zeros into
+        // averageScore would make a real game's average look worse later if
+        // the same deck mixes formats. The recorder skips that update.
+        InteractiveSession session = baseSession();
+        session.setFormat(SessionFormat.PRESENTATION);
+        session.setStartedAt(LocalDateTime.of(2026, 5, 20, 9, 0));
+        session.setEndedAt(LocalDateTime.of(2026, 5, 20, 9, 15));
+        session.getPlayers().add(playerWithScore("p-1", 0, 0.50));
+        session.getPlayers().add(playerWithScore("p-2", 0, 0.30));
+
+        service.recordSessionFinish(session);
+
+        DeckAnalytics saved = captureSaved();
+        FormatRollup pres = saved.getPresentationRollup();
+        FormatRollup game = saved.getGameRollup();
+
+        assertEquals(1, pres.getSessionCount());
+        assertEquals(2, pres.getParticipantCount());
+        assertEquals(0.0, pres.getAverageScore(), 0.0001,
+                "presentation finish must not pollute averageScore with zeros");
+        assertEquals(0.40, pres.getAverageAccuracy(), 0.0001,
+                "accuracy still tracked — scored elements inside a presentation contribute");
+        assertEquals(15L * 60_000L, pres.getAverageDurationMs());
+
+        assertEquals(0, game.getSessionCount(), "no GAME finishes → empty rollup");
+    }
+
+    @Test
+    void recordSessionFinish_MixedFormats_BothRollupsPopulatedIndependently() {
+        // First finish: GAME with one 100-point player.
+        InteractiveSession game = baseSession();
+        game.setFormat(SessionFormat.GAME);
+        game.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
+        game.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 10));
+        game.getPlayers().add(playerWithScore("p-1", 100, 1.0));
+        service.recordSessionFinish(game);
+        DeckAnalytics afterGame = captureSaved();
+
+        // Second finish: PRESENTATION with two participants, unscored.
+        when(analyticsRepository.findById("deck-1")).thenReturn(Optional.of(afterGame));
+        InteractiveSession pres = baseSession();
+        pres.setId("session-2");
+        pres.setFormat(SessionFormat.PRESENTATION);
+        pres.setStartedAt(LocalDateTime.of(2026, 5, 21, 10, 0));
+        pres.setEndedAt(LocalDateTime.of(2026, 5, 21, 10, 20));
+        pres.getPlayers().add(playerWithScore("p-2", 0, 0.70));
+        pres.getPlayers().add(playerWithScore("p-3", 0, 0.50));
+        service.recordSessionFinish(pres);
+
+        DeckAnalytics finalRollup = lastSaved();
+        FormatRollup gameRollup = finalRollup.getGameRollup();
+        FormatRollup presRollup = finalRollup.getPresentationRollup();
+
+        assertEquals(1, gameRollup.getSessionCount(), "GAME stays at 1");
+        assertEquals(100.0, gameRollup.getAverageScore(), 0.0001,
+                "PRESENTATION finish must not touch GAME rollup");
+
+        assertEquals(1, presRollup.getSessionCount());
+        assertEquals(2, presRollup.getParticipantCount());
+        assertEquals(0.0, presRollup.getAverageScore(), 0.0001);
+        assertEquals(0.60, presRollup.getAverageAccuracy(), 0.0001);
+
+        // Deck-wide totals stay populated for back-compat (sum across formats).
+        assertEquals(2, finalRollup.getTotalPlays(), "totalPlays = games + presentations");
+        assertEquals(3, finalRollup.getTotalPlayers(), "1 game player + 2 presentation participants");
+    }
+
+    @Test
+    void recordSessionFinish_LegacyRollupWithoutByFormat_LazilyInitialisesRollups() {
+        // Simulate a pre-PR3 document: gameRollup + presentationRollup are null
+        // because the schema didn't have the fields yet.
+        DeckAnalytics legacy = new DeckAnalytics();
+        legacy.setDeckId("deck-1");
+        legacy.setTotalPlays(5);
+        legacy.setGameRollup(null);
+        legacy.setPresentationRollup(null);
+        when(analyticsRepository.findById("deck-1")).thenReturn(Optional.of(legacy));
+
+        InteractiveSession session = baseSession();
+        session.setFormat(SessionFormat.GAME);
+        session.getPlayers().add(playerWithScore("p-1", 100, 1.0));
+
+        service.recordSessionFinish(session);
+
+        DeckAnalytics saved = captureSaved();
+        assertNotNull(saved.getGameRollup(),
+                "lazy initialisation should backfill the missing rollup");
+        assertNotNull(saved.getPresentationRollup(),
+                "the opposite rollup should also be initialised (empty) to keep schema consistent");
+        assertEquals(1, saved.getGameRollup().getSessionCount());
+    }
+
     // ── Robustness ─────────────────────────────────────────────────────
 
     @Test
-    void recordGame_NullDeckId_DoesNothing() {
+    void recordSessionFinish_NullDeckId_DoesNothing() {
         InteractiveSession session = new InteractiveSession();
         session.setId("session-x");
         // deckId is null
-        service.recordGame(session);
+        service.recordSessionFinish(session);
         verify(analyticsRepository, org.mockito.Mockito.never()).save(any(DeckAnalytics.class));
     }
 
     @Test
-    void recordGame_RepositoryThrows_ExceptionIsSwallowed() {
+    void recordSessionFinish_RepositoryThrows_ExceptionIsSwallowed() {
         when(analyticsRepository.findById("deck-1"))
                 .thenThrow(new RuntimeException("mongo down"));
 
         InteractiveSession session = baseSession();
         session.getDeckSnapshot().add(mcqElement("mcq-1"));
         // Must not throw — the analytics call is failure-isolated from endGame.
-        service.recordGame(session);
+        service.recordSessionFinish(session);
     }
 
     @Test
@@ -433,7 +574,7 @@ class DeckAnalyticsServiceTest {
 
     private InteractiveSessionPlayer playerWithScore(String userId, int score, double accuracy) {
         InteractiveSessionPlayer p = new InteractiveSessionPlayer();
-        p.setUserId(userId);
+        p.setUser(UserSnapshot.of(userId, null));
         p.setScore(score);
         p.setAccuracy(accuracy);
         return p;
@@ -463,34 +604,26 @@ class DeckAnalyticsServiceTest {
 
     private DeckElement mcqElement(String id) {
         return new cephadex.brainflex.model.element.McqQuestion(
-                id, null, null, "title", null, null, List.of(), List.of(),
-                10, null, true, false, null, null,
-                false, null, 0, null,
-                10, null, null, null, null, null, null, null, null,
+                id, null, List.of(), List.of(),
+                10, null, null,
                 false, false, 0,
-                null, null, null, null, List.of(), null, null, true, 1);
+                TestElementChromes.scored(id, "title"));
     }
 
     private DeckElement slide(String id) {
         return new Slide(
-                id, null, null, null, "Slide title", null,
-                null, null,
-                false, false, null, null,
-                0, null, null, null, null, null, null, null, null,
+                id, null, null, null,
                 null, false, 0, false, null, false, false, null, null, null,
                 null,
-                null, null, null, null, List.of(), null, null, true, 1);
+                TestElementChromes.slideChrome(id, "Slide title"));
     }
 
     private DeckElement qAndA(String id) {
         return new QAndAQuestion(
-                id, null, null, "Audience Q&A", null, null,
-                0, false, false,
-                0, null, false, true, null, null,
-                false, null, 0, null,
-                0, null, null, null, null, null, null, null, null,
+                id, null, 0, false, false,
+                0, null, null,
                 false, 0,
-                null, null, null, null, List.of(), null, null, true, 1);
+                TestElementChromes.survey(id, "Audience Q&A"));
     }
 
     private DeckAnalytics captureSaved() {

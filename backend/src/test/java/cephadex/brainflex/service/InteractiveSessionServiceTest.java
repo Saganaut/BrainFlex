@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.dto.AnswerSubmitRequest;
 import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
 import cephadex.brainflex.dto.RoundResultMessage;
@@ -43,6 +44,7 @@ import cephadex.brainflex.model.InteractiveSessionPlayer;
 import cephadex.brainflex.model.InteractiveSessionResult;
 import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.model.answer.DrawingAnswer;
 import cephadex.brainflex.model.answer.McqAnswer;
 import cephadex.brainflex.model.answer.Stroke;
@@ -53,7 +55,7 @@ import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.Difficulty;
-import cephadex.brainflex.model.enums.InteractiveSessionMode;
+import cephadex.brainflex.model.enums.AnswerSubmissionMode;
 import cephadex.brainflex.model.enums.InteractiveSessionStatus;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.InteractiveSessionPhase;
@@ -78,6 +80,7 @@ class InteractiveSessionServiceTest {
     @Mock private DeckRepository deckRepository;
     @Mock private InteractiveSessionResultRepository interactiveSessionResultRepository;
     @Mock private UserRepository userRepository;
+    @Mock private OAuthProviderService oAuthProviderService;
     @Mock private InteractiveSessionCacheService interactiveSessionCache;
     @Mock private AuthorizationService authorizationService;
     @Mock private DeckImageHydrationService deckImageHydrationService;
@@ -88,9 +91,18 @@ class InteractiveSessionServiceTest {
     @Mock private InteractiveSessionRateLimiter rateLimiter;
     @Mock private AvatarService avatarService;
     @Mock private GameHistoryService gameHistoryService;
+    @Mock private DeckAnalyticsService deckAnalyticsService;
+    @Mock private AchievementService achievementService;
     @Mock private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
     @Mock private SimpMessagingTemplate messagingTemplate;
     @Mock private org.springframework.context.ApplicationEventPublisher events;
+    @org.mockito.Spy
+    private cephadex.brainflex.service.bestanswer.BestAnswerScoringRegistry bestAnswerScoringRegistry =
+            new cephadex.brainflex.service.bestanswer.BestAnswerScoringRegistry(java.util.List.of(
+                    new cephadex.brainflex.service.bestanswer.PointsPerVoteStrategy(),
+                    new cephadex.brainflex.service.bestanswer.FlatWinnerStrategy()));
+    @org.mockito.Spy
+    private ShowResponsesResolver showResponsesResolver = new ShowResponsesResolver();
 
     @InjectMocks
     private InteractiveSessionService interactiveSessionService;
@@ -127,15 +139,11 @@ class InteractiveSessionServiceTest {
             McqOption a = new McqOption(id + "-a", "A", null, null);
             McqOption b = new McqOption(id + "-b", "B", null, null);
             els.add(new McqQuestion(
-                    id, "pub_" + id, "prv_" + id, "Prompt " + i, null,
+                    id,
                     "Prompt " + i, List.of(a, b), List.of(a.id()),
-                    100, Difficulty.EASY,
-                    true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
-                    false, null, 0, null,
-                    15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                    100, Difficulty.EASY, null,
                     true, false, 0,
-                    null, null, null, null, List.of(),
-                    null, null, true, 1));
+                    TestElementChromes.scored(id, "Prompt " + i)));
         }
         return els;
     }
@@ -150,7 +158,7 @@ class InteractiveSessionServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest(
-                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null);
         InteractiveSession result = interactiveSessionService.createInteractiveSession(host, request);
 
@@ -171,7 +179,7 @@ class InteractiveSessionServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest(
-                "deck1", null, 5, 20, null, null, null, null, null, null, null, null, null, null, null,
+                "deck1", null, null, null, 5, 20, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null);
         InteractiveSession result = interactiveSessionService.createInteractiveSession(host, request);
 
@@ -185,7 +193,7 @@ class InteractiveSessionServiceTest {
         when(deckRepository.findById("baddeck")).thenReturn(Optional.empty());
 
         CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest(
-                "baddeck", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                "baddeck", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null);
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> interactiveSessionService.createInteractiveSession(host, request));
@@ -201,7 +209,7 @@ class InteractiveSessionServiceTest {
         when(deckRepository.findById("empty")).thenReturn(Optional.of(empty));
 
         CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest(
-                "empty", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                "empty", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null);
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> interactiveSessionService.createInteractiveSession(host, request));
@@ -249,7 +257,7 @@ class InteractiveSessionServiceTest {
     @Test
     void joinInteractiveSession_WhenAlreadyJoined_ReturnsExistingSession() {
         InteractiveSessionPlayer existing = new InteractiveSessionPlayer();
-        existing.setUserId("player2");
+        existing.setUser(UserSnapshot.of("player2", null));
         lobbySession.getPlayers().add(existing);
 
         User returning = new User();
@@ -298,7 +306,7 @@ class InteractiveSessionServiceTest {
     void joinInteractiveSession_WhenSessionFull_ThrowsConflict() {
         lobbySession.getSettings().setMaxPlayers(1);
         InteractiveSessionPlayer existing = new InteractiveSessionPlayer();
-        existing.setUserId("someone");
+        existing.setUser(UserSnapshot.of("someone", null));
         lobbySession.getPlayers().add(existing);
 
         when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(lobbySession));
@@ -433,30 +441,34 @@ class InteractiveSessionServiceTest {
         interactiveSessionService.submitVote("ABCD12", new VoteSubmitRequest(el.id(), p2Sub), "guest:p2");
         interactiveSessionService.submitVote("ABCD12", new VoteSubmitRequest(el.id(), p1Sub), "guest:p3");
 
-        // p1's submission won → bestAnswerWinner flag + bonus applied to their score.
+        // p1's submission won → bestAnswerWinner flag + per-vote bonus applied.
+        // Chunk 24: default POINTS_PER_VOTE strategy means winner earns
+        // votesReceived (2) × bestAnswerPoints (50) = 100, on top of the
+        // 100 base for getting the question right → 200 total.
         PlayerAnswer p1Answer = answerOf(session, "p1", el.id());
         assertTrue(p1Answer.isBestAnswerWinner());
         InteractiveSessionPlayer p1 = session.getPlayers().stream()
                 .filter(p -> p.getUserId().equals("p1")).findFirst().orElseThrow();
-        // 100 base (correct answer) + 50 best-answer bonus = 150
-        assertEquals(150, p1.getScore());
+        assertEquals(200, p1.getScore());
 
-        // Loser p2 keeps just their base score (incorrect answer chose option-a; we
-        // verify they did not receive the winner bonus).
+        // p2 got 1 vote (from themselves) — under POINTS_PER_VOTE that still
+        // earns the per-vote award. 100 base (correct answer) + 1*50 = 150.
         InteractiveSessionPlayer p2 = session.getPlayers().stream()
                 .filter(p -> p.getUserId().equals("p2")).findFirst().orElseThrow();
-        assertFalse(answerOf(session, "p2", el.id()).isBestAnswerWinner());
-        assertEquals(100, p2.getScore());
+        assertTrue(answerOf(session, "p2", el.id()).isBestAnswerWinner());
+        assertEquals(150, p2.getScore());
 
-        // Reveal broadcast carries BestAnswerOutcome with winner ids + bonus.
+        // Reveal broadcast carries BestAnswerOutcome with both vote-getters in
+        // the winners list (POINTS_PER_VOTE rewards anyone who got ≥1 vote).
+        // bonusAwarded surfaces the largest single-player award.
         verify(messagingTemplate).convertAndSend(
                 org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/roundResult"),
                 argThat((Object msg) -> {
                     if (!(msg instanceof RoundResultMessage rr)) return false;
                     if (rr.bestAnswer() == null) return false;
                     return rr.bestAnswer().winnerUserIds().contains("p1")
-                            && !rr.bestAnswer().winnerUserIds().contains("p2")
-                            && rr.bestAnswer().bonusAwarded() == 50;
+                            && rr.bestAnswer().winnerUserIds().contains("p2")
+                            && rr.bestAnswer().bonusAwarded() == 100;
                 }));
     }
 
@@ -503,6 +515,36 @@ class InteractiveSessionServiceTest {
                         && w.elementId().equals(el.id())
                         && w.counts().getOrDefault("monday", 0) == 1
                         && w.counts().getOrDefault("rainy", 0) == 1));
+    }
+
+    /**
+     * Chunk 21 A.6 — when the runtime showResponses cascade resolves to
+     * PRIVATE (here via deck-level defaultShowResponses), the live aggregate
+     * broadcast in submitAnswer is suppressed. answerProgress still fires
+     * because it carries no payload data.
+     */
+    @Test
+    void submitAnswer_OnWordCloudRound_WhenShowResponsesPrivate_DoesNotBroadcastWordCloud() {
+        InteractiveSession session = wordCloudSessionWithTwoPlayers(2);
+        session.setDeckId("deck-private");
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        Deck privateDeck = new Deck();
+        privateDeck.setId("deck-private");
+        privateDeck.setDefaultShowResponses(cephadex.brainflex.model.enums.ShowResponsesMode.PRIVATE);
+        when(deckRepository.findById("deck-private")).thenReturn(Optional.of(privateDeck));
+
+        DeckElement el = session.getDeckSnapshot().get(0);
+        interactiveSessionService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), new WordCloudAnswer(List.of("Monday", "rainy"))),
+                "guest:p1");
+
+        verify(messagingTemplate, never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/wordCloud"),
+                any(Object.class));
+        // answerProgress is still broadcast — it's a counter, not aggregated answers.
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/answered"),
+                any(Object.class));
     }
 
     /**
@@ -658,7 +700,7 @@ class InteractiveSessionServiceTest {
         s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
+        settings.setAnswerSubmissionMode(AnswerSubmissionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         s.setSettings(settings);
@@ -670,16 +712,11 @@ class InteractiveSessionServiceTest {
 
     private static DrawingQuestion drawing(String id, int maxStrokes, int maxPointsPerStroke) {
         return new DrawingQuestion(
-                id, "pub_" + id, "prv_" + id, "Title", null,
+                id,
                 "Sketch it", null,
                 1920, 1080, maxStrokes, maxPointsPerStroke, List.of(),
-                0, Difficulty.EASY,
-                false, true, null,
-                cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
-                null, null, null, null, List.of(),
-                null, null, true, 1);
+                0, Difficulty.EASY, null,
+                TestElementChromes.survey(id, "Sketch it"));
     }
 
     private static InteractiveSession wordCloudSessionWithTwoPlayers(int maxSubmissionsPerPlayer) {
@@ -690,7 +727,7 @@ class InteractiveSessionServiceTest {
         s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
+        settings.setAnswerSubmissionMode(AnswerSubmissionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         s.setSettings(settings);
@@ -702,17 +739,12 @@ class InteractiveSessionServiceTest {
 
     private static WordCloudQuestion wordCloud(String id, int maxSubmissionsPerPlayer) {
         return new WordCloudQuestion(
-                id, "pub_" + id, "prv_" + id, "Title", null,
+                id,
                 "How was your weekend?",
                 maxSubmissionsPerPlayer, 30, false, true,
                 List.of("spam"),
-                0, Difficulty.EASY,
-                false, true, null,
-                cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
-                null, null, null, null, List.of(),
-                null, null, true, 1);
+                0, Difficulty.EASY, null,
+                TestElementChromes.survey(id, "How was your weekend?"));
     }
 
     private static PlayerAnswer answerOf(InteractiveSession session, String userId, String elementId) {
@@ -731,7 +763,7 @@ class InteractiveSessionServiceTest {
         s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
+        settings.setAnswerSubmissionMode(AnswerSubmissionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         s.setSettings(settings);
@@ -750,9 +782,7 @@ class InteractiveSessionServiceTest {
 
     private static InteractiveSessionPlayer player(String userId) {
         InteractiveSessionPlayer p = new InteractiveSessionPlayer();
-        p.setUserId(userId);
-        p.setUserName(userId);
-        p.setGuest(true);
+        p.setUser(UserSnapshot.of(userId, userId, null, true));
         return p;
     }
 
@@ -761,15 +791,13 @@ class InteractiveSessionServiceTest {
         McqOption a = new McqOption(id + "-a", "A", null, null);
         McqOption b = new McqOption(id + "-b", "B", null, null);
         return new McqQuestion(
-                id, "pub_" + id, "prv_" + id, "Prompt", null,
+                id,
                 "Prompt", List.of(a, b), List.of(a.id()),
-                100, Difficulty.EASY,
-                true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
-                true, null, bonus, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 true, false, 0,
-                null, null, null, null, List.of(),
-                null, null, true, 1);
+                TestElementChromes.chrome(id, "Prompt",
+                        true, false, null, 15,
+                        true, null, bonus, BestAnswerScoring.POINTS_PER_VOTE));
     }
 
     // ---- Audience engagement (chunk 11) ----
@@ -830,9 +858,10 @@ class InteractiveSessionServiceTest {
         lobbySession.getPlayers().add(player("host1"));
         when(rateLimiter.allow(any(), any(), any())).thenReturn(true);
 
-        // resolveUserId path for non-guest: principalName = googleId, returns user.id
+        // resolveUserId path for non-guest: principalName is the provider id,
+        // OAuthProviderService.findByAnyProviderId routes it back to the user.
         host.setGoogleId("google-host");
-        when(userRepository.findByGoogleId("google-host")).thenReturn(Optional.of(host));
+        when(oAuthProviderService.findByAnyProviderId("google-host")).thenReturn(Optional.of(host));
 
         InteractiveSessionChatMessageDTO dto = interactiveSessionService.acceptChat(
                 "ABCD12", new ChatSendRequest("hello world"), "google-host");
@@ -888,7 +917,7 @@ class InteractiveSessionServiceTest {
         row.setId("msg1");
         row.setInteractiveSessionId(session.getId());
         row.setBody("rude message");
-        row.setAuthorUserId("p2");
+        row.setAuthor(UserSnapshot.of("p2", null));
         when(chatRepository.findById("msg1")).thenReturn(Optional.of(row));
 
         InteractiveSessionChatMessageDTO dto = interactiveSessionService.moderateChatMessage("ABCD12", "msg1", "guest:p1");
@@ -919,12 +948,12 @@ class InteractiveSessionServiceTest {
         when(interactiveSessionRepository.save(any(InteractiveSession.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest(
-                "deck1", null, null, null, null, null, null, null, null, null, null, null,
+                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null,
                 Boolean.TRUE, 3, null,
                 null, null, null, null, null, null, null, null, null);
         InteractiveSession result = interactiveSessionService.createInteractiveSession(host, request);
 
-        assertTrue(result.isTeamMode());
+        assertTrue(result.getSettings().isTeamMode());
         assertEquals(3, result.getTeams().size());
         // Host joined the smallest (first) team and became its captain.
         InteractiveSessionPlayer hostPlayer = result.getPlayers().get(0);
@@ -960,7 +989,7 @@ class InteractiveSessionServiceTest {
     @Test
     void joinInteractiveSession_InManualTeamMode_RejectsMissingTeamId() {
         InteractiveSession session = teamSessionWithHostAlready();
-        session.setAutoBalanceTeams(false);
+        session.getSettings().setAutoBalanceTeams(false);
         when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(session));
 
         User joiner = new User();
@@ -975,7 +1004,7 @@ class InteractiveSessionServiceTest {
     @Test
     void joinInteractiveSession_InManualTeamMode_HonorsValidTeamId() {
         InteractiveSession session = teamSessionWithHostAlready();
-        session.setAutoBalanceTeams(false);
+        session.getSettings().setAutoBalanceTeams(false);
         when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(session));
         when(interactiveSessionRepository.save(any(InteractiveSession.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -1155,8 +1184,6 @@ class InteractiveSessionServiceTest {
         settings.setTeamMode(true);
         settings.setAutoBalanceTeams(true);
         s.setSettings(settings);
-        s.setTeamMode(true);
-        s.setAutoBalanceTeams(true);
 
         cephadex.brainflex.model.Team t0 = makeTeam("t1", "red");
         cephadex.brainflex.model.Team t1 = makeTeam("t2", "blue");
@@ -1179,12 +1206,11 @@ class InteractiveSessionServiceTest {
         s.setStatus(InteractiveSessionStatus.IN_PROGRESS);
         s.setPhase(InteractiveSessionPhase.SUBMIT);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
-        settings.setMode(InteractiveSessionMode.SIMULTANEOUS);
+        settings.setAnswerSubmissionMode(AnswerSubmissionMode.SIMULTANEOUS);
         settings.setTotalRounds(1);
         settings.setSpeedBonus(false);
         settings.setTeamMode(true);
         s.setSettings(settings);
-        s.setTeamMode(true);
         s.setCurrentRound(0);
         s.setDeckSnapshot(List.of(sampleElements(1).get(0)));
 
@@ -1246,15 +1272,11 @@ class InteractiveSessionServiceTest {
         McqOption a = new McqOption("nos-a", "A", null, null);
         McqOption b = new McqOption("nos-b", "B", null, null);
         DeckElement first = new McqQuestion(
-                "nos", "pub", "priv", "Prompt", null,
+                "nos",
                 "Prompt", List.of(a, b), List.of(a.id()),
-                100, Difficulty.EASY,
-                true, false, null, cephadex.brainflex.model.enums.ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 false, false, 0, // shuffleOptions=false
-                null, null, null, null, List.of(),
-                null, null, true, 1);
+                TestElementChromes.scored("nos", "Prompt"));
         lobbySession.setDeckSnapshot(List.of(first));
 
         InteractiveSessionPlayer p1 = player("p1");
@@ -1282,7 +1304,7 @@ class InteractiveSessionServiceTest {
         when(interactiveSessionRepository.save(any(InteractiveSession.class))).thenAnswer(inv -> inv.getArgument(0));
 
         CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest(
-                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 "PARTY1", null, null, null, null, null, null, null, null);
         InteractiveSession result = interactiveSessionService.createInteractiveSession(host, request);
 
@@ -1300,7 +1322,7 @@ class InteractiveSessionServiceTest {
         when(interactiveSessionRepository.findByRoomCode("PARTY1")).thenReturn(Optional.of(taken));
 
         CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest(
-                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                "deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                 "PARTY1", null, null, null, null, null, null, null, null);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,

@@ -17,6 +17,10 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     Optional<User> findByGoogleId(String googleId);
 
+    Optional<User> findByDiscordId(String discordId);
+
+    Optional<User> findByMicrosoftId(String microsoftId);
+
     Optional<User> findByUserName(String userName);
 
 }

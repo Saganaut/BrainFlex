@@ -23,6 +23,8 @@ import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
@@ -46,8 +48,14 @@ public class GameHistoryEntry {
     private String deckId;
     private String deckName;
 
-    private String hostUserId;
-    private String hostName;
+    /** Denormalized host display snapshot — userId / name. pictureUrl is not
+     *  tracked here (history lists render the deck thumbnail, not the host
+     *  avatar); {@code guest} is always false since only registered users
+     *  can host. */
+    private UserSnapshot host;
+
+    @JsonIgnore public String getHostUserId() { return host == null ? null : host.userId(); }
+    @JsonIgnore public String getHostName()   { return host == null ? null : host.name(); }
 
     private int finalScore;
     private int placement;

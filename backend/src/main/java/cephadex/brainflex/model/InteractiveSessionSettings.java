@@ -9,7 +9,11 @@
  */
 package cephadex.brainflex.model;
 
-import cephadex.brainflex.model.enums.InteractiveSessionMode;
+import cephadex.brainflex.model.enums.AnswerSubmissionMode;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.data.mongodb.core.mapping.Field;
 import lombok.Data;
 
 //TODO: We don't have a clear delimitation between Deck and InteractiveSession, a interactiveSession uses a deck but the delimitation is blurry
@@ -20,7 +24,16 @@ public class InteractiveSessionSettings {
     private int timePerQuestion = 15; // 0 = unlimited
     private boolean speedBonus = true;
     private boolean allowGuests = true;
-    private InteractiveSessionMode mode = InteractiveSessionMode.SIMULTANEOUS;
+    // Mongo key stays `mode` so existing documents keep round-tripping;
+    // Java / wire-format renamed in chunk 24 to leave room for other "mode"
+    // semantics (e.g. ShowResponsesMode below).
+    @Field("mode")
+    @JsonProperty("answerSubmissionMode")
+    @JsonAlias({"mode"})
+    private AnswerSubmissionMode answerSubmissionMode = AnswerSubmissionMode.SIMULTANEOUS;
+    // Session-level entry of the runtime show-responses cascade. INHERIT
+    // falls back to the format default (GAME → INSTANT, PRESENTATION → ON_CLICK).
+    private ShowResponsesMode showResponses = ShowResponsesMode.INHERIT;
     private boolean allowLateJoin = false;
     private boolean showScoresImmediately = true;
     private boolean scoringEnabled = true; // false = Pulse preset
@@ -68,4 +81,19 @@ public class InteractiveSessionSettings {
     private String lobbyMusicAssetId;
     private boolean requireFullName = false;
     private boolean spectatorsAllowed = false;
+
+    // Denormalised presentation assets copied from the source deck at session
+    // create time so chrome rendering doesn't have to re-fetch the deck.
+    // Frozen with the rest of the settings — mid-session deck edits never
+    // bleed into a running session.
+    private String deckCoverImageUrl;
+    private String deckBackgroundImageUrl;
+    private String themeId;
+
+    // anonymousMode hides real names on the leaderboard and reveal screens
+    // (avatarKey + colorTag take over). allowReJoin lets disconnected/kicked
+    // players come back into the lobby. Both default to the existing chunk-13
+    // behaviour.
+    private boolean anonymousMode = false;
+    private boolean allowReJoin = true;
 }

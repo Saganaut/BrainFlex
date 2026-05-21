@@ -6,7 +6,7 @@ import {
   type FetchArgs,
   type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
-import { emitAuthRequired } from "./authPromptBus";
+import { authPromptRequested } from "./authPromptSlice";
 
 export const apiBaseUrl: string =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://localhost:8080";
@@ -24,6 +24,9 @@ const isAuthProbe = (args: string | FetchArgs): boolean => {
   return url.endsWith("/api/auth/me");
 };
 
+// 401s funnel into the `authPrompt` slice via `api.dispatch`; React subscribes
+// to the slice in `AuthPromptBridge` and opens the LoginModal there. Replaces
+// the hand-rolled `authPromptBus` event bus with native Redux state.
 const baseQueryWithAuthPrompt: BaseQueryFn<
   string | FetchArgs,
   unknown,
@@ -31,7 +34,9 @@ const baseQueryWithAuthPrompt: BaseQueryFn<
 > = async (args, api, extraOptions) => {
   const result = await rawBaseQuery(args, api, extraOptions);
   if (result.error?.status === 401 && !isAuthProbe(args)) {
-    emitAuthRequired({ message: "Please sign in to continue." });
+    api.dispatch(
+      authPromptRequested({ message: "Please sign in to continue." }),
+    );
   }
   return result;
 };

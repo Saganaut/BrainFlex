@@ -14,13 +14,12 @@ package cephadex.brainflex.dto;
 import java.time.LocalDateTime;
 
 import cephadex.brainflex.model.DeckComment;
+import cephadex.brainflex.model.UserSnapshot;
 
 public record DeckCommentDTO(
         String id,
         String deckId,
-        String authorUserId,
-        String authorName,
-        String authorPictureUrl,
+        UserSnapshot author,
         String parentCommentId,
         String body,
         int upvotes,
@@ -38,9 +37,7 @@ public record DeckCommentDTO(
         return new DeckCommentDTO(
                 row.getId(),
                 row.getDeckId(),
-                row.getAuthorUserId(),
-                row.getAuthorName(),
-                row.getAuthorPictureUrl(),
+                row.getAuthor(),
                 row.getParentCommentId(),
                 row.getBody(),
                 row.getUpvotes(),

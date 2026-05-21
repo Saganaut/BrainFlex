@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -45,8 +44,8 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.dto.AddDeckToCollectionRequest;
 import cephadex.brainflex.dto.CreateDeckCollectionRequest;
 import cephadex.brainflex.dto.DeckCollectionDTO;
-import cephadex.brainflex.dto.DeckCollectionsPage;
 import cephadex.brainflex.dto.DeckDTO;
+import cephadex.brainflex.dto.Page;
 import cephadex.brainflex.dto.ReorderCollectionDecksRequest;
 import cephadex.brainflex.dto.UpdateDeckCollectionRequest;
 import cephadex.brainflex.model.Deck;
@@ -85,7 +84,7 @@ public class DeckCollectionController {
     /** Paginated list of collections owned by the caller, newest-first. */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/mine")
-    public DeckCollectionsPage listMyCollections(
+    public Page<DeckCollectionDTO> listMyCollections(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
@@ -94,14 +93,14 @@ public class DeckCollectionController {
         int safeSize = Math.max(1, Math.min(50, size));
         PageRequest pageRequest = PageRequest.of(
                 safePage, safeSize, Sort.by("updatedAt").descending());
-        Page<DeckCollection> rows = collectionService.listForOwner(caller.getId(), pageRequest);
+        org.springframework.data.domain.Page<DeckCollection> rows = collectionService.listForOwner(caller.getId(), pageRequest);
         List<DeckCollectionDTO> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckCollection col : rows.getContent()) {
             collectionService.hydrateCover(col);
             items.add(DeckCollectionDTO.summary(col));
         }
         boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
-        return new DeckCollectionsPage(items, safePage, safeSize, rows.getTotalElements(), hasMore);
+        return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);
     }
 
     /**

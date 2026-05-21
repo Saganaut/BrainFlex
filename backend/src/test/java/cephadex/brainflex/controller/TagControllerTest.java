@@ -87,6 +87,19 @@ class TagControllerTest {
     }
 
     @Test
+    void listTags_WhenCreatedByMe_ReturnsOnlyCallerAuthoredTags() throws Exception {
+        Tag mine = curatedTag("my-pet-topic", "My Pet Topic");
+        mine.setCurated(false);
+        mine.setCreatedByUserId("user-1");
+        when(tagService.listByCreator("user-1")).thenReturn(List.of(mine));
+
+        mockMvc.perform(get("/api/tags").param("createdByMe", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("my-pet-topic"))
+                .andExpect(jsonPath("$[0].createdByUserId").value("user-1"));
+    }
+
+    @Test
     void listTags_WhenSearchProvided_DelegatesToSearch() throws Exception {
         when(tagService.search("mat")).thenReturn(List.of(curatedTag("math", "Math")));
 
@@ -112,7 +125,7 @@ class TagControllerTest {
     @Test
     void createTag_WhenAdmin_Returns201() throws Exception {
         when(adminProperties.isAdmin(callerUser)).thenReturn(true);
-        when(tagService.create(any(TagDTO.CreateTagRequest.class)))
+        when(tagService.create(any(TagDTO.CreateTagRequest.class), any()))
                 .thenAnswer(inv -> {
                     TagDTO.CreateTagRequest req = inv.getArgument(0);
                     return curatedTag(req.id() != null ? req.id() : "history", req.displayName());
@@ -131,7 +144,7 @@ class TagControllerTest {
     @Test
     void createTag_WhenNotAdmin_ForcesCuratedFalseAndReturns201() throws Exception {
         when(adminProperties.isAdmin(callerUser)).thenReturn(false);
-        when(tagService.create(any(TagDTO.CreateTagRequest.class)))
+        when(tagService.create(any(TagDTO.CreateTagRequest.class), any()))
                 .thenAnswer(inv -> {
                     TagDTO.CreateTagRequest req = inv.getArgument(0);
                     // The controller must pass curated=false even though the
@@ -157,25 +170,18 @@ class TagControllerTest {
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void deleteTag_WhenAdmin_Returns204() throws Exception {
-        when(adminProperties.isAdmin(callerUser)).thenReturn(true);
-
         mockMvc.perform(delete("/api/tags/history"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void deleteTag_WhenNotAdmin_Returns403() throws Exception {
-        when(adminProperties.isAdmin(callerUser)).thenReturn(false);
-
-        mockMvc.perform(delete("/api/tags/history"))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void anyAdminEndpoint_WhenNoRegisteredCaller_Returns403() throws Exception {
-        when(userService.resolveRegisteredUser(any())).thenReturn(Optional.empty());
-
+        // Class-level @WithMockUser default role is USER; chunk 20 moved the
+        // gate from an in-body adminProperties.isAdmin(...) check to
+        // @PreAuthorize("hasRole('ADMIN')"), so the request never reaches the
+        // controller body — Spring Security rejects with 403.
         mockMvc.perform(delete("/api/tags/history"))
                 .andExpect(status().isForbidden());
     }

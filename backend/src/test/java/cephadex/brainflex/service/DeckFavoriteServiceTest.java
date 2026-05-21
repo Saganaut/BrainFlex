@@ -44,6 +44,8 @@ class DeckFavoriteServiceTest {
 
     @Mock private DeckFavoriteRepository favoriteRepository;
     @Mock private MongoTemplate mongoTemplate;
+    @Mock private AchievementService achievementService;
+    @Mock private org.springframework.context.ApplicationEventPublisher events;
 
     @InjectMocks private DeckFavoriteService deckFavoriteService;
 

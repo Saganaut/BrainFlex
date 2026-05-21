@@ -2,18 +2,18 @@
 // same card visual language as MyDecks; the heart on each tile doubles as the
 // remove-from-favorites toggle thanks to the shared optimistic update wiring
 // in apiEnhancements.ts.
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useListMyFavoritesQuery } from "@/store/BrainFlexApi";
-import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
+import { DeckCard } from "@/components/Common/Cards/DeckCard";
 import { Pagination } from "@/components/Common/Pagination/Pagination";
-import { resolveDeckCover } from "@/utils/deckImages";
 import styles from "./FavoritesPage.module.css";
 
 const PAGE_SIZE = 24;
 
 const FavoritesPage = () => {
   // Gated by /_authenticated — caller is always a registered user here.
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
 
   const { data, isFetching } = useListMyFavoritesQuery(
@@ -26,7 +26,7 @@ const FavoritesPage = () => {
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
-    <div className={styles.page}>
+    <main className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Favorites</h1>
         <span className={styles.subtitle}>
@@ -40,41 +40,23 @@ const FavoritesPage = () => {
           card to add it here.
         </p>
       ) : (
-        <div className={styles.grid}>
+        <ul className={styles.grid}>
           {items.map((deck) => (
-            <Link
-              key={deck.id}
-              to='/decks/$deckId/edit'
-              params={{ deckId: deck.id ?? "" }}
-              search={{ questionId: undefined }}
-              className={styles.card}>
-              <div className={styles.coverWrap}>
-                <img
-                  src={resolveDeckCover(deck.cover, deck.id ?? "")}
-                  alt=''
-                  className={styles.cover}
-                  loading='lazy'
-                />
-                {deck.id != null && deck.id !== "" && (
-                  <span className={styles.heart}>
-                    <FavoriteHeart
-                      deckId={deck.id}
-                      isFavorited={deck.isFavorited ?? true}
-                      favoriteCount={deck.favoriteCount}
-                      showCount
-                      size='sm'
-                    />
-                  </span>
-                )}
-              </div>
-              <span className={styles.name}>{deck.name}</span>
-              <span className={styles.meta}>
-                {deck.elementCount ?? 0} elements
-                {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
-              </span>
-            </Link>
+            <li key={deck.id} className={styles.gridItem}>
+              <DeckCard
+                deck={{ ...deck, isFavorited: deck.isFavorited ?? true }}
+                variant='compact'
+                onClick={() => {
+                  void navigate({
+                    to: "/decks/$deckId/edit",
+                    params: { deckId: deck.id ?? "" },
+                    search: { questionId: undefined },
+                  });
+                }}
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {pageCount > 1 && (
@@ -88,7 +70,7 @@ const FavoritesPage = () => {
           />
         </div>
       )}
-    </div>
+    </main>
   );
 };
 

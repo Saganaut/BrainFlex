@@ -107,15 +107,15 @@ class DeckFavoriteControllerTest {
 
     @Test
     void recountFavorites_RequiresAdmin() throws Exception {
-        when(adminProperties.isAdmin(caller)).thenReturn(false);
-
+        // Default @WithMockUser at the class level is ROLE_USER — @PreAuthorize("hasRole('ADMIN')")
+        // (chunk 20 migrated this from an in-body adminProperties.isAdmin check) rejects with 403.
         mockMvc.perform(post("/api/decks/deck-1/favorite/recount").with(csrf()))
                 .andExpect(status().isForbidden());
     }
 
     @Test
+    @WithMockUser(roles = "ADMIN")
     void recountFavorites_WhenAdmin_ReturnsAuthoritativeCount() throws Exception {
-        when(adminProperties.isAdmin(caller)).thenReturn(true);
         when(deckRepository.existsById("deck-1")).thenReturn(true);
         when(deckFavoriteService.recountFavorites("deck-1")).thenReturn(9L);
         when(deckFavoriteService.isFavorited("user-1", "deck-1")).thenReturn(false);

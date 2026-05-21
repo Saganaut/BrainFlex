@@ -13,11 +13,12 @@ import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.enums.CollaboratorRole;
-import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;
 import cephadex.brainflex.model.enums.PublishStatus;
+import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 
 public record DeckDTO(
         String id,
@@ -30,7 +31,8 @@ public record DeckDTO(
         String subjectTagId,
         boolean isSystem,
         DeckVisibility visibility,
-        DeckPreset recommendedPreset,
+        SessionFormat defaultSessionFormat,
+        ShowResponsesMode defaultShowResponses,
         Image cover,
         Image background,
         String themeId,
@@ -96,7 +98,8 @@ public record DeckDTO(
                 deck.getSubjectTagId(),
                 deck.isSystem(),
                 deck.getVisibility(),
-                deck.getRecommendedPreset(),
+                deck.getDefaultSessionFormat(),
+                deck.getDefaultShowResponses(),
                 deck.getCover(),
                 deck.getBackground(),
                 deck.getThemeId(),

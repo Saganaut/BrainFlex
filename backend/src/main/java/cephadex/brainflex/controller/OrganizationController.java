@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +23,9 @@ import cephadex.brainflex.model.Organization;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.OrganizationService;
 import cephadex.brainflex.service.UserService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/organizations")
@@ -31,12 +34,15 @@ public class OrganizationController {
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
     private final UserService userService;
+    private final OrganizationService organizationService;
 
     public OrganizationController(OrganizationRepository organizationRepository,
-            UserRepository userRepository, UserService userService) {
+            UserRepository userRepository, UserService userService,
+            OrganizationService organizationService) {
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
         this.userService = userService;
+        this.organizationService = organizationService;
     }
 
     /** Returns every organization the caller belongs to (possibly empty). */
@@ -77,6 +83,7 @@ public class OrganizationController {
         Organization org = new Organization();
         org.setName(request.name().strip());
         org.setOwnerId(user.getId());
+        org.setMemberCount(1);
         Organization saved = organizationRepository.save(org);
 
         addMembership(user, saved.getId());
@@ -84,6 +91,40 @@ public class OrganizationController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new OrganizationDTO.OrganizationResponse(saved));
+    }
+
+    /**
+     * Owner-only partial update of profile fields. Chunk 20 endpoint that
+     * powers the org settings page; the service layer enforces ownership and
+     * normalises {@code emailDomain} to lowercase so the OAuth auto-join hook
+     * can look it up without normalising at read time.
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<OrganizationDTO.OrganizationResponse> updateOrg(
+            @PathVariable String id,
+            @Valid @RequestBody OrganizationDTO.UpdateOrganizationRequest request,
+            Authentication authentication) {
+        User caller = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
+        Organization updated = organizationService.update(id, caller, request);
+        return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(updated));
+    }
+
+    /**
+     * Regenerates the {@code inviteCode} for an owner-checked org. The old
+     * code stops working immediately — there's no "grace period" pool;
+     * rotation is the kill switch for a leaked code.
+     */
+    @PostMapping("/{id}/invite-code/rotate")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<OrganizationDTO.OrganizationResponse> rotateInviteCode(
+            @PathVariable String id,
+            Authentication authentication) {
+        User caller = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
+        Organization rotated = organizationService.rotateInviteCode(id, caller);
+        return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(rotated));
     }
 
     /**
@@ -108,10 +149,30 @@ public class OrganizationController {
 
         User user = userOpt.get();
         if (addMembership(user, org.getId())) {
+            org.setMemberCount(org.getMemberCount() + 1);
             userRepository.save(user);
+            organizationRepository.save(org);
         }
 
         return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(org));
+    }
+
+    /**
+     * Joins an org by its shareable {@code inviteCode}. The org must have
+     * {@code allowPublicJoin=true}; otherwise the code is treated as
+     * invite-only and the endpoint returns 403.
+     */
+    @PostMapping("/join-by-code")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<OrganizationDTO.OrganizationResponse> joinByCode(
+            @RequestBody OrganizationDTO.JoinByCodeRequest request,
+            Authentication authentication) {
+        User caller = userService.resolveRegisteredUser(authentication)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
+        Organization joined = organizationService.joinByCode(
+                request == null ? null : request.inviteCode(),
+                caller);
+        return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(joined));
     }
 
     /** Removes the caller from a specific organization they belong to. */
@@ -130,6 +191,10 @@ public class OrganizationController {
 
         ids.remove(id);
         userRepository.save(user);
+        organizationRepository.findById(id).ifPresent(org -> {
+            org.setMemberCount(Math.max(0, org.getMemberCount() - 1));
+            organizationRepository.save(org);
+        });
         return ResponseEntity.ok().build();
     }
 

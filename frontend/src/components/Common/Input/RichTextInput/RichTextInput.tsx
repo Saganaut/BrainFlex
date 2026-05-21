@@ -178,6 +178,7 @@ const Toolbar = ({ editor, linkOpen, setLinkOpen }: ToolbarProps) => {
             <input
               ref={linkInputRef}
               type='url'
+              aria-label='Link URL'
               className={styles.linkInput}
               placeholder='https://example.com'
               value={linkUrl}

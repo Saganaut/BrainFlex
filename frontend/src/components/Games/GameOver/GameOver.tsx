@@ -19,6 +19,59 @@ interface GameOverProps {
 
 const PLACE_LABELS = ["1st", "2nd", "3rd"];
 
+/**
+ * Chunk 13 — per-player engagement chips on the placement card. Numbers come
+ * straight off `PlayerPlacement`, which `InteractiveSessionService.endGame`
+ * snapshots off the live `InteractiveSessionPlayer` at game-end time. Each
+ * chip is suppressed when its value is zero or undefined so a player who
+ * never streaked / never sent a reaction doesn't get noisy "0x" badges.
+ */
+const PlacementChips = ({ p }: { p: PlayerPlacement }) => {
+  const accuracyPct =
+    typeof p.accuracy === "number" && p.totalQuestions
+      ? Math.round(p.accuracy * 100)
+      : null;
+  const longestStreak = p.longestStreak ?? 0;
+  const speedBonusTotal = p.speedBonusTotal ?? 0;
+  const reactionsSent = p.reactionsSent ?? 0;
+  if (
+    accuracyPct === null &&
+    longestStreak === 0 &&
+    speedBonusTotal === 0 &&
+    reactionsSent === 0
+  ) {
+    return null;
+  }
+  return (
+    <div className={styles.chips}>
+      {accuracyPct !== null && (
+        <span className={styles.chip} title='Answer accuracy'>
+          {accuracyPct}% accuracy
+        </span>
+      )}
+      {longestStreak >= 2 && (
+        <span
+          className={`${styles.chip} ${styles.chipStreak}`}
+          title='Longest in-game streak'>
+          {longestStreak}x streak 🔥
+        </span>
+      )}
+      {speedBonusTotal > 0 && (
+        <span
+          className={`${styles.chip} ${styles.chipSpeed}`}
+          title='Total speed-bonus points'>
+          +{speedBonusTotal} speed
+        </span>
+      )}
+      {reactionsSent > 0 && (
+        <span className={styles.chip} title='Reactions sent'>
+          {reactionsSent} reactions
+        </span>
+      )}
+    </div>
+  );
+};
+
 const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
   const top3 = placements.slice(0, 3);
   const rest = placements.slice(3);
@@ -45,6 +98,7 @@ const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
             <span className={styles.placeLabel}>{PLACE_LABELS[i]}</span>
             <span className={styles.placeName}>{p.userName}</span>
             <span className={styles.placeScore}>{p.finalScore ?? 0} pts</span>
+            <PlacementChips p={p} />
           </div>
         ))}
       </div>
@@ -55,9 +109,12 @@ const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
             <li
               key={p.userId}
               className={`${styles.restRow} ${p.userId === currentUserId ? styles.me : ""}`}>
-              <span className={styles.restName}>{p.userName}</span>
-              {p.guest && <span className={styles.guestBadge}>guest</span>}
-              <span className={styles.restScore}>{p.finalScore ?? 0} pts</span>
+              <div className={styles.restRowMain}>
+                <span className={styles.restName}>{p.userName}</span>
+                {p.guest && <span className={styles.guestBadge}>guest</span>}
+                <span className={styles.restScore}>{p.finalScore ?? 0} pts</span>
+              </div>
+              <PlacementChips p={p} />
             </li>
           ))}
         </ol>

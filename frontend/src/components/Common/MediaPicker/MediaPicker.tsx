@@ -23,13 +23,13 @@ import {
 } from "@heroicons/react/24/outline";
 
 import {
-  useListMyOrgsQuery,
   useListMediaQuery,
   useUploadMediaMutation,
   useCreateMediaEmbedMutation,
   type MediaAssetResponse,
 } from "@/store/BrainFlexApi";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUserOrgs } from "@/hooks/useCurrentUserOrgs";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
@@ -65,9 +65,7 @@ const MediaPicker = ({ kind, onPick, onClose }: MediaPickerProps) => {
   const userState = useCurrentUser();
   const ownerId =
     userState.state === "registered" ? (userState.user.id ?? null) : null;
-  const { data: orgs = [] } = useListMyOrgsQuery(undefined, {
-    skip: userState.state !== "registered",
-  });
+  const { data: orgs = [] } = useCurrentUserOrgs();
   const { data: assets = [], isLoading } = useListMediaQuery({ kind });
   const [uploadMedia, { isLoading: isUploading }] = useUploadMediaMutation();
   const [createEmbed, { isLoading: isCreatingEmbed }] =
@@ -245,7 +243,7 @@ const MediaPicker = ({ kind, onPick, onClose }: MediaPickerProps) => {
         {
           useExternalImg: false,
           internalImgId: asset.id ?? "",
-          variants: asset.variants ?? [],
+          variants: asset.variants ?? {},
         },
         "SM",
       );
@@ -282,6 +280,7 @@ const MediaPicker = ({ kind, onPick, onClose }: MediaPickerProps) => {
             <Input
               type='text'
               fullWidth
+              ariaLabel='Search media by name or tag'
               placeholder='Search by name or tag…'
               value={search}
               onChange={(e) => {

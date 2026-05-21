@@ -26,13 +26,35 @@ import {
   useGetDeckQuery,
   useMoveMcqOptionMutation,
   useUpdateElementMutation,
+  type AllocationQuestion,
   type DeckDto,
+  type DrawingQuestion,
+  type GridQuestion,
+  type MatchingPair,
+  type MatchingQuestion,
   type McqOption,
   type McqQuestion,
+  type NumberQuestion,
+  type PlaceOnImageQuestion,
+  type QAndAQuestion,
+  type RankingItem,
+  type RankingQuestion,
+  type ScalesQuestion,
+  type ScaleStatement,
+  type Slide,
+  type SlideBlock,
+  type TextQuestion,
+  type WordCloudQuestion,
 } from "@/store/BrainFlexApi";
 import { useAppDispatch } from "@/store/hooks";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
+import {
+  createSlideBlock,
+  narrowSlideBlock,
+  type SlideBlockKind,
+  type SlideBlockUnion,
+} from "@/store/slideBlockTypes";
 
 type DeckElement = NonNullable<DeckDto["elements"]>[number];
 
@@ -87,11 +109,20 @@ const useElementEditor = <T extends DeckElement>(
   // built from the cached element above.
   const commit = (patch: T) => {
     if (!element?.id) return;
+    // chunk 25 — chrome now owns lastEditedByUserId / version, so the stamp
+    // lands inside the (possibly partial) chrome object the patch already
+    // carries. If the patch didn't touch chrome we synthesize a minimal one
+    // so the optimistic version bump still flows.
+    const existingChrome = (patch as { chrome?: { version?: number } }).chrome;
     const stampedPatch: T = {
       ...patch,
-      lastEditedByUserId: currentUserId,
-      version: (patch.version ?? 0) + 1,
-    };
+      chrome: {
+        ...(element.chrome ?? {}),
+        ...(existingChrome ?? {}),
+        lastEditedByUserId: currentUserId,
+        version: ((existingChrome?.version ?? element.chrome?.version) ?? 0) + 1,
+      },
+    } as T;
     void updateElement({
       id: deckId,
       elementId: element.id,
@@ -395,10 +426,696 @@ const useMcqQuestionEditor = (delay = 500): McqQuestionEditorApi => {
   };
 };
 
+// ─────────────────────────────────────────────────────────────────────────
+// Per-kind editor hooks (chunk 25).
+//
+// Every kind-specific author surface used to hand-roll the same plumbing
+// inline: local-mirror per field, `buildPatch(overrides)`, manual bounds
+// checks for collection caps, manual `flush()` before structural ops. The
+// hooks below centralise that the same way `useMcqQuestionEditor` /
+// `useMcqOptionEditor` already do for MCQ.
+//
+// Two shapes:
+//   - Flat kinds (Text / Number / WordCloud / QAndA / Drawing /
+//     PlaceOnImage / Grid): `useXxxEditor()` returns the narrowed `question`
+//     plus `schedule` / `commit` / `flush`. Both `schedule` and `commit`
+//     accept a Partial<T> and merge it on top of the cached element, so the
+//     caller never has to rebuild the whole question.
+//
+//   - Collection kinds (Allocation / Matching / Ranking / Scales): in
+//     addition to the flat API, `useXxxEditor()` exposes `items`,
+//     `canAdd` / `canRemove`, and `addItem` / `removeItem` / `updateItem`.
+//     A parallel `useXxxItemEditor(itemId)` hook scopes a single item the
+//     way `useMcqOptionEditor` does for MCQ options, so when (later) a
+//     per-item card component is extracted it owns its own debounce timer.
+//
+// Slide blocks: `useSlideEditor()` exposes title / slideKind / displaySeconds
+// / audio / video plus block-list ops (addBlock / removeBlock / moveBlock /
+// updateBlock). Per-block editor components remain inline for now; splitting
+// each block kind into its own component is follow-up work.
+// ─────────────────────────────────────────────────────────────────────────
+
+/** Flat-kind editor API: every field-level write is a `Partial<T>` patch
+ *  the hook merges on top of the current cached element. Structural ops
+ *  also call `commit(...)`, but use the same merge — they just supply a
+ *  bigger patch (typically the whole collection). */
+interface FlatElementEditorApi<T extends DeckElement> {
+  /** Narrowed active element from the deck cache. Undefined while loading
+   *  or if the active element is of a different kind. */
+  question: T | undefined;
+  /** Debounced merge: `{ ...cached, ...patch }` then PUT. */
+  schedule: (patch: Partial<T>) => void;
+  /** Immediate merge: `{ ...cached, ...patch }` then PUT. */
+  commit: (patch: Partial<T>) => void;
+  /** Fire any pending debounced commit now. */
+  flush: () => void;
+  syncedFromId: string | undefined;
+  markSynced: (id: string | undefined) => void;
+}
+
+/** Generic wrapper around `useElementEditor` that flips the field-level
+ *  write surface from "give me the whole T" to "give me a partial patch".
+ *  Reads default values from the deck cache so concurrent edits from
+ *  sibling fields (or sibling option editors) never get stomped. */
+const useFlatElementEditor = <T extends DeckElement>(
+  predicate: (e: DeckElement) => e is T,
+  delay = 500,
+): FlatElementEditorApi<T> => {
+  const { element, schedule, commit, flush, syncedFromId, markSynced } =
+    useElementEditor<T>(predicate, delay);
+
+  const schedulePatch = (patch: Partial<T>) => {
+    if (!element) return;
+    schedule({ ...element, ...patch });
+  };
+
+  const commitPatch = (patch: Partial<T>) => {
+    if (!element) return;
+    commit({ ...element, ...patch });
+  };
+
+  return {
+    question: element,
+    schedule: schedulePatch,
+    commit: commitPatch,
+    flush,
+    syncedFromId,
+    markSynced,
+  };
+};
+
+// ── Text ───────────────────────────────────────────────────────────────────
+
+const isTextQuestion = (e: DeckElement): e is TextQuestion =>
+  e.kind === "TextQuestion";
+
+/** Flat editor for `TextQuestion` (free-text answer with a canonical
+ *  correct answer + accepted variants). No nested structure — every field
+ *  goes through `schedule({...})` / `commit({...})`. */
+const useTextQuestionEditor = (delay = 500) =>
+  useFlatElementEditor<TextQuestion>(isTextQuestion, delay);
+
+// ── Number ─────────────────────────────────────────────────────────────────
+
+const isNumberQuestion = (e: DeckElement): e is NumberQuestion =>
+  e.kind === "NumberQuestion";
+
+/** Flat editor for `NumberQuestion`. The author's correctValue / tolerance
+ *  / unitLabel / decimalPlaces all live on the same flat shape, so this is
+ *  a thin pass-through. */
+const useNumberQuestionEditor = (delay = 500) =>
+  useFlatElementEditor<NumberQuestion>(isNumberQuestion, delay);
+
+// ── Word Cloud ─────────────────────────────────────────────────────────────
+
+const isWordCloudQuestion = (e: DeckElement): e is WordCloudQuestion =>
+  e.kind === "WordCloudQuestion";
+
+/** Flat editor for `WordCloudQuestion`. Banned-words list lives on
+ *  `bannedWords: string[]`; the author UI splits a comma-separated input
+ *  before calling `schedule({ bannedWords: ... })`. */
+const useWordCloudEditor = (delay = 500) =>
+  useFlatElementEditor<WordCloudQuestion>(isWordCloudQuestion, delay);
+
+// ── Q & A ──────────────────────────────────────────────────────────────────
+
+const isQAndAQuestion = (e: DeckElement): e is QAndAQuestion =>
+  e.kind === "QAndAQuestion";
+
+/** Flat editor for `QAndAQuestion`. Survey-only round with optional voting
+ *  + auto-approve flags. */
+const useQAndAEditor = (delay = 500) =>
+  useFlatElementEditor<QAndAQuestion>(isQAndAQuestion, delay);
+
+// ── Drawing ────────────────────────────────────────────────────────────────
+
+const isDrawingQuestion = (e: DeckElement): e is DrawingQuestion =>
+  e.kind === "DrawingQuestion";
+
+/** Flat editor for `DrawingQuestion`. Backing image lives at the root
+ *  (`backingImage`), not under a nested struct, so patching is direct. */
+const useDrawingEditor = (delay = 500) =>
+  useFlatElementEditor<DrawingQuestion>(isDrawingQuestion, delay);
+
+// ── Place on Image ─────────────────────────────────────────────────────────
+
+const isPlaceOnImageQuestion = (e: DeckElement): e is PlaceOnImageQuestion =>
+  e.kind === "PlaceOnImageQuestion";
+
+/** Flat editor for `PlaceOnImageQuestion`. correctX/Y/tolerance are
+ *  normalised 0–1; the editor enforces no bounds here — the input
+ *  components do. */
+const usePlaceOnImageEditor = (delay = 500) =>
+  useFlatElementEditor<PlaceOnImageQuestion>(isPlaceOnImageQuestion, delay);
+
+// ── Grid ───────────────────────────────────────────────────────────────────
+
+const isGridQuestion = (e: DeckElement): e is GridQuestion =>
+  e.kind === "GridQuestion";
+
+/** Flat editor for `GridQuestion`. The backing image lives under
+ *  `cells.backingImage`; callers patch by passing
+ *  `schedule({ cells: { ...question.cells, backingImage: img } })`. */
+const useGridQuestionEditor = (delay = 500) =>
+  useFlatElementEditor<GridQuestion>(isGridQuestion, delay);
+
+// ─────────────────────────────────────────────────────────────────────────
+// Collection-kind shared bounds. Same MIN/MAX pattern as MCQ — exported so
+// callers can hide their add/remove buttons at the bound. The hook short-
+// circuits on out-of-bounds calls so a slipped click is a no-op rather
+// than a corrupt save.
+// ─────────────────────────────────────────────────────────────────────────
+
+const MIN_ALLOCATION_OPTIONS = 2;
+const MAX_ALLOCATION_OPTIONS = 8;
+const MIN_MATCHING_PAIRS = 2;
+const MAX_MATCHING_PAIRS = 10;
+const MIN_RANKING_ITEMS = 2;
+const MAX_RANKING_ITEMS = 8;
+const MIN_SCALE_STATEMENTS = 1;
+const MAX_SCALE_STATEMENTS = 10;
+
+/** Common shape for the collection-level question hooks. The flat
+ *  `schedule` / `commit` / `flush` API still applies for top-level fields
+ *  (prompt, scoring, scaleMin, ...); the collection-only ops add bounds-
+ *  aware add/remove/update for the nested items. */
+interface CollectionElementEditorApi<T extends DeckElement, Item>
+  extends FlatElementEditorApi<T> {
+  /** Latest items array, read straight from the deck cache. */
+  items: Item[];
+  /** False at the max-items bound — bind to your add button's disabled. */
+  canAdd: boolean;
+  /** False at the min-items bound — bind to each row's remove button. */
+  canRemove: boolean;
+  /** Append a fresh item (via the kind-specific factory) and commit. */
+  addItem: () => void;
+  /** Drop the item with this id and commit. No-op below the min bound. */
+  removeItem: (id: string) => void;
+  /** Patch a single item in place. `mode` defaults to "schedule" (debounced)
+   *  for text/value edits; pass "commit" for structural per-item changes
+   *  (color, image, etc.). */
+  updateItem: (
+    id: string,
+    patch: Partial<Item>,
+    mode?: "schedule" | "commit",
+  ) => void;
+}
+
+// ── Allocation ────────────────────────────────────────────────────────────
+
+const isAllocationQuestion = (e: DeckElement): e is AllocationQuestion =>
+  e.kind === "AllocationQuestion";
+
+/** Editor for `AllocationQuestion`. Reuses the `McqOption` shape for items
+ *  (the backend stores Allocation's choices as McqOptions to keep the
+ *  schema cheap — same id/text/image/color). */
+const useAllocationEditor = (
+  delay = 500,
+): CollectionElementEditorApi<AllocationQuestion, McqOption> => {
+  const base = useFlatElementEditor<AllocationQuestion>(
+    isAllocationQuestion,
+    delay,
+  );
+  const items = base.question?.options ?? [];
+  const canAdd = items.length < MAX_ALLOCATION_OPTIONS;
+  const canRemove = items.length > MIN_ALLOCATION_OPTIONS;
+
+  const addItem = () => {
+    if (!base.question || !canAdd) return;
+    base.flush();
+    base.commit({
+      options: [...items, { id: crypto.randomUUID(), text: "" }],
+    });
+  };
+
+  const removeItem = (id: string) => {
+    if (!base.question || !canRemove) return;
+    base.flush();
+    base.commit({ options: items.filter((o) => o.id !== id) });
+  };
+
+  const updateItem = (
+    id: string,
+    patch: Partial<McqOption>,
+    mode: "schedule" | "commit" = "schedule",
+  ) => {
+    if (!base.question) return;
+    const next = items.map((o) => (o.id === id ? { ...o, ...patch } : o));
+    (mode === "commit" ? base.commit : base.schedule)({ options: next });
+  };
+
+  return { ...base, items, canAdd, canRemove, addItem, removeItem, updateItem };
+};
+
+/** Per-option editor for Allocation. Mirrors `useMcqOptionEditor` exactly
+ *  (same item shape) but routes commits through the Allocation parent's
+ *  cache write. Each instance owns its own debounce timer, so when callers
+ *  later extract an `AllocationOptionEditable` component the per-row text
+ *  edit feels responsive without sibling rows interfering. */
+const useAllocationOptionEditor = (
+  optionId: string | undefined,
+  delay = 500,
+) => {
+  const editor = useAllocationEditor(delay);
+  const index = optionId
+    ? editor.items.findIndex((o) => o.id === optionId)
+    : -1;
+  const option = index >= 0 ? editor.items[index] : undefined;
+
+  const schedule = (next: McqOption) => {
+    if (!optionId) return;
+    editor.updateItem(optionId, next, "schedule");
+  };
+
+  const commit = (next: McqOption) => {
+    if (!optionId) return;
+    editor.updateItem(optionId, next, "commit");
+  };
+
+  const remove = () => {
+    if (!optionId) return;
+    editor.removeItem(optionId);
+  };
+
+  return {
+    option,
+    parent: editor.question,
+    schedule,
+    commit,
+    flush: editor.flush,
+    index,
+    canRemove: editor.canRemove,
+    remove,
+    syncedFromId: editor.syncedFromId,
+    markSynced: editor.markSynced,
+  };
+};
+
+// ── Matching ──────────────────────────────────────────────────────────────
+
+const isMatchingQuestion = (e: DeckElement): e is MatchingQuestion =>
+  e.kind === "MatchingQuestion";
+
+/** Editor for `MatchingQuestion`. Pair items live on `pairs`; the on-screen
+ *  order is the answer key — the runtime shuffles the right column at
+ *  presentation time, but the cache (and therefore this hook) returns them
+ *  in authoring order. */
+const useMatchingEditor = (
+  delay = 500,
+): CollectionElementEditorApi<MatchingQuestion, MatchingPair> => {
+  const base = useFlatElementEditor<MatchingQuestion>(
+    isMatchingQuestion,
+    delay,
+  );
+  const items = base.question?.pairs ?? [];
+  const canAdd = items.length < MAX_MATCHING_PAIRS;
+  const canRemove = items.length > MIN_MATCHING_PAIRS;
+
+  const addItem = () => {
+    if (!base.question || !canAdd) return;
+    base.flush();
+    base.commit({
+      pairs: [
+        ...items,
+        { id: crypto.randomUUID(), leftLabel: "", rightLabel: "" },
+      ],
+    });
+  };
+
+  const removeItem = (id: string) => {
+    if (!base.question || !canRemove) return;
+    base.flush();
+    base.commit({ pairs: items.filter((p) => p.id !== id) });
+  };
+
+  const updateItem = (
+    id: string,
+    patch: Partial<MatchingPair>,
+    mode: "schedule" | "commit" = "schedule",
+  ) => {
+    if (!base.question) return;
+    const next = items.map((p) => (p.id === id ? { ...p, ...patch } : p));
+    (mode === "commit" ? base.commit : base.schedule)({ pairs: next });
+  };
+
+  return { ...base, items, canAdd, canRemove, addItem, removeItem, updateItem };
+};
+
+/** Per-pair editor for Matching. Same shape as `useMcqOptionEditor` — `pair`,
+ *  `parent`, scoped schedule/commit/remove, index, canRemove. */
+const useMatchingPairEditor = (
+  pairId: string | undefined,
+  delay = 500,
+) => {
+  const editor = useMatchingEditor(delay);
+  const index = pairId ? editor.items.findIndex((p) => p.id === pairId) : -1;
+  const pair = index >= 0 ? editor.items[index] : undefined;
+
+  const schedule = (next: MatchingPair) => {
+    if (!pairId) return;
+    editor.updateItem(pairId, next, "schedule");
+  };
+
+  const commit = (next: MatchingPair) => {
+    if (!pairId) return;
+    editor.updateItem(pairId, next, "commit");
+  };
+
+  const remove = () => {
+    if (!pairId) return;
+    editor.removeItem(pairId);
+  };
+
+  return {
+    pair,
+    parent: editor.question,
+    schedule,
+    commit,
+    flush: editor.flush,
+    index,
+    canRemove: editor.canRemove,
+    remove,
+    syncedFromId: editor.syncedFromId,
+    markSynced: editor.markSynced,
+  };
+};
+
+// ── Ranking ───────────────────────────────────────────────────────────────
+
+const isRankingQuestion = (e: DeckElement): e is RankingQuestion =>
+  e.kind === "RankingQuestion";
+
+/** Editor for `RankingQuestion`. The on-screen order of `items` IS the
+ *  correct order — `correctOrder` is kept in lock-step with the item ids
+ *  on every write. Drag-to-reorder is follow-up work (see chunk 25 README).
+ */
+const useRankingEditor = (
+  delay = 500,
+): CollectionElementEditorApi<RankingQuestion, RankingItem> => {
+  const base = useFlatElementEditor<RankingQuestion>(isRankingQuestion, delay);
+  const items = base.question?.items ?? [];
+  const canAdd = items.length < MAX_RANKING_ITEMS;
+  const canRemove = items.length > MIN_RANKING_ITEMS;
+
+  /** Build `correctOrder` from an arbitrary item list. The truthy filter
+   *  skips items that haven't been persisted yet (no id) so we never write
+   *  `undefined` into the answer key. */
+  const correctOrderOf = (rows: RankingItem[]): string[] =>
+    rows.map((i) => i.id).filter((id): id is string => id !== undefined);
+
+  const addItem = () => {
+    if (!base.question || !canAdd) return;
+    base.flush();
+    const next = [...items, { id: crypto.randomUUID(), label: "" }];
+    base.commit({ items: next, correctOrder: correctOrderOf(next) });
+  };
+
+  const removeItem = (id: string) => {
+    if (!base.question || !canRemove) return;
+    base.flush();
+    const next = items.filter((i) => i.id !== id);
+    base.commit({ items: next, correctOrder: correctOrderOf(next) });
+  };
+
+  const updateItem = (
+    id: string,
+    patch: Partial<RankingItem>,
+    mode: "schedule" | "commit" = "schedule",
+  ) => {
+    if (!base.question) return;
+    const next = items.map((i) => (i.id === id ? { ...i, ...patch } : i));
+    // correctOrder doesn't change on label edits — only on structural shifts.
+    (mode === "commit" ? base.commit : base.schedule)({ items: next });
+  };
+
+  return { ...base, items, canAdd, canRemove, addItem, removeItem, updateItem };
+};
+
+/** Per-item editor for Ranking. */
+const useRankingItemEditor = (
+  itemId: string | undefined,
+  delay = 500,
+) => {
+  const editor = useRankingEditor(delay);
+  const index = itemId ? editor.items.findIndex((i) => i.id === itemId) : -1;
+  const item = index >= 0 ? editor.items[index] : undefined;
+
+  const schedule = (next: RankingItem) => {
+    if (!itemId) return;
+    editor.updateItem(itemId, next, "schedule");
+  };
+
+  const commit = (next: RankingItem) => {
+    if (!itemId) return;
+    editor.updateItem(itemId, next, "commit");
+  };
+
+  const remove = () => {
+    if (!itemId) return;
+    editor.removeItem(itemId);
+  };
+
+  return {
+    item,
+    parent: editor.question,
+    schedule,
+    commit,
+    flush: editor.flush,
+    index,
+    canRemove: editor.canRemove,
+    remove,
+    syncedFromId: editor.syncedFromId,
+    markSynced: editor.markSynced,
+  };
+};
+
+// ── Scales ────────────────────────────────────────────────────────────────
+
+const isScalesQuestion = (e: DeckElement): e is ScalesQuestion =>
+  e.kind === "ScalesQuestion";
+
+/** Editor for `ScalesQuestion`. Top-level fields (scaleMin / scaleMax /
+ *  minLabel / maxLabel / scored) ride the flat `schedule({...})` channel;
+ *  per-statement edits go through the collection ops. */
+const useScalesEditor = (
+  delay = 500,
+): CollectionElementEditorApi<ScalesQuestion, ScaleStatement> => {
+  const base = useFlatElementEditor<ScalesQuestion>(isScalesQuestion, delay);
+  const items = base.question?.statements ?? [];
+  const canAdd = items.length < MAX_SCALE_STATEMENTS;
+  const canRemove = items.length > MIN_SCALE_STATEMENTS;
+
+  const addItem = () => {
+    if (!base.question || !canAdd) return;
+    base.flush();
+    base.commit({
+      statements: [...items, { id: crypto.randomUUID(), text: "" }],
+    });
+  };
+
+  const removeItem = (id: string) => {
+    if (!base.question || !canRemove) return;
+    base.flush();
+    base.commit({ statements: items.filter((s) => s.id !== id) });
+  };
+
+  const updateItem = (
+    id: string,
+    patch: Partial<ScaleStatement>,
+    mode: "schedule" | "commit" = "schedule",
+  ) => {
+    if (!base.question) return;
+    const next = items.map((s) => (s.id === id ? { ...s, ...patch } : s));
+    (mode === "commit" ? base.commit : base.schedule)({ statements: next });
+  };
+
+  return { ...base, items, canAdd, canRemove, addItem, removeItem, updateItem };
+};
+
+/** Per-statement editor for Scales. */
+const useScalesStatementEditor = (
+  statementId: string | undefined,
+  delay = 500,
+) => {
+  const editor = useScalesEditor(delay);
+  const index = statementId
+    ? editor.items.findIndex((s) => s.id === statementId)
+    : -1;
+  const statement = index >= 0 ? editor.items[index] : undefined;
+
+  const schedule = (next: ScaleStatement) => {
+    if (!statementId) return;
+    editor.updateItem(statementId, next, "schedule");
+  };
+
+  const commit = (next: ScaleStatement) => {
+    if (!statementId) return;
+    editor.updateItem(statementId, next, "commit");
+  };
+
+  const remove = () => {
+    if (!statementId) return;
+    editor.removeItem(statementId);
+  };
+
+  return {
+    statement,
+    parent: editor.question,
+    schedule,
+    commit,
+    flush: editor.flush,
+    index,
+    canRemove: editor.canRemove,
+    remove,
+    syncedFromId: editor.syncedFromId,
+    markSynced: editor.markSynced,
+  };
+};
+
+// ── Slide (non-interactive screen with a block stack) ─────────────────────
+
+const isSlide = (e: DeckElement): e is Slide => e.kind === "Slide";
+
+/** Hydrate the cached `blocks` (typed `SlideBlock[]` from codegen) into the
+ *  typed discriminated union, dropping any blocks whose `kind` we don't
+ *  know about. Mirrors the same helper in `SlideContent.tsx` so callers
+ *  reading `blocks` from this hook get them already-narrowed. */
+const hydrateBlocks = (raw: SlideBlock[] | undefined): SlideBlockUnion[] => {
+  if (!raw) return [];
+  return raw
+    .map(narrowSlideBlock)
+    .filter((b): b is SlideBlockUnion => b !== null);
+};
+
+/** Migration glue: when the server still returns the legacy `body` string
+ *  but has no `blocks`, surface it as a single BodyBlock so the editor
+ *  renders consistently. The next commit replaces both fields with the
+ *  canonical block list (every patch here passes `body: ""`). */
+const initialBlocksFromSlide = (slide: Slide): SlideBlockUnion[] => {
+  const fromBlocks = hydrateBlocks(slide.blocks);
+  if (fromBlocks.length > 0) return fromBlocks;
+  if (slide.body && slide.body.trim().length > 0) {
+    return [
+      {
+        kind: "BodyBlock",
+        id: `legacy-body-${slide.id ?? "anon"}`,
+        richBody: slide.body,
+      },
+    ];
+  }
+  return [];
+};
+
+interface SlideEditorApi extends FlatElementEditorApi<Slide> {
+  /** Narrowed block list from the cached slide. Already filtered through
+   *  `narrowSlideBlock` so callers don't see `kind` strings outside the
+   *  known union. */
+  blocks: SlideBlockUnion[];
+  /** Append a fresh block of the requested kind and commit immediately
+   *  (structural ops are never debounced). */
+  addBlock: (kind: SlideBlockKind) => void;
+  /** Remove a block by id and commit. */
+  removeBlock: (id: string) => void;
+  /** Swap a block with its neighbour in `direction` (-1 = up, +1 = down).
+   *  Silent no-op at the ends. */
+  moveBlock: (id: string, direction: -1 | 1) => void;
+  /** Replace a single block in place. `mode` defaults to "schedule" for
+   *  text/rich-body edits; pass "commit" for structural changes (heading
+   *  level, callout tone, image swap). Every patch also clears the legacy
+   *  `body` field so the slide is fully migrated once the author touches
+   *  the block list. */
+  updateBlock: (next: SlideBlockUnion, mode?: "schedule" | "commit") => void;
+}
+
+/** Editor for the non-interactive `Slide` kind.
+ *
+ *  Top-level fields (`title`, `slideKind`, `displaySeconds`,
+ *  `audioAssetId`/`audioUrl`, `videoAssetId`/`videoUrl`) ride the flat
+ *  `schedule({...})` / `commit({...})` channel. The block-list lives at
+ *  `blocks` and is mutated via `addBlock` / `removeBlock` / `moveBlock` /
+ *  `updateBlock`.
+ *
+ *  Every block-list write also stomps the legacy `body` field with `""`
+ *  so once the author has touched the block stack we never fall back to
+ *  the pre-chunk-10c body string again. */
+const useSlideEditor = (delay = 500): SlideEditorApi => {
+  const base = useFlatElementEditor<Slide>(isSlide, delay);
+  const blocks = base.question ? initialBlocksFromSlide(base.question) : [];
+
+  const commitBlocks = (
+    next: SlideBlockUnion[],
+    mode: "schedule" | "commit" = "commit",
+  ) => {
+    const patch: Partial<Slide> = { blocks: next, body: "" };
+    (mode === "commit" ? base.commit : base.schedule)(patch);
+  };
+
+  const addBlock = (kind: SlideBlockKind) => {
+    if (!base.question) return;
+    base.flush();
+    commitBlocks([...blocks, createSlideBlock(kind)]);
+  };
+
+  const removeBlock = (id: string) => {
+    if (!base.question) return;
+    base.flush();
+    commitBlocks(blocks.filter((b) => b.id !== id));
+  };
+
+  const moveBlock = (id: string, direction: -1 | 1) => {
+    if (!base.question) return;
+    const idx = blocks.findIndex((b) => b.id === id);
+    if (idx < 0) return;
+    const target = idx + direction;
+    if (target < 0 || target >= blocks.length) return;
+    base.flush();
+    const next = [...blocks];
+    [next[idx], next[target]] = [next[target], next[idx]];
+    commitBlocks(next);
+  };
+
+  const updateBlock = (
+    nextBlock: SlideBlockUnion,
+    mode: "schedule" | "commit" = "schedule",
+  ) => {
+    if (!base.question) return;
+    const next = blocks.map((b) => (b.id === nextBlock.id ? nextBlock : b));
+    commitBlocks(next, mode);
+  };
+
+  return { ...base, blocks, addBlock, removeBlock, moveBlock, updateBlock };
+};
+
 export {
   useElementEditor,
   useMcqOptionEditor,
   useMcqQuestionEditor,
   MIN_MCQ_OPTIONS,
   MAX_MCQ_OPTIONS,
+  // Per-kind hooks (chunk 25)
+  useFlatElementEditor,
+  useTextQuestionEditor,
+  useNumberQuestionEditor,
+  useWordCloudEditor,
+  useQAndAEditor,
+  useDrawingEditor,
+  usePlaceOnImageEditor,
+  useGridQuestionEditor,
+  useAllocationEditor,
+  useAllocationOptionEditor,
+  useMatchingEditor,
+  useMatchingPairEditor,
+  useRankingEditor,
+  useRankingItemEditor,
+  useScalesEditor,
+  useScalesStatementEditor,
+  useSlideEditor,
+  MIN_ALLOCATION_OPTIONS,
+  MAX_ALLOCATION_OPTIONS,
+  MIN_MATCHING_PAIRS,
+  MAX_MATCHING_PAIRS,
+  MIN_RANKING_ITEMS,
+  MAX_RANKING_ITEMS,
+  MIN_SCALE_STATEMENTS,
+  MAX_SCALE_STATEMENTS,
 };

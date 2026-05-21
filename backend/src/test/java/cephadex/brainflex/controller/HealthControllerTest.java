@@ -15,8 +15,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import cephadex.brainflex.repository.AchievementRepository;
 import cephadex.brainflex.repository.AudienceSubmissionRepository;
+import cephadex.brainflex.repository.EmailSuppressionRepository;
+import cephadex.brainflex.service.email.outbox.EmailOutboxRepository;
 import cephadex.brainflex.repository.BestAnswerVoteRepository;
+import cephadex.brainflex.repository.DeckAnalyticsRepository;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckCollectionRepository;
 import cephadex.brainflex.repository.DeckCommentRepository;
@@ -27,6 +31,7 @@ import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.repository.GameHistoryRepository;
 import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
 import cephadex.brainflex.repository.MediaAssetRepository;
+import cephadex.brainflex.repository.NotificationRepository;
 import cephadex.brainflex.repository.ReactionRepository;
 import cephadex.brainflex.repository.InteractiveSessionChatMessageRepository;
 import cephadex.brainflex.repository.InteractiveSessionResultRepository;
@@ -35,6 +40,7 @@ import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.ScheduledInteractiveSessionRepository;
 import cephadex.brainflex.repository.TagRepository;
 import cephadex.brainflex.repository.ThemeRepository;
+import cephadex.brainflex.repository.UserAchievementRepository;
 import cephadex.brainflex.repository.UserRepository;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -128,10 +134,31 @@ class HealthControllerTest {
     @MockitoBean
     private GameHistoryRepository gameHistoryRepository;
 
+    @MockitoBean
+    private DeckAnalyticsRepository deckAnalyticsRepository;
+
+    @MockitoBean
+    private AchievementRepository achievementRepository;
+
+    @MockitoBean
+    private UserAchievementRepository userAchievementRepository;
+
+    // Chunk 18 in-progress — NotificationRepository is already on the
+    // classpath but isn't covered by HealthControllerTest yet; mock it so the
+    // shared context still loads with the chunk-17 additions.
+    @MockitoBean
+    private NotificationRepository notificationRepository;
+
     // GridFsTemplate auto-configuration also reads MongoConverter from the
     // mocked MongoTemplate (getConverter() → null), so mock it here too.
     @MockitoBean
     private GridFsTemplate gridFsTemplate;
+
+    @MockitoBean
+    private EmailOutboxRepository emailOutboxRepository;
+
+    @MockitoBean
+    private EmailSuppressionRepository emailSuppressionRepository;
 
     @Test
     void getHealth_WhenAllServicesUp_ReturnsUp() throws Exception {

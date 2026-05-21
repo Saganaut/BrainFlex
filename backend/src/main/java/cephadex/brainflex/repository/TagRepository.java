@@ -17,6 +17,9 @@ public interface TagRepository extends MongoRepository<Tag, String> {
 
     List<Tag> findByParentTagId(String parentTagId);
 
+    /** Chunk 21 — backs the "tags I've created" filter on the listTags endpoint. */
+    List<Tag> findByCreatedByUserId(String createdByUserId);
+
     /**
      * Case-insensitive prefix match against id or displayName, used by the
      * TagPicker typeahead.

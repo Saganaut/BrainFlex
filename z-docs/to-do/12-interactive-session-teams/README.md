@@ -1,6 +1,6 @@
 # 12 — InteractiveSession teams
 
-**Status:** Backend + codegen landed (2026-05-19). Lobby team picker grid, in-game team leaderboard, and team podium are deferred to chunk 13, which is the holistic player-UI pass (same precedent as chunk 11).
+**Status:** Complete (2026-05-21). Backend + codegen landed 2026-05-19; the lobby team picker grid, in-game team leaderboard, team podium, host move-player select, and STOMP `/teams` subscription are all wired through `Lobby` → `TeamPicker`, `PlayPage` → `ScoreBoard` + `TeamLeaderboard`, `ResultsPage` → `GameOver` → `TeamPodium`, and `useInteractiveSessionWebSocket`. Drag-and-drop moves are intentionally not pursued — the per-row "Move to…" select on each member is the host's path for cross-team reassignment.
 **Depends on:** Nothing strict; pairs with chunk 13 (settings flag `teamMode`)
 **Unblocks:** 13 (`InteractiveSessionPlayer.teamId`)
 
@@ -80,8 +80,10 @@ Team (embedded in InteractiveSession.teams)
 - [x] `submitAnswer` + Best-Answer reveal recompute `team.score`; broadcasts `TeamUpdateMessage`
 - [x] Host team CRUD endpoints (`POST/PUT/DELETE /api/interactive-sessions/{code}/teams`, `PUT /players/{userId}/team`) + tests
 - [x] STOMP `TeamUpdateMessage` broadcasts on `/topic/interactive-session/{roomCode}/teams`
-- [ ] Lobby team picker grid *(deferred to chunk 13)*
-- [ ] Team leaderboard between rounds *(deferred to chunk 13)*
-- [ ] Team podium on results *(deferred to chunk 13)*
+- [x] Lobby team picker grid (`TeamPicker` rendered from `Lobby` when `teamMode`)
+- [x] Team leaderboard alongside individual leaderboard during play (`TeamLeaderboard` in the `PlayPage` sidebar; ScoreBoard renders a per-row team chip)
+- [x] Team podium on results (`TeamPodium` rendered above the individual podium in `GameOver`)
+- [x] Host move-player affordance — per-member native `<select>` on each `TeamCard` calls `useMovePlayerToTeamMutation`
+- [x] STOMP `/teams` subscription in `useInteractiveSessionWebSocket` dispatches `teamUpdateReceived` so scores tick live
 - [x] Frontend codegen + lint
 - [x] Backend tests pass (258/258, including 11 new team-mode tests)

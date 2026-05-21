@@ -5,7 +5,7 @@
  * editor navbar. The navbar's title is an inline-editable input that patches the
  * deck name through `PUT /api/decks/{id}` on blur/Enter — no save button.
  */
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { Btn } from "../Common/Buttons/Btn";
 import { SplitBtn } from "../Common/Buttons/SplitBtn/SplitBtn";
@@ -25,6 +25,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useStartInteractiveSession } from "@/hooks/useStartInteractiveSession";
 import {
   ArrowsPointingOutIcon,
+  ChartBarIcon,
   PlayIcon,
   ShareIcon,
 } from "@heroicons/react/24/outline";
@@ -47,6 +48,11 @@ const DeckEditor = () => {
     userState.state === "registered" ? userState.user.id : undefined;
   const { data: deck } = useGetDeckQuery({ id: deckId });
   const callerIsOwner = deck?.myRole === "OWNER";
+  // Backend gates the analytics endpoints on owner/editor + non-system; hide
+  // the button for anyone else so we don't dangle a 403 in front of viewers.
+  const canViewAnalytics =
+    !deck?.isSystem &&
+    (deck?.myRole === "OWNER" || deck?.myRole === "EDITOR");
   const {
     quickStart,
     isStarting,
@@ -95,7 +101,7 @@ const DeckEditor = () => {
               aria-label='Enter fullscreen'
               onClick={toggleFullScreen}>
               <ArrowsPointingOutIcon
-                style={{ width: "1rem", height: "1rem" }}
+                className={styles.iconMd}
               />
             </Btn>{" "}
             <Input
@@ -121,8 +127,18 @@ const DeckEditor = () => {
 
           <div className={styles.rightControlButtons}>
             <PublishStatusControl />
+            {canViewAnalytics && (
+              <Link
+                to='/decks/$deckId/analytics'
+                params={{ deckId }}>
+                <Btn size={"md"} shape={"pill"}>
+                  <ChartBarIcon className={styles.iconMd} />
+                  Analytics
+                </Btn>
+              </Link>
+            )}
             <Btn size={"md"} shape={"pill"} onClick={handleShareClick}>
-              <ShareIcon style={{ width: "1rem", height: "1rem" }} />
+              <ShareIcon className={styles.iconMd} />
               Share
             </Btn>
             <SplitBtn
@@ -151,7 +167,7 @@ const DeckEditor = () => {
                   </DropdownMenuItem>
                 </>
               }>
-              <PlayIcon style={{ width: "1rem", height: "1rem" }} />
+              <PlayIcon className={styles.iconMd} />
               {isStarting ? "Starting…" : "Start"}
             </SplitBtn>
             {startError && (

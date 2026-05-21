@@ -10,31 +10,10 @@
   color: var(--text-secondary);
 }
 
-.pager {
+.roundContent {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-}
-
-.pagerBtn {
-  min-width: 28px;
-  padding: var(--space-1) var(--space-2);
-  background: var(--bg-surface);
-  border: var(--border-size-sm) solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: var(--font-size-xs);
-  cursor: pointer;
-
-  &:hover {
-    border-color: var(--action-hover);
-  }
-}
-
-.pagerActive {
-  border-color: var(--action-hover);
-  background: var(--bg-subtle);
-  font-weight: 700;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .questionHeader {

@@ -20,6 +20,8 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
@@ -33,16 +35,16 @@ public class InteractiveSessionChatMessage {
     @Indexed
     private String interactiveSessionId;
 
-    private String authorUserId;
+    /** Denormalized author display + guest flag, frozen at send time so the
+     *  row still renders after the sender is removed. */
+    private UserSnapshot author;
 
-    /** Denormalized at send time so the row still renders after a user is removed. */
-    private String authorName;
-
-    private String authorPictureUrl;
+    @JsonIgnore public String getAuthorUserId()      { return author == null ? null : author.userId(); }
+    @JsonIgnore public String getAuthorName()        { return author == null ? null : author.name(); }
+    @JsonIgnore public String getAuthorPictureUrl()  { return author == null ? null : author.pictureUrl(); }
+    @JsonIgnore public boolean isGuest()             { return author != null && author.guest(); }
 
     private boolean fromHost;
-
-    private boolean guest;
 
     /** Plain text, max 500 chars (service-enforced). */
     private String body;

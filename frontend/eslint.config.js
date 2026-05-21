@@ -5,6 +5,8 @@ import reactDom from "eslint-plugin-react-dom";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
+import unusedImports from "eslint-plugin-unused-imports";
+
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
@@ -12,6 +14,9 @@ export default defineConfig([
   {
     files: ["**/*.{ts,tsx}"],
     ignores: ["src/store/BrainFlexApi.ts"],
+    plugins: {
+      "unused-imports": unusedImports,
+    },
     extends: [
       js.configs.recommended,
       tseslint.configs.recommendedTypeChecked,
@@ -23,8 +28,22 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+        },
+      ],
       "@typescript-eslint/consistent-type-definitions": "warn",
-      "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        { allowNumber: true },
+      ],
     },
     languageOptions: {
       parserOptions: {

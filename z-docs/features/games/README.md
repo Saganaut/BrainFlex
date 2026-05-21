@@ -6,13 +6,14 @@ A **Deck** is the authored content: an ordered list of **elements** (questions, 
 
 A **InteractiveSession** is a live run of a Deck with a host and participants. Sessions are persisted, broadcast over WebSocket, and have a lifecycle (LOBBY → IN_PROGRESS → FINISHED).
 
-A InteractiveSession has presets that toggle behavior:
+A InteractiveSession is one of two **formats** (chrome flavor, not a constraint on content):
 
-- **Game** preset — `scoringEnabled: true`, leaderboard, GameOver screen. (Default; the only preset surfaced today.)
-- **Pulse** preset — `scoringEnabled: false`, no leaderboard, data-tracking review only. (Authoring surface not yet built.)
-- **Presentation** preset (future) — `scoringEnabled: false`, host paces the deck slide-by-slide, no time pressure.
+- **`GAME`** — persistent leaderboard, score animations, podium at round end, `GameOver` placement screen at session end. Default.
+- **`PRESENTATION`** — no persistent leaderboard; round-end focuses on aggregated data (charts, distributions, word clouds); `SessionSummary` screen at the end aggregates every question's responses.
 
-User-facing routes still split "Create a Game" (`/games/create`) and "Create a Poll" (`/pulse/create`); both ultimately persist `InteractiveSession`s with different presets.
+Every element kind is permitted in either format. The format controls which UI shell renders the chrome — not which questions you can include or which behaviors are available. Best-answer voting, timers, freeze-responses, reveal-on-demand, scoring, all work identically in both.
+
+**`scoringEnabled` is independent of `format`.** A PRESENTATION can still award points on a couple of quiz interludes; a GAME can include unscored Q&A breaks. The old "Pulse" preset is just `format = PRESENTATION` + `scoringEnabled = false` — there's no `PULSE` enum value, and templates pre-fill the combo so authors don't have to think about it.
 
 Status legend: ✅ shipped · 🚧 partial · ☐ todo
 
@@ -33,7 +34,8 @@ Status legend: ✅ shipped · 🚧 partial · ☐ todo
 - ✅ `organizationId` — org-scoped sharing (parallels `User.organizationId`)
 - ✅ `visibility: PRIVATE | UNLISTED | ORG | PUBLIC` — replaced boolean `isPublic`
 - ☐ `themeId` — link to the host's `Theme` so deck inherits color scheme during play
-- ☐ `recommendedPreset: GAME | PULSE | PRESENTATION` — advisory; sets defaults in the create flow
+- ✅ `defaultSessionFormat: GAME | PRESENTATION` — advisory; pre-fills the host's format picker on CreateGamePage and the deck-settings panel in the editor. Never read by the runtime once the session is created; the host's choice freezes onto `InteractiveSession.format` at create time.
+- ✅ `defaultShowResponses: INHERIT | INSTANT | ON_CLICK | PRIVATE` — top of the deck layer in the runtime cascade (see [Cascades](#cascades)). Defaults to `INHERIT` so the per-element + format-default fall-through is the visible behavior unless the author opts in.
 - ☐ `defaultSettings: InteractiveSessionSettings` — author-suggested interactive session settings auto-applied at create time
 - ☐ `estimatedDurationMinutes` — "~10 min" hint for template browsing
 - ☐ `parentDeckId` + `version` — for fork-this-template + history
@@ -177,12 +179,14 @@ All settings live in `InteractiveSessionSettings.java` and are surfaced in the C
 - ✅ Speed bonus — `speedBonus` (disabled in the UI when `timePerQuestion === 0`)
 - ✅ Per-element point value — `pointValue` (on every scored element kind)
 - ✅ Per-element time limit — `displaySeconds` (always overrides the interactive session `timePerQuestion`)
-- ✅ Game mode (simultaneous / turn-based) — `gameMode`
+- ✅ Answer submission mode (simultaneous / turn-based) — `answerSubmissionMode` (renamed from `mode` / `gameMode` in chunk 24)
 - ✅ Allow guests — `allowGuests`
 - ✅ Max players — `maxPlayers`
 - ✅ Allow late join — `allowLateJoin`
 - ✅ Hide scores during play — `showScoresImmediately`
-- ✅ Scoring preset — `scoringEnabled` (plumbing only — Game preset sets true; Pulse will set false)
+- ✅ Scoring enabled — `scoringEnabled` (independent of `format`; PRESENTATION can score, GAME can leave individual elements un-scored)
+- ✅ Show responses — `showResponses: INHERIT | INSTANT | ON_CLICK | PRIVATE` (chunk 24; top of the runtime cascade — see [Cascades](#cascades))
+- ✅ Session format — frozen on `InteractiveSession.format` at create time from `CreateInteractiveSessionRequest.format` (falls back to `deck.defaultSessionFormat`, then GAME)
 - ✅ Shuffle MCQ answer order — frontend-only concern now; the deck editor owns a shuffle / reorder button (the server-side `shuffleMcqOptions` setting was dropped during the polymorphic rework to keep interactive session state cleaner)
 - ☐ Reveal correct answer privately as soon as a player submits
 - ☐ Bonus points for correct-guess in Dixit variant
@@ -196,6 +200,7 @@ Role-aware control panel + live player list.
 - ✅ **Player view**: leave (`sendLeave`), self-boot detection navigates them home
 - ☐ **Player view**: mute sound (sound system itself not yet implemented)
 - ✅ **Host view**: next round (turn-based, existing), end interactive session early (`sendEndInteractiveSession`), boot a player (`sendBoot`)
+- ✅ **Host view (chunk 24)**: reveal responses on demand (`sendRevealNow`, enabled when the resolved `showResponses` is `ON_CLICK`), freeze responses for the current round (`sendFreezeResponses` — `NOT_ACCEPTING_RESPONSES` rejects late submissions with 409). Neither mutates the deck; both live on the per-session override map.
 
 **Player list (live)**
 
@@ -218,8 +223,10 @@ Role-aware control panel + live player list.
 
 ## 6. Round-end & post-interactive-session data view
 
-- ✅ Round result overlay reveals correct answer + per-player outcome — `frontend/src/components/Games/RoundResult/RoundResult.tsx`
-- ✅ Game-over screen shows final placements — `frontend/src/components/Games/GameOver/GameOver.tsx`
+- ✅ Round result overlay reveals correct answer + per-player outcome — `frontend/src/components/Games/RoundResult/RoundResult.tsx` (GAME format)
+- ✅ Round data view (chunk 24) renders aggregated room responses with no rankings — `frontend/src/components/Games/RoundDataView/RoundDataView.tsx` (PRESENTATION format)
+- ✅ Game-over screen shows final placements — `frontend/src/components/Games/GameOver/GameOver.tsx` (GAME format)
+- ✅ Session summary screen (chunk 24) aggregates every round's responses — `frontend/src/components/Games/SessionSummary/SessionSummary.tsx` (PRESENTATION format; mutually exclusive with GameOver — backend emits one or the other based on `session.format`)
 - ✅ **Post-interactive session review mode** — `GET /api/interactive-sessions/{roomCode}/review` returns per-round aggregates; `ReviewPanel.tsx` paginates through each round
   - ✅ bar chart for MCQ option counts — `components/Common/Charts/BarChart/`
   - ✅ frequency list for TEXT_INPUT submissions (placeholder for future word cloud) — `components/Common/Charts/FrequencyList/`
@@ -273,17 +280,18 @@ All ☐. Spec: user provides a topic / theme, or uploads a PDF / webpage / docum
 - ☐ Template categories (general knowledge / movies / science / pop culture…)
 - ☐ Template marketplace / community-submitted templates
 
-## 10. Pulse (audience polling preset)
+## 10. PRESENTATION format (audience-polling chrome)
 
-Spec: same authoring + runtime as a Game, but scoring off and focus on data tracking.
+Chunk 24 retired the standalone "Pulse" preset. Audience-polling sessions are now `format = PRESENTATION` (chrome flavor — no leaderboard, aggregated round-end views) with `scoringEnabled = false` (independent toggle). Templates ship the combo so the author doesn't think about it.
 
-- 🚧 Stub page at `/pulse/create` — `frontend/src/pages/PulsePage/PulseCreatePage.tsx`
-- 🚧 ActionCard for Pulse on MainPage (marked "Soon", disabled for non-registered)
-- ✅ Backend plumbing for the `scoringEnabled` preset (default true; Pulse will create with false)
-- ☐ Pulse creation form — defaults to `scoringEnabled: false`, hides game-mode toggle
-- ☐ Live response aggregation (counts per option, word cloud for text-in, histogram for guess-the-number)
-- ☐ Pulse results view (no leaderboard; shares the §6 review mode without scores)
-- ☐ Anonymous responder mode (no account required, just a join code)
+- ✅ Format picker on CreateGamePage (two tiles: GAME / PRESENTATION) — `frontend/src/pages/GamePage/CreateGamePage.tsx`
+- ✅ Deck-level `defaultSessionFormat` in the deck-editor's "Session defaults" panel — `frontend/src/components/DeckEditor/RightSidebar/ThemePanel.tsx`
+- ✅ Backend `SessionFormat` enum (GAME / PRESENTATION). Legacy Mongo documents written with `recommendedPreset: "PULSE"` deserialize as `defaultSessionFormat: PRESENTATION` via `@JsonAlias`.
+- ✅ Player surface: `PlayPage` hides the persistent leaderboard for PRESENTATION; ScoreBoard + TeamLeaderboard mounts only for GAME — `frontend/src/pages/GamePage/PlayPage.tsx`
+- ✅ Round-end aggregated view (`RoundDataView`) and end-of-session summary (`SessionSummary`) — see §6
+- ✅ Anonymous responder mode via `InteractiveSessionSettings.anonymousMode` (chunk 13)
+- 🚧 `/pulse/create` stub remains as a redirect surface for older links — should be retired once link-rot is acceptable
+- ☐ "Save as PRESENTATION template" surface (chunk 24 out-of-scope; templates pre-filling format + settings is the goal, but the authoring UI is a separate chunk)
 
 ## 11. Cross-cutting
 
@@ -311,3 +319,25 @@ Spec: same authoring + runtime as a Game, but scoring off and focus on data trac
 - **Coordinate spaces are normalized**: pin-on-image uses 0–1 normalized coordinates so the question works at any rendered scale. Pin-on-map uses lat/lng + km tolerance.
 - **Polymorphic answer payloads**: every submission is a sealed `AnswerPayload`. New element kinds add a new payload record alongside their scorer/redactor case rather than overloading existing ones.
 - **Slides participate in deck order but not in scoring or round-result aggregation**: the server already enforces this; new types should follow the same "element is in the timeline; not all elements are scored" pattern.
+
+### Cascades
+
+Two opposite-direction lookups govern every behavior knob in the runtime. Picking the right direction is per-field, not global:
+
+| Cascade | Direction | Reason | Fields |
+|---|---|---|---|
+| **Authored content** | element > deck > theme > placeholder | most-specific authored value wins; the host doesn't override what the author set | `background`, `image`, `themeId`, media |
+| **Runtime behavior** | session > deck > element | host's choice at run time wins; deck is the suggestion; element is the per-question knob | `format`, `showResponses` (chunk 24), future per-element scoring opt-out + response-freeze defaults |
+
+**Documented odd-one-out:** `DeckElement.displaySeconds` is an *authored* value but unconditionally overrides `InteractiveSessionSettings.timePerQuestion`. The reasoning ("the author knows this specific question needs 60s") stays; flag it explicitly so the exception isn't surprising.
+
+`showResponses` resolves with `INHERIT` as the "defer" sentinel: element value if not INHERIT → else deck value if not INHERIT → else session value if not INHERIT → else the format default. Format defaults: `GAME → INSTANT`, `PRESENTATION → ON_CLICK`. The resolver lives at `backend/.../service/ShowResponsesResolver.java` (with a frontend mirror at `frontend/src/utils/showResponsesResolver.ts`).
+
+### Pluggable best-answer scoring
+
+Best-answer rounds dispatch to a `BestAnswerScoringStrategy` keyed off `element.bestAnswerScoring` (chunk 24):
+
+- **`POINTS_PER_VOTE`** (default) — every player whose submission got ≥1 vote earns `votesReceived × bestAnswerPoints`. Ties handled naturally.
+- **`FLAT_WINNER`** (legacy) — the submission(s) with the most votes each earn `bestAnswerPoints`. Ties → all tied players get the bonus.
+
+`bestAnswerPoints` (renamed from `bestAnswerBonus` in chunk 24; Mongo `@Field` aliases preserve storage) defaults to 50 so flipping `bestAnswerMode = true` results in meaningful scoring without the author having to fill in a points field. The int no longer means "flat bonus" — the strategy decides what it means. Future strategies (e.g. "1st 3pts / 2nd 2pts / 3rd 1pt" decay) can drop in without touching `InteractiveSessionService`.

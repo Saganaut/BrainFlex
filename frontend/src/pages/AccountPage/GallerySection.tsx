@@ -12,12 +12,12 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
 import { useModal } from "@/context/useModal";
 import {
-  useDeleteGalleryImageMutation,
-  useListGalleryImagesQuery,
-  useUpdateGalleryImageMutation,
   type GalleryImageResponse,
-} from "@/store/galleryApi";
-import { useListMyOrgsQuery } from "@/store/BrainFlexApi";
+  useDeleteImageMutation,
+  useListImagesQuery,
+  useUpdateImageMutation,
+} from "@/store/BrainFlexApi";
+import { useCurrentUserOrgs } from "@/hooks/useCurrentUserOrgs";
 import { variantFor } from "@/utils/image";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
@@ -35,18 +35,19 @@ interface EditFormProps {
 }
 
 const EditForm = ({ image, orgs, onClose }: EditFormProps) => {
-  const [name, setName] = useState(image.name);
-  const [tags, setTags] = useState(image.tags.join(", "));
+  const [name, setName] = useState(image.name ?? "");
+  const [tags, setTags] = useState((image.tags ?? []).join(", "));
   const [orgId, setOrgId] = useState(image.organizationId ?? "");
   const [error, setError] = useState<string | null>(null);
-  const [updateImage, { isLoading }] = useUpdateGalleryImageMutation();
+  const [updateImage, { isLoading }] = useUpdateImageMutation();
 
   const handleSave = async () => {
+    if (!image.id) return;
     setError(null);
     try {
       await updateImage({
         id: image.id,
-        body: {
+        updateGalleryImageRequest: {
           name: name.trim(),
           tags: tags
             .split(",")
@@ -125,11 +126,9 @@ const GallerySection = () => {
   const userState = useCurrentUser();
   const ownerId =
     userState.state === "registered" ? (userState.user.id ?? null) : null;
-  const { data: images = [], isLoading } = useListGalleryImagesQuery();
-  const { data: orgs = [] } = useListMyOrgsQuery(undefined, {
-    skip: userState.state !== "registered",
-  });
-  const [deleteImage] = useDeleteGalleryImageMutation();
+  const { data: images = [], isLoading } = useListImagesQuery();
+  const { data: orgs = [] } = useCurrentUserOrgs();
+  const [deleteImage] = useDeleteImageMutation();
   const openPicker = useGalleryPicker();
   const { openModal, closeModal } = useModal();
   const confirm = useConfirm();
@@ -153,7 +152,7 @@ const GallerySection = () => {
 
   const handleEdit = (image: GalleryImageResponse) => {
     openModal({
-      title: `Edit ${image.name}`,
+      title: `Edit ${image.name ?? "image"}`,
       content: <EditForm image={image} orgs={orgs} onClose={closeModal} />,
     });
   };
@@ -192,6 +191,8 @@ const GallerySection = () => {
               image.organizationId != null &&
               image.organizationId !== "" &&
               !isOwned;
+            const name = image.name ?? "Untitled";
+            const tags = image.tags ?? [];
             // Thumbnails on the management page are ~200px wide — SM fits.
             const thumb = variantFor({
               useExternalImg: false,
@@ -203,26 +204,26 @@ const GallerySection = () => {
                 {thumb?.url ? (
                   <img
                     src={thumb.url}
-                    alt={image.name}
+                    alt={name}
                     className={styles.thumb}
                   />
                 ) : (
                   <div className={styles.thumb} aria-hidden='true' />
                 )}
-                <p className={styles.cardName} title={image.name}>
-                  {image.name}
+                <p className={styles.cardName} title={name}>
+                  {name}
                 </p>
                 <div className={styles.cardMeta}>
                   {isOrgShared && (
                     <span className={styles.cardBadge}>Org</span>
                   )}
-                  {image.tags.map((t) => (
+                  {tags.map((t) => (
                     <span key={t} className={styles.cardBadge}>
                       {t}
                     </span>
                   ))}
                 </div>
-                {isOwned && (
+                {isOwned && image.id && (
                   <div className={styles.cardActions}>
                     <Btn
                       size='sm'
@@ -234,7 +235,7 @@ const GallerySection = () => {
                     <Btn
                       size='sm'
                       onClick={() => {
-                        void handleDelete(image.id);
+                        if (image.id) void handleDelete(image.id);
                       }}>
                       Delete
                     </Btn>

@@ -32,5 +32,11 @@ public class BestAnswerVote {
     private String submissionId;
     private String voterUserId;
 
+    /** Multiplier applied to this vote in the tally. Defaults to 1 (one player, one
+     *  vote). Game modes that want host weighting can set 2 when the voter is the host;
+     *  the tallier consumes this verbatim. Stored on the vote so a re-tally is
+     *  deterministic without re-resolving the voter. */
+    private int weight = 1;
+
     private LocalDateTime votedAt = LocalDateTime.now();
 }

@@ -16,8 +16,6 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +56,11 @@ public class TagService {
         return tagRepository.findByParentTagId(parentTagId);
     }
 
+    /** Chunk 21 — backs the "tags I've created" filter on listTags. */
+    public List<Tag> listByCreator(String createdByUserId) {
+        return tagRepository.findByCreatedByUserId(createdByUserId);
+    }
+
     public List<Tag> search(String text) {
         if (text == null || text.isBlank()) return List.of();
         return tagRepository.searchByText(Pattern.quote(text.trim()));
@@ -75,6 +78,16 @@ public class TagService {
     // ---- Write ----
 
     public Tag create(TagDTO.CreateTagRequest request) {
+        return create(request, null);
+    }
+
+    /**
+     * Chunk 21 — stamps {@code createdByUserId} on the new tag so the
+     * inline-create path can be attributed back to the author. Pass null
+     * for system seeds; admin-created tags are stamped too so we can later
+     * surface "tags I created" on an admin dashboard.
+     */
+    public Tag create(TagDTO.CreateTagRequest request, String createdByUserId) {
         String slug = (request.id() != null && !request.id().isBlank())
                 ? request.id().trim()
                 : slugify(request.displayName());
@@ -95,10 +108,8 @@ public class TagService {
         tag.setDescription(request.description());
         tag.setIconUrl(request.iconUrl());
         tag.setCurated(Boolean.TRUE.equals(request.curated()));
+        tag.setCreatedByUserId(createdByUserId);
         tag.setDeckCount(0);
-        LocalDateTime now = LocalDateTime.now();
-        tag.setCreatedAt(now);
-        tag.setUpdatedAt(now);
         return tagRepository.save(tag);
     }
 
@@ -129,7 +140,6 @@ public class TagService {
         if (request.curated() != null) {
             tag.setCurated(request.curated());
         }
-        tag.setUpdatedAt(LocalDateTime.now());
         return tagRepository.save(tag);
     }
 
@@ -188,7 +198,6 @@ public class TagService {
             int next = counts.getOrDefault(tag.getId(), 0);
             if (tag.getDeckCount() != next) {
                 tag.setDeckCount(next);
-                tag.setUpdatedAt(LocalDateTime.now());
                 tagRepository.save(tag);
                 changed++;
             }
@@ -233,9 +242,6 @@ public class TagService {
         tag.setDisplayName(legacyTag.trim());
         tag.setCurated(false);
         tag.setDeckCount(0);
-        LocalDateTime now = LocalDateTime.now();
-        tag.setCreatedAt(now);
-        tag.setUpdatedAt(now);
         return tagRepository.save(tag);
     }
 }

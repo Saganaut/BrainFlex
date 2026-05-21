@@ -22,6 +22,7 @@ public class TagDTO {
             String iconUrl,
             int deckCount,
             boolean curated,
+            String createdByUserId,
             List<TagResponse> children,
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
@@ -39,6 +40,7 @@ public class TagDTO {
                     tag.getIconUrl(),
                     tag.getDeckCount(),
                     tag.isCurated(),
+                    tag.getCreatedByUserId(),
                     children,
                     tag.getCreatedAt(),
                     tag.getUpdatedAt());

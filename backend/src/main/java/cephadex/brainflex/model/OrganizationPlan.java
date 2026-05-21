@@ -12,6 +12,8 @@
 package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import cephadex.brainflex.model.enums.MembershipStatus;
 import cephadex.brainflex.model.enums.MembershipTier;
@@ -36,4 +38,25 @@ public class OrganizationPlan {
 
     private String stripeCustomerId;
     private String stripeSubscriptionId;
+
+    /**
+     * Org-level feature gating, mirrored on each seat-holder's {@link Membership#getFeatureFlags()}
+     * at seat-assignment time. Lets the owner unlock a feature for the whole org without
+     * touching every member document. Never null.
+     */
+    private Set<String> featureFlags = new LinkedHashSet<>();
+
+    /**
+     * Per-seat monthly session cap applied to every member when they consume an
+     * {@code ORG_SEAT} membership. {@code 0} = unlimited. Mirrored onto each seat-holder's
+     * {@link Membership#getMonthlyInteractiveSessionLimit()} at seat-assignment time so the
+     * quota check stays single-document.
+     */
+    private int monthlyInteractiveSessionLimit = 0;
+
+    /**
+     * When the org's quota window resets (start of next calendar month UTC). Null until
+     * the first seat-holder triggers a quota check. Surfaces in the org admin UI.
+     */
+    private LocalDateTime quotaResetsAt;
 }

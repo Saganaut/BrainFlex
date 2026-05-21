@@ -5,13 +5,21 @@
  */
 package cephadex.brainflex.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
 public class PlayerPlacement {
-    private String userId;
-    private String userName;
-    private boolean isGuest;
+    /** Denormalized player display snapshot — userId / name / guest. pictureUrl
+     *  is copied off the {@link InteractiveSessionPlayer} at game end so the
+     *  placement card has its own copy for replays. */
+    private UserSnapshot user;
+
+    @JsonIgnore public String getUserId()   { return user == null ? null : user.userId(); }
+    @JsonIgnore public String getUserName() { return user == null ? null : user.name(); }
+    @JsonIgnore public boolean isGuest()    { return user != null && user.guest(); }
+
     private int finalScore;
     private int placement; // 1 = first place
     private int correctAnswers;
@@ -28,4 +36,5 @@ public class PlayerPlacement {
     private int longestStreak;
     private double accuracy;
     private int reactionsSent;
+    private int speedBonusTotal;
 }

@@ -6,20 +6,17 @@
 // Layout: filter sidebar on the left (subject chips, language, difficulty)
 // + sort dropdown + paginated deck grid. "Load more" pulls the next page;
 // changing any filter resets to page 0.
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { PlayIcon, StarIcon } from "@heroicons/react/24/outline";
 import {
   useExploreDecksQuery,
   useListTagsQuery,
   type DeckDto,
   type ExploreDecksApiArg,
 } from "@/store/BrainFlexApi";
-import { Tag } from "@/components/Common/Tag/Tag";
+import { DeckCard } from "@/components/Common/Cards/DeckCard";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
-import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
 import { Pagination } from "@/components/Common/Pagination/Pagination";
-import { resolveDeckCover } from "@/utils/deckImages";
 import styles from "./ExplorePage.module.css";
 
 type SortKey = "trending" | "new" | "top-rated" | "most-played";
@@ -50,73 +47,8 @@ const DIFFICULTY_OPTIONS: { value: DifficultyKey | "all"; label: string }[] = [
   { value: "HARD", label: "Hard" },
 ];
 
-const formatRating = (rating: number, count: number): string => {
-  if (count <= 0) return "—";
-  return rating.toFixed(1);
-};
-
-const ExploreCard = ({ deck }: { deck: DeckDto }) => (
-  <li className={styles.card}>
-    <Link
-      to='/decks/$deckId/edit'
-      params={{ deckId: deck.id ?? "" }}
-      search={{ questionId: undefined }}
-      className={styles.cardLink}>
-      <div className={styles.cardCoverWrap}>
-        <img
-          src={resolveDeckCover(deck.cover, deck.id ?? "")}
-          alt=''
-          loading='lazy'
-          className={styles.cardCover}
-        />
-        {deck.id != null && deck.id !== "" && (
-          <span className={styles.cardHeart}>
-            <FavoriteHeart
-              deckId={deck.id}
-              isFavorited={deck.isFavorited ?? false}
-              favoriteCount={deck.favoriteCount}
-              showCount
-              size='sm'
-            />
-          </span>
-        )}
-      </div>
-      <div className={styles.cardBody}>
-        <span className={styles.cardName}>{deck.name}</span>
-        {deck.description != null && deck.description !== "" && (
-          <span className={styles.cardDesc}>{deck.description}</span>
-        )}
-        <div className={styles.cardMeta}>
-          <span className={styles.cardMetaItem} aria-label='Plays'>
-            <PlayIcon className={styles.cardIcon} />
-            {deck.playCount ?? 0}
-          </span>
-          <span className={styles.cardMetaItem} aria-label='Rating'>
-            <StarIcon className={styles.cardIcon} />
-            {formatRating(deck.averageRating ?? 0, deck.ratingCount ?? 0)}
-          </span>
-          <span className={styles.cardMetaItem}>
-            {(deck.language ?? "en").toUpperCase()}
-          </span>
-          <span className={styles.cardMetaItem}>
-            {deck.difficulty ?? "MEDIUM"}
-          </span>
-        </div>
-        {deck.tags != null && deck.tags.length > 0 && (
-          <div className={styles.cardTags}>
-            {deck.tags.slice(0, 3).map((t) => (
-              <Tag key={t} size='sm'>
-                {t}
-              </Tag>
-            ))}
-          </div>
-        )}
-      </div>
-    </Link>
-  </li>
-);
-
 const ExplorePage = () => {
+  const navigate = useNavigate();
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [language, setLanguage] = useState<LanguageKey | "all">("all");
   const [difficulty, setDifficulty] = useState<DifficultyKey | "all">("all");
@@ -255,7 +187,19 @@ const ExplorePage = () => {
           ) : (
             <ul className={styles.grid}>
               {items.map((deck) => (
-                <ExploreCard key={deck.id} deck={deck} />
+                <li key={deck.id} className={styles.gridItem}>
+                  <DeckCard
+                    deck={deck}
+                    variant='discovery'
+                    onClick={() => {
+                      void navigate({
+                        to: "/decks/$deckId/edit",
+                        params: { deckId: deck.id ?? "" },
+                        search: { questionId: undefined },
+                      });
+                    }}
+                  />
+                </li>
               ))}
             </ul>
           )}

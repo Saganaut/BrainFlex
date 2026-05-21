@@ -1,41 +1,27 @@
 // CreateGamePage — customize-before-start screen for a known deck. Reached
 // via the chevron menu on a deck's Quick Start button (carries ?deckId=<id>).
 // The deck-picker step lives on /decks now; without a deckId we bounce there.
-import { useEffect, useState } from "react";
+// Form state + deck seeding live in useGameSettings.
+import { useEffect } from "react";
 import { getRouteApi, useNavigate, Link } from "@tanstack/react-router";
 
-import { useCreateInteractiveSessionMutation, useGetDeckQuery } from "../../store/BrainFlexApi";
+import { useCreateInteractiveSessionMutation } from "../../store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
 import { RadioGroup } from "@/components/Common/Input/RadioGroup/RadioGroup";
+import {
+  useGameSettings,
+  type SettingsState,
+  type SessionFormat,
+  type ShowResponsesMode,
+  type AnswerSubmissionMode,
+} from "@/hooks/useGameSettings";
 import { extractErrorMessage } from "../../utils/utils";
 import styles from "./Game.module.css";
 
 const routeApi = getRouteApi("/_authenticated/games/create");
 
-// Renamed from `SessionMode` in chunk 24 to avoid colliding with the new
-// SessionFormat (GAME / PRESENTATION) concept. Same values, semantic name.
-type AnswerSubmissionMode = "SIMULTANEOUS" | "TURN_BASED";
-type SessionFormat = "GAME" | "PRESENTATION";
-type ShowResponsesMode = "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
-
-const DEFAULT_ROUNDS = 10;
-const DEFAULT_TIME = 15;
-const DEFAULT_SPEED_BONUS = true;
-const DEFAULT_MODE: AnswerSubmissionMode = "SIMULTANEOUS";
-const DEFAULT_FORMAT: SessionFormat = "GAME";
-const DEFAULT_SHOW_RESPONSES: ShowResponsesMode = "INHERIT";
-const DEFAULT_MAX_PLAYERS = 8;
-const DEFAULT_ALLOW_GUESTS = true;
-const DEFAULT_ALLOW_LATE_JOIN = false;
-const DEFAULT_SHOW_SCORES_IMMEDIATELY = true;
-const DEFAULT_REACTIONS_ENABLED = true;
-const DEFAULT_CHAT_ENABLED = true;
-const DEFAULT_TEAM_MODE = false;
-const DEFAULT_TEAM_COUNT = 4;
-const DEFAULT_AUTO_BALANCE_TEAMS = true;
-const DEFAULT_ANONYMOUS_MODE = false;
 const TEAM_COUNT_MIN = 2;
 const TEAM_COUNT_MAX = 8;
 
@@ -69,53 +55,6 @@ const SHOW_RESPONSES_OPTIONS: {
   { value: "ON_CLICK", label: "Reveal on host click" },
   { value: "PRIVATE", label: "Hide responses entirely" },
 ];
-
-interface SettingsState {
-  // Chunk 24 — chrome flavor. Pre-fills from deck.defaultSessionFormat but
-  // the host can override; the chosen value is frozen onto the session at
-  // create time and never re-read from the deck after.
-  format: SessionFormat;
-  // Chunk 24 — top of the session > deck > element cascade. INHERIT defers
-  // to the deck's default, which itself defers to the per-element value,
-  // which finally falls back to the format default.
-  showResponses: ShowResponsesMode;
-  totalRounds: number;
-  // 0 = unlimited (no countdown). Any positive value enables the timer.
-  timePerQuestion: number;
-  speedBonus: boolean;
-  answerSubmissionMode: AnswerSubmissionMode;
-  maxPlayers: number;
-  allowGuests: boolean;
-  allowLateJoin: boolean;
-  showScoresImmediately: boolean;
-  reactionsEnabled: boolean;
-  chatEnabled: boolean;
-  teamMode: boolean;
-  teamCount: number;
-  autoBalanceTeams: boolean;
-  anonymousMode: boolean;
-  customRoomCode: string;
-}
-
-const PLATFORM_DEFAULTS: SettingsState = {
-  format: DEFAULT_FORMAT,
-  showResponses: DEFAULT_SHOW_RESPONSES,
-  totalRounds: DEFAULT_ROUNDS,
-  timePerQuestion: DEFAULT_TIME,
-  speedBonus: DEFAULT_SPEED_BONUS,
-  answerSubmissionMode: DEFAULT_MODE,
-  maxPlayers: DEFAULT_MAX_PLAYERS,
-  allowGuests: DEFAULT_ALLOW_GUESTS,
-  allowLateJoin: DEFAULT_ALLOW_LATE_JOIN,
-  showScoresImmediately: DEFAULT_SHOW_SCORES_IMMEDIATELY,
-  reactionsEnabled: DEFAULT_REACTIONS_ENABLED,
-  chatEnabled: DEFAULT_CHAT_ENABLED,
-  teamMode: DEFAULT_TEAM_MODE,
-  teamCount: DEFAULT_TEAM_COUNT,
-  autoBalanceTeams: DEFAULT_AUTO_BALANCE_TEAMS,
-  anonymousMode: DEFAULT_ANONYMOUS_MODE,
-  customRoomCode: "",
-};
 
 interface SettingsFormProps {
   settings: SettingsState;
@@ -356,11 +295,9 @@ const SettingsForm = ({
             />
           </label>
 
-          {/* TODO(backend): the request DTO accepts customRoomCode but the
-              service doesn't currently validate uniqueness — a memorable code
-              that collides with an existing live session will be rejected
-              with a generic 400. Surface that explicitly once the server
-              owns the collision check. */}
+          {/* Chunk 13 — customRoomCode is validated server-side: alphanumeric
+              4–8 chars, falls back to the auto-generated 6-char code when
+              blank, returns 409 on collision with another live session. */}
           <label className={styles.setting}>
             <span>
               Custom room code
@@ -377,6 +314,100 @@ const SettingsForm = ({
                 patch({ customRoomCode: e.target.value.toUpperCase() });
               }}
               className={styles.numberInput}
+            />
+          </label>
+
+          {/* Chunk 13 — lobby polish, shuffle, and auto-advance toggles. All
+              persist onto InteractiveSessionSettings; the deck's defaults seed
+              the form via useGameSettings.seedFromDeck. */}
+          <label className={styles.setting}>
+            <span>Shuffle question order</span>
+            <Checkbox
+              checked={settings.shuffleQuestions}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ shuffleQuestions: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Shuffle answer choices</span>
+            <Checkbox
+              checked={settings.shuffleAnswers}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ shuffleAnswers: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>
+              Auto-advance between rounds
+              <span className={styles.settingHint}>
+                {" "}
+                — turn-based only; host doesn&apos;t have to click Next
+              </span>
+            </span>
+            <Checkbox
+              checked={settings.autoAdvance}
+              disabled={settings.answerSubmissionMode !== "TURN_BASED"}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ autoAdvance: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Podium duration (seconds)</span>
+            <Input
+              type='number'
+              min={5}
+              max={60}
+              value={settings.podiumDuration}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ podiumDuration: e.target.valueAsNumber });
+              }}
+              className={styles.numberInput}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Lobby countdown (seconds)</span>
+            <Input
+              type='number'
+              min={0}
+              max={30}
+              value={settings.lobbyCountdownSeconds}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ lobbyCountdownSeconds: e.target.valueAsNumber });
+              }}
+              className={styles.numberInput}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>
+              Require full name
+              <span className={styles.settingHint}>
+                {" "}
+                — blocks guest joins and nickname-only accounts
+              </span>
+            </span>
+            <Checkbox
+              checked={settings.requireFullName}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ requireFullName: e.target.checked });
+              }}
+            />
+          </label>
+
+          <label className={styles.setting}>
+            <span>Allow spectators (no player slot)</span>
+            <Checkbox
+              checked={settings.spectatorsAllowed}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                patch({ spectatorsAllowed: e.target.checked });
+              }}
             />
           </label>
         </div>
@@ -396,44 +427,8 @@ const CreateGamePage = () => {
     }
   }, [deckId, navigate]);
 
-  const { data: deck, isLoading: loadingDeck } = useGetDeckQuery(
-    { id: deckId ?? "" },
-    { skip: !deckId },
-  );
-
-  // Seed the form with the deck's defaultSettings; fall back per-field to
-  // platform defaults. The backend would also cascade nulls if we sent them,
-  // but pre-filling the visible form is what makes "customize" useful.
-  const [settings, setSettings] = useState<SettingsState>(PLATFORM_DEFAULTS);
-  const [seededFromDeckId, setSeededFromDeckId] = useState<string | null>(null);
-  if (deck?.id && deck.id !== seededFromDeckId) {
-    const d = deck.defaultSettings ?? {};
-    setSettings({
-      // Chunk 24 — pre-fill format from the deck's defaultSessionFormat;
-      // showResponses left at INHERIT so the deck/element cascade is the
-      // visible default until the host opens "More options" and picks
-      // something explicit.
-      format: deck.defaultSessionFormat ?? DEFAULT_FORMAT,
-      showResponses: DEFAULT_SHOW_RESPONSES,
-      totalRounds: d.totalRounds ?? DEFAULT_ROUNDS,
-      timePerQuestion: d.timePerQuestion ?? DEFAULT_TIME,
-      speedBonus: d.speedBonus ?? DEFAULT_SPEED_BONUS,
-      answerSubmissionMode: d.answerSubmissionMode ?? DEFAULT_MODE,
-      maxPlayers: d.maxPlayers ?? DEFAULT_MAX_PLAYERS,
-      allowGuests: d.allowGuests ?? DEFAULT_ALLOW_GUESTS,
-      allowLateJoin: d.allowLateJoin ?? DEFAULT_ALLOW_LATE_JOIN,
-      showScoresImmediately:
-        d.showScoresImmediately ?? DEFAULT_SHOW_SCORES_IMMEDIATELY,
-      reactionsEnabled: d.reactionsEnabled ?? DEFAULT_REACTIONS_ENABLED,
-      chatEnabled: d.chatEnabled ?? DEFAULT_CHAT_ENABLED,
-      teamMode: d.teamMode ?? DEFAULT_TEAM_MODE,
-      teamCount: d.teamCount ?? DEFAULT_TEAM_COUNT,
-      autoBalanceTeams: d.autoBalanceTeams ?? DEFAULT_AUTO_BALANCE_TEAMS,
-      anonymousMode: DEFAULT_ANONYMOUS_MODE,
-      customRoomCode: "",
-    });
-    setSeededFromDeckId(deck.id);
-  }
+  const { deck, isLoadingDeck, settings, setSettings } =
+    useGameSettings(deckId);
 
   const [createGame, { isLoading: creating, error: createError }] =
     useCreateInteractiveSessionMutation();
@@ -464,6 +459,16 @@ const CreateGamePage = () => {
             : undefined,
           anonymousMode: settings.anonymousMode,
           customRoomCode: trimmedRoomCode.length > 0 ? trimmedRoomCode : undefined,
+          shuffleQuestions: settings.shuffleQuestions,
+          shuffleAnswers: settings.shuffleAnswers,
+          autoAdvance:
+            settings.answerSubmissionMode === "TURN_BASED"
+              ? settings.autoAdvance
+              : undefined,
+          podiumDuration: settings.podiumDuration,
+          lobbyCountdownSeconds: settings.lobbyCountdownSeconds,
+          requireFullName: settings.requireFullName,
+          spectatorsAllowed: settings.spectatorsAllowed,
         },
       }).unwrap();
       if (session.roomCode) {
@@ -488,7 +493,7 @@ const CreateGamePage = () => {
     <div className={styles.page}>
       <h1 className={styles.title}>Customize your game</h1>
       <p className={styles.authMsg}>
-        {loadingDeck
+        {isLoadingDeck
           ? "Loading deck…"
           : deck?.name
             ? `Starting "${deck.name}". Adjust the settings, then start.`

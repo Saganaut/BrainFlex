@@ -48,48 +48,26 @@ const ThemeSection = () => {
       <div>
         <p className={styles.subsectionTitle}>Presets</p>
         <div className={styles.themeGrid}>
-          {presets.map((preset) => (
-            <div
-              key={preset.label}
-              className={`${styles.card} ${!activeThemeId && styles.cardActive}`}>
-              <div className={styles.cardSwatch} aria-hidden='true'>
-                <div
-                  className={styles.swatchPrimary}
-                  style={{
-                    background: `oklch(55% 0.2 ${preset.huePrimary}deg)`,
-                  }}
-                />
-                <div
-                  className={styles.swatchAccent}
-                  style={{
-                    background: `oklch(65% 0.22 ${preset.hueAccent}deg)`,
-                  }}
-                />
-              </div>
-              <div className={styles.cardBody}>
-                <p className={styles.cardName}>{preset.label}</p>
-                <div className={styles.cardMeta}>
-                  {!activeThemeId &&
-                    !customPresetActive &&
-                    preset.label === "Brand" && (
-                      <span className={`${styles.badge} ${styles.badgeActive}`}>
-                        Active
-                      </span>
-                    )}
-                </div>
-              </div>
-              <div className={styles.cardActions}>
-                <Btn
-                  type='button'
-                  className={`${styles.cardActionBtn} ${styles.cardActionBtnPrimary}`}
-                  onClick={() => {
-                    void activatePreset(preset);
-                  }}>
-                  Activate
-                </Btn>
-              </div>
-            </div>
-          ))}
+          {presets.map((preset) => {
+            // Brand preset is the default when the user has no active custom
+            // theme and hasn't customized the hues — it's the implicit Active.
+            const isBrandDefault =
+              !activeThemeId &&
+              !customPresetActive &&
+              preset.label === "Brand";
+            return (
+              <ThemeCard
+                key={preset.label}
+                huePrimary={preset.huePrimary}
+                hueAccent={preset.hueAccent}
+                name={preset.label}
+                isActive={isBrandDefault}
+                onActivate={() => {
+                  void activatePreset(preset);
+                }}
+              />
+            );
+          })}
         </div>
       </div>
 
@@ -97,36 +75,40 @@ const ThemeSection = () => {
         <div>
           <p className={styles.subsectionTitle}>Custom Themes</p>
           <div className={styles.themeGrid}>
-            {themes.map((theme) => (
-              <ThemeCard
-                key={theme.id}
-                theme={theme}
-                isActive={theme.id === activeThemeId}
-                isOwned={theme.ownerId === userId}
-                isOrgShared={
-                  theme.organizationId != null &&
-                  theme.organizationId !== "" &&
-                  theme.ownerId !== userId
-                }
-                onActivate={(t) => {
-                  void activateCustom(t);
-                }}
-                onEdit={
-                  theme.ownerId === userId
-                    ? (t) => {
-                        openEditor(t);
-                      }
-                    : undefined
-                }
-                onDelete={
-                  theme.ownerId === userId
-                    ? (t) => {
-                        void handleDelete(t);
-                      }
-                    : undefined
-                }
-              />
-            ))}
+            {themes.map((theme) => {
+              const isOwned = theme.ownerId === userId;
+              const isOrgShared =
+                theme.organizationId != null &&
+                theme.organizationId !== "" &&
+                theme.ownerId !== userId;
+              return (
+                <ThemeCard
+                  key={theme.id}
+                  huePrimary={theme.huePrimary ?? 260}
+                  hueAccent={theme.hueAccent ?? 25}
+                  name={theme.name ?? "Untitled"}
+                  isActive={theme.id === activeThemeId}
+                  isOrgShared={isOrgShared}
+                  onActivate={() => {
+                    void activateCustom(theme);
+                  }}
+                  onEdit={
+                    isOwned
+                      ? () => {
+                          openEditor(theme);
+                        }
+                      : undefined
+                  }
+                  onDelete={
+                    isOwned
+                      ? () => {
+                          void handleDelete(theme);
+                        }
+                      : undefined
+                  }
+                />
+              );
+            })}
           </div>
         </div>
       )}

@@ -1,8 +1,8 @@
 /**
  * Open-canvas / "scribble" question. Players draw on a blank or image-backed
  * surface; the answer is a list of strokes. Never scored ({@code scored=false},
- * {@code survey=true} always) — use Best Answer mode to put a host-curated
- * vote on top of the submissions.
+ * {@code survey=true} always — both on {@link ElementChrome}) — use Best
+ * Answer mode to put a host-curated vote on top of the submissions.
  *
  * Storage strategy is inline: the full stroke list lives on
  * {@link cephadex.brainflex.model.answer.DrawingAnswer} on
@@ -17,21 +17,13 @@
  */
 package cephadex.brainflex.model.element;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
-import cephadex.brainflex.model.enums.MediaPosition;
-import cephadex.brainflex.model.enums.ResponseMode;
 
 public record DrawingQuestion(
         String id,
-        String publicKey,
-        String privateKey,
-        String title,
-        Map<String, Object> styledTitle,
         String prompt,
         Image backingImage,            // optional underlay
         int canvasWidth,               // logical units; default 1920
@@ -39,38 +31,12 @@ public record DrawingQuestion(
         int maxStrokesPerPlayer,       // default 200
         int maxPointsPerStroke,        // default 500
         List<String> palette,          // optional swatch palette (oklch tokens or hex)
-        // scoring (forced to non-scored / survey)
+        // scoring (question-only — not chrome; always 0 / unscored)
         int pointValue,
         Difficulty difficulty,
-        boolean scored,                // always false for drawing
-        boolean survey,                // always true
-        Integer multipleSelections,
-        ResponseMode responseMode,
-        // best-answer modifier (drawings are a natural fit for vote-the-best)
-        boolean bestAnswerMode,
-        String bestAnswerTitle,
-        int bestAnswerBonus,
         String explanation,
-        // shared chrome
-        int displaySeconds,
-        String speakerNotes,
-        Image background,
-        Image image,
-        String videoUrl,
-        String audioUrl,
-        String videoAssetId,
-        String audioAssetId,
-        MediaPosition mediaPosition,
-        // shared metadata (chunk 10b)
-        String createdByUserId,
-        String lastEditedByUserId,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        List<String> tagIds,
-        String mediaCaption,
-        String altText,
-        boolean reactionsEnabled,
-        Integer version
+        // shared chrome (chunk 25)
+        ElementChrome chrome
 ) implements DeckElement {
 
     @Override

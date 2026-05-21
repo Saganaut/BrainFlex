@@ -1,8 +1,14 @@
 // Hook managing light/dark mode, the two brand hue variables, and whether a
 // custom (hue-derived) theme is active. Default mode uses the named brand
 // palette in tokens.css; toggling customTheme adds .theme-custom to <html>,
-// which overrides semantic tokens with hue-derived oklch values. All state
-// persists to localStorage so it survives page refreshes.
+// which overrides semantic tokens with hue-derived oklch values.
+//
+// localStorage holds the boot-time optimistic cache so the first paint
+// doesn't flash a default theme. For registered users, ActiveThemeBridge (→
+// useActiveThemeSync) overwrites that cache from the server's activeThemeId
+// as soon as RTK Query resolves — the server, not localStorage, is the
+// source of truth for "which theme is mine." Guest/anon users get
+// localStorage-only behavior since they have no server-side identity yet.
 import { useEffect, useState } from "react";
 
 export type ThemeMode = "light" | "dark";

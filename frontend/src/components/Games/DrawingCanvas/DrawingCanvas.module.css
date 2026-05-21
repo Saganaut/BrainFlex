@@ -107,6 +107,9 @@
   .thicknessDot {
     display: inline-block;
     border-radius: var(--radius-full);
+    width: var(--dot-size);
+    height: var(--dot-size);
+    background: var(--dot-color);
   }
 
   .actions {

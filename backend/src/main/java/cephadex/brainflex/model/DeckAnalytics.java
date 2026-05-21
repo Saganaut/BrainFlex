@@ -3,20 +3,29 @@
  *
  * Read-amplified: writes happen on every finished session (incrementally —
  * running averages, never a full recompute), reads happen rarely on the
- * analytics dashboard. {@code DeckAnalyticsService.recordGame} is the sole
- * writer; the backfill migration replays existing finished sessions through
- * the same path.
+ * analytics dashboard. {@code DeckAnalyticsService.recordSessionFinish} is the
+ * sole writer; the backfill migration replays existing finished sessions
+ * through the same path.
  *
  * Deck-level fields ({@code totalPlays}, {@code averageScore},
  * {@code averageAccuracy}, {@code averageDurationMs}) aggregate across all
- * plays. {@code perElement} carries one {@link ElementStats} per element id
- * that has ever been presented; survey-only kinds report zero
- * {@code correctCount}.
+ * finished sessions regardless of format. {@code gameRollup} +
+ * {@code presentationRollup} slice the same data by
+ * {@link cephadex.brainflex.model.enums.SessionFormat} so the dashboard can
+ * surface format-aware KPIs without re-walking history. {@code perElement}
+ * carries one {@link ElementStats} per element id that has ever been
+ * presented; per-element data is intentionally <b>not</b> split by format
+ * (surveys and games can share a question, and most callers want the union).
  *
  * {@code totalPlayers} is a coarse "submissions accepted" tally — distinct
  * players across plays are not deduped (no HyperLogLog yet). If we ever need
  * exact distinct-player counts the value will be replaced; treat it as an
  * upper bound on "people who played" for now.
+ *
+ * Legacy documents predating PR3 deserialize with {@code gameRollup} and
+ * {@code presentationRollup} null; the service replaces them with fresh
+ * instances on the next finish. To repopulate them deterministically from
+ * history, run the {@code --migrate.deck-analytics=true} backfill.
  */
 package cephadex.brainflex.model;
 
@@ -25,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.Data;
@@ -45,6 +55,11 @@ public class DeckAnalytics {
 
     private Map<String, ElementStats> perElement = new HashMap<>();
 
+    private FormatRollup gameRollup;
+    private FormatRollup presentationRollup;
+
     private LocalDateTime lastPlayedAt;
+
+    @LastModifiedDate
     private LocalDateTime updatedAt;
 }

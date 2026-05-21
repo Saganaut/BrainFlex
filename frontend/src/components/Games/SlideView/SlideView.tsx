@@ -21,7 +21,8 @@ const SlideView = ({
   totalRounds,
   timeRemaining,
 }: SlideViewProps) => {
-  const imageUrl = largestUrl(slide.image, slide.id ?? "");
+  const title = slide.chrome?.title;
+  const imageUrl = largestUrl(slide.chrome?.image, slide.id ?? "");
   return (
     <article className={styles.card} aria-label='Slide'>
       <div className={styles.meta}>
@@ -35,7 +36,7 @@ const SlideView = ({
 
       {imageUrl && <img src={imageUrl} alt='' className={styles.image} />}
 
-      {slide.title && <h2 className={styles.title}>{slide.title}</h2>}
+      {title && <h2 className={styles.title}>{title}</h2>}
       {slide.body && <p className={styles.body}>{slide.body}</p>}
     </article>
   );

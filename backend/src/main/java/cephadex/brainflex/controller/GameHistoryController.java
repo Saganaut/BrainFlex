@@ -1,7 +1,7 @@
 /**
  * Read-only access to the per-user game-history index.
  *
- * Mounts three GETs that all return the same {@link GameHistoryPage} shape:
+ * Mounts three GETs that all return the same {@link Page} shape:
  *   - {@code /api/users/me/history}: paginated history for the caller
  *   - {@code /api/users/{userId}/history}: public profile view (closed and
  *     guest accounts are 404'd to avoid leaking their existence)
@@ -15,7 +15,6 @@ package cephadex.brainflex.controller;
 
 import java.util.List;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -29,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.GameHistoryDTO;
-import cephadex.brainflex.dto.GameHistoryPage;
+import cephadex.brainflex.dto.Page;
 import cephadex.brainflex.model.GameHistoryEntry;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
@@ -58,7 +57,7 @@ public class GameHistoryController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/users/me/history")
-    public GameHistoryPage listMyHistory(
+    public Page<GameHistoryDTO> listMyHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
@@ -69,7 +68,7 @@ public class GameHistoryController {
     }
 
     @GetMapping("/users/{userId}/history")
-    public GameHistoryPage listUserHistory(
+    public Page<GameHistoryDTO> listUserHistory(
             @PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -86,7 +85,7 @@ public class GameHistoryController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/decks/{deckId}/history/mine")
-    public GameHistoryPage listMyHistoryForDeck(
+    public Page<GameHistoryDTO> listMyHistoryForDeck(
             @PathVariable String deckId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -104,11 +103,11 @@ public class GameHistoryController {
         return PageRequest.of(safePage, safeSize, Sort.by("playedAt").descending());
     }
 
-    private GameHistoryPage toPage(Page<GameHistoryEntry> page) {
+    private Page<GameHistoryDTO> toPage(org.springframework.data.domain.Page<GameHistoryEntry> page) {
         List<GameHistoryDTO> items = page.getContent().stream()
                 .map(GameHistoryDTO::from)
                 .toList();
         boolean hasMore = (long) (page.getNumber() + 1) * page.getSize() < page.getTotalElements();
-        return new GameHistoryPage(items, page.getNumber(), page.getSize(), page.getTotalElements(), hasMore);
+        return new Page<>(items, page.getNumber(), page.getSize(), page.getTotalElements(), hasMore);
     }
 }

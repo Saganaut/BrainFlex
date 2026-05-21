@@ -38,7 +38,9 @@ import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.Image;
 import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
-import cephadex.brainflex.model.enums.DeckPreset;
+import cephadex.brainflex.model.enums.AchievementTrigger;
+import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.PublishStatus;
 import cephadex.brainflex.repository.DeckRepository;
@@ -51,18 +53,21 @@ public class DeckService {
     private final TagService tagService;
     private final MongoTemplate mongoTemplate;
     private final DeckCollaboratorService deckCollaboratorService;
+    private final AchievementService achievementService;
 
     public DeckService(
             DeckRepository deckRepository,
             AuthorizationService authorizationService,
             TagService tagService,
             MongoTemplate mongoTemplate,
-            DeckCollaboratorService deckCollaboratorService) {
+            DeckCollaboratorService deckCollaboratorService,
+            AchievementService achievementService) {
         this.deckRepository = deckRepository;
         this.authorizationService = authorizationService;
         this.tagService = tagService;
         this.mongoTemplate = mongoTemplate;
         this.deckCollaboratorService = deckCollaboratorService;
+        this.achievementService = achievementService;
     }
 
     // ---- Read ----
@@ -128,7 +133,9 @@ public class DeckService {
             deck.setSubjectTagId(request.subjectTagId());
         }
         deck.setVisibility(request.visibility() == null ? DeckVisibility.PRIVATE : request.visibility());
-        deck.setRecommendedPreset(request.recommendedPreset() == null ? DeckPreset.GAME : request.recommendedPreset());
+        deck.setDefaultSessionFormat(request.defaultSessionFormat() == null ? SessionFormat.GAME : request.defaultSessionFormat());
+        deck.setDefaultShowResponses(
+                request.defaultShowResponses() == null ? ShowResponsesMode.INHERIT : request.defaultShowResponses());
         deck.setCover(normalizeImage(request.cover()));
         deck.setBackground(normalizeImage(request.background()));
         deck.setThemeId(request.themeId());
@@ -152,13 +159,17 @@ public class DeckService {
         // First-author credit defaults to the creator — copy-on-fork updates
         // it explicitly later when fork support lands.
         deck.setOriginalAuthorUserId(creator.getId());
-        deck.setCreatedAt(LocalDateTime.now());
-        deck.setUpdatedAt(LocalDateTime.now());
         Deck saved = deckRepository.save(deck);
         // Seed the OWNER collaborator row so authorization checks and the
         // "decks shared with me" query both have a consistent source of truth
         // from day one — no special-case for freshly-created decks.
         deckCollaboratorService.addInitialOwner(saved, creator);
+        // Chunk 17 — DECKS_CREATED trigger fires on every create (counter is
+        // the user's deck count after the save). Achievement service is
+        // fire-and-forget so failures never break create.
+        long ownedCount = deckRepository.countByCreatorUserId(creator.getId());
+        achievementService.evaluate(creator.getId(), AchievementTrigger.DECKS_CREATED,
+                (int) Math.min(ownedCount, Integer.MAX_VALUE), null, saved.getId());
         return saved;
     }
 
@@ -185,8 +196,10 @@ public class DeckService {
         }
         if (request.visibility() != null)
             deck.setVisibility(request.visibility());
-        if (request.recommendedPreset() != null)
-            deck.setRecommendedPreset(request.recommendedPreset());
+        if (request.defaultSessionFormat() != null)
+            deck.setDefaultSessionFormat(request.defaultSessionFormat());
+        if (request.defaultShowResponses() != null)
+            deck.setDefaultShowResponses(request.defaultShowResponses());
         if (request.cover() != null) {
             deck.setCover(normalizeImage(request.cover()));
         }
@@ -212,7 +225,6 @@ public class DeckService {
         if (request.license() != null) {
             deck.setLicense(request.license());
         }
-        deck.setUpdatedAt(LocalDateTime.now());
         deck.setVersion(deck.getVersion() + 1);
         return deckRepository.save(deck);
     }
@@ -268,8 +280,15 @@ public class DeckService {
         if (deck.getPublishedAt() == null) {
             deck.setPublishedAt(LocalDateTime.now());
         }
-        deck.setUpdatedAt(LocalDateTime.now());
-        return deckRepository.save(deck);
+        Deck saved = deckRepository.save(deck);
+        // Chunk 17 — DECKS_PUBLISHED counter advances every time a draft
+        // crosses into PUBLISHED. Re-publishing an already-published deck is
+        // a no-op above so we don't double-count.
+        long publishedCount = deckRepository.countByCreatorUserIdAndPublishStatus(
+                caller.getId(), PublishStatus.PUBLISHED);
+        achievementService.evaluate(caller.getId(), AchievementTrigger.DECKS_PUBLISHED,
+                (int) Math.min(publishedCount, Integer.MAX_VALUE), null, saved.getId());
+        return saved;
     }
 
     /** Move a deck back to DRAFT. {@code publishedAt} is preserved as history. */
@@ -277,7 +296,6 @@ public class DeckService {
         Deck deck = requireOwned(id, caller);
         if (deck.getPublishStatus() == PublishStatus.DRAFT) return deck;
         deck.setPublishStatus(PublishStatus.DRAFT);
-        deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
     }
 
@@ -289,7 +307,6 @@ public class DeckService {
         Deck deck = requireOwned(id, caller);
         if (deck.getPublishStatus() == PublishStatus.ARCHIVED) return deck;
         deck.setPublishStatus(PublishStatus.ARCHIVED);
-        deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
     }
 
@@ -401,7 +418,6 @@ public class DeckService {
                 normalized.mediaCaption(), normalized.altText(),
                 normalized.reactionsEnabled(), 1);
         deck.getElements().add(stamped);
-        deck.setUpdatedAt(now);
         return deckRepository.save(deck);
     }
 
@@ -433,7 +449,6 @@ public class DeckService {
                 normalized.mediaCaption(), normalized.altText(),
                 normalized.reactionsEnabled(), nextVersion);
         deck.getElements().set(idx, stamped);
-        deck.setUpdatedAt(now);
         return deckRepository.save(deck);
     }
 
@@ -445,7 +460,6 @@ public class DeckService {
         Deck deck = requireOwned(deckId, caller);
         int idx = indexOfElement(deck, elementId);
         deck.getElements().remove(idx);
-        deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
     }
 
@@ -461,7 +475,6 @@ public class DeckService {
             return deck;
         DeckElement element = deck.getElements().remove(currentIdx);
         deck.getElements().add(clamped, element);
-        deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
     }
 
@@ -499,7 +512,6 @@ public class DeckService {
         McqOption moved = options.remove(currentIdx);
         options.add(clamped, moved);
         deck.getElements().set(elementIdx, DeckElementCloner.withOptions(mcq, options));
-        deck.setUpdatedAt(LocalDateTime.now());
         return deckRepository.save(deck);
     }
 

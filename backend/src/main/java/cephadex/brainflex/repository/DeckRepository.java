@@ -10,6 +10,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.enums.DeckVisibility;
+import cephadex.brainflex.model.enums.PublishStatus;
 
 public interface DeckRepository extends MongoRepository<Deck, String> {
 
@@ -18,4 +19,10 @@ public interface DeckRepository extends MongoRepository<Deck, String> {
     List<Deck> findBySystemTrue();
 
     List<Deck> findByCreatorUserId(String creatorUserId);
+
+    /** Chunk 17 — drives the DECKS_CREATED achievement trigger. */
+    long countByCreatorUserId(String creatorUserId);
+
+    /** Chunk 17 — drives the DECKS_PUBLISHED achievement trigger. */
+    long countByCreatorUserIdAndPublishStatus(String creatorUserId, PublishStatus publishStatus);
 }

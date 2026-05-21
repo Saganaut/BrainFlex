@@ -28,7 +28,7 @@ import lombok.Data;
         // ready to boot; the compound index keeps that query cheap.
         @CompoundIndex(name = "status_startAt", def = "{'status': 1, 'scheduledStartAt': 1}")
 })
-public class ScheduledInteractiveSession {
+public class ScheduledInteractiveSession extends Auditable {
     @Id
     private String id;
 
@@ -52,6 +52,9 @@ public class ScheduledInteractiveSession {
 
     private ScheduleStatus status = ScheduleStatus.SCHEDULED;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    /** Stamped by the "starting soon" sweep once the 5-minute reminder fires
+     *  so the same schedule does not re-notify on subsequent sweeps. Null until
+     *  the first reminder; cleared when the row is rescheduled to a later
+     *  scheduledStartAt. */
+    private LocalDateTime startingSoonNotifiedAt;
 }

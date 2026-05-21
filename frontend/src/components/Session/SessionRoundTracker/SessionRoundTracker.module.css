@@ -1,0 +1,7 @@
+.sessionRoundTracker {
+  border: 1px dashed blue;
+  background-color: var(--bg-surface);
+  height: 100%;
+  margin: var(--space-1);
+  border-radius: var(--radius-md);
+}

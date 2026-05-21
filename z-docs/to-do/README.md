@@ -4,6 +4,8 @@ This folder tracks the work needed to bring the BrainFlex backend (and the front
 
 For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 
+For a cross-cutting audit of the Java `model/` and `dto/` packages (repetition, fields on the wrong owner, sealed-hierarchy inconsistencies, naming/typing gaps), see [java-model-issues.md](java-model-issues.md).
+
 ## How to use this
 
 - Each chunk lives in its own subfolder so notes, scratch code, migration scripts, and design docs can be added next to the README later.
@@ -15,47 +17,52 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 
 ### Discovery & social
 
-- [x] **01** — [Tags & taxonomy](./01-tags-and-taxonomy/README.md) — promote free-form `tags: List<String>` to a real `Tag` model
-- [x] **02** — [Deck discovery metadata](./02-deck-discovery-metadata/README.md) — `publishStatus`, `language`, rating/play counters, license
-- [x] **03** — [Deck favorites](./03-deck-favorites/README.md) — `DeckFavorite` join collection + star icon
-- [x] **04** — [Deck ratings & comments](./04-deck-ratings-and-comments/README.md) — 1–5 star ratings and threaded comments
-- [x] **05** — [Deck collections](./05-deck-collections/README.md) — user/org folders of decks
-- [x] **06** — [Deck collaborators](./06-deck-collaborators/README.md) — co-editors on a deck
+- [x] **01** — **ARCHIVED** — [Tags & taxonomy](../archive/to-do/01-tags-and-taxonomy/README.md) — promote free-form `tags: List<String>` to a real `Tag` model
+- [x] **02** — **ARCHIVED** — [Deck discovery metadata](../archive/to-do/02-deck-discovery-metadata/README.md) — `publishStatus`, `language`, rating/play counters, license
+- [x] **03** — **ARCHIVED** — [Deck favorites](../archive/to-do/03-deck-favorites/README.md) — `DeckFavorite` join collection + star icon
+- [x] **04** — **ARCHIVED** — [Deck ratings & comments](../archive/to-do/04-deck-ratings-and-comments/README.md) — 1–5 star ratings and threaded comments
+- [x] **05** — **ARCHIVED** — [Deck collections](../archive/to-do/05-deck-collections/README.md) — user/org folders of decks
+- [x] **06** — **ARCHIVED** — [Deck collaborators](../archive/to-do/06-deck-collaborators/README.md) — co-editors on a deck
 
 ### New element kinds
 
-- [x] **07** — [Word Cloud](./07-element-word-cloud-and-true-false/README.md) — Mentimeter-style survey kind (True/False dropped: an MCQ with 2 options covers that use case)
-- [x] **08** — [Allocation & Matching](./08-element-allocation-and-matching/README.md) — Mentimeter "100 points" and Kahoot "puzzle pairs"
-- [x] **09** — [Drawing](./09-element-drawing/README.md) — open canvas with stroke-based answers
-- [x] **10** — [Common element additions](./10-element-common-additions/README.md) — provenance, shuffle, fuzzy match, slide blocks
+- [x] **07** — **ARCHIVED** — [Word Cloud](../archive/to-do/07-element-word-cloud-and-true-false/README.md) — Mentimeter-style survey kind (True/False dropped: an MCQ with 2 options covers that use case)
+- [x] **08** — **ARCHIVED** — [Allocation & Matching](../archive/to-do/08-element-allocation-and-matching/README.md) — Mentimeter "100 points" and Kahoot "puzzle pairs"
+- [x] **09** — **ARCHIVED** — [Drawing](../archive/to-do/09-element-drawing/README.md) — open canvas with stroke-based answers
+- [x] **10** — **ARCHIVED** — [Common element additions](../archive/to-do/10-element-common-additions/README.md) — provenance, shuffle, fuzzy match, slide blocks
 
 ### Live game polish
 
-- [x] **11** — [InteractiveSession reactions & chat](./11-interactive-session-reactions-and-chat/README.md) — emoji reactions + audience chat *(backend + codegen done; player/host UI deferred to chunk 13)*
-- [x] **12** — [InteractiveSession teams](./12-interactive-session-teams/README.md) — team mode + team leaderboard *(backend + codegen done; lobby team picker / team leaderboard / team podium deferred to chunk 13)*
-- [x] **13** — [InteractiveSession settings & player additions](./13-interactive-session-settings-and-player-additions/README.md) — shuffle, auto-advance, podium, avatars, streaks, answer timing *(backend + codegen done; lobby avatar picker / streak indicator / autoAdvance ring / placement card UI deferred to the holistic chunk-13 player-UI pass)*
-- [x] **14** — [Scheduled interactive sessions & invites](./14-scheduled-interactive-sessions-and-invites/README.md) — schedule a session and email invites
+- [x] **11** — [InteractiveSession reactions & chat](./11-interactive-session-reactions-and-chat/README.md) — emoji reactions + audience chat *(complete: backend, codegen, ReactionBar / ReactionRain / ChatPanel mounted on PlayPage, host hover-to-hide moderation, optimistic chat send + STOMP reconcile)*
+- [x] **12** — [InteractiveSession teams](./12-interactive-session-teams/README.md) — team mode + team leaderboard *(complete: backend, codegen, lobby `TeamPicker` grid with host create/rename/recolor/delete + per-member "Move to…" select, side-by-side `TeamLeaderboard` on `PlayPage`, per-row team chip on `ScoreBoard`, `TeamPodium` on `GameOver`, STOMP `/teams` subscription on `useInteractiveSessionWebSocket`)*
+- [x] **13** — [InteractiveSession settings & player additions](./13-interactive-session-settings-and-player-additions/README.md) — shuffle, auto-advance, podium, avatars, streaks, answer timing *(complete: backend + codegen + UI; `CreateGamePage` "More options" exposes shuffleQuestions/shuffleAnswers/autoAdvance/podiumDuration/lobbyCountdownSeconds/requireFullName/spectatorsAllowed, lobby renders an `AvatarSelector` backed by `useListAvatarsQuery` + the new `PUT /api/interactive-sessions/{roomCode}/me/avatar` endpoint, lobby header surfaces `customRoomCode` + host name/avatar, `PlayPage` shows a streak banner + per-row streak chips on `ScoreBoard` + host autoAdvance countdown ring, `GameOver` placement chips for accuracy/streak/speed/reactions backed by the new `PlayerPlacement.speedBonusTotal` snapshot)*
+- [x] **14** — **ARCHIVED** — [Scheduled interactive sessions & invites](../archive/to-do/14-scheduled-interactive-sessions-and-invites/README.md) — schedule a session and email invites
 
 ### Analytics & reporting
 
 - [x] **15** — [Game history](./15-game-history/README.md) — per-user `GameHistoryEntry` *(backend + tests done; profile history tab / your-best widget / stats cards deferred to the holistic chunk-13 player-UI pass)*
-- [ ] **16** — [Deck analytics](./16-deck-analytics/README.md) — rolled-up `DeckAnalytics` + per-element stats + reports
-- [ ] **17** — [Achievements](./17-achievements/README.md) — `Achievement` + `UserAchievement` + trigger evaluator
-- [ ] **18** — [Notifications](./18-notifications/README.md) — in-app notification stream
+- [x] **16** — [Deck analytics](./16-deck-analytics/README.md) — rolled-up `DeckAnalytics` + per-element stats + reports *(PR1 + PR2 done: models, per-kind bucketing for all 13 ElementKinds, backfill, GET endpoint, CSV export, analytics dashboard with KPI strip + per-element accordion, deck-editor "Analytics" tab; PDF export and per-show `InteractiveSessionResult.exportedReportUrl` CSV deferred — revisit if there's demand)*
+- [x] **17** — [Achievements](./17-achievements/README.md) — `Achievement` + `UserAchievement` + trigger evaluator *(backend + tests + frontend done: 10-trigger enum, fire-and-forget `AchievementService.evaluate`, trigger wiring in `GameHistoryService.recordFinish` + `DeckService.create/publish` + `DeckFavoriteService.favorite` + `InteractiveSessionService.updateStatsAfterGame`, 3 endpoints, 18-row seed catalog, `/achievements` catalog route, profile "Achievements" tab; `REACTIONS_SENT` + `WORD_CLOUD_SUBMITTED` triggers and the game-results "Achievement unlocked" surface + toast deferred to the holistic chunk-13 player-UI pass)*
+- [x] **18** — [Notifications](./18-notifications/README.md) — in-app notification stream *(backend `Notification` model + repo + 90d TTL + per-user STOMP push + 7 ApplicationEvent listeners, `DECK_FAVORITED` Redis throttle, 5 REST endpoints; frontend `NotificationBell` with unread badge + grouped dropdown, STOMP subscription via `useNotificationStream`, RTK Query 60s polling fallback, optimistic mark-read / read-all / dismiss cache enhancements; toast-on-receive deferred until chunk 20 `notificationPrefs` lands)*
 
 ### Platform
 
-- [ ] **19** — [Media asset](./19-media-asset/README.md) — generalize `GalleryImage` to audio/video upload
-- [ ] **20** — [User/Org/Theme/Membership additions](./20-user-organization-theme-membership-additions/README.md) — catch-all field additions
+- [ ] ~~**19** — [Media asset](./19-media-asset/README.md) — generalize `GalleryImage` to audio/video upload~~ — **Deferred (future feature).** Not pursuing audio/video upload for now; YouTube link embedding may be revisited later.
+- [x] **20** — [User/Org/Theme/Membership additions](./20-user-organization-theme-membership-additions/README.md) — catch-all field additions *(backend complete: model additions + `UserProfileBackfillMigration` (`scripts/migrate-user-profile.sh`) + `NotificationPrefs` GET/PUT (`/api/users/me/notification-prefs`) + three Organization endpoints (`PUT /api/organizations/{id}`, `POST /api/organizations/{id}/invite-code/rotate`, `POST /api/organizations/join-by-code`) + OAuth email-domain auto-join hook on existing-user / guest-conversion / brand-new-registration paths + `MembershipService.canStartInteractiveSession` quota gate (HTTP 402 on `POST /api/interactive-sessions`) + `PlayerStatsResetScheduler` weekly (`MON 00:00 UTC`) + monthly (`1st 00:00 UTC`) crons + `DeckController.recountFavorites` and `TagController.update/delete` migrated to `@PreAuthorize("hasRole('ADMIN')")` (`TestSecurityConfig` mirrors prod role hierarchy + `@EnableMethodSecurity` so the gate fires under MockMvc) + frontend codegen regenerated; 500/500 tests green; frontend profile / org-settings / notification-prefs / `useTheme.tokenOverrides` pages deferred to a frontend pass)*
 
 ### Right-sidebar polish
 
-- [ ] **21** — [Slide design shape & sidebar polish](./21-slide-design-and-sidebar-polish/README.md) — `EditSlidePanel` chart picker + `Design` value object + custom subjects/tags + finish review posting
+- [ ] **21** — [Slide design shape & sidebar polish](./21-slide-design-and-sidebar-polish/README.md) — `EditSlidePanel` chart picker + `Design` value object + custom subjects/tags + finish review posting *(Part B + Part C closed out: chart picker, `selectionsPerParticipant=0`, `showResultsAsPercentage`, two-toggle QR/join UI, `showResponses` radio + `PRIVATE` gate in `InteractiveSessionService.submitAnswer` with test, inline-create subject + tags, `Tag.createdByUserId` + `?createdByMe=true` filter, Explore curated default, reviews-panel textarea + cache invalidation all done; `Design` value object + `DesignEditor` and the `titleLabel` UI surfacing + render still TODO — A.7 backend is being delivered via the chunk-25 `ElementChrome` refactor in flight)*
 
 ### Editor shell & shared components
 
-- [ ] **22** — [Common-component gaps](./22-common-component-gaps/README.md) — Pagination + inline Alert/Banner; sweep existing one-off error spans
-- [ ] **23** — [Deck editor shell polish](./23-deck-editor-shell-polish/README.md) — Preview / Start (interactive session) navbar buttons, new-deck first-slide skeleton, right-sidebar vertical icon rail + drawer-on-drawer (Edit slide / Theme / Participants / Sharing)
+- [x] **22** — **ARCHIVED** — [Common-component gaps](../archive/to-do/22-common-component-gaps/README.md) — Pagination + inline Alert/Banner; sweep existing one-off error spans
+- [ ] **23** — [Deck editor shell polish](./23-deck-editor-shell-polish/README.md) — Preview / Start (interactive session) navbar buttons, new-deck first-slide skeleton, right-sidebar vertical icon rail + drawer-on-drawer (Edit slide / Theme / Participants / Sharing) *(Start button + first-slide skeleton + vertical icon rail with 7 drawer panels all landed; Preview button still `console.log`, empty-deck guard + tests still TODO, `SharingPreferencesPanel` still a "Coming soon" placeholder, `ParticipantsPanel` only hosts the reactions toggle today — collaborator list TODO)*
+- [x] **25** — [Per-kind slide editor hooks](./25-per-kind-slide-editor-hooks/README.md) — Extend the `useElementEditor`/`useMcq*Editor` pattern across every other slide kind (Text/Number/WordCloud/QAndA/Drawing/PlaceOnImage/Grid/Allocation/Matching/Ranking/Scales/Slide) so per-kind buildPatch / bounds / structural-op plumbing leaves the components *(all 13 hooks + 12 component migrations landed; per-item card extraction and drag-to-reorder remain follow-up work)*
+
+### Interactive session runtime
+
+- [x] **24** — **ARCHIVED** — [Session format & runtime cascades](../archive/to-do/24-session-format-and-runtime-cascades/README.md) — rename `DeckPreset` → `SessionFormat` (drop `PULSE`), make it session-authoritative with deck as default, formalize the session > deck > element cascade for `showResponses`, rename `mode` → `answerSubmissionMode`, pluggable best-answer scoring (`POINTS_PER_VOTE` + `FLAT_WINNER`), reveal-on-demand + freeze-responses host controls (host overlays now exposed on `InteractiveSessionDTO` so reconnects rebuild reveal/freeze state), PRESENTATION RoundDataView + SessionSummary, deck-editor `defaultSessionFormat` / `defaultShowResponses` panel, shared `BehaviorSection` for per-element `showResponses` *(backend-up `BrainFlexApi.ts` codegen run completed)*
 
 ## Dependency graph
 
@@ -77,6 +84,8 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 21 leans on 01 (TagPicker create affordance) and 04 (rating mutation) — backend foundations exist, this finishes the UI
 22 is independent — Pagination + Alert can be picked up any time
 23 should land before (or in the same PR series as) 21 — chunk 21 modifies the content of panels that chunk 23 restructures the shell around
+24 is independent of 21–23 but touches the same RoundResult / GameOver surfaces as the chunk-13 deferred player-UI pass; land before or alongside that pass to avoid double-touching those components
+25 is independent — pure frontend plumbing on top of the existing `useElementEditor` base; no backend changes
 ```
 
 ## Cross-cutting reminders
@@ -98,36 +107,6 @@ These items were intentionally left out of the chunk that nominally owns them be
 
   These naturally cluster with **chunk 13** (InteractiveSession settings & player additions) since that chunk already touches the player UI. Re-open this list when starting chunk 13.
 
-- **Team-mode UI (chunk 12).** Chunk 12 shipped the backend (`Team` embedded model, `InteractiveSession.teams` + `teamMode` + `autoBalanceTeams`, `InteractiveSessionSettings.teamMode`/`teamCount`/`autoBalanceTeams`, `InteractiveSessionPlayer.teamId`, `PlayerPlacement.teamId`, deterministic team seeding + auto-balance join + manual join, per-answer team-score recompute + Best-Answer reveal recompute, host CRUD endpoints, `TeamUpdateMessage` STOMP broadcasts) and the codegen hooks (`useCreateTeamMutation` / `useUpdateTeamMutation` / `useDeleteTeamMutation` / `useMovePlayerToTeamMutation` plus the optional `JoinInteractiveSessionRequest` body), but **no team-mode UI**. Specifically still TODO:
-  - Team-mode toggle + team-count slider on `CreateGamePage.tsx`
-  - Lobby team picker grid (one card per team with color, name, current member list; "Auto-assign" button when `autoBalanceTeams`)
-  - Host team edit affordances (create/rename/recolor/delete; move-player drop target)
-  - Team badge under the player's score on `PlayPage.tsx`
-  - Team leaderboard alternating with individual leaderboard between rounds
-  - Team podium on the results page (top 3 teams + per-team MVP)
-  - Subscribe to `/topic/interactive-session/{roomCode}/teams` in `useGameWebSocket` so team scores tick live
-
-  These cluster with **chunk 13** for the same reason as chunks 7–9 and chunk 11: chunk 13 is the holistic player-UI pass, so building the team-mode shell in isolation would establish a layout pattern the other deferred work would have to match.
-
-- **InteractiveSession settings & player additions UI (chunk 13).** Chunk 13 shipped the backend (field additions on InteractiveSession / InteractiveSessionSettings / InteractiveSessionPlayer / PlayerAnswer / PlayerPlacement, `customRoomCode` validation + collision check, `shuffleQuestions` at game start, `shuffleAnswers` gated by settings on top of the chunk-10 per-element flag, `speedBonusAwarded` split out of base points, `currentStreak`/`longestStreak`/`accuracy` updates, `autoAdvance` scheduling for TURN_BASED mode, 16-preset `AvatarService` + `GET /api/avatars` + lobby join wiring, `PresenceService` → `InteractiveSessionPlayer.disconnected`/`lastSeenAt`) and the codegen hooks, but **the player + host UI is deferred**. Specifically still TODO:
-  - InteractiveSession create form: "Advanced" section exposing all new toggles (anonymousMode, customRoomCode, shuffleQuestions, shuffleAnswers, autoAdvance, podiumDuration, lobbyCountdownSeconds, requireFullName, spectatorsAllowed)
-  - Lobby avatar picker — grid backed by `useListAvatarsQuery`
-  - Streak indicator on `PlayPage` ("3x streak 🔥")
-  - Host autoAdvance progress ring (uses the new `InteractiveSession.lobbyOpenedAt` + `settings.podiumDuration`)
-  - Per-player `accuracy` / `longestStreak` / `speedBonusTotal` chips on the placement card
-  - Custom room code displayed prominently in the lobby header (denormalized `hostName` / `hostAvatarUrl` also available)
-
-  These cluster with the same chunk-13 holistic pass as everything else below: re-open this list when starting the player-UI work.
-
-- **Audience engagement UI (chunk 11).** Chunk 11 shipped the backend (models, REST + STOMP, rate limiting, emoji allow-list, Redis aggregation, host moderation) and the codegen hooks (`useSendReactionMutation` / `useSendChatMutation` / `useListChatQuery` / `useModerateChatMutation`), but **no player or host UI**. Specifically still TODO:
-  - `ReactionBar` on the player view (six default emojis + long-press picker, sends via STOMP or REST fallback)
-  - `ReactionRain` on the host view (subscribes to `/topic/interactive-session/{roomCode}/reaction`, animates emoji bursts using CSS transforms + RAF)
-  - `ChatPanel` sidebar (host + player views, toggleable, last-50 replay on mount, host messages styled distinctively)
-  - Host moderation interaction (hover-to-hide, server flips `moderated=true`, non-hosts re-render the row as "(hidden by host)")
-  - Optimistic chat send + STOMP reconcile (apiEnhancements `onQueryStarted` for `sendChat`)
-
-  These cluster with **chunk 13** for the same reason as the per-kind player surfaces above: chunk 13 is the holistic player-UI pass, and building the reaction/chat shell in isolation would establish a layout pattern the other deferred work would have to match.
-
 - **Game history UI (chunk 15).** Chunk 15 shipped the backend (`GameHistoryEntry` model + `(userId, interactiveSessionId)` unique index, `GameHistoryService.recordFinish` writing per-player + standalone-host rows from `InteractiveSessionService.endGame`, `PlayerStats.currentStreak` reinterpreted as a never-resetting tally of games played, `Membership.monthlyInteractiveSessionCount` + `monthlyCountPeriodStart` with month-boundary rollover, three GET endpoints under `/api/users/me/history`, `/api/users/{userId}/history`, `/api/decks/{deckId}/history/mine`, plus a `GameHistoryBackfillMigration` gated on `--migrate.game-history=true`), but **no frontend yet** (codegen has not been regenerated). Specifically still TODO:
   - Profile page "History" tab with paginated list (deck cover + name, placement badge, score, host, relative played-at)
   - Stats summary cards above the list (total games, best placement, total points, average accuracy)
@@ -135,3 +114,10 @@ These items were intentionally left out of the chunk that nominally owns them be
   - Frontend codegen + RTK Query cache-sync enhancements
 
   These cluster with **chunk 13** alongside the other deferred player/host surfaces — the deck-detail "your best" widget is small enough to land standalone, but the profile history tab + summary cards share styling decisions with the chunk-13 placement card and read most naturally next to the deferred chunk 11/12/13 work.
+
+- **Achievement player-surface + missing triggers (chunk 17).** Chunk 17 shipped the catalog backend (`Achievement` + `UserAchievement` models with `(userId, achievementId)` unique index, `AchievementTrigger` enum, fire-and-forget `AchievementService.evaluate`, trigger wiring across `GameHistoryService.recordFinish` / `DeckService.createDeck` / `DeckService.publish` / `DeckFavoriteService.favorite` / `InteractiveSessionService.updateStatsAfterGame`, three GET endpoints, 18-row seed catalog) and the frontend catalog + profile tab, but two deferrals remain:
+  - **Game-results "Achievement unlocked" cards.** The spec calls for showing newly-earned achievements before the standard placement card. `AchievementService.evaluate` already returns the awarded list per-call, so the wiring on the player side is mostly UI — but it shares layout decisions with the deferred chunk-13 placement card and is cheaper to land in the same pass.
+  - **Achievement toast component.** Per-user live notification when a badge fires. Needs either chunk 18 (notification stream) to ship first or a stop-gap `SimpMessagingTemplate.convertAndSendToUser` push from `AchievementService` — re-open when chunk 18 starts.
+  - **`REACTIONS_SENT` + `WORD_CLOUD_SUBMITTED` triggers.** Both would require either a lifetime counter on `User.stats` (cheap) or a full history aggregation per game-end (expensive). Skipped for the first cut — add a counter and re-enable the enum values when there's a use case.
+
+  These cluster with **chunk 13** for the player-surface portion and **chunk 18** for the toast — the catalog browse + profile summary tab are already live and don't depend on the deferred items.

@@ -48,10 +48,33 @@ export interface RoundResultPayload {
   // Populated when the round was a Best Answer round (SUBMIT → VOTE → REVEAL).
   // Carries the de-anonymized vote tallies + winner ids + bonus awarded.
   bestAnswer?: BestAnswerOutcome | null;
+  // Chunk 24 — chrome the renderer needs without an extra session lookup.
+  // GAME → RoundResult overlay (leaderboard chrome).
+  // PRESENTATION → RoundDataView (aggregated chart, no rankings).
+  format?: "GAME" | "PRESENTATION";
 }
 
 export interface SessionEndedPayload {
   placements: PlayerPlacement[];
+}
+
+// ─── Chunk 24 — PRESENTATION end-of-session + host reveal/freeze ─────────────
+
+export interface SessionSummaryRound {
+  roundIndex: number;
+  element: DeckElement;
+  aggregatedPayloads: AnswerPayload[];
+}
+
+export interface SessionSummaryPayload {
+  roundsPlayed: number;
+  anyScoringEnabled: boolean;
+  rounds: SessionSummaryRound[];
+}
+
+export interface ResponsesRevealedPayload {
+  round: number;
+  elementId: string;
 }
 
 export interface WsErrorPayload {
@@ -166,6 +189,25 @@ interface InteractiveSessionState {
   teams: Team[];
   teamMode: boolean;
   autoBalanceTeams: boolean;
+
+  // ---- Chunk 24 — session chrome + host overlays ----
+  // `format` is frozen on the InteractiveSession at create time. Mirrored
+  // here so PlayPage / ResultsPage can switch shells without waiting for the
+  // RTK Query `getInteractiveSession` cache to repopulate.
+  format: "GAME" | "PRESENTATION";
+  // elementIds the host has explicitly revealed (ON_CLICK reveal-now). The
+  // backend ResponsesRevealedMessage tracks one-shot per element per session;
+  // we keep a Set so the player + host UIs can flip from "waiting" to "shown"
+  // without an extra fetch.
+  revealedElementIds: string[];
+  // elementId → "FROZEN" overlay. Host-only state: when the host clicks
+  // Freeze, we mark the element here so the toggle reflects current state.
+  // Player rejections come back as WsErrors from submitAnswer, so they don't
+  // need to consult this map.
+  frozenElementIds: string[];
+  // PRESENTATION end-of-session aggregated payload. Populated from
+  // SessionSummaryMessage on /summary; null until the host ends the session.
+  sessionSummary: SessionSummaryPayload | null;
 }
 
 const initialState: InteractiveSessionState = {
@@ -194,6 +236,10 @@ const initialState: InteractiveSessionState = {
   teams: [],
   teamMode: false,
   autoBalanceTeams: false,
+  format: "GAME",
+  revealedElementIds: [],
+  frozenElementIds: [],
+  sessionSummary: null,
 };
 
 export const interactiveSessionSlice = createSlice({
@@ -208,9 +254,22 @@ export const interactiveSessionSlice = createSlice({
       state.totalRounds = s.settings?.totalRounds ?? 0;
       state.round = s.currentRound ?? 0;
       state.teams = s.teams ?? [];
-      state.teamMode = s.teamMode ?? s.settings?.teamMode ?? false;
-      state.autoBalanceTeams =
-        s.autoBalanceTeams ?? s.settings?.autoBalanceTeams ?? false;
+      state.teamMode = s.settings?.teamMode ?? false;
+      state.autoBalanceTeams = s.settings?.autoBalanceTeams ?? false;
+      // Chunk 24 — format is frozen on the session at create time. Default
+      // GAME so legacy sessions that pre-date the column still render the
+      // existing chrome instead of falling through to a blank PRESENTATION.
+      state.format = s.format ?? "GAME";
+      // Chunk 24 — host overlays are persisted on the session document so a
+      // host reconnect/refresh rebuilds reveal + freeze state from the DTO
+      // instead of waiting for the next broadcast. STOMP messages still keep
+      // the slice in sync once we're live; this just gives us a correct
+      // starting point.
+      state.revealedElementIds = s.revealedElementIds ?? [];
+      const overrides = s.elementResponseModeOverrides ?? {};
+      state.frozenElementIds = Object.entries(overrides)
+        .filter(([, mode]) => mode === "NOT_ACCEPTING_RESPONSES")
+        .map(([elementId]) => elementId);
     },
 
     roundStarted(state, action: PayloadAction<RoundStartPayload>) {
@@ -304,6 +363,49 @@ export const interactiveSessionSlice = createSlice({
       state.status = "FINISHED";
       state.finalPlacements = action.payload.placements;
       state.currentElement = null;
+    },
+
+    /**
+     * PRESENTATION end-of-session payload. Mutually exclusive with
+     * sessionEnded on the wire: a GAME session emits placements,
+     * PRESENTATION emits aggregated rounds. Clients subscribe to both topics
+     * and only one fires per session.
+     */
+    sessionSummaryReceived(
+      state,
+      action: PayloadAction<SessionSummaryPayload>,
+    ) {
+      state.status = "FINISHED";
+      state.sessionSummary = action.payload;
+      state.currentElement = null;
+    },
+
+    /**
+     * Host clicked Reveal on an ON_CLICK round. Track the elementId so the
+     * player + host UIs can flip from "waiting for host" to "showing
+     * responses." Server is idempotent — duplicates are no-ops here too.
+     */
+    responsesRevealed(state, action: PayloadAction<ResponsesRevealedPayload>) {
+      const { elementId } = action.payload;
+      if (!state.revealedElementIds.includes(elementId)) {
+        state.revealedElementIds.push(elementId);
+      }
+    },
+
+    /**
+     * Host-local mirror of freeze state. The server stores the override map
+     * on the session but doesn't expose it via the DTO, so the host tracks
+     * the toggle here. Player-side, attempting to submit while frozen comes
+     * back as a WsError from /answer rather than being read off this map.
+     */
+    freezeStateChanged(
+      state,
+      action: PayloadAction<{ elementId: string; frozen: boolean }>,
+    ) {
+      const { elementId, frozen } = action.payload;
+      const idx = state.frozenElementIds.indexOf(elementId);
+      if (frozen && idx < 0) state.frozenElementIds.push(elementId);
+      if (!frozen && idx >= 0) state.frozenElementIds.splice(idx, 1);
     },
 
     wsErrorReceived(state, action: PayloadAction<WsErrorPayload>) {
@@ -427,6 +529,9 @@ export const {
   reactionReceived,
   reactionConsumed,
   teamUpdateReceived,
+  sessionSummaryReceived,
+  responsesRevealed,
+  freezeStateChanged,
 } = interactiveSessionSlice.actions;
 
 export default interactiveSessionSlice.reducer;

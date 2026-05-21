@@ -1,13 +1,12 @@
-/* Shared styles for the SlideContentTypes editors. Each kind-specific editor
-   slots fields, inputs, and helper rows in here so layout stays consistent
-   across the deck editor's slide canvas. Form primitives themselves come from
-   Common/Input — these classes handle the editor shell (header / body /
-   footer), row layout, warnings, and image placeholders. */
+/* Styles for `SlideContentWrapper`, the layout shell shared by every
+   kind-specific slide editor. Slide editors in their own folders own all
+   their own visuals via `_shared/` primitives; this file only carries the
+   header / body / footer rhythm of the outer shell. */
 
 .editorShell {
   display: flex;
   flex-direction: column;
-  padding: var(--space-3) var(--space-4) var(--space-1);
+  padding: var(--space-3) var(--space-4) var(--space-2);
   gap: var(--space-3);
   width: 100%;
   height: 100%;
@@ -20,7 +19,7 @@
   flex-direction: column;
   gap: var(--space-1);
   padding-bottom: var(--space-2);
-  border-bottom: var(--border-size-sm) solid var(--border-subtle);
+  border-bottom: var(--border-size-sm) solid var(--edge-surface);
 }
 
 .editorTitle {
@@ -40,7 +39,7 @@
 .editorBody {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-3);
   padding-right: var(--space-1);
   width: 100%;
   height: 100%;
@@ -57,160 +56,4 @@
   gap: var(--space-2);
   align-items: center;
   justify-content: center;
-}
-
-.fieldRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-.warning {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-2);
-  margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border-left: var(--border-size-md) solid
-    var(--text-warning, oklch(72% 0.16 70deg));
-  background-color: var(--bg-subtle);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  border-radius: var(--radius-sm);
-}
-
-.warningIcon {
-  display: inline-flex;
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  color: var(--text-warning, oklch(72% 0.16 70deg));
-}
-
-.warningIcon svg {
-  width: 100%;
-  height: 100%;
-}
-
-.placeholder {
-  margin-top: var(--space-2);
-  padding: var(--space-3);
-  border: var(--border-size-sm) dashed var(--border-default);
-  border-radius: var(--radius-md);
-  background-color: var(--bg-subtle);
-  color: var(--text-muted);
-  font-size: var(--font-size-sm);
-  text-align: center;
-}
-
-.imagePlaceholder {
-  display: block;
-  width: 240px;
-  max-width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: var(--radius-md);
-  border: var(--border-size-sm) solid var(--border-default);
-}
-
-.optionImagePlaceholder {
-  display: block;
-  width: 80px;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  border-radius: var(--radius-sm);
-  border: var(--border-size-sm) solid var(--border-default);
-}
-
-.itemList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.itemRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background-color: var(--bg-surface);
-  border: var(--border-size-sm) solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.itemRowIndex {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-muted);
-  min-width: 1.5rem;
-  text-align: right;
-}
-
-/* Wrapper for an Input rendered inside .itemRow so the field stretches to
-   fill available width — Input itself has a fixed 300px default that we
-   override with `fullWidth`, but flex needs the wrapper to claim the row. */
-.itemRowField {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Stack of fields next to a thumbnail (used by ImageChoice option rows). */
-.optionFieldsCol {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.sectionLabel {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.imageEditorRow {
-  display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-  align-items: flex-start;
-}
-
-.imageEditorPreview {
-  flex: 0 0 auto;
-}
-
-.imageEditorFields {
-  flex: 1;
-  min-width: 220px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-/* Inline "URL field + Pick-from-gallery button" cluster. The input grows;
-   the button stays fixed-width on the right. */
-.urlPickerRow {
-  display: flex;
-  gap: var(--space-2);
-  align-items: end;
-}
-
-.urlPickerInput {
-  flex: 1;
-  min-width: 0;
 }

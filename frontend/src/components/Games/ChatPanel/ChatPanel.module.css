@@ -13,25 +13,14 @@
   }
 
   .toggleBtn {
-    appearance: none;
-    display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: var(--gap-sm);
     width: 100%;
-    border: none;
     border-bottom: var(--border-size-sm) solid var(--border-subtle);
     background: var(--bg-surface-raised);
-    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-size: var(--font-size-xs);
     padding: var(--p-sm);
-    cursor: pointer;
-
-    &:hover {
-      color: var(--action-hover);
-    }
+    border-radius: 0;
   }
 
   &.closed .toggleBtn {
@@ -122,25 +111,13 @@
       position: absolute;
       top: var(--space-1);
       right: var(--space-1);
-      appearance: none;
-      border: var(--border-size-sm) solid transparent;
-      background: transparent;
-      color: var(--text-secondary);
-      font-size: var(--font-size-xs);
-      padding: 0 var(--space-1);
-      border-radius: var(--radius-sm);
-      cursor: pointer;
       opacity: 0;
-      transition:
-        opacity var(--duration-fast) var(--ease-out),
-        border-color var(--duration-fast) var(--ease-out);
+      transition: opacity var(--duration-fast) var(--ease-out);
     }
 
     &:hover .hideBtn,
     .hideBtn:focus-visible {
       opacity: 1;
-      border-color: var(--border-error);
-      color: var(--text-error);
     }
   }
 

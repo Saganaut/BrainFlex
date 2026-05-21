@@ -4,15 +4,16 @@ import styles from "./Layout.module.css";
 
 interface CanvasHeaderProps {
   children: ReactNode;
+  className?: string;
 }
 
-const CanvasHeader = ({ children }: CanvasHeaderProps) => {
+const CanvasHeader = ({ children, className }: CanvasHeaderProps) => {
   const { isFullScreen } = useFullScreen();
   return (
-    <div
-      className={`${styles.canvasHeader} ${isFullScreen ? styles.isCollapsed : " "} `}>
+    <header
+      className={`${styles.canvasHeader} ${isFullScreen ? styles.isCollapsed : " "} ${className}`}>
       {children}
-    </div>
+    </header>
   );
 };
 

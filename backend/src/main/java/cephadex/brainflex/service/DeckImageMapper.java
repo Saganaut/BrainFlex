@@ -7,6 +7,11 @@
  * `map(Deck, UnaryOperator<Image>)` returns a structurally-equal Deck with
  * every Image replaced by `op.apply(image)`. Null images are skipped (the op
  * is never called with null). `forEach` is the read-only equivalent.
+ *
+ * Chunk 25 — the chrome's {@code background} / {@code image} slots are
+ * rebuilt through {@link ElementChrome#withImages(Image, Image)}, so each
+ * switch arm only deals with the kind-specific image slots (option images,
+ * grid backing image, etc.).
  */
 package cephadex.brainflex.service;
 
@@ -19,6 +24,7 @@ import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.DrawingQuestion;
+import cephadex.brainflex.model.element.ElementChrome;
 import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
 import cephadex.brainflex.model.element.Image;
@@ -63,165 +69,78 @@ public final class DeckImageMapper {
      *  RankingItem.image, GridCellsConfig.backingImage, PlaceOnImage.targetImage,
      *  plus shared chrome image + background) with `op.apply(image)`. */
     public static DeckElement mapElement(DeckElement element, UnaryOperator<Image> op) {
+        ElementChrome chrome = element.chrome().withImages(
+                applyNullable(element.chrome().background(), op),
+                applyNullable(element.chrome().image(), op));
         return switch (element) {
             case Slide s -> new Slide(
-                    s.id(), s.slideKind(), s.publicKey(), s.privateKey(),
-                    s.title(), s.styledTitle(), s.body(), mapBlocks(s.blocks(), op),
-                    s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
-                    s.displaySeconds(), s.speakerNotes(),
-                    applyNullable(s.background(), op), applyNullable(s.image(), op),
-                    s.videoUrl(), s.audioUrl(), s.videoAssetId(), s.audioAssetId(), s.mediaPosition(),
+                    s.id(), s.slideKind(), s.body(), mapBlocks(s.blocks(), op),
                     s.resultsDisplayType(), s.multipleSelectionsEnabled(),
                     s.selectionsPerParticipant(), s.showResultsAsPercentage(),
                     s.joinType(), s.showJoinInformation(), s.showQrCode(), s.showResponses(),
                     s.heading(), s.participantInformation(),
                     s.autoAdvanceSeconds(),
-                    s.createdByUserId(), s.lastEditedByUserId(), s.createdAt(), s.updatedAt(),
-                    s.tagIds(), s.mediaCaption(), s.altText(), s.reactionsEnabled(), s.version());
+                    chrome);
             case McqQuestion q -> new McqQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), mapOptions(q.options(), op), q.correctOptionIds(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
+                    q.id(), q.prompt(), mapOptions(q.options(), op), q.correctOptionIds(),
+                    q.pointValue(), q.difficulty(), q.explanation(),
                     q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    chrome);
             case TextQuestion q -> new TextQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.correctAnswer(), q.acceptedVariants(), q.caseSensitive(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
+                    q.id(), q.prompt(), q.correctAnswer(), q.acceptedVariants(), q.caseSensitive(),
+                    q.pointValue(), q.difficulty(), q.explanation(),
                     q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    chrome);
             case NumberQuestion q -> new NumberQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.correctValue(), q.tolerance(), q.unitLabel(), q.decimalPlaces(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
+                    q.id(), q.prompt(), q.correctValue(), q.tolerance(), q.unitLabel(), q.decimalPlaces(),
+                    q.pointValue(), q.difficulty(), q.explanation(),
                     q.minValue(), q.maxValue(), q.allowNegative(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    chrome);
             case RankingQuestion q -> new RankingQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), mapItems(q.items(), op), q.correctOrder(), q.scoring(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
+                    q.id(), q.prompt(), mapItems(q.items(), op), q.correctOrder(), q.scoring(),
+                    q.pointValue(), q.difficulty(), q.explanation(),
                     q.shuffleItemsForPresentation(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    chrome);
             case ScalesQuestion q -> new ScalesQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.statements(), q.scaleMin(), q.scaleMax(),
-                    q.minLabel(), q.maxLabel(), q.correctRatings(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.id(), q.prompt(), q.statements(),
+                    q.scaleMin(), q.scaleMax(), q.minLabel(), q.maxLabel(), q.correctRatings(),
+                    q.pointValue(), q.difficulty(), q.explanation(),
+                    chrome);
             case QAndAQuestion q -> new QAndAQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.maxSubmissionsPerPlayer(), q.allowVoting(), q.autoApprove(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
+                    q.id(), q.prompt(), q.maxSubmissionsPerPlayer(), q.allowVoting(), q.autoApprove(),
+                    q.pointValue(), q.difficulty(), q.explanation(),
                     q.anonymousSubmissions(), q.minVotesToShow(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    chrome);
             case GridQuestion q -> new GridQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.rows(), q.cols(), mapCells(q.cells(), op),
+                    q.id(), q.prompt(), q.rows(), q.cols(), mapCells(q.cells(), op),
                     q.correctCellIndexes(), q.multipleCorrect(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.pointValue(), q.difficulty(), q.explanation(),
+                    chrome);
             case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), applyNullable(q.targetImage(), op),
+                    q.id(), q.prompt(), applyNullable(q.targetImage(), op),
                     q.correctX(), q.correctY(), q.tolerance(), q.scoring(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.pointValue(), q.difficulty(), q.explanation(),
+                    chrome);
             case WordCloudQuestion q -> new WordCloudQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), q.maxSubmissionsPerPlayer(), q.maxWordLength(),
+                    q.id(), q.prompt(), q.maxSubmissionsPerPlayer(), q.maxWordLength(),
                     q.caseSensitive(), q.profanityFilter(), q.bannedWords(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.pointValue(), q.difficulty(), q.explanation(),
+                    chrome);
             case AllocationQuestion q -> new AllocationQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), mapOptions(q.options(), op),
+                    q.id(), q.prompt(), mapOptions(q.options(), op),
                     q.totalPointsToDistribute(), q.allowZeroOnItem(), q.enforceExactTotal(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.pointValue(), q.difficulty(), q.explanation(),
+                    chrome);
             case MatchingQuestion q -> new MatchingQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), mapPairs(q.pairs(), op), q.scoring(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.id(), q.prompt(), mapPairs(q.pairs(), op), q.scoring(),
+                    q.pointValue(), q.difficulty(), q.explanation(),
+                    chrome);
             case DrawingQuestion q -> new DrawingQuestion(
-                    q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                    q.prompt(), applyNullable(q.backingImage(), op),
+                    q.id(), q.prompt(), applyNullable(q.backingImage(), op),
                     q.canvasWidth(), q.canvasHeight(),
                     q.maxStrokesPerPlayer(), q.maxPointsPerStroke(), q.palette(),
-                    q.pointValue(), q.difficulty(),
-                    q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                    q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(), q.explanation(),
-                    q.displaySeconds(), q.speakerNotes(),
-                    applyNullable(q.background(), op), applyNullable(q.image(), op),
-                    q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
-                    q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                    q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                    q.pointValue(), q.difficulty(), q.explanation(),
+                    chrome);
         };
     }
 

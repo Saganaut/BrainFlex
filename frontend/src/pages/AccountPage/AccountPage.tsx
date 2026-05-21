@@ -20,8 +20,13 @@ import { Checkbox } from "@/components/Common/Input/Checkbox/Checkbox";
 import { Tabs } from "@/components/Common/Tabs/Tabs";
 import { FileUpload } from "@/components/Common/Input/FileUpload/FileUpload";
 import { Avatar } from "@/components/Common/Avatar/Avatar";
+import { AvatarSelector } from "@/components/Common/Input/AvatarSelector/AvatarSelector";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { validateImageFile } from "@/utils/imageValidation";
+import {
+  builtinAvatarUrl,
+  builtinAvatarValue,
+} from "@/utils/avatarUrl";
 import { extractErrorMessage } from "@/utils/utils";
 
 type Tab =
@@ -113,6 +118,26 @@ const AccountPage = () => {
     }
   };
 
+  // Built-in avatar pick. Stored as `builtin:<value>` in pictureUrl; the
+  // backend clears pictureVariants on its end so the selection actually wins
+  // the hydrator's variants>pictureUrl precedence.
+  const handleAvatarPick = async (avatarValue: string) => {
+    setPictureError(null);
+    setPictureSuccess(false);
+    try {
+      await updateProfile({
+        updateProfileRequest: { pictureUrl: builtinAvatarUrl(avatarValue) },
+      }).unwrap();
+      setPictureSuccess(true);
+      await refetch();
+    } catch (err: unknown) {
+      setPictureError(extractErrorMessage(err, "Could not update avatar."));
+    }
+  };
+
+  const selectedBuiltinAvatar =
+    builtinAvatarValue(registeredUser.pictureUrl) ?? "";
+
   const handleNewsletterChange = async (checked: boolean) => {
     setPendingNewsletter(checked);
     setNewsletterSuccess(false);
@@ -121,6 +146,7 @@ const AccountPage = () => {
         updateProfileRequest: { newsletter: checked },
       }).unwrap();
       setNewsletterSuccess(true);
+      await refetch();
       setPendingNewsletter(null);
     } catch {
       setPendingNewsletter(null);
@@ -169,6 +195,14 @@ const AccountPage = () => {
               : "JPEG, PNG, WebP or GIF · max 1 MB · resized to 500×500"
           }
           errorMessage={pictureError ?? undefined}
+        />
+        <AvatarSelector
+          name='profile-avatar'
+          legend='Or pick a built-in avatar'
+          value={selectedBuiltinAvatar}
+          onChange={(v) => {
+            void handleAvatarPick(v);
+          }}
         />
         {pictureSuccess && (
           <p className={styles.success}>Profile picture updated.</p>

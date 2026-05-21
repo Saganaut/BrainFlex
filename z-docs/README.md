@@ -24,3 +24,4 @@ Reachability is enforced by `tools/doc-lint.js`: every `.md` file under the repo
 ## Single-file references
 
 - [Glossary](glossary.md) — Domain terms (deck, element, interactive session, organization, theme, slide, MCQ, …).
+- [Found Issues](found-issues.md) — Frontend code-quality audit (2026-05-21): coupling, missing abstractions, design-rule violations.

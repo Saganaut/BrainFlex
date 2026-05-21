@@ -31,6 +31,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.server.ResponseStatusException;
@@ -130,5 +132,56 @@ class DeckAnalyticsControllerTest {
 
         mockMvc.perform(get("/api/decks/missing/analytics"))
                 .andExpect(status().isNotFound());
+    }
+
+    // ── CSV export ──────────────────────────────────────────────────────
+
+    @Test
+    void getDeckAnalyticsCsv_OwnerOrEditor_ReturnsCsvAttachment() throws Exception {
+        Deck deck = new Deck();
+        deck.setId("deck-1");
+        deck.setName("Geography 101");
+        when(authorizationService.requireDeckEditable(eq("deck-1"), eq(caller))).thenReturn(deck);
+
+        DeckAnalytics analytics = new DeckAnalytics();
+        analytics.setDeckId("deck-1");
+        analytics.setTotalPlays(2);
+        analytics.setTotalPlayers(8);
+        analytics.setAverageScore(72.0);
+        when(deckAnalyticsService.findByDeckId("deck-1")).thenReturn(analytics);
+
+        mockMvc.perform(get("/api/decks/deck-1/analytics/csv"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "text/csv;charset=UTF-8"))
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"geography-101-analytics.csv\""))
+                .andExpect(content().string(org.hamcrest.Matchers.startsWith("Deck Analytics\n")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "deck-1,Geography 101,2,8,")));
+    }
+
+    @Test
+    void getDeckAnalyticsCsv_NeverPlayed_ReturnsHeaderOnlyCsv() throws Exception {
+        Deck deck = new Deck();
+        deck.setId("deck-7");
+        deck.setName("Fresh Deck");
+        when(authorizationService.requireDeckEditable(eq("deck-7"), eq(caller))).thenReturn(deck);
+        when(deckAnalyticsService.findByDeckId("deck-7")).thenReturn(null);
+
+        mockMvc.perform(get("/api/decks/deck-7/analytics/csv"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "deck-7,Fresh Deck,0,0,")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "\nPer-Element Stats\n")));
+    }
+
+    @Test
+    void getDeckAnalyticsCsv_NotEditable_Returns403() throws Exception {
+        when(authorizationService.requireDeckEditable(eq("deck-2"), eq(caller)))
+                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "no access"));
+
+        mockMvc.perform(get("/api/decks/deck-2/analytics/csv"))
+                .andExpect(status().isForbidden());
     }
 }

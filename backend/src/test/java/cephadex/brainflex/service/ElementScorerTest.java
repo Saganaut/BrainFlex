@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.DrawingAnswer;
 import cephadex.brainflex.model.answer.MatchingAnswer;
@@ -39,56 +40,35 @@ import cephadex.brainflex.model.enums.ResponseMode;
 
 class ElementScorerTest {
 
-    // Metadata block (chunk 10b) — every test record gets the same v1 / reactions-on tail.
-    private static final String META_USER = null;
-    private static final java.time.LocalDateTime META_TIME = null;
-    private static final List<String> META_TAGS = List.of();
-    private static final String META_CAPTION = null;
-    private static final String META_ALT = null;
-    private static final boolean META_REACTIONS = true;
-    private static final Integer META_VERSION = 1;
-
     private static WordCloudQuestion wordCloud() {
         return new WordCloudQuestion(
-                "wc-1", "pub", "priv", "Title", null,
+                "wc-1",
                 "Describe Monday in a word", 3, 30, false, true, List.of(),
-                0, Difficulty.MEDIUM,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                0, Difficulty.MEDIUM, null,
+                TestElementChromes.survey("wc-1", "Describe Monday in a word"));
     }
 
     private static AllocationQuestion allocation() {
         return new AllocationQuestion(
-                "alloc-1", "pub", "priv", "Title", null,
+                "alloc-1",
                 "Distribute 100 points across these features", List.of(),
                 100, true, true,
-                0, Difficulty.MEDIUM,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                0, Difficulty.MEDIUM, null,
+                TestElementChromes.survey("alloc-1", "Distribute 100 points across these features"));
     }
 
     private static DrawingQuestion drawing() {
         return new DrawingQuestion(
-                "draw-1", "pub", "priv", "Title", null,
+                "draw-1",
                 "Sketch the org chart", null,
                 1920, 1080, 200, 500, List.of(),
-                0, Difficulty.MEDIUM,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                0, Difficulty.MEDIUM, null,
+                TestElementChromes.survey("draw-1", "Sketch the org chart"));
     }
 
     private static MatchingQuestion matching(MatchingScoring scoring) {
         return new MatchingQuestion(
-                "m-1", "pub", "priv", "Title", null,
+                "m-1",
                 "Match the rivers to their continents",
                 List.of(
                         new MatchingPair("p1", "Nile", "Africa", null, null),
@@ -96,12 +76,8 @@ class ElementScorerTest {
                         new MatchingPair("p3", "Yangtze", "Asia", null, null),
                         new MatchingPair("p4", "Danube", "Europe", null, null)),
                 scoring,
-                100, Difficulty.MEDIUM,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                100, Difficulty.MEDIUM, null,
+                TestElementChromes.scored("m-1", "Match the rivers to their continents"));
     }
 
     @Test
@@ -173,15 +149,11 @@ class ElementScorerTest {
         var b = new McqOption("b", "B", null, null);
         var c = new McqOption("c", "C", null, null);
         return new McqQuestion(
-                "mcq-1", "pub", "priv", "Title", null,
+                "mcq-1",
                 "Pick", List.of(a, b, c), List.of(a.id(), b.id()),
-                100, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 true, allowMultiple, maxSelections,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                TestElementChromes.scored("mcq-1", "Pick"));
     }
 
     @Test
@@ -218,15 +190,11 @@ class ElementScorerTest {
 
     private static NumberQuestion number(Double min, Double max) {
         return new NumberQuestion(
-                "num-1", "pub", "priv", "Title", null,
+                "num-1",
                 "Guess", 10.0, 0.0, "", 0,
-                100, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 min, max, true,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                TestElementChromes.scored("num-1", "Guess"));
     }
 
     @Test
@@ -252,15 +220,11 @@ class ElementScorerTest {
 
     private static TextQuestion text(boolean fuzzy, int distance) {
         return new TextQuestion(
-                "text-1", "pub", "priv", "Title", null,
+                "text-1",
                 "Spell it", "Mississippi", List.of(), false,
-                100, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                20, null, null, null, null, null, null, null, MediaPosition.NONE,
+                100, Difficulty.EASY, null,
                 80, true, fuzzy, distance,
-                META_USER, META_USER, META_TIME, META_TIME, META_TAGS,
-                META_CAPTION, META_ALT, META_REACTIONS, META_VERSION);
+                TestElementChromes.scored("text-1", "Spell it"));
     }
 
     @Test

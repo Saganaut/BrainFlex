@@ -45,23 +45,16 @@
 }
 
 .chipRemove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  border: 0;
+  --height: 1.25rem;
+  --width: 1.25rem;
+  --padding: 0;
+
   border-radius: var(--radius-full);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  font-size: var(--font-size-md);
-  line-height: 1;
 }
 
-.chipRemove:hover {
-  color: var(--text-primary);
-  background: var(--bg-subtle);
+.chipRemove svg {
+  --max-height: 0.9rem;
+  --max-width: 0.9rem;
 }
 
 .waiting {

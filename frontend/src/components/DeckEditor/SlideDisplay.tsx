@@ -10,19 +10,20 @@ import styles from "./SlideDisplay.module.css";
 import { Loader } from "../Common/Loader/Loader";
 import { CephadexLogo } from "../Graphic/CephadexLogo";
 import { SlideTypeGraphicSvg } from "../Common/Slides/SlideTypeGraphics/SlideTypeGraphic";
-import { SlideContent } from "./SlideContentTypes/SlideContent";
+import { largestUrl } from "@/utils/image";
+import { SlideContent } from "./SlideContentTypes/SlideContent/SlideContent";
 import { McqSlideContent } from "./SlideContentTypes/McqSlideContent/McqSlideContent";
-import { TextSlideContent } from "./SlideContentTypes/TextSlideContent";
-import { NumberSlideContent } from "./SlideContentTypes/NumberSlideContent";
-import { RankingSlideContent } from "./SlideContentTypes/RankingSlideContent";
-import { ScalesSlideContent } from "./SlideContentTypes/ScalesSlideContent";
-import { QAndASlideContent } from "./SlideContentTypes/QAndASlideContent";
-import { GridSlideContent } from "./SlideContentTypes/GridSlideContent";
-import { PlaceOnImageSlideContent } from "./SlideContentTypes/PlaceOnImageSlideContent";
-import { WordCloudSlideContent } from "./SlideContentTypes/WordCloudSlideContent";
-import { AllocationSlideContent } from "./SlideContentTypes/AllocationSlideContent";
-import { MatchingSlideContent } from "./SlideContentTypes/MatchingSlideContent";
-import { DrawingSlideContent } from "./SlideContentTypes/DrawingSlideContent";
+import { TextSlideContent } from "./SlideContentTypes/TextSlideContent/TextSlideContent";
+import { NumberSlideContent } from "./SlideContentTypes/NumberSlideContent/NumberSlideContent";
+import { RankingSlideContent } from "./SlideContentTypes/RankingSlideContent/RankingSlideContent";
+import { ScalesSlideContent } from "./SlideContentTypes/ScalesSlideContent/ScalesSlideContent";
+import { QAndASlideContent } from "./SlideContentTypes/QAndASlideContent/QAndASlideContent";
+import { GridSlideContent } from "./SlideContentTypes/GridSlideContent/GridSlideContent";
+import { PlaceOnImageSlideContent } from "./SlideContentTypes/PlaceOnImageSlideContent/PlaceOnImageSlideContent";
+import { WordCloudSlideContent } from "./SlideContentTypes/WordCloudSlideContent/WordCloudSlideContent";
+import { AllocationSlideContent } from "./SlideContentTypes/AllocationSlideContent/AllocationSlideContent";
+import { MatchingSlideContent } from "./SlideContentTypes/MatchingSlideContent/MatchingSlideContent";
+import { DrawingSlideContent } from "./SlideContentTypes/DrawingSlideContent/DrawingSlideContent";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -78,15 +79,16 @@ const SlideDisplay = () => {
         return <div>No slide selected</div>;
     }
   };
-  console.log("image", element?.image);
+  const backgroundUrl = element
+    ? largestUrl(element.chrome?.background, `${element.id ?? ""}-background`)
+    : null;
 
-  const imgUrl = null;
   return (
     <div
       className={styles.slideDisplay}
       style={
         {
-          "--background-image": `url("${imgUrl}")`,
+          "--background-image": backgroundUrl ? `url("${backgroundUrl}")` : "none",
         } as React.CSSProperties
       }>
       <div className={styles.slideHeader}>

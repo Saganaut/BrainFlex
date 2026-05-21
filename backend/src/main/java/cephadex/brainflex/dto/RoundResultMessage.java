@@ -15,9 +15,15 @@ import java.util.List;
 
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.enums.SessionFormat;
 
 public record RoundResultMessage(
         int round,
+        // Chunk 24 — carries the session's chrome flavor on every round-end
+        // broadcast so the client can mount the right shell (GAME →
+        // RoundResult / leaderboard; PRESENTATION → RoundDataView) without
+        // an extra session lookup. Frozen for the duration of the session.
+        SessionFormat format,
         DeckElement element,                // un-redacted; carries answer key
         List<PlayerRoundResult> playerResults,
         BestAnswerOutcome bestAnswer) {

@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { emptySplitApi } from "./emptyApi";
 import interactiveSessionReducer from "./interactiveSessionSlice";
+import { authPromptReducer } from "./authPromptSlice";
 // Side-effect import: layers cache-sync onQueryStarted handlers onto the
 // auto-generated BrainFlex mutations so mutation responses update getDeck.
 import "./apiEnhancements";
@@ -9,6 +10,7 @@ export const store = configureStore({
   reducer: {
     [emptySplitApi.reducerPath]: emptySplitApi.reducer,
     interactiveSession: interactiveSessionReducer,
+    authPrompt: authPromptReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(emptySplitApi.middleware),

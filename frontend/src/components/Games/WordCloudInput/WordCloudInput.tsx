@@ -12,7 +12,9 @@
  * rendered by the parent renderer (the input view stays compact next to it).
  */
 import { useState } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { Input } from "@/components/Common/Input/Input/Input";
 import type {
   WordCloudAnswer,
@@ -110,15 +112,17 @@ const WordCloudInput = ({
             <li key={`${w}-${String(idx)}`} className={styles.chip}>
               <span>{w}</span>
               {!locked && (
-                <button
-                  type='button'
+                <IconBtn
+                  variant='secondary'
+                  fill='ghost'
+                  size='xs'
                   className={styles.chipRemove}
+                  icon={<XMarkIcon />}
                   aria-label={`Remove ${w}`}
                   onClick={() => {
                     removeWord(idx);
-                  }}>
-                  ×
-                </button>
+                  }}
+                />
               )}
             </li>
           ))}

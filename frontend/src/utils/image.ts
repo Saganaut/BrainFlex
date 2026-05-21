@@ -2,12 +2,12 @@
  * Helpers around the wire `Image` shape.
  *
  * The backend models every image-bearing field with the same record:
- *   { useExternalImg, internalImgId, variants: ImageVariant[] }
+ *   { useExternalImg, internalImgId, externalUrl, variants: { XS, SM, MD, LG, XL } }
  * — see `model/element/Image.java`. `useExternalImg` decides the source of
- * truth: external (author pasted a URL) holds a single variant carrying that
- * URL with `size=null`; internal (gallery-backed) holds the gallery id in
- * `internalImgId` and the backend rehydrates the variants list (one entry
- * per `ImageSize` tier: xs/sm/md/lg/xl) from S3 on every read.
+ * truth: external (author pasted a URL) holds that URL in `externalUrl` and
+ * leaves `variants` empty; internal (gallery-backed) holds the gallery id in
+ * `internalImgId` and the backend rehydrates the variants map (one entry per
+ * `ImageSize` tier: XS/SM/MD/LG/XL) from S3 on every read.
  *
  * The constructors below produce the standard "blank / external / internal"
  * shapes so callers don't reach into the object literal. `resolveImageUrl`
@@ -30,68 +30,69 @@ const SIZE_ORDER: ImageSize[] = ["XS", "SM", "MD", "LG", "XL"];
 export const externalImage = (url: string): Image => ({
   useExternalImg: true,
   internalImgId: "",
-  variants: [{ url, width: 0, height: 0 }],
+  externalUrl: url,
+  variants: {},
 });
 
 export const internalImage = (galleryImageId: string): Image => ({
   useExternalImg: false,
   internalImgId: galleryImageId,
-  variants: [],
+  variants: {},
 });
 
 export const emptyImage = (): Image => ({
   useExternalImg: true,
   internalImgId: "",
-  variants: [],
+  variants: {},
 });
 
 const hasRenderableUrl = (v: ImageVariant | undefined): v is ImageVariant =>
   !!v && typeof v.url === "string" && v.url.trim() !== "";
 
 export const isImageEmpty = (img: Image | null | undefined): boolean => {
-  if (!img?.variants) return true;
-  return !img.variants.some(hasRenderableUrl);
+  if (!img) return true;
+  if (img.useExternalImg) {
+    return !img.externalUrl || img.externalUrl.trim() === "";
+  }
+  if (!img.variants) return true;
+  return !Object.values(img.variants).some(hasRenderableUrl);
 };
 
-/** Largest variant we have a URL for, or `undefined` if the image is empty. */
+/** Largest variant we have a URL for, or `undefined` if the image is empty.
+ *  External images don't carry tiered variants — callers should check
+ *  `useExternalImg`/`externalUrl` directly when they need the raw URL. */
 export const largestVariant = (
   img: Image | null | undefined,
 ): ImageVariant | undefined => {
-  if (!img?.variants?.length) return undefined;
+  const variants = img?.variants;
+  if (!variants) return undefined;
   for (let i = SIZE_ORDER.length - 1; i >= 0; i--) {
-    const hit = img.variants.find(
-      (v) => v.size === SIZE_ORDER[i] && hasRenderableUrl(v),
-    );
-    if (hit) return hit;
+    const hit = variants[SIZE_ORDER[i]];
+    if (hasRenderableUrl(hit)) return hit;
   }
-  // External images carry a single variant with `size` undefined — return it.
-  return img.variants.find(hasRenderableUrl);
+  return undefined;
 };
 
 /** Pick the variant for the requested size, or the next-largest available
- *  (and finally any renderable variant for external images that only have
- *  one entry with size=undefined). */
+ *  (then smaller sizes as last resort). Returns undefined for external
+ *  images and for empty internal images. */
 export const variantFor = (
   img: Image | null | undefined,
   preferred: ImageSize,
 ): ImageVariant | undefined => {
-  if (!img?.variants?.length) return undefined;
+  const variants = img?.variants;
+  if (!variants) return undefined;
   const startIdx = SIZE_ORDER.indexOf(preferred);
   if (startIdx < 0) return largestVariant(img);
-  // Try requested size, then larger sizes, then smaller sizes.
   for (let i = startIdx; i < SIZE_ORDER.length; i++) {
-    const hit = img.variants.find(
-      (v) => v.size === SIZE_ORDER[i] && hasRenderableUrl(v),
-    );
-    if (hit) return hit;
+    const hit = variants[SIZE_ORDER[i]];
+    if (hasRenderableUrl(hit)) return hit;
   }
   for (let i = startIdx - 1; i >= 0; i--) {
-    const hit = img.variants.find(
-      (v) => v.size === SIZE_ORDER[i] && hasRenderableUrl(v),
-    );
-    if (hit) return hit;
+    const hit = variants[SIZE_ORDER[i]];
+    if (hasRenderableUrl(hit)) return hit;
   }
-  return img.variants.find(hasRenderableUrl);
+  return undefined;
 };
 
 /** Seeded Lorem Picsum placeholder used when an image slot is empty. */
@@ -114,6 +115,10 @@ export const resolveImageUrl = (
   h?: number,
   includePlaceholder = false,
 ): string | null => {
+  if (img?.useExternalImg) {
+    if (img.externalUrl && img.externalUrl.trim() !== "") return img.externalUrl;
+    return includePlaceholder ? placeholderImageUrl(seed, w, h) : null;
+  }
   const v = variantFor(img, preferred);
   if (v && hasRenderableUrl(v)) return v.url ?? null;
   return includePlaceholder ? placeholderImageUrl(seed, w, h) : null;
@@ -127,6 +132,10 @@ export const largestUrl = (
   h?: number,
   includePlaceholder = false,
 ): string | null => {
+  if (img?.useExternalImg) {
+    if (img.externalUrl && img.externalUrl.trim() !== "") return img.externalUrl;
+    return includePlaceholder ? placeholderImageUrl(seed, w, h) : null;
+  }
   const v = largestVariant(img);
   if (v && hasRenderableUrl(v)) return v.url ?? null;
   return includePlaceholder ? placeholderImageUrl(seed, w, h) : null;

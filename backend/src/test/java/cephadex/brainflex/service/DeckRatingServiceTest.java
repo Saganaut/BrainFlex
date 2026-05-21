@@ -28,6 +28,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -45,6 +46,7 @@ class DeckRatingServiceTest {
 
     @Mock private DeckRatingRepository ratingRepository;
     @Mock private MongoTemplate mongoTemplate;
+    @Mock private ApplicationEventPublisher events;
 
     @InjectMocks private DeckRatingService deckRatingService;
 

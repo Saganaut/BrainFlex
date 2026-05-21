@@ -1,6 +1,6 @@
 # 17 — Achievements
 
-**Status:** Not started
+**Status:** Catalog backend + frontend shipped; game-results surface, toast, and `REACTIONS_SENT` / `WORD_CLOUD_SUBMITTED` triggers deferred (see [to-do README](../README.md#deferred-work--come-back-to-this)).
 **Depends on:** 15 (history is the primary trigger source), 13 (streak fields)
 **Unblocks:** Nothing critical — pure gamification
 
@@ -86,15 +86,15 @@ AchievementTrigger (enum)
 
 ## Checklist
 
-- [ ] `Achievement` + `UserAchievement` models + repos + unique index
-- [ ] `AchievementTrigger` enum
-- [ ] `AchievementService.evaluate`
-- [ ] Trigger call sites wired
-- [ ] Seed catalog (15–20 starter achievements)
-- [ ] Endpoints + tests
-- [ ] Achievement toast component
-- [ ] `/achievements` catalog route
-- [ ] Profile "Achievements" tab
-- [ ] Results screen surface for new achievements
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] `Achievement` + `UserAchievement` models + repos + unique index
+- [x] `AchievementTrigger` enum (10 values; `REACTIONS_SENT` + `WORD_CLOUD_SUBMITTED` deferred — need a lifetime counter on User.stats)
+- [x] `AchievementService.evaluate` (fire-and-forget, idempotent, guest-skip, reward-points bump)
+- [x] Trigger call sites wired (`GameHistoryService.recordFinish` for player + host events; `DeckService.createDeck` / `DeckService.publish`; `DeckFavoriteService.favorite` for owner; `InteractiveSessionService.updateStatsAfterGame` for `TOTAL_POINTS`)
+- [x] Seed catalog — 18 rows across starter / scoring / host / creator / social categories
+- [x] Endpoints + tests (`GET /api/achievements`, `GET /api/users/me/achievements`, `GET /api/users/{userId}/achievements` — public/auth gates, hidden masking, progress against cheap counters)
+- [ ] ~~Achievement toast component~~ — deferred to chunk 18 (needs notification stream or a stop-gap `convertAndSendToUser` push)
+- [x] `/achievements` catalog route — earned/locked grid grouped by category with progress bars
+- [x] Profile "Achievements" tab — earned-only summary newest-first, links out to the catalog
+- [ ] ~~Results screen surface for new achievements~~ — deferred to the holistic chunk-13 player-UI pass
+- [x] Frontend codegen + lint
+- [x] Backend tests pass

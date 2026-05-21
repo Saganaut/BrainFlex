@@ -50,6 +50,9 @@ import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.ScheduledInteractiveSessionRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.email.EmailJob;
+import cephadex.brainflex.service.email.EmailService;
+import cephadex.brainflex.service.email.EmailTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class ScheduledInteractiveSessionServiceTest {
@@ -61,6 +64,7 @@ class ScheduledInteractiveSessionServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private InteractiveSessionService interactiveSessionService;
     @Mock private EmailService emailService;
+    @Mock private org.springframework.context.ApplicationEventPublisher events;
 
     @InjectMocks
     private ScheduledInteractiveSessionService service;
@@ -112,7 +116,13 @@ class ScheduledInteractiveSessionServiceTest {
             assertNotNull(invite.getExpiresAt());
             assertEquals(host.getId(), invite.getInvitedByUserId());
         }
-        verify(emailService, times(2)).sendInitialInvite(any(), any(), eq("Aragorn"), eq("Lore of Middle Earth"));
+        ArgumentCaptor<EmailJob> jobCaptor = ArgumentCaptor.forClass(EmailJob.class);
+        verify(emailService, times(2)).enqueue(jobCaptor.capture());
+        for (EmailJob job : jobCaptor.getAllValues()) {
+            assertEquals(EmailTemplate.INVITE_INITIAL, job.template());
+            assertEquals("Aragorn", job.model().get("hostName"));
+            assertEquals("Lore of Middle Earth", job.model().get("deckName"));
+        }
     }
 
     @Test
@@ -153,8 +163,13 @@ class ScheduledInteractiveSessionServiceTest {
         ScheduledInteractiveSession cancelled = service.cancel("sched1", host);
 
         assertEquals(ScheduleStatus.CANCELLED, cancelled.getStatus());
-        verify(emailService).sendCancelNotice(any(), eq(List.of(invite)),
-                eq("Aragorn"), eq("Lore of Middle Earth"));
+        ArgumentCaptor<EmailJob> cancelCaptor = ArgumentCaptor.forClass(EmailJob.class);
+        verify(emailService).enqueue(cancelCaptor.capture());
+        EmailJob cancelJob = cancelCaptor.getValue();
+        assertEquals(EmailTemplate.INVITE_CANCEL, cancelJob.template());
+        assertEquals("Aragorn", cancelJob.model().get("hostName"));
+        assertEquals("Lore of Middle Earth", cancelJob.model().get("deckName"));
+        assertEquals("alice@example.com", cancelJob.recipient());
     }
 
     @Test
@@ -207,8 +222,13 @@ class ScheduledInteractiveSessionServiceTest {
         assertEquals(ScheduleStatus.LIVE, scheduleCaptor.getValue().getStatus());
         assertEquals("live1", scheduleCaptor.getValue().getCreatedInteractiveSessionId());
         assertEquals("live1", invite.getInteractiveSessionId());
-        verify(emailService).sendBootReminder(any(), eq(invite), eq("Aragorn"),
-                eq("Lore of Middle Earth"), eq("ABCD12"));
+        ArgumentCaptor<EmailJob> bootCaptor = ArgumentCaptor.forClass(EmailJob.class);
+        verify(emailService).enqueue(bootCaptor.capture());
+        EmailJob bootJob = bootCaptor.getValue();
+        assertEquals(EmailTemplate.INVITE_REMINDER, bootJob.template());
+        assertEquals("Aragorn", bootJob.model().get("hostName"));
+        assertEquals("Lore of Middle Earth", bootJob.model().get("deckName"));
+        assertEquals("ABCD12", bootJob.model().get("roomCode"));
     }
 
     @Test
@@ -346,8 +366,13 @@ class ScheduledInteractiveSessionServiceTest {
 
         assertEquals("frodo@shire.org", created.getEmail());
         assertEquals("frodo@shire.org", schedule.getInvitedEmails().get(0));
-        verify(emailService).sendInitialInvite(any(), any(), eq("Aragorn"),
-                eq("Lore of Middle Earth"));
+        ArgumentCaptor<EmailJob> jobCaptor2 = ArgumentCaptor.forClass(EmailJob.class);
+        verify(emailService).enqueue(jobCaptor2.capture());
+        EmailJob job = jobCaptor2.getValue();
+        assertEquals(EmailTemplate.INVITE_INITIAL, job.template());
+        assertEquals("Aragorn", job.model().get("hostName"));
+        assertEquals("Lore of Middle Earth", job.model().get("deckName"));
+        assertEquals("frodo@shire.org", job.recipient());
     }
 
     @Test

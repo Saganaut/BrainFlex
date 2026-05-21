@@ -2,10 +2,11 @@
  * REST endpoints for the curated tag taxonomy.
  *
  * Reads ({@code GET /api/tags}, {@code GET /api/tags/{id}}) are open to any
- * registered user — the explore UI needs them on every visit. Writes
- * ({@code POST}, {@code PUT}, {@code DELETE}) require the caller to be on
- * the admin allowlist ({@link AdminProperties}). A user-facing
- * {@code ROLE_ADMIN} replaces the allowlist later (chunk 20).
+ * registered user — the explore UI needs them on every visit. {@code PUT} /
+ * {@code DELETE} are gated by {@code @PreAuthorize("hasRole('ADMIN')")} at the
+ * HTTP layer; {@code POST} is open but {@link AdminProperties#isAdmin(User)}
+ * strips the curated flag for non-admins (the one inline-branching site that
+ * still depends on the helper, since the gate isn't forbid-or-allow).
  */
 package cephadex.brainflex.controller;
 
@@ -64,12 +65,22 @@ public class TagController {
     public List<TagDTO.TagResponse> listTags(
             @RequestParam(name = "curated", required = false) Boolean curated,
             @RequestParam(name = "parentTagId", required = false) String parentTagId,
-            @RequestParam(name = "search", required = false) String search) {
+            @RequestParam(name = "search", required = false) String search,
+            @RequestParam(name = "createdByMe", required = false) Boolean createdByMe,
+            Authentication authentication) {
         List<Tag> tags;
         if (search != null && !search.isBlank()) {
             tags = tagService.search(search);
         } else if (parentTagId != null && !parentTagId.isBlank()) {
             tags = tagService.listByParent(parentTagId);
+        } else if (Boolean.TRUE.equals(createdByMe)) {
+            // Chunk 21 — picker can show "your custom tags" without scanning
+            // the full curated table. Forbids anonymous callers since the
+            // filter has no useful meaning for them.
+            User caller = userService.resolveRegisteredUser(authentication)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                            "Registered account required"));
+            tags = tagService.listByCreator(caller.getId());
         } else if (Boolean.TRUE.equals(curated)) {
             tags = tagService.listCurated();
         } else {
@@ -105,35 +116,22 @@ public class TagController {
                         request.description(),
                         request.iconUrl(),
                         false);
-        Tag created = tagService.create(sanitized);
+        Tag created = tagService.create(sanitized, caller.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(new TagDTO.TagResponse(created));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public TagDTO.TagResponse updateTag(
             @PathVariable String id,
-            @Valid @RequestBody TagDTO.UpdateTagRequest request,
-            Authentication authentication) {
-        requireAdmin(authentication);
+            @Valid @RequestBody TagDTO.UpdateTagRequest request) {
         return new TagDTO.TagResponse(tagService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deleteTag(
-            @PathVariable String id,
-            Authentication authentication) {
-        requireAdmin(authentication);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deleteTag(@PathVariable String id) {
         tagService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private void requireAdmin(Authentication authentication) {
-        User caller = userService.resolveRegisteredUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
-        if (!adminProperties.isAdmin(caller)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin access required");
-        }
     }
 }

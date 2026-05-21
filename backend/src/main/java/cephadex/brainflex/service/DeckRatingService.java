@@ -30,11 +30,11 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -58,12 +58,15 @@ public class DeckRatingService {
 
     private final DeckRatingRepository ratingRepository;
     private final MongoTemplate mongoTemplate;
+    private final ApplicationEventPublisher events;
 
     public DeckRatingService(
             DeckRatingRepository ratingRepository,
-            MongoTemplate mongoTemplate) {
+            MongoTemplate mongoTemplate,
+            ApplicationEventPublisher events) {
         this.ratingRepository = ratingRepository;
         this.mongoTemplate = mongoTemplate;
+        this.events = events;
     }
 
     /**
@@ -81,7 +84,6 @@ public class DeckRatingService {
             int oldStars = row.getStars();
             row.setStars(stars);
             row.setReview(normalizedReview);
-            row.setUpdatedAt(LocalDateTime.now());
             DeckRating saved = ratingRepository.save(row);
             if (oldStars != stars) {
                 applyDelta(deckId, stars - oldStars, 0);
@@ -95,11 +97,10 @@ public class DeckRatingService {
         row.setUserId(userId);
         row.setStars(stars);
         row.setReview(normalizedReview);
-        row.setCreatedAt(LocalDateTime.now());
-        row.setUpdatedAt(LocalDateTime.now());
         try {
             DeckRating saved = ratingRepository.insert(row);
             applyDelta(deckId, stars, 1);
+            events.publishEvent(new NotificationEvents.DeckRatingCreatedEvent(deckId, stars, userId));
             return saved;
         } catch (DuplicateKeyException dup) {
             // Lost the race with another concurrent insert from the same user.

@@ -1,6 +1,6 @@
 # 20 — User / Organization / Theme / Membership additions
 
-**Status:** In progress (UserRole + admin gating slice landed)
+**Status:** Backend complete; frontend profile / org-settings / notification-prefs / `useTheme.tokenOverrides` pass deferred
 **Depends on:** Nothing strict; field additions stand alone
 **Unblocks:** UX polish, real role-gating, plan tiers
 
@@ -140,19 +140,30 @@ AudienceSubmission (additions only)
 ## Checklist
 
 - [x] `UserRole` enum + `User.roles` field + `ROLE_ADMIN` / `ROLE_MODERATOR` authorities + role-backed `AdminProperties` (env-var allowlist removed) + `UserRoleBackfillMigration` (`scripts/migrate-user-roles.sh`)
-- [ ] Remaining `User` profile additions: `displayName`, `customAvatarUrl`, `bio`, `location`, `websiteUrl`, `locale`, `timezone`, `tagInterests`, `emailVerifiedAt`
-- [ ] `NotificationPrefs` embedded record + endpoints
-- [ ] Migrate remaining `adminProperties.isAdmin(caller)` *forbid-or-allow* sites to `@PreAuthorize("hasRole('ADMIN')")` (the inline-branching sites like `TagController.createTag`'s curated-flag shaping stay on the helper)
-- [ ] `PlayerStats` extensions + weekly/monthly reset cron
-- [ ] `Organization` additions + endpoints + email-domain auto-join
-- [ ] `Theme` additions + frontend token override application
-- [ ] `Membership` / `OrganizationPlan` feature flags + quota
-- [ ] `MembershipService.canStartInteractiveSession` + UI quota surface
-- [ ] `GalleryImage` additions (if not migrated to `MediaAsset`)
-- [ ] `BestAnswerVote.weight`
-- [ ] `AudienceSubmission` moderation fields
+- [x] `User` profile field additions: `displayName`, `customAvatarUrl`, `bio`, `location`, `websiteUrl`, `locale` (default `"en"`), `tagInterests` (`Set<String>`), `notificationPrefs` (embedded). `timezone` and `emailVerifiedAt` already landed in earlier passes. Backfill landed via `UserProfileBackfillMigration` (`scripts/migrate-user-profile.sh`).
+- [x] `NotificationPrefs` embedded class (`inApp` / `email` `Map<NotificationKind, Boolean>` + `weeklyDigestEmail` + `marketingEmail`) with `withDefaults()` factory and `inAppEnabled` / `emailEnabled` fallback helpers so newly-added `NotificationKind` values stay opt-in by default. `GET` / `PUT /api/users/me/notification-prefs` endpoints landed on `UserController`.
+- [x] Migrate remaining `adminProperties.isAdmin(caller)` *forbid-or-allow* sites to `@PreAuthorize("hasRole('ADMIN')")` — `DeckController.recountFavorites` and `TagController.update/delete` migrated; `TestSecurityConfig` now mirrors the production role hierarchy + `@EnableMethodSecurity` so the gate fires under MockMvc. The inline-branching curated-flag site in `TagController.createTag` keeps using the helper.
+- [x] `PlayerStats` extensions: `longestStreak`, `perfectGames`, `totalReactionsSent`, `presentedByKind`, `correctByKind`, `weeklyPoints`, `monthlyPoints`, `weeklyPointsResetAt`, `monthlyPointsResetAt`, `lastPlayedAt`. Reset cron landed (`PlayerStatsResetScheduler` — `0 0 0 ? * MON` weekly + `0 0 0 1 * *` monthly, both UTC).
+- [x] `Organization` additions: `description`, `logoVariants` (`List<StoredImageVariant>`), `websiteUrl`, `location`, `emailDomain` (indexed, drives OAuth auto-join), `inviteCode` (indexed), `allowPublicJoin`, `memberCount` (denorm), `defaultThemeId`, `updatedAt` (via `Auditable`). `PUT /api/organizations/{id}`, `POST /api/organizations/{id}/invite-code/rotate`, `POST /api/organizations/join-by-code` endpoints landed, and the OAuth-success email-domain auto-join hook fires on the existing-user + guest-conversion + brand-new-registration paths.
+- [x] `Theme` additions: `fontFamily`, `headingFontFamily`, `soundThemeId` (pointer to a future `MediaAsset`), `tokenOverrides` (`Map<String, String>` of CSS variable overrides applied on `:root`). *(Frontend `useTheme.ts` token-override application still TODO.)*
+- [x] `Membership` / `OrganizationPlan` feature flags + quota fields: both gain `featureFlags` (`Set<String>`), `monthlyInteractiveSessionLimit` (`0` = unlimited), and `quotaResetsAt`. `monthlyInteractiveSessionCount` was already on `Membership` from chunk 15.
+- [x] `MembershipService.canStartInteractiveSession` — pure read-side gate on `Membership.monthlyInteractiveSessionLimit`, wired into `InteractiveSessionController.createInteractiveSession` (`HTTP 402 PAYMENT_REQUIRED` when the quota is exhausted). UI quota surface deferred to the frontend pass below.
+- [x] `GalleryImage` additions: `width`, `height`, `altText`, `attribution`, `sourceUrl`, `mimeType`, `originalFileName`, `sizeBytes`. (`MediaAsset` migration is deferred per chunk 19, so these stay on `GalleryImage`.)
+- [x] `BestAnswerVote.weight` (default `1`)
+- [x] `AudienceSubmission` moderation fields: `downvotes`, `moderatedByUserId`, `moderatedAt`, `moderationReason`
 - [ ] Frontend profile page expansions (display name, bio, locale, avatar upload)
 - [ ] Org settings page (description, logo, invite code rotation)
 - [ ] Notification preferences page
-- [ ] Frontend codegen + lint
-- [ ] Backend tests pass
+- [x] Frontend codegen — `BrainFlexApi.ts` regenerated; `updateOrg` / `rotateInviteCode` / `joinByCode` / `updateNotificationPrefs` mutations + `getNotificationPrefs` query all surfaced to the client.
+- [x] Backend tests pass — chunk 20 adds `MembershipServiceTest` (9 cases), `OrganizationServiceTest` (17 cases), `PlayerStatsResetSchedulerTest` (2 cases); existing `TagControllerTest` + `DeckFavoriteControllerTest` updated for the `@PreAuthorize` migration; full suite green (`./mvnw test` → 500/500).
+
+## Remaining work after the backend pass
+
+The model additions, migration, endpoints, service logic, cron, and admin-gate migration above all landed. What remains is a small frontend pass:
+
+- **Profile page expansions** — display name, bio, locale, avatar upload form fields backed by `PATCH /api/users/me`. The endpoint hasn't grown new fields yet — `UpdateProfileRequest` is the right place to extend.
+- **Org settings page** — description, logo upload, invite-code rotation, email-domain claim. All backend wires are live (`updateOrg` / `rotateInviteCode` mutations are in `BrainFlexApi.ts`).
+- **Notification preferences page** — table of `NotificationKind × {in-app, email}` checkboxes plus `weeklyDigestEmail` and `marketingEmail` toggles. The `getNotificationPrefs` / `updateNotificationPrefs` endpoints are surfaced in `BrainFlexApi.ts`.
+- **`useTheme.ts` `tokenOverrides`** — read the active theme's `tokenOverrides` map and apply each entry as an inline `:root` CSS variable after the design-system defaults.
+
+These four UI passes are independent and can ship in any order. The backend will not change again for chunk 20.

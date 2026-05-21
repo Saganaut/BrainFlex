@@ -1,6 +1,6 @@
 # 13 — InteractiveSession settings & player additions
 
-**Status:** Backend + field additions complete (2026-05-19). Player/host UI deferred — clusters with the per-kind player surfaces (chunks 07–09), reaction/chat UI (chunk 11), and team-mode UI (chunk 12) for one holistic pass.
+**Status:** Done (2026-05-21). Backend + field additions landed 2026-05-19; the deferred player/host UI pass landed alongside the new `PUT /api/interactive-sessions/{roomCode}/me/avatar` endpoint and `PlayerPlacement.speedBonusTotal` snapshot.
 **Depends on:** 11 (reactions counter), 12 (teamId)
 **Unblocks:** 15 (`PlayerAnswer.timeTakenMs` needed for history), 16 (analytics)
 
@@ -114,10 +114,10 @@ Catch-all chunk for the field additions that make a live show feel polished: shu
 - [x] `accuracy` recompute — recomputed in `submitAnswer` as `correctAnswers / answeredQuestions`
 - [x] `autoAdvance` scheduling — TURN_BASED only; `advanceRound` schedules `startNextRound` at `+podiumDuration` seconds via the existing `ScheduledExecutorService`. SIMULTANEOUS already auto-advances via the `BETWEEN_ROUNDS_DELAY_SECONDS` path
 - [x] `AvatarService` + preset pool — 16-preset static service, `GET /api/avatars` public endpoint, lobby join flow now accepts `{ avatarKey, colorTag }` on `JoinInteractiveSessionRequest`. Unknown keys silently drop (forward-compatible with stale clients)
-- [ ] Lobby avatar picker *(deferred — clusters with chunk-13 UI pass)*
-- [ ] Streak indicator in player view *(deferred — clusters with chunk-13 UI pass)*
-- [ ] Host autoAdvance countdown ring *(deferred — clusters with chunk-13 UI pass)*
-- [ ] Per-player accuracy + streak in placement card *(deferred — clusters with chunk-13 UI pass)*
+- [x] Lobby avatar picker — `Lobby.tsx` now mounts `AvatarSelector` for non-host viewers with `options` built from `useListAvatarsQuery()` (the controller's `list()` method was renamed to `listAvatars` so the hook keeps the chunk-13 README's expected name). Selecting a tile fires `useUpdateMyAvatarMutation()` against the new `PUT /api/interactive-sessions/{roomCode}/me/avatar` endpoint — backend `InteractiveSessionService.updatePlayerAvatar` rejects unknown keys with 400, broadcasts `/topic/.../lobby` on success, and only accepts changes while the session is in LOBBY status.
+- [x] Streak indicator in player view — `PlayPage.tsx` mounts a "{N}x streak 🔥" hero banner above the QuestionCard when the local player's `currentStreak ≥ 2`; `ScoreBoard.tsx` also renders a small streak chip inline for every visible player on the leaderboard.
+- [x] Host autoAdvance countdown ring — `PlayPage.tsx` renders a conic-gradient ring in the host sidebar while `game.roundResult` is set and the session has `answerSubmissionMode = TURN_BASED + autoAdvance = true`. The ring counts down from `settings.podiumDuration` in lock-step with the server's scheduled `startNextRound`.
+- [x] Per-player accuracy + streak in placement card — `GameOver.tsx` now renders a `PlacementChips` row under every podium tile and rest row showing accuracy %, longest streak, speed bonus total, and reactions sent. Backend `PlayerPlacement` gained `speedBonusTotal` (snapshotted off `InteractiveSessionPlayer.speedBonusTotal` in `endGame`); the rest were already on the model.
 - [x] Frontend codegen + lint — `BrainFlexApi.ts` regenerated; `npm run lint` + `tsgo --noEmit` clean
 - [x] Backend tests pass — 286 tests green; chunk 13 adds `AvatarServiceTest` + 7 `InteractiveSessionServiceTest` cases (customRoomCode happy + collision, timing+streak capture, wrong-answer streak reset, valid + unknown avatarKey, requireFullName+guest)
 

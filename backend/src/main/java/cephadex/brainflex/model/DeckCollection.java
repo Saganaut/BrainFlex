@@ -13,7 +13,6 @@
  */
 package cephadex.brainflex.model;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ import lombok.Data;
 // Public browsing of collections sorts newest-first within a visibility
 // bucket, mirroring the deck explore feed.
 @CompoundIndex(name = "collection_explore_idx", def = "{'visibility': 1, 'updatedAt': -1}")
-public class DeckCollection {
+public class DeckCollection extends Auditable {
 
     @Id
     private String id;
@@ -52,7 +51,4 @@ public class DeckCollection {
     private DeckVisibility visibility = DeckVisibility.PRIVATE;
 
     private int viewCount;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
 }

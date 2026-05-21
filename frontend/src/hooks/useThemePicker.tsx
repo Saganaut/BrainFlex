@@ -5,13 +5,13 @@
 import {
   useDeleteThemeMutation,
   useGetCurrentUserQuery,
-  useListMyOrgsQuery,
   useListThemesQuery,
   useUpdateProfileMutation,
 } from "../store/BrainFlexApi";
 import type { ThemeResponse } from "../store/BrainFlexApi";
 import { useTheme } from "./useTheme";
 import { useCurrentUser } from "./useCurrentUser";
+import { useCurrentUserOrgs } from "./useCurrentUserOrgs";
 import { useModal } from "../context/useModal";
 import {
   ThemeEditor,
@@ -43,9 +43,7 @@ export function useThemePicker(): UseThemePickerResult {
     undefined,
     { skip: !registeredUser },
   );
-  const { data: myOrgs = [] } = useListMyOrgsQuery(undefined, {
-    skip: !registeredUser,
-  });
+  const { data: myOrgs = [] } = useCurrentUserOrgs();
 
   const [updateProfile] = useUpdateProfileMutation();
   const [deleteTheme] = useDeleteThemeMutation();

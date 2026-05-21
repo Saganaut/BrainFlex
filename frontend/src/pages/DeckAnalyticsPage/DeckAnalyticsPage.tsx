@@ -1,14 +1,17 @@
 /**
  * Per-deck analytics dashboard (chunk 16).
  *
- * Reads the rolled-up {@code DeckAnalytics} from the backend and renders a KPI
- * strip plus a per-element accordion. Each element's distribution map is
- * interpreted differently depending on its {@code kind} — count-style maps
- * (MCQ, Grid, Text, …) display raw counts and a label looked up off the live
- * deck (so option ids become "Paris", item ids become "Sahara", etc.), while
- * sum-style maps (Allocation, Scales, Ranking) display the average = sum ÷
- * answeredCount. Survey-only kinds (Drawing, Q&A) get a "no distribution"
- * placeholder since their stats are non-bucketed.
+ * Reads the rolled-up {@code DeckAnalytics} from the backend and renders a
+ * KPI strip plus a per-element accordion. The dashboard switches between
+ * three views via a segment control: "All" (deck-wide totals across formats),
+ * "Games" (the {@code gameRollup} slice — scored sessions), and
+ * "Presentations" (the {@code presentationRollup} slice — typically unscored).
+ *
+ * This file is intentionally thin — it owns only the page chrome (title,
+ * actions, segment control wiring, loading + error states). The KPI strip,
+ * per-element accordion, distribution chart, and data plumbing all live in
+ * sibling files; reusable analytics primitives (Kpi, KpiStrip, Segment,
+ * DistributionList) come from {@code components/Common/Analytics}.
  *
  * The "Export CSV" button bypasses RTK Query (the response is text, not JSON)
  * by opening {@code GET /api/decks/{id}/analytics/csv} in a hidden anchor —
@@ -18,58 +21,31 @@
  */
 import { useMemo, useState } from "react";
 import { getRouteApi, Link } from "@tanstack/react-router";
-import { ArrowLeftIcon, ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowDownTrayIcon,
+  ArrowLeftIcon,
+} from "@heroicons/react/24/outline";
 
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { Segment } from "@/components/Common/Analytics";
 import {
   useGetDeckQuery,
   useGetDeckAnalyticsQuery,
 } from "@/store/BrainFlexApi";
-import type {
-  DeckAnalytics,
-  DeckDto,
-  ElementStats,
-} from "@/store/BrainFlexApi";
+import type { DeckAnalytics } from "@/store/BrainFlexApi";
 import { apiBaseUrl } from "@/store/emptyApi";
+
+import { ElementCard } from "./ElementCard";
+import { KpiStrip } from "./KpiStrip";
+import { buildOrderedElements, SEGMENT_LABELS } from "./helpers";
+import type { Segment as SegmentId } from "./helpers";
 import styles from "./DeckAnalyticsPage.module.css";
 
 const routeApi = getRouteApi("/decks/$deckId/analytics");
 
-// ── Kind classification ──────────────────────────────────────────────────
-//
-// The backend stores ElementStats.distribution as a discriminated
-// Map<String, Integer>. Sum-style kinds (Allocation, Scales, Ranking) need a
-// per-row divisor (answeredCount) at render time so we surface an average
-// instead of a sum; everything else displays raw counts. Drawing + Q&A have
-// no distribution at all.
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
-type ElementKind = DeckElement["kind"];
-
-const SUM_STYLE_KINDS: ReadonlySet<ElementKind> = new Set<ElementKind>([
-  "AllocationQuestion",
-  "ScalesQuestion",
-  "RankingQuestion",
-]);
-const NO_DISTRIBUTION_KINDS: ReadonlySet<ElementKind> = new Set<ElementKind>([
-  "DrawingQuestion",
-  "QAndAQuestion",
-]);
-
-const KIND_BADGE_LABEL: Record<ElementKind, string> = {
-  Slide: "Slide",
-  McqQuestion: "MCQ",
-  TextQuestion: "Text",
-  NumberQuestion: "Number",
-  RankingQuestion: "Ranking",
-  ScalesQuestion: "Scales",
-  QAndAQuestion: "Q & A",
-  GridQuestion: "Grid",
-  PlaceOnImageQuestion: "Place on image",
-  WordCloudQuestion: "Word cloud",
-  AllocationQuestion: "Allocation",
-  MatchingQuestion: "Matching",
-  DrawingQuestion: "Drawing",
-};
+const SEGMENT_ITEMS = (Object.keys(SEGMENT_LABELS) as SegmentId[]).map(
+  (id) => ({ id, label: SEGMENT_LABELS[id] }),
+);
 
 const DeckAnalyticsPage = () => {
   const { deckId } = routeApi.useParams();
@@ -88,16 +64,24 @@ const DeckAnalyticsPage = () => {
   const loading = deckLoading || analyticsLoading;
   const fatalError = deckError ?? analyticsError;
 
+  const [segment, setSegment] = useState<SegmentId>("ALL");
+
   const orderedElements = useMemo(
     () => buildOrderedElements(deck, analytics),
     [deck, analytics],
   );
 
+  // Any element with a non-zero correctCount is enough to call the deck
+  // "scored." Drives whether the Presentations segment shows accuracy at all.
+  const deckHasScoredAnswers = useMemo(
+    () => orderedElements.some((row) => (row.stats.correctCount ?? 0) > 0),
+    [orderedElements],
+  );
+
   const handleExportCsv = () => {
     // window.open keeps the existing session cookie attached so the backend
-    // sees the same auth as RTK Query would; the Content-Disposition the
-    // backend sets makes the browser download the response instead of
-    // navigating away from the dashboard.
+    // sees the same auth as RTK Query would; Content-Disposition on the
+    // response makes the browser download it instead of navigating away.
     window.open(
       `${apiBaseUrl}/api/decks/${deckId}/analytics/csv`,
       "_blank",
@@ -107,10 +91,11 @@ const DeckAnalyticsPage = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
+      <header className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <span className={styles.breadcrumb}>Deck analytics</span>
           <h1 className={styles.title}>{deck?.name ?? "Loading…"}</h1>
+          {analytics && <FormatMixChip analytics={analytics} />}
         </div>
         <div className={styles.headerActions}>
           <Link
@@ -118,7 +103,7 @@ const DeckAnalyticsPage = () => {
             params={{ deckId }}
             search={{ questionId: undefined }}>
             <Btn size='md' shape='pill'>
-              <ArrowLeftIcon style={{ width: "1rem", height: "1rem" }} />
+              <ArrowLeftIcon className={styles.btnIcon} />
               Back to editor
             </Btn>
           </Link>
@@ -128,11 +113,11 @@ const DeckAnalyticsPage = () => {
             variant='brand'
             onClick={handleExportCsv}
             disabled={loading}>
-            <ArrowDownTrayIcon style={{ width: "1rem", height: "1rem" }} />
+            <ArrowDownTrayIcon className={styles.btnIcon} />
             Export CSV
           </Btn>
         </div>
-      </div>
+      </header>
 
       {fatalError ? (
         <div className={styles.errorBanner} role='alert'>
@@ -143,16 +128,34 @@ const DeckAnalyticsPage = () => {
         <div className={styles.loading}>Loading analytics…</div>
       ) : (
         <>
-          <KpiStrip analytics={analytics} />
+          <Segment
+            items={SEGMENT_ITEMS}
+            value={segment}
+            onChange={setSegment}
+            ariaLabel='Filter analytics by session format'
+            className={styles.segmentControl}
+          />
+          <KpiStrip
+            analytics={analytics}
+            segment={segment}
+            deckHasScoredAnswers={deckHasScoredAnswers}
+          />
           <h2 className={styles.sectionTitle}>Per-element breakdown</h2>
           {orderedElements.length === 0 ? (
             <div className={styles.empty}>
-              No play data yet. Run a session to start populating analytics.
+              No data yet — run a session to start populating analytics.
             </div>
           ) : (
             <div className={styles.elementList}>
               {orderedElements.map((row) => (
-                <ElementCard key={row.elementId} {...row} />
+                <ElementCard
+                  key={row.elementId}
+                  elementId={row.elementId}
+                  element={row.element}
+                  stats={row.stats}
+                  segment={segment}
+                  deckHasScoredAnswers={deckHasScoredAnswers}
+                />
               ))}
             </div>
           )}
@@ -162,346 +165,24 @@ const DeckAnalyticsPage = () => {
   );
 };
 
-// ── KPI strip ────────────────────────────────────────────────────────────
-
-const KpiStrip = ({ analytics }: { analytics: DeckAnalytics | undefined }) => {
-  const totalPlays = analytics?.totalPlays ?? 0;
-  const totalPlayers = analytics?.totalPlayers ?? 0;
-  const avgScore = analytics?.averageScore ?? 0;
-  const avgAccuracy = analytics?.averageAccuracy ?? 0;
-  const avgDurationMs = analytics?.averageDurationMs ?? 0;
-  const lastPlayedAt = analytics?.lastPlayedAt;
-  return (
-    <div className={styles.kpiStrip}>
-      <Kpi label='Total plays' value={totalPlays.toLocaleString()} />
-      <Kpi
-        label='Player-games'
-        value={totalPlayers.toLocaleString()}
-        sub='(counts each finish, not distinct people)'
-      />
-      <Kpi label='Avg score' value={avgScore.toFixed(1)} />
-      <Kpi label='Avg accuracy' value={`${(avgAccuracy * 100).toFixed(1)}%`} />
-      <Kpi label='Avg duration' value={formatDuration(avgDurationMs)} />
-      <Kpi
-        label='Last played'
-        value={lastPlayedAt ? formatRelativeDate(lastPlayedAt) : "—"}
-      />
-    </div>
-  );
-};
-
-const Kpi = ({
-  label,
-  value,
-  sub,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-}) => (
-  <div className={styles.kpiCard}>
-    <span className={styles.kpiLabel}>{label}</span>
-    <span className={styles.kpiValue}>{value}</span>
-    {sub && <span className={styles.kpiSub}>{sub}</span>}
-  </div>
-);
-
-// ── Per-element card ─────────────────────────────────────────────────────
-
-interface ElementRow {
-  elementId: string;
-  element: DeckElement | undefined;
-  stats: ElementStats;
-}
-
-const ElementCard = ({ elementId, element, stats }: ElementRow) => {
-  const [expanded, setExpanded] = useState(false);
-  const kind = element?.kind;
-  const title = element
-    ? (element.title?.trim() ? element.title : "(untitled)")
-    : "(deleted element)";
-  const accuracy =
-    stats.answeredCount && stats.answeredCount > 0
-      ? (stats.correctCount ?? 0) / stats.answeredCount
-      : undefined;
-  const kindLabel = kind ? KIND_BADGE_LABEL[kind] : "Element";
-  return (
-    <div className={styles.elementCard}>
-      <button
-        type='button'
-        className={styles.elementHeader}
-        aria-expanded={expanded}
-        onClick={() => {
-          setExpanded((prev) => !prev);
-        }}>
-        <span className={styles.kindBadge}>{kindLabel}</span>
-        <span className={styles.elementTitle}>{title}</span>
-        <span className={styles.elementSummary}>
-          <span className={styles.summaryStat}>
-            <span className={styles.summaryLabel}>Presented</span>
-            <span className={styles.summaryValue}>
-              {stats.presentedCount ?? 0}
-            </span>
-          </span>
-          <span className={styles.summaryStat}>
-            <span className={styles.summaryLabel}>Answered</span>
-            <span className={styles.summaryValue}>
-              {stats.answeredCount ?? 0}
-            </span>
-          </span>
-          {accuracy !== undefined && (
-            <span className={styles.summaryStat}>
-              <span className={styles.summaryLabel}>Accuracy</span>
-              <span className={styles.summaryValue}>
-                {(accuracy * 100).toFixed(0)}%
-              </span>
-            </span>
-          )}
-        </span>
-      </button>
-      {expanded && (
-        <div className={styles.elementBody}>
-          <div>
-            <h3 className={styles.distributionTitle}>Response distribution</h3>
-            <DistributionChart
-              elementId={elementId}
-              element={element}
-              stats={stats}
-            />
-          </div>
-          <div className={styles.statsTable}>
-            <span className={styles.statLabel}>Presented</span>
-            <span className={styles.statValue}>{stats.presentedCount ?? 0}</span>
-            <span className={styles.statLabel}>Answered</span>
-            <span className={styles.statValue}>{stats.answeredCount ?? 0}</span>
-            <span className={styles.statLabel}>Correct</span>
-            <span className={styles.statValue}>
-              {kind && NO_DISTRIBUTION_KINDS.has(kind)
-                ? "—"
-                : (stats.correctCount ?? 0)}
-            </span>
-            <span className={styles.statLabel}>Accuracy</span>
-            <span className={styles.statValue}>
-              {accuracy === undefined ? "—" : `${(accuracy * 100).toFixed(1)}%`}
-            </span>
-            <span className={styles.statLabel}>Avg time</span>
-            <span className={styles.statValue}>
-              {stats.averageTimeMs
-                ? `${(stats.averageTimeMs / 1000).toFixed(1)} s`
-                : "—"}
-            </span>
-            <span className={styles.statLabel}>Reactions</span>
-            <span className={styles.statValue}>
-              {stats.reactionsReceived ?? 0}
-            </span>
-            <span className={styles.statLabel}>Chat messages</span>
-            <span className={styles.statValue}>
-              {stats.chatMessagesDuringRound ?? 0}
-            </span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ── Distribution chart ───────────────────────────────────────────────────
-
-interface DistributionRow {
-  key: string;
-  label: string;
-  value: number;
-  display: string;
-}
-
-const DistributionChart = ({
-  elementId,
-  element,
-  stats,
-}: {
-  elementId: string;
-  element: DeckElement | undefined;
-  stats: ElementStats;
-}) => {
-  const kind = element?.kind;
-  const rows = useMemo(
-    () => buildDistributionRows(element, stats),
-    [element, stats],
-  );
-  if (kind && NO_DISTRIBUTION_KINDS.has(kind)) {
-    return (
-      <p className={styles.distributionEmpty}>
-        {kind === "DrawingQuestion"
-          ? "Drawings aren't bucketed — review them in the host replay instead."
-          : "Audience Q&A submissions live on the session record, not the rollup."}
-      </p>
+/**
+ * Tiny chip under the deck title that surfaces the session-format mix at a
+ * glance ("12 games · 3 presentations"). Prevents the "where did my scores
+ * go?" reaction when a presentation-heavy deck shows a low overall score in
+ * the All segment. Hides itself for never-played decks.
+ */
+const FormatMixChip = ({ analytics }: { analytics: DeckAnalytics }) => {
+  const games = analytics.gameRollup?.sessionCount ?? 0;
+  const presentations = analytics.presentationRollup?.sessionCount ?? 0;
+  if (games === 0 && presentations === 0) return null;
+  const parts: string[] = [];
+  if (games > 0) parts.push(`${games} ${games === 1 ? "game" : "games"}`);
+  if (presentations > 0) {
+    parts.push(
+      `${presentations} ${presentations === 1 ? "presentation" : "presentations"}`,
     );
   }
-  if (rows.length === 0) {
-    return (
-      <p className={styles.distributionEmpty}>
-        No responses recorded for {elementId.slice(0, 8)}…
-      </p>
-    );
-  }
-  const max = rows.reduce((acc, row) => Math.max(acc, row.value), 0);
-  return (
-    <div className={styles.distributionList}>
-      {rows.map((row) => {
-        const pct = max > 0 ? (row.value / max) * 100 : 0;
-        return (
-          <div key={row.key} className={styles.distributionRow}>
-            <span className={styles.distributionLabel} title={row.label}>
-              {row.label}
-            </span>
-            <span className={styles.distributionBar}>
-              <span
-                className={styles.distributionFill}
-                style={{ width: `${pct}%` }}
-              />
-            </span>
-            <span className={styles.distributionValue}>{row.display}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-// ── Data plumbing ────────────────────────────────────────────────────────
-
-const buildOrderedElements = (
-  deck: DeckDto | undefined,
-  analytics: DeckAnalytics | undefined,
-): ElementRow[] => {
-  const perElement = analytics?.perElement ?? {};
-  const rows: ElementRow[] = [];
-  const seen = new Set<string>();
-
-  // 1. Live deck order — questions the author still owns appear first, in
-  //    the order they're presented during a session.
-  for (const element of deck?.elements ?? []) {
-    if (!element.id) continue;
-    if (element.kind === "Slide") continue;
-    const stats = perElement[element.id];
-    // TS treats the perElement index signature as total, but the rollup
-    // only carries elements that have been presented in a finished game.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (!stats) continue;
-    rows.push({ elementId: element.id, element, stats });
-    seen.add(element.id);
-  }
-
-  // 2. Orphans — analytics rows that no longer match any deck element
-  //    (renamed, deleted, etc.). Surface them so the export still
-  //    accounts for them.
-  for (const [elementId, stats] of Object.entries(perElement)) {
-    if (seen.has(elementId)) continue;
-    rows.push({ elementId, element: undefined, stats });
-  }
-
-  return rows;
-};
-
-const buildDistributionRows = (
-  element: DeckElement | undefined,
-  stats: ElementStats,
-): DistributionRow[] => {
-  const dist = stats.distribution ?? {};
-  const entries = Object.entries(dist);
-  if (entries.length === 0) return [];
-
-  const kind = element?.kind;
-  const labelByKey = buildLabelLookup(element);
-  const answeredCount = stats.answeredCount ?? 0;
-  const sumStyle = kind ? SUM_STYLE_KINDS.has(kind) : false;
-
-  const rows: DistributionRow[] = entries.map(([key, raw]) => {
-    const value = sumStyle && answeredCount > 0 ? raw / answeredCount : raw;
-    const display = sumStyle ? value.toFixed(1) : value.toLocaleString();
-    return {
-      key,
-      label: labelByKey[key] ?? key,
-      value,
-      display,
-    };
-  });
-  rows.sort((a, b) => b.value - a.value);
-  return rows;
-};
-
-const buildLabelLookup = (
-  element: DeckElement | undefined,
-): Record<string, string> => {
-  if (!element) return {};
-  const out: Record<string, string> = {};
-  switch (element.kind) {
-    case "McqQuestion":
-    case "AllocationQuestion":
-      for (const opt of element.options ?? []) {
-        if (opt.id) out[opt.id] = opt.text ?? opt.id;
-      }
-      return out;
-    case "RankingQuestion":
-      for (const item of element.items ?? []) {
-        if (item.id) out[item.id] = item.label ?? item.id;
-      }
-      return out;
-    case "ScalesQuestion":
-      for (const s of element.statements ?? []) {
-        if (s.id) out[s.id] = s.text ?? s.id;
-      }
-      return out;
-    case "MatchingQuestion": {
-      // Matching distribution keys are "leftId>rightId". Build a label
-      // that reads as "Left → Right" so the dashboard column lines up
-      // with the player's experience.
-      const leftById: Record<string, string> = {};
-      const rightById: Record<string, string> = {};
-      for (const pair of element.pairs ?? []) {
-        if (pair.id) {
-          if (pair.leftLabel) leftById[pair.id] = pair.leftLabel;
-          if (pair.rightLabel) rightById[pair.id] = pair.rightLabel;
-        }
-      }
-      // The dict has all pair ids — when reading the bucket key
-      // "leftId>rightId" the caller composes the label.
-      const target: Record<string, string> = {};
-      return new Proxy(target, {
-        get(_t, prop) {
-          if (typeof prop !== "string") return undefined;
-          const arrow = prop.indexOf(">");
-          if (arrow < 0) return undefined;
-          const left = prop.slice(0, arrow);
-          const right = prop.slice(arrow + 1);
-          const leftLabel = leftById[left] ?? left;
-          const rightLabel = rightById[right] ?? right;
-          return `${leftLabel} → ${rightLabel}`;
-        },
-      });
-    }
-    default:
-      // Number/Text/WordCloud/Grid/PlaceOnImage — the bucket key is already
-      // human-readable (or close enough). Slide/Drawing/Q&A never reach here.
-      return out;
-  }
-};
-
-// ── Formatters ───────────────────────────────────────────────────────────
-
-const formatDuration = (ms: number): string => {
-  if (!ms || ms <= 0) return "—";
-  const totalSeconds = Math.round(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  if (minutes <= 0) return `${seconds}s`;
-  return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
-};
-
-const formatRelativeDate = (iso: string): string => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return <span className={styles.mixChip}>{parts.join(" · ")}</span>;
 };
 
 export { DeckAnalyticsPage };

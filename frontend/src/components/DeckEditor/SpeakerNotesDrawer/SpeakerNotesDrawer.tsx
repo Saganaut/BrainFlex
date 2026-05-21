@@ -61,13 +61,13 @@ const SpeakerNotesDrawer = () => {
 
   const { schedule, flush } = useDebouncedCommit<DeckElement>(commit, 500);
 
-  const [notes, setNotes] = useState<string>(element?.speakerNotes ?? "");
+  const [notes, setNotes] = useState<string>(element?.chrome?.speakerNotes ?? "");
   const [syncedFromId, setSyncedFromId] = useState<string | undefined>(
     element?.id,
   );
   if (element && syncedFromId !== element.id) {
     setSyncedFromId(element.id);
-    setNotes(element.speakerNotes ?? "");
+    setNotes(element.chrome?.speakerNotes ?? "");
   }
 
   const [isOpen, setIsOpen] = useState(false);
@@ -89,7 +89,7 @@ const SpeakerNotesDrawer = () => {
   const handleNotesChange = (html: string) => {
     setNotes(html);
     if (!element) return;
-    schedule({ ...element, speakerNotes: html });
+    schedule({ ...element, chrome: { ...element.chrome, speakerNotes: html } });
   };
 
   const hasNotes = notes.trim() !== "" && notes !== "<p></p>";

@@ -37,6 +37,8 @@ import cephadex.brainflex.model.Membership;
 import cephadex.brainflex.model.PlayerPlacement;
 import cephadex.brainflex.model.Team;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.enums.AchievementTrigger;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GameHistoryRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -47,14 +49,17 @@ public class GameHistoryService {
     private final GameHistoryRepository historyRepository;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
+    private final AchievementService achievementService;
 
     public GameHistoryService(
             GameHistoryRepository historyRepository,
             DeckRepository deckRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            AchievementService achievementService) {
         this.historyRepository = historyRepository;
         this.deckRepository = deckRepository;
         this.userRepository = userRepository;
+        this.achievementService = achievementService;
     }
 
     /**
@@ -81,10 +86,19 @@ public class GameHistoryService {
             if (isHost) hostPlayed = true;
             boolean inserted = writeEntry(buildPlayerEntry(session, p, deckName, durationMs, playedAt, isHost));
             if (isHost) hostRowInserted = inserted;
+            // Chunk 17 — fire-and-forget achievement evaluation. Only runs on
+            // a true insert so a replayed finish doesn't double-evaluate.
+            if (inserted && !p.isGuest()) {
+                evaluatePlayerAchievements(session, p, isHost);
+            }
         }
 
         if (!hostPlayed && session.getHostUserId() != null) {
             hostRowInserted = writeEntry(buildHostOnlyEntry(session, deckName, durationMs, playedAt));
+            // Standalone host row — only the host-side triggers apply.
+            if (hostRowInserted) {
+                evaluateHostOnlyAchievements(session);
+            }
         }
 
         // Bump the Membership counter only when the host's row was actually
@@ -94,6 +108,67 @@ public class GameHistoryService {
         if (hostRowInserted) {
             bumpHostMonthlyCounter(session.getHostUserId(), playedAt);
         }
+    }
+
+    /**
+     * Evaluates every gameplay-driven trigger for a single player who just
+     * finished a game. The achievement service is fire-and-forget — any
+     * failure here is logged and swallowed so a broken trigger can't break
+     * the {@code endGame} write path.
+     *
+     * {@code TOTAL_POINTS} is intentionally NOT evaluated here — it lives in
+     * {@code InteractiveSessionService.updateStatsAfterGame} where the User
+     * doc is already loaded for the points roll-up. Doing it twice would
+     * waste a Mongo round-trip; doing it here would also miss the
+     * just-bumped value because updateStatsAfterGame runs after recordFinish.
+     */
+    private void evaluatePlayerAchievements(
+            InteractiveSession session, PlayerPlacement p, boolean isHost) {
+        String userId = p.getUserId();
+        if (userId == null || userId.isBlank()) return;
+        String sessionId = session.getId();
+
+        long gamesPlayed = historyRepository.countByUserId(userId);
+        achievementService.evaluate(userId, AchievementTrigger.FIRST_GAME, 1, sessionId, null);
+        achievementService.evaluate(userId, AchievementTrigger.GAMES_PLAYED,
+                (int) Math.min(gamesPlayed, Integer.MAX_VALUE), sessionId, null);
+        achievementService.evaluate(userId, AchievementTrigger.HIGH_SCORE,
+                p.getFinalScore(), sessionId, null);
+        achievementService.evaluate(userId, AchievementTrigger.STREAK,
+                p.getLongestStreak(), sessionId, null);
+
+        // PERFECT_GAME only applies when the player got every question right;
+        // threshold gates on the minimum number of questions so a one-question
+        // deck doesn't trivially unlock the badge.
+        if (p.getAccuracy() >= 1.0d && p.getTotalQuestions() > 0) {
+            achievementService.evaluate(userId, AchievementTrigger.PERFECT_GAME,
+                    p.getTotalQuestions(), sessionId, null);
+        }
+
+        if (isHost) {
+            long hostGames = historyRepository.countByUserIdAndWasHostTrue(userId);
+            achievementService.evaluate(userId, AchievementTrigger.HOST_GAMES,
+                    (int) Math.min(hostGames, Integer.MAX_VALUE), sessionId, null);
+        }
+    }
+
+    /**
+     * Triggers that apply when the host did not play. The host's player-side
+     * counters (HIGH_SCORE / STREAK / PERFECT_GAME) don't apply, but the
+     * GAMES_PLAYED counter still bumps and HOST_GAMES is the whole point.
+     */
+    private void evaluateHostOnlyAchievements(InteractiveSession session) {
+        String hostId = session.getHostUserId();
+        if (hostId == null || hostId.isBlank()) return;
+        String sessionId = session.getId();
+
+        long gamesPlayed = historyRepository.countByUserId(hostId);
+        long hostGames = historyRepository.countByUserIdAndWasHostTrue(hostId);
+        achievementService.evaluate(hostId, AchievementTrigger.FIRST_GAME, 1, sessionId, null);
+        achievementService.evaluate(hostId, AchievementTrigger.GAMES_PLAYED,
+                (int) Math.min(gamesPlayed, Integer.MAX_VALUE), sessionId, null);
+        achievementService.evaluate(hostId, AchievementTrigger.HOST_GAMES,
+                (int) Math.min(hostGames, Integer.MAX_VALUE), sessionId, null);
     }
 
     /** Paginated history for the given user, newest-first by {@code playedAt}. */
@@ -151,8 +226,7 @@ public class GameHistoryService {
         e.setInteractiveSessionId(session.getId());
         e.setDeckId(session.getDeckId());
         e.setDeckName(deckName);
-        e.setHostUserId(session.getHostUserId());
-        e.setHostName(session.getHostName());
+        e.setHost(UserSnapshot.of(session.getHostUserId(), session.getHostName()));
         e.setDurationMs(durationMs);
         e.setPlayedAt(playedAt);
         return e;

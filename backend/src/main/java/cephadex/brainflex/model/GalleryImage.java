@@ -39,5 +39,34 @@ public class GalleryImage {
     /** One entry per ImageSize tier (xs/sm/md/lg/xl). Never null after upload. */
     private List<StoredImageVariant> variants = new ArrayList<>();
 
+    /** Native pixel dimensions of the original upload — kept separately from per-variant
+     *  dimensions so the picker can show "1920×1080 original" without resolving an XL
+     *  variant. Null on legacy rows uploaded before chunk 20 lands a backfill. */
+    private Integer width;
+    private Integer height;
+
+    /** Accessibility caption — surfaced as the {@code alt} attribute when an image is
+     *  rendered into a slide. Null until the uploader fills it in. */
+    private String altText;
+
+    /** Free-form attribution string ("Photo by X on Unsplash"). Renderers display this
+     *  beneath the image in the legal-required citation slot. */
+    private String attribution;
+
+    /** Original source URL if the image was harvested from a CC-licensed source
+     *  (Unsplash, Wikimedia, etc.). Lets the gallery link back to provenance. */
+    private String sourceUrl;
+
+    /** MIME type of the original upload (e.g. {@code "image/png"}). Mostly informational
+     *  — the stored renditions are always WebP. */
+    private String mimeType;
+
+    /** Filename the user uploaded with. Kept for the "downloaded original" affordance and
+     *  for human-readable rows in admin tooling. */
+    private String originalFileName;
+
+    /** Size of the original upload in bytes. {@code 0} means unknown (legacy rows). */
+    private long sizeBytes;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 }

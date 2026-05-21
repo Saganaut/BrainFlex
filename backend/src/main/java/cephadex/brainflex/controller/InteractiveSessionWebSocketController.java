@@ -42,8 +42,10 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.dto.AnswerSubmitRequest;
 import cephadex.brainflex.dto.BootPlayerRequest;
 import cephadex.brainflex.dto.ChatSendRequest;
+import cephadex.brainflex.dto.FreezeResponsesRequest;
 import cephadex.brainflex.dto.ModerateChatRequest;
 import cephadex.brainflex.dto.ReactionSendRequest;
+import cephadex.brainflex.dto.RevealNowRequest;
 import cephadex.brainflex.dto.InteractiveSessionErrorMessage;
 import cephadex.brainflex.dto.VoteSubmitRequest;
 import cephadex.brainflex.service.InteractiveSessionService;
@@ -150,6 +152,33 @@ public class InteractiveSessionWebSocketController {
             @Payload ModerateChatRequest request,
             Principal principal) {
         interactiveSessionService.moderateChatMessage(roomCode, request.messageId(), principal.getName());
+    }
+
+    /**
+     * Chunk 24 — host manually reveals the response distribution for the
+     * current ON_CLICK round. No-op (idempotent) when the resolved
+     * showResponses isn't ON_CLICK or when the round isn't in SUBMIT.
+     */
+    @MessageMapping("/interactive-session/{roomCode}/reveal")
+    public void revealNow(
+            @DestinationVariable String roomCode,
+            @Payload RevealNowRequest request,
+            Principal principal) {
+        interactiveSessionService.revealNow(roomCode, request.elementId(), principal.getName());
+    }
+
+    /**
+     * Chunk 24 — host flips the current round's responseMode (ACCEPTING /
+     * NOT_ACCEPTING). Affects only the current run — never mutates the
+     * source element on the deck. Late submissions are rejected with 409.
+     */
+    @MessageMapping("/interactive-session/{roomCode}/freeze")
+    public void freezeResponses(
+            @DestinationVariable String roomCode,
+            @Payload FreezeResponsesRequest request,
+            Principal principal) {
+        interactiveSessionService.freezeResponses(roomCode, request.elementId(),
+                request.mode(), principal.getName());
     }
 
     /**

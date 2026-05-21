@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,8 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,6 +25,7 @@ import cephadex.brainflex.dto.RegisterRequest;
 import cephadex.brainflex.dto.UpdateProfileRequest;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.email.EmailService;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -30,10 +34,33 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private OAuthProviderService oAuthProviderService;
+
+    @Mock
     private OAuth2User oAuth2User;
+
+    @Mock
+    private EmailService emailService;
+
+    /** Chunk 20 — register() now calls autoJoinByEmailDomain on the new User
+     *  to land them in every org claiming their email domain. Mocked so the
+     *  unit test stays a registration-only assertion. */
+    @Mock
+    private OrganizationService organizationService;
 
     @InjectMocks
     private UserService userService;
+
+    /** Helper — wraps {@link #oAuth2User} in a real OAuth2AuthenticationToken
+     *  so tests can call {@code userService.register(token, ...)}. The
+     *  registration id is irrelevant here because oAuthProviderService is
+     *  itself mocked and never inspects the token's registration. */
+    private OAuth2AuthenticationToken googleToken() {
+        return new OAuth2AuthenticationToken(
+                oAuth2User,
+                List.of(new SimpleGrantedAuthority("ROLE_USER")),
+                OAuthProviderService.GOOGLE);
+    }
 
     @Test
     void createGuest_WhenUsernameAvailable_CreatesUser() {
@@ -59,17 +86,23 @@ class UserServiceTest {
 
     @Test
     void register_WhenValid_CreatesUser() {
-        when(oAuth2User.getAttribute("sub")).thenReturn("google123");
-        when(oAuth2User.getAttribute("email")).thenReturn("test@example.com");
-        when(oAuth2User.getAttribute("name")).thenReturn("Test User");
-        when(oAuth2User.getAttribute("picture")).thenReturn("pic.jpg");
-        when(userRepository.findByGoogleId("google123")).thenReturn(java.util.Optional.empty());
+        var profile = new OAuthProviderService.ProviderProfile(
+                OAuthProviderService.GOOGLE, "google123", "test@example.com", "Test User", "pic.jpg");
+        when(oAuthProviderService.profileOf(any())).thenReturn(profile);
+        when(oAuthProviderService.findByProviderId(OAuthProviderService.GOOGLE, "google123"))
+                .thenReturn(java.util.Optional.empty());
         when(userRepository.findByUserName("testuser")).thenReturn(java.util.Optional.empty());
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            // Mirror what OAuthProviderService.setProviderIdOn would have written
+            // so the returned User has its googleId set, matching production behavior.
+            u.setGoogleId("google123");
+            return u;
+        });
 
         RegisterRequest request = new RegisterRequest("testuser", true);
 
-        User result = userService.register(oAuth2User, request);
+        User result = userService.register(googleToken(), request);
 
         assertEquals("google123", result.getGoogleId());
         assertEquals("test@example.com", result.getEmail());
@@ -87,15 +120,16 @@ class UserServiceTest {
         closed.setIsClosed(true);
         closed.setEmailVerifiedAt(null);
 
-        when(oAuth2User.getAttribute("sub")).thenReturn("google123");
-        when(oAuth2User.getAttribute("name")).thenReturn("Test User");
-        when(oAuth2User.getAttribute("picture")).thenReturn("pic.jpg");
-        when(userRepository.findByGoogleId("google123")).thenReturn(java.util.Optional.of(closed));
+        var profile = new OAuthProviderService.ProviderProfile(
+                OAuthProviderService.GOOGLE, "google123", null, "Test User", "pic.jpg");
+        when(oAuthProviderService.profileOf(any())).thenReturn(profile);
+        when(oAuthProviderService.findByProviderId(OAuthProviderService.GOOGLE, "google123"))
+                .thenReturn(java.util.Optional.of(closed));
         when(userRepository.findByUserName("testuser")).thenReturn(java.util.Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RegisterRequest request = new RegisterRequest("testuser", true);
-        User result = userService.register(oAuth2User, request);
+        User result = userService.register(googleToken(), request);
 
         assertNotNull(result.getEmailVerifiedAt());
     }
@@ -109,15 +143,16 @@ class UserServiceTest {
         closed.setIsClosed(true);
         closed.setEmailVerifiedAt(original);
 
-        when(oAuth2User.getAttribute("sub")).thenReturn("google123");
-        when(oAuth2User.getAttribute("name")).thenReturn("Test User");
-        when(oAuth2User.getAttribute("picture")).thenReturn("pic.jpg");
-        when(userRepository.findByGoogleId("google123")).thenReturn(java.util.Optional.of(closed));
+        var profile = new OAuthProviderService.ProviderProfile(
+                OAuthProviderService.GOOGLE, "google123", null, "Test User", "pic.jpg");
+        when(oAuthProviderService.profileOf(any())).thenReturn(profile);
+        when(oAuthProviderService.findByProviderId(OAuthProviderService.GOOGLE, "google123"))
+                .thenReturn(java.util.Optional.of(closed));
         when(userRepository.findByUserName("testuser")).thenReturn(java.util.Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         RegisterRequest request = new RegisterRequest("testuser", true);
-        User result = userService.register(oAuth2User, request);
+        User result = userService.register(googleToken(), request);
 
         assertEquals(original, result.getEmailVerifiedAt(),
                 "Once stamped, emailVerifiedAt is immutable — reopening should not overwrite it");
@@ -162,13 +197,16 @@ class UserServiceTest {
 
     @Test
     void register_WhenGoogleIdExists_ThrowsException() {
-        when(oAuth2User.getAttribute("sub")).thenReturn("google123");
-        when(userRepository.findByGoogleId("google123")).thenReturn(java.util.Optional.of(new User()));
+        var profile = new OAuthProviderService.ProviderProfile(
+                OAuthProviderService.GOOGLE, "google123", null, null, null);
+        when(oAuthProviderService.profileOf(any())).thenReturn(profile);
+        when(oAuthProviderService.findByProviderId(OAuthProviderService.GOOGLE, "google123"))
+                .thenReturn(java.util.Optional.of(new User()));
 
         RegisterRequest request = new RegisterRequest("testuser", true);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            userService.register(oAuth2User, request);
+            userService.register(googleToken(), request);
         });
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
@@ -176,14 +214,17 @@ class UserServiceTest {
 
     @Test
     void register_WhenUsernameTaken_ThrowsException() {
-        when(oAuth2User.getAttribute("sub")).thenReturn("google123");
-        when(userRepository.findByGoogleId("google123")).thenReturn(java.util.Optional.empty());
+        var profile = new OAuthProviderService.ProviderProfile(
+                OAuthProviderService.GOOGLE, "google123", null, null, null);
+        when(oAuthProviderService.profileOf(any())).thenReturn(profile);
+        when(oAuthProviderService.findByProviderId(OAuthProviderService.GOOGLE, "google123"))
+                .thenReturn(java.util.Optional.empty());
         when(userRepository.findByUserName("taken")).thenReturn(java.util.Optional.of(new User()));
 
         RegisterRequest request = new RegisterRequest("taken", true);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
-            userService.register(oAuth2User, request);
+            userService.register(googleToken(), request);
         });
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());

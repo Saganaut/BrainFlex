@@ -25,6 +25,8 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
@@ -32,7 +34,7 @@ import lombok.Data;
 // Listing the top-level comments for a deck is the hot path; pair it with a
 // createdAt index suffix so the default newest-first sort uses the same index.
 @CompoundIndex(name = "deck_parent_created_idx", def = "{'deckId': 1, 'parentCommentId': 1, 'createdAt': -1}")
-public class DeckComment {
+public class DeckComment extends Auditable {
 
     @Id
     private String id;
@@ -40,15 +42,16 @@ public class DeckComment {
     @Indexed
     private String deckId;
 
-    private String authorUserId;
-
     /**
-     * Denormalized author display fields so deleted users don't leave the
-     * thread with empty cells. Updated on every comment write to keep the
-     * snapshot reasonably current.
+     * Denormalized author display snapshot so deleted users don't leave the
+     * thread with empty cells. Refreshed on every comment write so the snapshot
+     * tracks the author's current display name.
      */
-    private String authorName;
-    private String authorPictureUrl;
+    private UserSnapshot author;
+
+    @JsonIgnore public String getAuthorUserId()      { return author == null ? null : author.userId(); }
+    @JsonIgnore public String getAuthorName()        { return author == null ? null : author.name(); }
+    @JsonIgnore public String getAuthorPictureUrl()  { return author == null ? null : author.pictureUrl(); }
 
     /** Null for top-level comments; a comment id for replies. */
     private String parentCommentId;
@@ -70,7 +73,5 @@ public class DeckComment {
     /** Soft-delete flag; body is replaced with "[removed]" on delete. */
     private boolean deleted;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
     private LocalDateTime deletedAt;
 }

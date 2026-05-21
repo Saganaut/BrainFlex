@@ -66,6 +66,48 @@ const PlayPage = () => {
       : undefined;
 
   const isHost = !!userId && session?.hostUserId === userId;
+  // Chunk 13 — local player's current streak, surfaced as a hero banner
+  // above the QuestionCard when ≥ 2 (matches the Kahoot threshold for the
+  // first streak callout). Backend resets on wrong answer; this just reads.
+  const myStreak = userId
+    ? (game.players.find((p) => p.userId === userId)?.currentStreak ?? 0)
+    : 0;
+
+  // Chunk 13 — host autoAdvance progress ring. The server schedules
+  // startNextRound() at roundResult-display + podiumDuration in TURN_BASED
+  // sessions with autoAdvance=true; the ring is purely a local countdown
+  // mirroring that timer so the host knows how long until the next round.
+  // settings.autoAdvance is read without an optional chain because the
+  // `answerSubmissionMode === "TURN_BASED"` check above narrows settings to
+  // non-null for TypeScript.
+  const isAutoAdvanceTurnBased =
+    session?.settings?.answerSubmissionMode === "TURN_BASED" &&
+    !!session.settings.autoAdvance;
+  const autoAdvanceEnabled =
+    isHost && !!game.roundResult && isAutoAdvanceTurnBased;
+  const podiumDuration = session?.settings?.podiumDuration ?? 15;
+  const [autoAdvanceProgress, setAutoAdvanceProgress] = useState(0);
+  const [autoAdvanceRemaining, setAutoAdvanceRemaining] =
+    useState(podiumDuration);
+  useEffect(() => {
+    if (!autoAdvanceEnabled) return;
+    const startMs = Date.now();
+    const totalMs = podiumDuration * 1000;
+    const tick = () => {
+      const elapsed = Date.now() - startMs;
+      // eslint-disable-next-line react-x/set-state-in-effect
+      setAutoAdvanceProgress(Math.min(1, elapsed / totalMs));
+      // eslint-disable-next-line react-x/set-state-in-effect
+      setAutoAdvanceRemaining(
+        Math.max(0, Math.ceil((totalMs - elapsed) / 1000)),
+      );
+    };
+    tick();
+    const id = setInterval(tick, 200);
+    return () => {
+      clearInterval(id);
+    };
+  }, [autoAdvanceEnabled, podiumDuration, game.round]);
   const isTurnBased = session?.settings?.answerSubmissionMode === "TURN_BASED";
   // Chunk 24 — frozen session format drives chrome (GAME = persistent
   // leaderboard, PRESENTATION = no leaderboard, aggregated data view at
@@ -84,9 +126,7 @@ const PlayPage = () => {
   const reactionsEnabled = session?.settings?.reactionsEnabled !== false;
   const chatEnabled = session?.settings?.chatEnabled !== false;
   const teams = session?.teams ?? [];
-  const teamMode =
-    (session?.teamMode ?? session?.settings?.teamMode ?? false) &&
-    teams.length > 0;
+  const teamMode = (session?.settings?.teamMode ?? false) && teams.length > 0;
 
   useEffect(() => {
     if (session) dispatch(setSession(session));
@@ -150,7 +190,7 @@ const PlayPage = () => {
     } else {
       if (!game.roundStartedAt) return;
       const isSlide = game.currentElement.kind === "Slide";
-      const elementSeconds = game.currentElement.displaySeconds ?? 0;
+      const elementSeconds = game.currentElement.chrome?.displaySeconds ?? 0;
       const effective = elementSeconds > 0
         ? elementSeconds
         : interactiveSessionUnlimited ? 0 : (session?.settings?.timePerQuestion ?? 0);
@@ -194,7 +234,7 @@ const PlayPage = () => {
   };
 
   const backgroundUrl = resolveInteractiveSessionBackground(
-    session?.deckBackgroundImageUrl,
+    session?.settings?.deckBackgroundImageUrl,
     session?.deckId,
   );
   const bgStyle: React.CSSProperties = {
@@ -238,7 +278,7 @@ const PlayPage = () => {
   const element = game.currentElement;
   const isSlide = element.kind === "Slide";
   const isVotePhase = game.phase === "VOTE";
-  const elementSeconds = element.displaySeconds ?? 0;
+  const elementSeconds = element.chrome?.displaySeconds ?? 0;
   const showCountdownChrome = !isSlide && (
     isVotePhase
       ? game.votePhaseSeconds > 0
@@ -254,6 +294,12 @@ const PlayPage = () => {
     <div className={styles.play} style={bgStyle}>
       <div className={styles.main}>
         <WsErrorBanner />
+        {!isHost && myStreak >= 2 && !isSlide && (
+          <div className={styles.streakBanner} role='status'>
+            <span className={styles.streakValue}>{myStreak}x</span>
+            <span className={styles.streakLabel}>streak 🔥</span>
+          </div>
+        )}
         {!isSlide && (
           <QuestionCard
             question={{
@@ -261,7 +307,7 @@ const PlayPage = () => {
               pointValue:
                 "pointValue" in element ? (element.pointValue ?? 0) : 0,
               timeLimit: questionCardTimeLimit,
-              imageUrl: largestUrl(element.image, element.id ?? "") ?? undefined,
+              imageUrl: largestUrl(element.chrome?.image, element.id ?? "") ?? undefined,
             }}
             round={game.round}
             totalRounds={game.totalRounds}
@@ -346,7 +392,7 @@ const PlayPage = () => {
             resolvedShowResponses={resolveShowResponsesFor(
               session,
               deck,
-              element,
+              undefined, // showResponses is Slide-only and HostRoundControls only renders for !isSlide
             )}
             onReveal={() => {
               sendRevealNow(element.id ?? "");
@@ -358,6 +404,19 @@ const PlayPage = () => {
               );
             }}
           />
+        )}
+        {autoAdvanceEnabled && (
+          <div
+            className={styles.autoAdvanceRing}
+            role='timer'
+            aria-label={`Next round in ${autoAdvanceRemaining.toString()} seconds`}
+            style={
+              { "--progress": autoAdvanceProgress } as React.CSSProperties
+            }>
+            <span className={styles.autoAdvanceRingLabel}>
+              {autoAdvanceRemaining}
+            </span>
+          </div>
         )}
         {isHost && (
           <Btn

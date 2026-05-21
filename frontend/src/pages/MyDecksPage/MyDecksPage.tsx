@@ -1,7 +1,6 @@
 // Lists user-owned content decks and all system decks, with create/edit/delete actions.
 import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { StarIcon, PlayIcon } from "@heroicons/react/24/outline";
 import {
   BrainFlex,
   useListMyDecksQuery,
@@ -14,8 +13,7 @@ import type { DeckDto, Slide } from "../../store/BrainFlexApi";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { DeckActionButton } from "@/components/Common/Buttons/DeckActionButton/DeckActionButton";
-import { Badge } from "@/components/Common/Badge";
-import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
+import { DeckCard } from "@/components/Common/Cards/DeckCard";
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -23,88 +21,7 @@ import {
 import { AddToCollectionModal } from "@/components/Collections/AddToCollectionModal";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
 import { useModal } from "@/context/useModal";
-import { resolveDeckCover } from "../../utils/deckImages";
 import styles from "./MyDecksPage.module.css";
-
-const PUBLISH_BADGE_VARIANT = {
-  DRAFT: "info",
-  PUBLISHED: "success",
-  ARCHIVED: "warning",
-} as const;
-
-const ROLE_BADGE_VARIANT = {
-  OWNER: "brand",
-  EDITOR: "success",
-  VIEWER: "info",
-} as const;
-
-const ROLE_BADGE_LABEL = {
-  OWNER: "Owner",
-  EDITOR: "Editor",
-  VIEWER: "Viewer",
-} as const;
-
-const DIFFICULTY_LABEL = {
-  EASY: "Easy",
-  MEDIUM: "Medium",
-  HARD: "Hard",
-} as const;
-
-const formatRating = (rating: number, count: number): string => {
-  if (count <= 0) return "—";
-  return rating.toFixed(1);
-};
-
-const DeckStatusRow = ({ deck }: { deck: DeckDto }) => {
-  if (deck.isSystem) {
-    return <Badge size='sm' variant='brand' label='System' />;
-  }
-  const status = deck.publishStatus ?? "DRAFT";
-  const role = deck.myRole;
-  return (
-    <span className={styles.statusRow}>
-      <Badge
-        size='sm'
-        variant={PUBLISH_BADGE_VARIANT[status]}
-        label={status.charAt(0) + status.slice(1).toLowerCase()}
-      />
-      {role && role !== "OWNER" && (
-        <Badge
-          size='sm'
-          variant={ROLE_BADGE_VARIANT[role]}
-          label={ROLE_BADGE_LABEL[role]}
-        />
-      )}
-    </span>
-  );
-};
-
-const DeckDiscoveryRow = ({ deck }: { deck: DeckDto }) => {
-  const plays = deck.playCount ?? 0;
-  const rating = deck.averageRating ?? 0;
-  const ratingCount = deck.ratingCount ?? 0;
-  const language = deck.language ?? "en";
-  const difficulty = deck.difficulty ?? "MEDIUM";
-
-  return (
-    <span className={styles.cardDiscovery}>
-      <span className={styles.cardDiscoveryItem} aria-label='Plays'>
-        <PlayIcon className={styles.cardIcon} />
-        {plays}
-      </span>
-      <span className={styles.cardDiscoveryItem} aria-label='Average rating'>
-        <StarIcon className={styles.cardIcon} />
-        {formatRating(rating, ratingCount)}
-      </span>
-      <span className={styles.cardDiscoveryItem} aria-label='Language'>
-        {language.toUpperCase()}
-      </span>
-      <span className={styles.cardDiscoveryItem} aria-label='Difficulty'>
-        {DIFFICULTY_LABEL[difficulty]}
-      </span>
-    </span>
-  );
-};
 
 /**
  * Starter slide stamped into every new deck so the editor never opens onto an
@@ -118,12 +35,7 @@ const buildFirstSlide = (id: string): Slide => ({
   kind: "Slide",
   id,
   slideKind: "TITLE",
-  title: "Untitled slide",
   body: "",
-  scored: false,
-  survey: false,
-  displaySeconds: 0,
-  mediaPosition: "NONE",
   resultsDisplayType: "DEFAULT",
   multipleSelectionsEnabled: false,
   selectionsPerParticipant: 1,
@@ -132,9 +44,16 @@ const buildFirstSlide = (id: string): Slide => ({
   showJoinInformation: true,
   showQrCode: false,
   showResponses: "INSTANT",
-  tagIds: [],
-  reactionsEnabled: true,
-  version: 1,
+  chrome: {
+    title: "Untitled slide",
+    scored: false,
+    survey: false,
+    displaySeconds: 0,
+    mediaPosition: "NONE",
+    tagIds: [],
+    reactionsEnabled: true,
+    version: 1,
+  },
 });
 
 const buildOptimisticDeck = (
@@ -152,9 +71,8 @@ const buildOptimisticDeck = (
   elementCount: 1,
   elements: [firstSlide],
 });
-//TODO Extract this out into its own component, it should go with the other Card components - potentially be a variant
-//TODO the cards should have a small menu button on the top right that toggles a dropdown which then exposes options
-const DeckCard = ({
+
+const DeckCardWithMenu = ({
   deck,
   editable,
   onDelete,
@@ -180,69 +98,43 @@ const DeckCard = ({
       position='top-left'
       anchorToCursor
       trigger={(toggle) => (
-        <div
-          className={styles.card}
+        <DeckCard
+          deck={deck}
+          variant='full'
           onClick={() => {
-            void navigate({ to: `/decks/${deck.id}/edit` });
+            void navigate({ to: `/decks/${deck.id ?? ""}/edit` });
           }}
           onContextMenu={(e) => {
             e.preventDefault();
             toggle(e);
-          }}>
-          <div className={styles.cardCoverWrap}>
-            <img
-              src={resolveDeckCover(deck.cover, deck.id)}
-              alt=''
-              className={styles.cardCover}
-              loading='lazy'
-            />
-            {deck.id && (
-              <span className={styles.cardHeart}>
-                <FavoriteHeart
-                  deckId={deck.id}
-                  isFavorited={deck.isFavorited ?? false}
-                  favoriteCount={deck.favoriteCount}
-                  showCount
-                  size='sm'
-                />
-              </span>
-            )}
-          </div>
-          <span className={styles.cardName}>{deck.name}</span>
-          <DeckStatusRow deck={deck} />
-          <span className={styles.cardMeta}>
-            {deck.elementCount ?? 0} elements
-            {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
-          </span>
-          <DeckDiscoveryRow deck={deck} />
-          {deck.description && (
-            <span className={styles.cardDesc}>{deck.description}</span>
-          )}
-          {deck.id && (
-            <div className={styles.cardActions}>
-              <DeckActionButton deckId={deck.id} size='sm' />
-              {editable && (
-                <>
-                  <Link
-                    to='/decks/$deckId/edit'
-                    params={{ deckId: deck.id }}
-                    search={{ questionId: undefined }}
-                    viewTransition>
-                    <Btn size='sm'>Edit</Btn>
-                  </Link>
-                  <Btn
-                    size='sm'
-                    variant='error'
-                    onClick={() => {
-                      if (deck.id) onDelete?.(deck.id);
-                    }}>
-                    Delete
-                  </Btn>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+          }}
+          actions={
+            deck.id ? (
+              <>
+                <DeckActionButton deckId={deck.id} size='sm' />
+                {editable && (
+                  <>
+                    <Link
+                      to='/decks/$deckId/edit'
+                      params={{ deckId: deck.id }}
+                      search={{ questionId: undefined }}
+                      viewTransition>
+                      <Btn size='sm'>Edit</Btn>
+                    </Link>
+                    <Btn
+                      size='sm'
+                      variant='error'
+                      onClick={() => {
+                        if (deck.id) onDelete?.(deck.id);
+                      }}>
+                      Delete
+                    </Btn>
+                  </>
+                )}
+              </>
+            ) : null
+          }
+        />
       )}>
       <DropdownMenuItem onClick={handleAddToCollection}>
         Add to collection…
@@ -399,7 +291,7 @@ const MyDecksPage = () => {
           ) : (
             <div className={styles.grid}>
               {visibleDecks.map((deck) => (
-                <DeckCard
+                <DeckCardWithMenu
                   key={deck.id}
                   deck={deck}
                   editable={
@@ -421,7 +313,7 @@ const MyDecksPage = () => {
         ) : (
           <div className={styles.grid}>
             {userSystemDecks.map((deck) => (
-              <DeckCard key={deck.id} deck={deck} editable={false} />
+              <DeckCardWithMenu key={deck.id} deck={deck} editable={false} />
             ))}
           </div>
         )}

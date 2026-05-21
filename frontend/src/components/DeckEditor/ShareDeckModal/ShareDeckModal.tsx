@@ -22,6 +22,7 @@ import {
   useTransferOwnershipMutation,
   type DeckCollaboratorDto,
 } from "@/store/BrainFlexApi";
+import { resolveAvatarSrc } from "@/utils/avatarUrl";
 import styles from "./ShareDeckModal.module.css";
 
 interface ShareDeckModalProps {
@@ -193,7 +194,7 @@ const ShareDeckModal = ({
                 <div className={styles.avatarSlot}>
                   {row.pictureUrl != null && row.pictureUrl !== "" ? (
                     <img
-                      src={row.pictureUrl}
+                      src={resolveAvatarSrc(row.pictureUrl)}
                       alt=''
                       className={styles.avatar}
                       loading='lazy'

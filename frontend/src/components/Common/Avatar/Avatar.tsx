@@ -3,6 +3,7 @@
 // uniformly via the size prop so callers don't reinvent the circle.
 import { useState } from "react";
 import { UserIcon } from "@heroicons/react/24/solid";
+import { resolveAvatarSrc } from "@/utils/avatarUrl";
 import styles from "./Avatar.module.css";
 
 interface AvatarProps {
@@ -15,7 +16,8 @@ interface AvatarProps {
 
 const Avatar = ({ src, name, alt, size = "md", className }: AvatarProps) => {
   const [errored, setErrored] = useState(false);
-  const showImage = Boolean(src) && !errored;
+  const resolvedSrc = resolveAvatarSrc(src);
+  const showImage = Boolean(resolvedSrc) && !errored;
   const initial = name?.trim().charAt(0).toUpperCase();
   const wrapperClass = [styles.avatar, styles[size], className]
     .filter(Boolean)
@@ -25,7 +27,7 @@ const Avatar = ({ src, name, alt, size = "md", className }: AvatarProps) => {
     <span className={wrapperClass} aria-label={alt ?? name}>
       {showImage ? (
         <img
-          src={src ?? ""}
+          src={resolvedSrc ?? ""}
           alt={alt ?? name ?? ""}
           className={styles.image}
           onError={() => {

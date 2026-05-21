@@ -1,8 +1,8 @@
 /**
  * One-shot backfill that wipes {@code deck_analytics} and replays every
  * finished {@link cephadex.brainflex.model.InteractiveSession} through
- * {@link cephadex.brainflex.service.DeckAnalyticsService#recordGame} in
- * chronological order, producing a deterministic per-deck rollup.
+ * {@link cephadex.brainflex.service.DeckAnalyticsService#recordSessionFinish}
+ * in chronological order, producing a deterministic per-deck rollup.
  *
  * Gated on {@code --migrate.deck-analytics=true} so a normal boot is a no-op;
  * mirrors the chunk-15 {@code GameHistoryBackfillMigration} pattern. The
@@ -10,9 +10,12 @@
  * without leaving a stray Spring context behind.
  *
  * Unlike the game-history backfill, this one <b>resets</b> the target collection
- * first — {@code recordGame} is not idempotent (it increments running averages
- * + counters), so the only safe replay strategy is "delete and replay from
- * zero."
+ * first — {@code recordSessionFinish} is not idempotent (it increments running
+ * averages + counters), so the only safe replay strategy is "delete and replay
+ * from zero." Re-running this migration is also the supported way to
+ * repopulate the per-format rollups
+ * ({@code gameRollup}/{@code presentationRollup}) on documents that predate
+ * the PR3 schema.
  */
 package cephadex.brainflex.config;
 
@@ -64,7 +67,7 @@ public class DeckAnalyticsBackfillMigration {
                         skippedNoDeck++;
                         continue;
                     }
-                    deckAnalyticsService.recordGame(session);
+                    deckAnalyticsService.recordSessionFinish(session);
                     finishedReplayed++;
                 }
 

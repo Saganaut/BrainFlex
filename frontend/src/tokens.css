@@ -188,6 +188,11 @@
   --bg-display-only: #fff;
   --bg-disabled: var(--white-700);
 
+  /** Modal / dialog backdrop. Same value in light and dark — the overlay's job */
+
+  /* is to dim whatever is behind it, regardless of theme.                      */
+  --bg-overlay: rgb(0 0 0 / 50%);
+
   /** Edge Tokens — hairline outline paired to each bg, used when you want a */
 
   /* subtle border that visually belongs to the fill. Darker in light mode,  */

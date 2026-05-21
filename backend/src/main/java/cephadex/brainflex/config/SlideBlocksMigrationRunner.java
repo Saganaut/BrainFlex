@@ -104,17 +104,12 @@ public class SlideBlocksMigrationRunner {
      *  one path that wants to replace them. */
     private static Slide withBlocks(Slide s, List<SlideBlock> blocks) {
         return new Slide(
-                s.id(), s.slideKind(), s.publicKey(), s.privateKey(),
-                s.title(), s.styledTitle(), s.body(), blocks,
-                s.scored(), s.survey(), s.multipleSelections(), s.responseMode(),
-                s.displaySeconds(), s.speakerNotes(), s.background(),
-                s.image(), s.videoUrl(), s.audioUrl(), s.videoAssetId(), s.audioAssetId(), s.mediaPosition(),
+                s.id(), s.slideKind(), s.body(), blocks,
                 s.resultsDisplayType(), s.multipleSelectionsEnabled(),
                 s.selectionsPerParticipant(), s.showResultsAsPercentage(),
                 s.joinType(), s.showJoinInformation(), s.showQrCode(), s.showResponses(),
                 s.heading(), s.participantInformation(),
                 s.autoAdvanceSeconds(),
-                s.createdByUserId(), s.lastEditedByUserId(), s.createdAt(), s.updatedAt(),
-                s.tagIds(), s.mediaCaption(), s.altText(), s.reactionsEnabled(), s.version());
+                s.chrome());
     }
 }

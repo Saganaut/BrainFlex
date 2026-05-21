@@ -8,10 +8,11 @@ package cephadex.brainflex.dto;
 import java.util.List;
 
 import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;
+import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -28,7 +29,8 @@ public record CreateDeckRequest(
         List<@Size(max = 64) String> tagIds,
         @Size(max = 64) String subjectTagId,
         DeckVisibility visibility,        // null → PRIVATE
-        DeckPreset recommendedPreset,     // null → GAME
+        SessionFormat defaultSessionFormat, // null → GAME
+        ShowResponsesMode defaultShowResponses, // null → INHERIT
         Image cover,
         Image background,
         String themeId,

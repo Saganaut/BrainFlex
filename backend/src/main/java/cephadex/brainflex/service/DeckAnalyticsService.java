@@ -27,20 +27,32 @@
  *   <li>SLIDE — skipped entirely; slides don't accept answers.</li>
  * </ul>
  *
+ * <h3>Format split (PR3)</h3>
+ *
+ * The recorder reads {@code session.format} and routes each finish into either
+ * the GAME or PRESENTATION {@link FormatRollup} on {@code DeckAnalytics}, in
+ * addition to updating the deck-wide totals. PRESENTATION sessions leave
+ * {@code averageScore} alone because scoring is typically disabled in
+ * presentation mode — averaging zeros would lie. Per-element stats stay
+ * merged across formats (a question presented in either mode contributes to
+ * the same {@link ElementStats}); the format split is a deck-level concern.
+ *
  * <h3>Failure isolation</h3>
  *
- * {@link #recordGame} swallows all exceptions and logs them — a broken
- * analytics rollup must never break game-end. Game history's call already
- * runs synchronously and unguarded; this one is wrapped because the per-kind
- * bucketing surface area is larger and any new element kind we forget to
- * branch on would otherwise blow up the entire finish path.
+ * {@link #recordSessionFinish} swallows all exceptions and logs them — a
+ * broken analytics rollup must never break game-end. Game history's call
+ * already runs synchronously and unguarded; this one is wrapped because the
+ * per-kind bucketing surface area is larger and any new element kind we
+ * forget to branch on would otherwise blow up the entire finish path.
  *
  * <h3>Backfill</h3>
  *
  * {@code DeckAnalyticsBackfillMigration} (gated on
  * {@code --migrate.deck-analytics=true}) wipes {@code deck_analytics} and
  * replays every finished session in chronological order so the rollup is
- * deterministic post-migration.
+ * deterministic post-migration. Re-running it is also the way to repopulate
+ * {@code gameRollup}/{@code presentationRollup} on documents that predate the
+ * PR3 schema.
  */
 package cephadex.brainflex.service;
 
@@ -56,6 +68,7 @@ import org.springframework.stereotype.Service;
 
 import cephadex.brainflex.model.DeckAnalytics;
 import cephadex.brainflex.model.ElementStats;
+import cephadex.brainflex.model.FormatRollup;
 import cephadex.brainflex.model.InteractiveSession;
 import cephadex.brainflex.model.InteractiveSessionPlayer;
 import cephadex.brainflex.model.PlayerAnswer;
@@ -74,6 +87,7 @@ import cephadex.brainflex.model.answer.TimeoutAnswer;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.enums.SessionFormat;
 import cephadex.brainflex.repository.DeckAnalyticsRepository;
 import cephadex.brainflex.repository.InteractiveSessionChatMessageRepository;
 import cephadex.brainflex.repository.ReactionRepository;
@@ -103,10 +117,13 @@ public class DeckAnalyticsService {
     /**
      * Incorporates one finished session into the per-deck rollup. Idempotency
      * is not guaranteed — running this twice for the same session double-counts.
-     * The caller (InteractiveSessionService.endGame) calls it exactly once;
-     * the backfill resets the collection before replaying.
+     * The caller ({@code InteractiveSessionService.endGame}) calls it exactly
+     * once; the backfill resets the collection before replaying. Handles both
+     * GAME and PRESENTATION sessions — the format is read off
+     * {@code session.getFormat()} and used to route into the matching
+     * {@link FormatRollup}.
      */
-    public void recordGame(InteractiveSession session) {
+    public void recordSessionFinish(InteractiveSession session) {
         if (session == null || session.getDeckId() == null) return;
         try {
             DeckAnalytics analytics = analyticsRepository.findById(session.getDeckId())
@@ -116,14 +133,14 @@ public class DeckAnalyticsService {
                         return fresh;
                     });
 
-            applyGameLevelRollup(analytics, session);
+            applyDeckWideRollup(analytics, session);
+            applyPerFormatRollup(analytics, session);
             applyPerElementRollup(analytics, session);
 
-            analytics.setUpdatedAt(LocalDateTime.now());
             analyticsRepository.save(analytics);
         } catch (Exception e) {
             // Swallow + log: a broken analytics call must not break game-end.
-            log.warn("DeckAnalytics.recordGame failed for deck {} (session {}): {}",
+            log.warn("DeckAnalytics.recordSessionFinish failed for deck {} (session {}): {}",
                     session.getDeckId(), session.getId(), e.toString());
         }
     }
@@ -138,7 +155,7 @@ public class DeckAnalyticsService {
         analyticsRepository.deleteAll();
     }
 
-    private void applyGameLevelRollup(DeckAnalytics analytics, InteractiveSession session) {
+    private void applyDeckWideRollup(DeckAnalytics analytics, InteractiveSession session) {
         long durationMs = computeDurationMs(session);
         int newTotalPlays = analytics.getTotalPlays() + 1;
         analytics.setAverageDurationMs(incrementalAvgLong(
@@ -159,6 +176,52 @@ public class DeckAnalyticsService {
         LocalDateTime endedAt = session.getEndedAt() != null ? session.getEndedAt() : LocalDateTime.now();
         if (analytics.getLastPlayedAt() == null || endedAt.isAfter(analytics.getLastPlayedAt())) {
             analytics.setLastPlayedAt(endedAt);
+        }
+    }
+
+    /**
+     * Routes one finished session into the {@link FormatRollup} matching its
+     * {@code session.format}. PRESENTATION sessions intentionally skip the
+     * {@code averageScore} update — presentations typically run with
+     * {@code scoringEnabled=false}, and averaging zeros would make the field
+     * look like the deck is producing low-scoring games. Accuracy still
+     * applies in both formats (it counts correctly-answered scored elements,
+     * which presentations can include).
+     */
+    private void applyPerFormatRollup(DeckAnalytics analytics, InteractiveSession session) {
+        SessionFormat fmt = session.getFormat() != null ? session.getFormat() : SessionFormat.GAME;
+
+        // Legacy docs predating PR3 deserialize with null rollups; lazily
+        // create them so the first post-PR3 finish doesn't NPE.
+        if (analytics.getGameRollup() == null) analytics.setGameRollup(new FormatRollup());
+        if (analytics.getPresentationRollup() == null) analytics.setPresentationRollup(new FormatRollup());
+
+        FormatRollup rollup = fmt == SessionFormat.GAME
+                ? analytics.getGameRollup()
+                : analytics.getPresentationRollup();
+
+        long durationMs = computeDurationMs(session);
+        int newSessionCount = rollup.getSessionCount() + 1;
+        rollup.setAverageDurationMs(incrementalAvgLong(
+                rollup.getAverageDurationMs(), durationMs, newSessionCount));
+        rollup.setSessionCount(newSessionCount);
+
+        List<InteractiveSessionPlayer> players = session.getPlayers() == null
+                ? List.of() : session.getPlayers();
+        for (InteractiveSessionPlayer p : players) {
+            int newParticipantCount = rollup.getParticipantCount() + 1;
+            if (fmt == SessionFormat.GAME) {
+                rollup.setAverageScore(incrementalAvgDouble(
+                        rollup.getAverageScore(), p.getScore(), newParticipantCount));
+            }
+            rollup.setAverageAccuracy(incrementalAvgDouble(
+                    rollup.getAverageAccuracy(), p.getAccuracy(), newParticipantCount));
+            rollup.setParticipantCount(newParticipantCount);
+        }
+
+        LocalDateTime endedAt = session.getEndedAt() != null ? session.getEndedAt() : LocalDateTime.now();
+        if (rollup.getLastRunAt() == null || endedAt.isAfter(rollup.getLastRunAt())) {
+            rollup.setLastRunAt(endedAt);
         }
     }
 

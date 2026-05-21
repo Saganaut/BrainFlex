@@ -3,17 +3,26 @@
  * and (for the host) the Start Game button. Real-time player-list updates
  * arrive via /topic/interactive-session/{roomCode}/lobby; the WebSocket is managed here.
  */
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAppDispatch } from "../../../store/hooks";
 import { setSession } from "../../../store/interactiveSessionSlice";
-import { useGetInteractiveSessionQuery } from "../../../store/BrainFlexApi";
+import {
+  useGetInteractiveSessionQuery,
+  useListAvatarsQuery,
+  useUpdateMyAvatarMutation,
+} from "../../../store/BrainFlexApi";
 import { useInteractiveSession } from "../../../hooks/useInteractiveSession";
 import { useInteractiveSessionWebSocket } from "../../../hooks/useInteractiveSessionWebSocket";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
 import { TeamPicker } from "../TeamPicker/TeamPicker";
 import { resolveInteractiveSessionBackground } from "../../../utils/deckImages";
+import { resolveAvatarSrc } from "../../../utils/avatarUrl";
+import {
+  AvatarSelector,
+  type AvatarOption,
+} from "@/components/Common/Input/AvatarSelector/AvatarSelector";
 import styles from "./Lobby.module.css";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
@@ -49,6 +58,29 @@ const Lobby = ({ roomCode }: LobbyProps) => {
       : undefined;
   const isHost = !!userId && session?.hostUserId === userId;
   const players = game.players;
+  const myPlayer = useMemo(
+    () => (userId ? players.find((p) => p.userId === userId) : undefined),
+    [players, userId],
+  );
+
+  // Chunk 13 — lobby avatar picker. Hosts don't pick a preset (their
+  // pictureUrl drives the lobby header), but every joined player can. The
+  // picker stays hidden until the player has actually joined (myPlayer set).
+  const showAvatarPicker = !isHost && !!myPlayer;
+  const { data: avatarPresets } = useListAvatarsQuery(undefined, {
+    skip: !showAvatarPicker,
+  });
+  const [updateMyAvatar] = useUpdateMyAvatarMutation();
+  const avatarOptions = useMemo<AvatarOption[]>(
+    () =>
+      (avatarPresets ?? []).map((preset) => ({
+        value: preset.key ?? "",
+        label: preset.displayName ?? preset.key ?? "Avatar",
+        src: preset.imageUrl ?? "",
+      })),
+    [avatarPresets],
+  );
+  const myAvatarKey = myPlayer?.avatarKey ?? "";
   // Team-mode lobby (chunk 12). The slice keeps teams in sync with both the
   // setSession refresh and STOMP /teams broadcasts, so we read from there
   // rather than session.teams to also catch live joins.
@@ -68,6 +100,17 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     }
   }, [userId, players, navigate]);
 
+  const handleAvatarChange = (avatarKey: string) => {
+    const preset = avatarPresets?.find((p) => p.key === avatarKey);
+    void updateMyAvatar({
+      roomCode,
+      updatePlayerAvatarRequest: {
+        avatarKey,
+        colorTag: preset?.colorTag,
+      },
+    });
+  };
+
   const handleBoot = async (targetUserId: string) => {
     const ok = await confirm({
       title: "Remove player",
@@ -80,24 +123,62 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   };
 
   const backgroundUrl = resolveInteractiveSessionBackground(
-    session?.deckBackgroundImageUrl,
+    session?.settings?.deckBackgroundImageUrl,
     session?.deckId,
   );
 
   return (
-    <div
+    <section
       className={styles.lobby}
+      aria-label='Lobby'
       style={
         { "--interactive-session-bg": `url(${backgroundUrl})` } as React.CSSProperties
       }>
-      <div className={styles.header}>
+      <header className={styles.header}>
         <h1 className={styles.title}>Lobby</h1>
+        {(session?.hostName ?? session?.hostAvatarUrl) && (
+          <div className={styles.hostStrip}>
+            {session.hostAvatarUrl && (
+              <img
+                src={resolveAvatarSrc(session.hostAvatarUrl)}
+                alt=''
+                className={styles.hostAvatar}
+              />
+            )}
+            <span className={styles.hostLine}>
+              <span className={styles.hostLabel}>Hosted by</span>
+              <span className={styles.hostName}>
+                {session.hostName ?? "Host"}
+              </span>
+            </span>
+          </div>
+        )}
         <div className={styles.codeBox}>
           <span className={styles.codeLabel}>Room Code</span>
-          <span className={styles.codeValue}>{roomCode}</span>
+          {/* Chunk 13 — when the host set a customRoomCode, surface that as
+              the canonical big-text value. The auto-generated 6-char roomCode
+              is still the URL path (and falls back here if no custom code is
+              set), so this is purely a display swap. */}
+          <span className={styles.codeValue}>
+            {session?.customRoomCode ?? roomCode}
+          </span>
           <span className={styles.codeHint}>Share this with friends</span>
         </div>
-      </div>
+      </header>
+
+      {showAvatarPicker && avatarOptions.length > 0 && (
+        <section
+          className={styles.avatarPickerSection}
+          aria-label='Choose your avatar'>
+          <h2 className={styles.avatarPickerHeading}>Pick your avatar</h2>
+          <AvatarSelector
+            name='lobby-avatar'
+            value={myAvatarKey}
+            options={avatarOptions}
+            onChange={handleAvatarChange}
+          />
+        </section>
+      )}
 
       {teamMode && (
         <TeamPicker
@@ -110,8 +191,8 @@ const Lobby = ({ roomCode }: LobbyProps) => {
         />
       )}
 
-      <div className={styles.playerSection}>
-        <h2 className={styles.playerHeading}>
+      <section className={styles.playerSection} aria-labelledby='lobby-players-heading'>
+        <h2 id='lobby-players-heading' className={styles.playerHeading}>
           Players ({players.length} / {session?.settings?.maxPlayers ?? 8})
         </h2>
         <ul className={styles.playerList}>
@@ -120,12 +201,26 @@ const Lobby = ({ roomCode }: LobbyProps) => {
             const isPlayerHost = session?.hostUserId === playerId;
             const isOffline =
               !!playerId && game.offlineUserIds.includes(playerId);
+            // Chunk 13 — preset avatar (avatarKey) wins over the player's
+            // real pictureUrl when present. avatarPresets only loads once a
+            // non-host viewer is in the lobby; on hosts we still resolve via
+            // pictureUrl, so this just lights up after the picker fires.
+            const presetUrl =
+              p.avatarKey && avatarPresets
+                ? avatarPresets.find((preset) => preset.key === p.avatarKey)
+                    ?.imageUrl
+                : undefined;
+            const avatarSrc = presetUrl ?? p.pictureUrl;
             return (
               <li
                 key={playerId}
                 className={`${styles.player} ${isOffline ? styles.offline : ""}`}>
-                {p.pictureUrl ? (
-                  <img src={p.pictureUrl} alt='' className={styles.avatar} />
+                {avatarSrc ? (
+                  <img
+                    src={resolveAvatarSrc(avatarSrc)}
+                    alt=''
+                    className={styles.avatar}
+                  />
                 ) : (
                   <div className={styles.avatarFallback}>
                     {(p.userName?.[0] ?? "?").toUpperCase()}
@@ -158,9 +253,9 @@ const Lobby = ({ roomCode }: LobbyProps) => {
         {players.length === 0 && (
           <p className={styles.emptyState}>Waiting for players to join…</p>
         )}
-      </div>
+      </section>
 
-      <div className={styles.actions}>
+      <footer className={styles.actions}>
         <WsErrorBanner />
         {isHost ? (
           <Btn
@@ -176,8 +271,8 @@ const Lobby = ({ roomCode }: LobbyProps) => {
         <Btn type='button' className={styles.leaveBtn} onClick={sendLeave}>
           Leave
         </Btn>
-      </div>
-    </div>
+      </footer>
+    </section>
   );
 };
 

@@ -12,10 +12,10 @@
   --background-color-hover: var(--background-color, transparent);
   --border-color-hover: var(--action-hover);
 
-  max-width: var(--max-screen-width);
+  /* max-width: var(--max-screen-width);
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1; */
 
   .navbar {
     display: flex;
@@ -48,6 +48,11 @@
         color: var(--text-error);
       }
     }
+  }
+
+  .iconMd {
+    width: 1rem;
+    height: 1rem;
   }
 
   .slideCanvasContainer {

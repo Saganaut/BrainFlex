@@ -1,30 +1,38 @@
+// CLAUDE NEVER MODIFY THIS FILE!
+
 import { MainBodyDashboard } from "@/components/Layout/MainBodyDashboard";
-import { useSession } from "./useSession";
 import { CanvasHeader } from "@/components/Layout/CanvasHeader";
 import { CanvasBody } from "@/components/Layout/CanvasBody";
 import { InnerDisplay } from "@/components/Layout/InnerDisplay";
 import { LeftSidebar } from "@/components/Layout/LeftSidebar";
 import { RightSidebar } from "@/components/Layout/RightSidebar";
-
+import { SessionBoard } from "@/components/Session/SessionBoard/SessionBoard";
+import { SessionControls } from "@/components/Session/SessionControls/SessionControls";
+import { SessionRoundTracker } from "@/components/Session/SessionRoundTracker/SessionRoundTracker";
+import styles from "./SessionPage.module.css";
+import { SessionHeader } from "@/components/Session/SessionHeader/SessionHeader";
+import { SessionLeaderboard } from "@/components/Session/SessionLeaderboard/SessionLeaderboard";
+import { SessionPlayerList } from "@/components/Session/SessionPlayerList/SessionPlayerList";
+import { SessionChat } from "@/components/Session/SessionChat/SessionChat";
 const SessionPage = () => {
-  const { sessionId } = useSession();
-
   return (
-    <MainBodyDashboard className={""}>
-      <CanvasHeader>
-        <div>Header {sessionId}</div>
+    <MainBodyDashboard className={styles.sessionDashboard}>
+      <CanvasHeader className={styles.header}>
+        <SessionHeader />
       </CanvasHeader>
-      <CanvasBody>
-        <LeftSidebar>A progress tracker </LeftSidebar>
-        <InnerDisplay>
-          {" "}
-          {sessionId}
-          {/* 
-            Main presentation is one row
-
-            Bottom row is controls */}
+      <CanvasBody className={styles.body}>
+        <LeftSidebar className={styles.leftSidebar}>
+          <SessionRoundTracker />
+        </LeftSidebar>
+        <InnerDisplay className={styles.innerDisplay}>
+          <SessionBoard className={styles.sessionBoard} />
+          <SessionControls className={styles.sessionControls} />
         </InnerDisplay>
-        <RightSidebar>Players, leaderboards, chat, emojis</RightSidebar>
+        <RightSidebar className={styles.rightSidebar}>
+          <SessionLeaderboard />
+          <SessionPlayerList />
+          <SessionChat />
+        </RightSidebar>
       </CanvasBody>
     </MainBodyDashboard>
   );

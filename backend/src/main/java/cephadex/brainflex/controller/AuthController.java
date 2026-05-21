@@ -1,6 +1,7 @@
 package cephadex.brainflex.controller;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +24,7 @@ import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthoritiesService;
 import cephadex.brainflex.service.DeckCollaboratorService;
+import cephadex.brainflex.service.OAuthProviderService;
 import cephadex.brainflex.service.UserImageHydrator;
 import cephadex.brainflex.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,24 +35,38 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/auth")
 public class AuthController {
 
+    /**
+     * Allowlist of OAuth registration ids accepted by {@code /api/auth/login}.
+     * Anything else is rejected before we hand off to Spring's OAuth2 filter
+     * so a typo (or attacker-supplied) provider name can't drive a redirect to
+     * an arbitrary {@code /oauth2/authorization/...} path.
+     */
+    private static final Set<String> SUPPORTED_PROVIDERS = Set.of(
+            OAuthProviderService.GOOGLE,
+            OAuthProviderService.DISCORD,
+            OAuthProviderService.MICROSOFT);
+
     private final UserRepository userRepository;
     private final UserService userService;
     private final SecurityContextRepository securityContextRepository;
     private final AuthoritiesService authoritiesService;
     private final UserImageHydrator userImageHydrator;
     private final DeckCollaboratorService deckCollaboratorService;
+    private final OAuthProviderService oAuthProviderService;
 
     public AuthController(UserRepository userRepository, UserService userService,
             SecurityContextRepository securityContextRepository,
             AuthoritiesService authoritiesService,
             UserImageHydrator userImageHydrator,
-            DeckCollaboratorService deckCollaboratorService) {
+            DeckCollaboratorService deckCollaboratorService,
+            OAuthProviderService oAuthProviderService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.securityContextRepository = securityContextRepository;
         this.authoritiesService = authoritiesService;
         this.userImageHydrator = userImageHydrator;
         this.deckCollaboratorService = deckCollaboratorService;
+        this.oAuthProviderService = oAuthProviderService;
     }
 
     @GetMapping("/me")
@@ -69,7 +85,7 @@ public class AuthController {
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user))))
                         .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
             } else if (isRegistered) {
-                return userRepository.findByGoogleId(authentication.getName())
+                return oAuthProviderService.findByOAuthAuthentication(authentication)
                         .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.RegisteredUser(user, userImageHydrator.pictureImageOf(user))))
                         .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
             }
@@ -86,13 +102,11 @@ public class AuthController {
             @Valid @RequestBody RegisterRequest request,
             Authentication authentication) {
 
-        if (authentication == null || !authentication.isAuthenticated() ||
-                "anonymousUser".equals(authentication.getName())) {
+        if (!(authentication instanceof OAuth2AuthenticationToken token) || !token.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).<UserDTO.RegisteredUser>build();
         }
 
-        OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-        User registered = userService.register(oAuth2User, request);
+        User registered = userService.register(token, request);
         // Promote any pending email-based deck-collaborator invites for this
         // address — invites sent to "alice@example.com" before Alice signed up
         // resolve to her userId now.
@@ -105,15 +119,17 @@ public class AuthController {
     public void login(
             @RequestParam(required = false) String returnUrl,
             @RequestParam(required = false) String guestId,
+            @RequestParam(required = false, defaultValue = OAuthProviderService.GOOGLE) String provider,
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
+        String registrationId = SUPPORTED_PROVIDERS.contains(provider) ? provider : OAuthProviderService.GOOGLE;
         if (returnUrl != null) {
             request.getSession(true).setAttribute("returnUrl", returnUrl);
         }
         if (guestId != null && !guestId.isBlank()) {
             request.getSession(true).setAttribute("guestId", guestId);
         }
-        response.sendRedirect("/oauth2/authorization/google");
+        response.sendRedirect("/oauth2/authorization/" + registrationId);
     }
 
     @PostMapping("/guest")

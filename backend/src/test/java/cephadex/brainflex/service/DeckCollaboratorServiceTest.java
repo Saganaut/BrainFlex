@@ -31,6 +31,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -50,6 +51,7 @@ class DeckCollaboratorServiceTest {
     @Mock private DeckRepository deckRepository;
     @Mock private UserRepository userRepository;
     @Mock private UserImageHydrator userImageHydrator;
+    @Mock private ApplicationEventPublisher events;
 
     @InjectMocks private DeckCollaboratorService service;
 

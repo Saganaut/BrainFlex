@@ -39,14 +39,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import cephadex.brainflex.model.Achievement;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.Organization;
 import cephadex.brainflex.model.InteractiveSessionSettings;
 import cephadex.brainflex.model.Tag;
 import cephadex.brainflex.model.Theme;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.enums.AchievementTrigger;
 import cephadex.brainflex.model.element.BodyBlock;
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.element.ElementChrome;
 import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
 import cephadex.brainflex.model.element.Image;
@@ -62,7 +65,8 @@ import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.SlideBlock;
 import cephadex.brainflex.model.element.TextQuestion;
-import cephadex.brainflex.model.enums.DeckPreset;
+import cephadex.brainflex.model.enums.BestAnswerScoring;
+import cephadex.brainflex.model.enums.SessionFormat;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;
@@ -75,6 +79,7 @@ import cephadex.brainflex.model.enums.ResponseMode;
 import cephadex.brainflex.model.enums.ResultsDisplayType;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
 import cephadex.brainflex.model.enums.SlideKind;
+import cephadex.brainflex.repository.AchievementRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.TagRepository;
@@ -105,6 +110,7 @@ public class SampleDataSeeder {
             ThemeRepository themeRepository,
             OrganizationRepository organizationRepository,
             TagRepository tagRepository,
+            AchievementRepository achievementRepository,
             TagService tagService,
             DeckCollaboratorService deckCollaboratorService,
             MongoTemplate mongoTemplate) {
@@ -119,6 +125,7 @@ public class SampleDataSeeder {
                 ensureUsers(userRepository);
                 int tagsAdded = ensureCuratedTags(tagRepository);
                 ensureSystemDecks(deckRepository);
+                int achievementsAdded = ensureAchievementCatalog(achievementRepository);
 
                 List<User> users = userRepository.findAll();
                 System.out.println("Found " + users.size() + " users — populating sample data per user…");
@@ -140,6 +147,7 @@ public class SampleDataSeeder {
                 System.out.println("  themes added:     " + themeCount);
                 System.out.println("  decks added:      " + deckCount);
                 System.out.println("  curated tags new: " + tagsAdded);
+                System.out.println("  achievements new: " + achievementsAdded);
                 System.out.println("  tag counts dirty: " + recounted);
             } finally {
                 int exit = SpringApplication.exit(applicationContext, () -> 0);
@@ -174,7 +182,9 @@ public class SampleDataSeeder {
                 "interactive_sessions",
                 "interactive_session_results",
                 "audience_submissions",
-                "best_answer_votes");
+                "best_answer_votes",
+                "achievements",
+                "user_achievements");
         System.out.println("--seed.clear=true → dropping collections");
         for (String name : collections) {
             long count = mongoTemplate.getCollection(name).countDocuments();
@@ -231,10 +241,110 @@ public class SampleDataSeeder {
             tag.setDescription(entry.description());
             tag.setCurated(true);
             tag.setDeckCount(0);
-            LocalDateTime now = LocalDateTime.now();
-            tag.setCreatedAt(now);
-            tag.setUpdatedAt(now);
             tagRepository.save(tag);
+            added++;
+        }
+        return added;
+    }
+
+    // ------------------------------------------------------- achievements
+
+    /**
+     * Seeds the chunk-17 starter achievement catalog. Slugs are stable so the
+     * loader is idempotent — re-running tops up missing rows but never edits
+     * or deletes existing ones (admin-tweaked names/descriptions stick).
+     *
+     * Categories: starter (introductory milestones), scoring (point/score
+     * thresholds), games (volume), social (favorites, hidden surprises),
+     * creator (decks created/published), host (games hosted).
+     */
+    private int ensureAchievementCatalog(AchievementRepository achievementRepository) {
+        record Seed(String id, String name, String description, String category,
+                AchievementTrigger trigger, int threshold, int rewardPoints,
+                boolean hidden, int displayOrder) {}
+        List<Seed> catalog = List.of(
+                // -------- starter --------
+                new Seed("first-game", "First Steps",
+                        "Finish your first game.", "starter",
+                        AchievementTrigger.FIRST_GAME, 1, 50, false, 10),
+                new Seed("first-deck", "Author",
+                        "Create your first deck.", "starter",
+                        AchievementTrigger.DECKS_CREATED, 1, 50, false, 20),
+                new Seed("first-publish", "Shared with the World",
+                        "Publish your first deck.", "starter",
+                        AchievementTrigger.DECKS_PUBLISHED, 1, 100, false, 30),
+
+                // -------- scoring --------
+                new Seed("points-1k", "Rising Star",
+                        "Earn 1,000 lifetime points.", "scoring",
+                        AchievementTrigger.TOTAL_POINTS, 1_000, 50, false, 40),
+                new Seed("points-10k", "Veteran",
+                        "Earn 10,000 lifetime points.", "scoring",
+                        AchievementTrigger.TOTAL_POINTS, 10_000, 250, false, 50),
+                new Seed("points-100k", "Legend",
+                        "Earn 100,000 lifetime points.", "scoring",
+                        AchievementTrigger.TOTAL_POINTS, 100_000, 1_000, false, 60),
+                new Seed("high-score-2k", "Big Round",
+                        "Score 2,000 in a single game.", "scoring",
+                        AchievementTrigger.HIGH_SCORE, 2_000, 100, false, 70),
+
+                // -------- games --------
+                new Seed("games-10", "Regular",
+                        "Finish 10 games.", "scoring",
+                        AchievementTrigger.GAMES_PLAYED, 10, 100, false, 80),
+                new Seed("games-100", "Frequent Player",
+                        "Finish 100 games.", "scoring",
+                        AchievementTrigger.GAMES_PLAYED, 100, 500, false, 90),
+                new Seed("games-1000", "Devotee",
+                        "Finish 1,000 games.", "scoring",
+                        AchievementTrigger.GAMES_PLAYED, 1_000, 2_500, false, 100),
+
+                // -------- streaks & perfect --------
+                new Seed("streak-5", "On a Roll",
+                        "Answer 5 questions correctly in a row.", "scoring",
+                        AchievementTrigger.STREAK, 5, 100, false, 110),
+                new Seed("streak-10", "Unstoppable",
+                        "Answer 10 questions correctly in a row.", "scoring",
+                        AchievementTrigger.STREAK, 10, 250, false, 120),
+                new Seed("perfect-5", "Flawless",
+                        "Answer every question right in a 5+ question game.", "scoring",
+                        AchievementTrigger.PERFECT_GAME, 5, 250, true, 130),
+
+                // -------- host --------
+                new Seed("host-10", "Quizmaster",
+                        "Host 10 games.", "host",
+                        AchievementTrigger.HOST_GAMES, 10, 200, false, 140),
+                new Seed("host-100", "Master of Ceremonies",
+                        "Host 100 games.", "host",
+                        AchievementTrigger.HOST_GAMES, 100, 1_000, false, 150),
+
+                // -------- creator & social --------
+                new Seed("decks-10", "Prolific Author",
+                        "Create 10 decks.", "creator",
+                        AchievementTrigger.DECKS_CREATED, 10, 250, false, 160),
+                new Seed("decks-published-5", "Curator",
+                        "Publish 5 decks.", "creator",
+                        AchievementTrigger.DECKS_PUBLISHED, 5, 250, false, 170),
+                new Seed("favorites-10", "Crowd Favorite",
+                        "Have one of your decks favorited 10 times.", "social",
+                        AchievementTrigger.FAVORITES_RECEIVED, 10, 200, false, 180));
+
+        int added = 0;
+        LocalDateTime now = LocalDateTime.now();
+        for (Seed seed : catalog) {
+            if (achievementRepository.existsById(seed.id())) continue;
+            Achievement a = new Achievement();
+            a.setId(seed.id());
+            a.setName(seed.name());
+            a.setDescription(seed.description());
+            a.setCategory(seed.category());
+            a.setTrigger(seed.trigger());
+            a.setThreshold(seed.threshold());
+            a.setRewardPoints(seed.rewardPoints());
+            a.setHidden(seed.hidden());
+            a.setDisplayOrder(seed.displayOrder());
+            a.setCreatedAt(now);
+            achievementRepository.save(a);
             added++;
         }
         return added;
@@ -290,7 +400,6 @@ public class SampleDataSeeder {
                 org = new Organization();
                 org.setName(factionName);
                 org.setOwnerId(owner.getId());
-                org.setCreatedAt(LocalDateTime.now());
                 org = organizationRepository.save(org);
                 System.out.println("  Org created: " + factionName + " (owner=" + owner.getUserName() + ")");
             }
@@ -357,7 +466,6 @@ public class SampleDataSeeder {
         theme.setHuePrimary(palette.huePrimary);
         theme.setHueAccent(palette.hueAccent);
         theme.setMode(palette.mode);
-        theme.setCreatedAt(LocalDateTime.now());
         theme = themeRepository.save(theme);
 
         if (user.getActiveThemeId() == null) {
@@ -429,7 +537,7 @@ public class SampleDataSeeder {
                 "A grab-bag of trivia about the nine walkers, from Bag End to Mount Doom.",
                 List.of("lotr", "trivia", "fellowship"),
                 "fellowship-trivia");
-        deck.setRecommendedPreset(DeckPreset.GAME);
+        deck.setDefaultSessionFormat(SessionFormat.GAME);
         deck.setEstimatedDurationMinutes(7);
 
         List<DeckElement> els = new ArrayList<>();
@@ -445,17 +553,13 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM));
 
         els.add(new NumberQuestion("ftd-num-1",
-                pub("ftd-num-1"), prv("ftd-num-1"),
-                "How many members were there in the Fellowship of the Ring?", null,
                 "How many members were there in the Fellowship of the Ring?",
                 9.0, 0.0, " members", 0,
                 150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Four hobbits, two men, an elf, a dwarf, and a wizard.",
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "Four hobbits, two men, an elf, a dwarf, and a wizard.",
                 null, null, true,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("ftd-num-1", "How many members were there in the Fellowship of the Ring?",
+                        true, false, 15)));
 
         els.add(mcq("ftd-mcq-2", "Who breaks the Fellowship by attempting to take the Ring from Frodo?",
                 List.of("Aragorn", "Legolas", "Boromir", "Pippin"), 2,
@@ -473,7 +577,7 @@ public class SampleDataSeeder {
                 "A Pulse-style poll deck — no scoring, just hobbit hot takes.",
                 List.of("lotr", "pulse", "hobbits"),
                 "second-breakfast");
-        deck.setRecommendedPreset(DeckPreset.PULSE);
+        deck.setDefaultSessionFormat(SessionFormat.PRESENTATION);
         deck.setEstimatedDurationMinutes(4);
         InteractiveSessionSettings settings = deck.getDefaultSettings();
         settings.setScoringEnabled(false);
@@ -491,30 +595,20 @@ public class SampleDataSeeder {
                 new ScaleStatement("meal-tea", "Afternoon tea"),
                 new ScaleStatement("meal-supper", "Supper"));
         els.add(new ScalesQuestion("sb-scales-1",
-                pub("sb-scales-1"), prv("sb-scales-1"),
-                "Rate how essential each meal is to a proper hobbit day.", null,
                 "Rate how essential each meal is to a proper hobbit day.",
                 meals, 1, 5, "Skip it", "Sacred", List.of(),
-                0, Difficulty.EASY,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                0, Difficulty.EASY, null,
+                seedChrome("sb-scales-1", "Rate how essential each meal is to a proper hobbit day.",
+                        false, true, 30)));
 
         els.add(new QAndAQuestion("sb-qanda-1",
-                pub("sb-qanda-1"), prv("sb-qanda-1"),
-                "What's your strongest hobbit hot take? Submit anything.", null,
                 "What's your strongest hobbit hot take? Submit anything.",
                 3, true, false,
-                0, Difficulty.EASY,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                45, "Pin the best ones to share.",
-                null, null, null, null, null, null, MediaPosition.NONE,
+                0, Difficulty.EASY, null,
                 false, 0,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("sb-qanda-1", "What's your strongest hobbit hot take? Submit anything.",
+                        false, true, null, 45, "Pin the best ones to share.",
+                        false, null, 0, BestAnswerScoring.POINTS_PER_VOTE)));
 
         els.add(endSlide("sb-s-end", "Mind your taters.",
                 "PO-TA-TOES. Boil 'em, mash 'em, stick 'em in a stew."));
@@ -528,7 +622,7 @@ public class SampleDataSeeder {
                 "For wizards, lore-masters, and anyone who reads the appendices.",
                 List.of("lotr", "lore", "advanced"),
                 "ancient-lore");
-        deck.setRecommendedPreset(DeckPreset.GAME);
+        deck.setDefaultSessionFormat(SessionFormat.GAME);
         deck.setEstimatedDurationMinutes(8);
 
         List<DeckElement> els = new ArrayList<>();
@@ -549,23 +643,17 @@ public class SampleDataSeeder {
                 new RankingItem("age-third", "Third Age", null),
                 new RankingItem("age-fourth", "Fourth Age", null));
         els.add(new RankingQuestion("al-rank-1",
-                pub("al-rank-1"), prv("al-rank-1"),
-                "Order the Ages of Middle-earth from earliest to latest.", null,
                 "Order the Ages of Middle-earth from earliest to latest.",
                 ages,
                 List.of("age-first", "age-second", "age-third", "age-fourth"),
                 RankingScoring.PARTIAL,
                 250, Difficulty.MEDIUM,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "An Age ends with a great war or sundering.",
-                25, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "An Age ends with a great war or sundering.",
                 true,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("al-rank-1", "Order the Ages of Middle-earth from earliest to latest.",
+                        true, false, 25)));
 
         els.add(new GridQuestion("al-grid-1",
-                pub("al-grid-1"), prv("al-grid-1"),
-                "Select all the Valar (not Maiar) below.", null,
                 "Select all the Valar (not Maiar) below.",
                 3, 2,
                 new GridCellsConfig(
@@ -573,11 +661,10 @@ public class SampleDataSeeder {
                 Set.of(0, 2, 4),
                 true,
                 300, Difficulty.HARD,
-                true, false, 3, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Valar are the greater powers; Sauron, Gandalf, and Saruman are all Maiar.",
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                "Valar are the greater powers; Sauron, Gandalf, and Saruman are all Maiar.",
+                seedChrome("al-grid-1", "Select all the Valar (not Maiar) below.",
+                        true, false, 3, 30, null,
+                        false, null, 0, BestAnswerScoring.POINTS_PER_VOTE)));
 
         els.add(endSlide("al-s-end", "Even the wise cannot see all ends.",
                 "Thank you for studying with us."));
@@ -606,18 +693,14 @@ public class SampleDataSeeder {
                 200, Difficulty.MEDIUM));
 
         els.add(new PlaceOnImageQuestion("rr-place-1",
-                pub("rr-place-1"), prv("rr-place-1"),
-                "Click roughly where Edoras would be on this map of Rohan.", null,
                 "Click roughly where Edoras would be on this map of Rohan.",
                 Image.external("https://picsum.photos/seed/middle-earth-rohan/1200/800"),
                 0.5, 0.5, 0.1,
                 PlaceScoring.LINEAR,
                 200, Difficulty.MEDIUM,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Lorem Picsum placeholder until a real map ships.",
-                25, null, null, null, null, null, null, null, MediaPosition.NONE,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                "Lorem Picsum placeholder until a real map ships.",
+                seedChrome("rr-place-1", "Click roughly where Edoras would be on this map of Rohan.",
+                        true, false, 25)));
 
         els.add(endSlide("rr-s-end", "Forth Eorlingas!",
                 "Ride now, ride now! Ride to ruin and the world's ending!"));
@@ -684,30 +767,22 @@ public class SampleDataSeeder {
                 new McqOption("pipe-pony", "A Brandywine pony",
                         Image.external("https://picsum.photos/seed/lotr-pony/400/300"), null));
         els.add(new McqQuestion("sf-img-1",
-                pub("sf-img-1"), prv("sf-img-1"),
-                "Which of these would you find Gandalf enjoying outside Bag End?", null,
                 "Which of these would you find Gandalf enjoying outside Bag End?",
                 pipes, List.of("pipe-leaf"),
                 150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Old Toby is from the Southfarthing — Gandalf's favorite.",
-                20, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "Old Toby is from the Southfarthing — Gandalf's favorite.",
                 true, false, 0,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("sf-img-1", "Which of these would you find Gandalf enjoying outside Bag End?",
+                        true, false, 20)));
 
         els.add(new NumberQuestion("sf-num-1",
-                pub("sf-num-1"), prv("sf-num-1"),
-                "What birthday was Bilbo celebrating when he disappeared at his party?", null,
                 "What birthday was Bilbo celebrating when he disappeared at his party?",
                 111.0, 0.0, " years", 0,
                 150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "His eleventy-first birthday.",
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "His eleventy-first birthday.",
                 null, null, true,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("sf-num-1", "What birthday was Bilbo celebrating when he disappeared at his party?",
+                        true, false, 15)));
 
         els.add(endSlide("sf-s-end", "Don't keep them waiting.",
                 "It's a dangerous business, going out your door."));
@@ -727,7 +802,7 @@ public class SampleDataSeeder {
         deck.setSubjectTagId("pop-culture");
         deck.setTagIds(new ArrayList<>(List.of("pop-culture", "trivia")));
         deck.setVisibility(DeckVisibility.PRIVATE);
-        deck.setRecommendedPreset(DeckPreset.GAME);
+        deck.setDefaultSessionFormat(SessionFormat.GAME);
         deck.setCover(Image.external("https://picsum.photos/seed/" + seedSlug + "/480/280"));
         deck.setBackground(Image.external("https://picsum.photos/seed/" + seedSlug + "-bg/1600/1000"));
         // Sample LOTR decks ship as PUBLISHED with CC_BY so the Explore feed
@@ -737,8 +812,6 @@ public class SampleDataSeeder {
         deck.setLanguage("en");
         deck.setDifficulty(Difficulty.MEDIUM);
         deck.setLicense(License.CC_BY);
-        deck.setCreatedAt(LocalDateTime.now());
-        deck.setUpdatedAt(LocalDateTime.now());
         return deck;
     }
 
@@ -764,28 +837,52 @@ public class SampleDataSeeder {
         return List.of(new BodyBlock(id + "-block-1", body));
     }
 
-    private static Slide titleSlide(String id, String title, String body) {
-        return new Slide(id, SlideKind.TITLE, pub(id), prv(id), title, null, body, seedBlocks(id, body),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                6, null, null, null, null, null, null, null, MediaPosition.NONE,
-                ResultsDisplayType.DEFAULT, false, 1, false,
-                JoinType.INSTRUCTIONS_BAR, true, false, ShowResponsesMode.INSTANT,
-                null, null,
-                null,
+    /**
+     * Build an {@link ElementChrome} populated with the seeder's standard
+     * defaults. Callers pass the small set of fields that vary by element
+     * (title, scored/survey, displaySeconds, best-answer toggles); everything
+     * else (response mode, media slots, audit fields, version) lands on the
+     * shared seed constants. Eliminates the ~14-arg "chrome tail" that every
+     * element constructor used to repeat.
+     */
+    private static ElementChrome seedChrome(String id, String title,
+                                            boolean scored, boolean survey,
+                                            Integer multipleSelections,
+                                            int displaySeconds, String speakerNotes,
+                                            boolean bestAnswerMode, String bestAnswerTitle,
+                                            int bestAnswerPoints, BestAnswerScoring bestAnswerScoring) {
+        return new ElementChrome(
+                pub(id), prv(id), title, null, null,
+                scored, survey, multipleSelections, ResponseMode.ACCEPTING_RESPONSES,
+                displaySeconds, speakerNotes,
+                null, null, null, null, null, null, MediaPosition.NONE,
+                bestAnswerMode, bestAnswerTitle, bestAnswerPoints, bestAnswerScoring,
                 SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
                 SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
     }
 
-    private static Slide endSlide(String id, String title, String body) {
-        return new Slide(id, SlideKind.END, pub(id), prv(id), title, null, body, seedBlocks(id, body),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                8, null, null, null, null, null, null, null, MediaPosition.NONE,
+    /** Shorthand for the common "no best-answer, single-select" case. */
+    private static ElementChrome seedChrome(String id, String title, boolean scored, boolean survey, int displaySeconds) {
+        return seedChrome(id, title, scored, survey, null, displaySeconds, null,
+                false, null, 0, BestAnswerScoring.POINTS_PER_VOTE);
+    }
+
+    private static Slide titleSlide(String id, String title, String body) {
+        return new Slide(id, SlideKind.TITLE, body, seedBlocks(id, body),
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, true, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
+                seedChrome(id, title, false, false, 6));
+    }
+
+    private static Slide endSlide(String id, String title, String body) {
+        return new Slide(id, SlideKind.END, body, seedBlocks(id, body),
+                ResultsDisplayType.DEFAULT, false, 1, false,
+                JoinType.INSTRUCTIONS_BAR, true, false, ShowResponsesMode.INSTANT,
+                null, null,
+                null,
+                seedChrome(id, title, false, false, 8));
     }
 
     private static McqQuestion mcq(String id, String prompt, List<String> options, int correctIndex,
@@ -794,28 +891,18 @@ public class SampleDataSeeder {
         for (int i = 0; i < options.size(); i++) {
             opts.add(new McqOption(id + "-opt-" + i, options.get(i), null, null));
         }
-        return new McqQuestion(id, pub(id), prv(id), prompt, null,
-                prompt, opts, List.of(opts.get(correctIndex).id()),
-                pointValue, difficulty,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+        return new McqQuestion(id, prompt, opts, List.of(opts.get(correctIndex).id()),
+                pointValue, difficulty, null,
                 true, false, 0,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
+                seedChrome(id, prompt, true, false, 15));
     }
 
     private static TextQuestion textQ(String id, String prompt, String correct,
                                       List<String> variants, int pointValue, Difficulty difficulty) {
-        return new TextQuestion(id, pub(id), prv(id), prompt, null,
-                prompt, correct, variants, false,
-                pointValue, difficulty,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                20, null, null, null, null, null, null, null, MediaPosition.NONE,
+        return new TextQuestion(id, prompt, correct, variants, false,
+                pointValue, difficulty, null,
                 80, true, false, 1,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION);
+                seedChrome(id, prompt, true, false, 20));
     }
 
     // ---------- system decks (preserved from the old startup seeder) ------
@@ -830,7 +917,7 @@ public class SampleDataSeeder {
         deck.setTagIds(new ArrayList<>(List.of("general-knowledge", "trivia")));
         deck.setSystem(true);
         deck.setVisibility(DeckVisibility.PUBLIC);
-        deck.setRecommendedPreset(DeckPreset.GAME);
+        deck.setDefaultSessionFormat(SessionFormat.GAME);
         deck.setCover(Image.external("https://picsum.photos/seed/brainflex-welcome-tour/480/280"));
         deck.setBackground(Image.external("https://picsum.photos/seed/brainflex-welcome-tour-bg/1600/1000"));
         deck.setEstimatedDurationMinutes(8);
@@ -839,8 +926,6 @@ public class SampleDataSeeder {
         deck.setLanguage("en");
         deck.setDifficulty(Difficulty.EASY);
         deck.setLicense(License.CC_BY);
-        deck.setCreatedAt(LocalDateTime.now());
-        deck.setUpdatedAt(LocalDateTime.now());
 
         InteractiveSessionSettings defaults = new InteractiveSessionSettings();
         defaults.setTotalRounds(16);
@@ -851,33 +936,23 @@ public class SampleDataSeeder {
         List<DeckElement> els = new ArrayList<>();
 
         els.add(new Slide("wt-s-1", SlideKind.TITLE,
-                pub("wt-s-1"), prv("wt-s-1"),
-                "Welcome to BrainFlex", null,
                 "A quick tour through every kind of element a deck can contain. Press the screen to begin.",
                 seedBlocks("wt-s-1", "A quick tour through every kind of element a deck can contain. Press the screen to begin."),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                6, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.QR_CODE, true, true, ShowResponsesMode.INSTANT,
                 "Join the tour",
                 null,
                 null,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-s-1", "Welcome to BrainFlex", false, false, 6)));
 
         els.add(new Slide("wt-s-2", SlideKind.SECTION,
-                pub("wt-s-2"), prv("wt-s-2"),
-                "Trivia round", null,
                 "Multiple choice, then free-text, then a number guess.",
                 seedBlocks("wt-s-2", "Multiple choice, then free-text, then a number guess."),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-s-2", "Trivia round", false, false, 4)));
 
         List<McqOption> mcqOpts = List.of(
                 new McqOption("mars-opt-1", "Venus", null, null),
@@ -885,57 +960,40 @@ public class SampleDataSeeder {
                 new McqOption("mars-opt-3", "Mars", null, null),
                 new McqOption("mars-opt-4", "Saturn", null, null));
         els.add(new McqQuestion("wt-mcq-1",
-                pub("wt-mcq-1"), prv("wt-mcq-1"),
-                "Which planet is known as the Red Planet?", null,
                 "Which planet is known as the Red Planet?",
                 mcqOpts, List.of("mars-opt-3"),
                 100, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Mars looks red because of iron oxide (rust) on its surface.",
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "Mars looks red because of iron oxide (rust) on its surface.",
                 true, false, 0,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-mcq-1", "Which planet is known as the Red Planet?",
+                        true, false, 15)));
 
         els.add(new TextQuestion("wt-text-1",
-                pub("wt-text-1"), prv("wt-text-1"),
-                "What is the capital of France?", null,
                 "What is the capital of France?",
                 "Paris", List.of("paree"), false,
                 150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Paris has been France's capital since 987 AD.",
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "Paris has been France's capital since 987 AD.",
                 80, true, false, 1,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-text-1", "What is the capital of France?",
+                        true, false, 15)));
 
         els.add(new NumberQuestion("wt-num-1",
-                pub("wt-num-1"), prv("wt-num-1"),
-                "How many planets are in our solar system?", null,
                 "How many planets are in our solar system?",
                 8.0, 0.0, " planets", 0,
                 150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Pluto was reclassified as a dwarf planet in 2006.",
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "Pluto was reclassified as a dwarf planet in 2006.",
                 null, null, true,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-num-1", "How many planets are in our solar system?",
+                        true, false, 15)));
 
         els.add(new Slide("wt-s-3", SlideKind.SECTION,
-                pub("wt-s-3"), prv("wt-s-3"),
-                "Order and rate", null,
                 "Drag to reorder, then rate some statements.",
                 seedBlocks("wt-s-3", "Drag to reorder, then rate some statements."),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.BAR_VERTICAL, true, 3, true,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-s-3", "Order and rate", false, false, 4)));
 
         List<RankingItem> planets = List.of(
                 new RankingItem("planet-mercury", "Mercury", null),
@@ -943,19 +1001,15 @@ public class SampleDataSeeder {
                 new RankingItem("planet-earth", "Earth", null),
                 new RankingItem("planet-mars", "Mars", null));
         els.add(new RankingQuestion("wt-rank-1",
-                pub("wt-rank-1"), prv("wt-rank-1"),
-                "Order these planets from closest to farthest from the Sun.", null,
                 "Order these planets from closest to farthest from the Sun.",
                 planets,
                 List.of("planet-mercury", "planet-venus", "planet-earth", "planet-mars"),
                 RankingScoring.PARTIAL,
                 200, Difficulty.MEDIUM,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Distance order from the Sun outward.",
-                20, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "Distance order from the Sun outward.",
                 true,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-rank-1", "Order these planets from closest to farthest from the Sun.",
+                        true, false, 20)));
 
         List<ScaleStatement> features = List.of(
                 new ScaleStatement("feat-realtime", "Real-time multiplayer gameplay"),
@@ -963,102 +1017,73 @@ public class SampleDataSeeder {
                 new ScaleStatement("feat-slides", "Slides + media in decks"),
                 new ScaleStatement("feat-bestanswer", "Best Answer voting"));
         els.add(new ScalesQuestion("wt-scales-1",
-                pub("wt-scales-1"), prv("wt-scales-1"),
-                "How excited are you about each of these features?", null,
                 "How excited are you about each of these features?",
                 features, 1, 5, "Meh", "Hyped", List.of(),
-                0, Difficulty.EASY,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                25, null, null, null, null, null, null, null, MediaPosition.NONE,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                0, Difficulty.EASY, null,
+                seedChrome("wt-scales-1", "How excited are you about each of these features?",
+                        false, true, 25)));
 
         els.add(new Slide("wt-s-4", SlideKind.SECTION,
-                pub("wt-s-4"), prv("wt-s-4"),
-                "Audience interaction", null,
                 "Vote on the funniest answer, then ask anything.",
                 seedBlocks("wt-s-4", "Vote on the funniest answer, then ask anything."),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.PIE_CHART, false, 1, true,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.ON_CLICK,
                 null, null,
                 null,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-s-4", "Audience interaction", false, false, 4)));
 
         els.add(new TextQuestion("wt-best-1",
-                pub("wt-best-1"), prv("wt-best-1"),
-                "If our next deck had a one-word theme, what would it be?", null,
                 "If our next deck had a one-word theme, what would it be?",
                 "open",
                 List.of(), false,
                 0, Difficulty.EASY,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                true, "Which one-word theme is the most creative?", 100,
                 "Best Answer mode — players vote on the most creative response.",
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
                 80, true, false, 1,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-best-1", "If our next deck had a one-word theme, what would it be?",
+                        false, true, null, 30, null,
+                        true, "Which one-word theme is the most creative?", 100,
+                        BestAnswerScoring.POINTS_PER_VOTE)));
 
         els.add(new QAndAQuestion("wt-qanda-1",
-                pub("wt-qanda-1"), prv("wt-qanda-1"),
-                "Ask the host anything about how BrainFlex works.", null,
                 "Ask the host anything about how BrainFlex works.",
                 3, true, false,
-                0, Difficulty.EASY,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                45, "Audience asks freely; you pin the ones you want to address.",
-                null, null, null, null, null, null, MediaPosition.NONE,
+                0, Difficulty.EASY, null,
                 false, 0,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-qanda-1", "Ask the host anything about how BrainFlex works.",
+                        false, true, null, 45,
+                        "Audience asks freely; you pin the ones you want to address.",
+                        false, null, 0, BestAnswerScoring.POINTS_PER_VOTE)));
 
         els.add(new Slide("wt-s-5", SlideKind.SECTION,
-                pub("wt-s-5"), prv("wt-s-5"),
-                "Visual round", null,
                 "Tap cells, place a pin, pick an image.",
                 seedBlocks("wt-s-5", "Tap cells, place a pin, pick an image."),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                4, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.INSTANT,
                 null, null,
                 null,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-s-5", "Visual round", false, false, 4)));
 
         els.add(new GridQuestion("wt-grid-1",
-                pub("wt-grid-1"), prv("wt-grid-1"),
-                "Select all the prime numbers.", null,
                 "Select all the prime numbers.",
                 3, 3,
                 new GridCellsConfig(List.of("1", "2", "3", "4", "5", "6", "7", "8", "9"), null),
                 Set.of(1, 2, 4, 6),
                 true,
                 200, Difficulty.MEDIUM,
-                true, false, 4, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Primes: 2, 3, 5, 7.",
-                20, null, null, null, null, null, null, null, MediaPosition.NONE,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                "Primes: 2, 3, 5, 7.",
+                seedChrome("wt-grid-1", "Select all the prime numbers.",
+                        true, false, 4, 20, null,
+                        false, null, 0, BestAnswerScoring.POINTS_PER_VOTE)));
 
         els.add(new PlaceOnImageQuestion("wt-place-1",
-                pub("wt-place-1"), prv("wt-place-1"),
-                "Click roughly where Italy would be on this map.", null,
                 "Click roughly where Italy would be on this map.",
                 Image.external("https://picsum.photos/seed/brainflex-welcome-map/1200/800"),
                 0.55, 0.42, 0.08,
                 PlaceScoring.LINEAR,
                 200, Difficulty.MEDIUM,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "Lorem Picsum stands in for a real map until we wire one up.",
-                25, null, null, null, null, null, null, null, MediaPosition.NONE,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                "Lorem Picsum stands in for a real map until we wire one up.",
+                seedChrome("wt-place-1", "Click roughly where Italy would be on this map.",
+                        true, false, 25)));
 
         List<McqOption> landmarks = List.of(
                 new McqOption("lm-eiffel", "Eiffel Tower",
@@ -1070,31 +1095,22 @@ public class SampleDataSeeder {
                 new McqOption("lm-statue", "Statue of Liberty",
                         Image.external("https://picsum.photos/seed/landmark-statue/400/300"), null));
         els.add(new McqQuestion("wt-img-1",
-                pub("wt-img-1"), prv("wt-img-1"),
-                "Which of these is the Eiffel Tower?", null,
                 "Which of these is the Eiffel Tower?",
                 landmarks, List.of("lm-eiffel"),
                 150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, "MCQ option carries images.",
-                20, null, null, null, null, null, null, null, MediaPosition.NONE,
+                "MCQ option carries images.",
                 true, false, 0,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-img-1", "Which of these is the Eiffel Tower?",
+                        true, false, 20)));
 
         els.add(new Slide("wt-s-end", SlideKind.END,
-                pub("wt-s-end"), prv("wt-s-end"),
-                "Thanks for playing!", null,
                 "That's every element type. Now go build your own deck.",
                 seedBlocks("wt-s-end", "That's every element type. Now go build your own deck."),
-                false, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                8, null, null, null, null, null, null, null, MediaPosition.NONE,
                 ResultsDisplayType.DEFAULT, false, 1, false,
                 JoinType.INSTRUCTIONS_BAR, false, false, ShowResponsesMode.PRIVATE,
                 null, null,
                 null,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("wt-s-end", "Thanks for playing!", false, false, 8)));
 
         deck.setElements(els);
         return deck;
@@ -1110,7 +1126,7 @@ public class SampleDataSeeder {
         deck.setTagIds(new ArrayList<>(List.of("general-knowledge", "trivia")));
         deck.setSystem(true);
         deck.setVisibility(DeckVisibility.PUBLIC);
-        deck.setRecommendedPreset(DeckPreset.GAME);
+        deck.setDefaultSessionFormat(SessionFormat.GAME);
         deck.setCover(Image.external("https://picsum.photos/seed/brainflex-general-knowledge/480/280"));
         deck.setBackground(Image.external("https://picsum.photos/seed/brainflex-general-knowledge-bg/1600/1000"));
         deck.setEstimatedDurationMinutes(6);
@@ -1119,8 +1135,6 @@ public class SampleDataSeeder {
         deck.setLanguage("en");
         deck.setDifficulty(Difficulty.MEDIUM);
         deck.setLicense(License.CC_BY);
-        deck.setCreatedAt(LocalDateTime.now());
-        deck.setUpdatedAt(LocalDateTime.now());
 
         InteractiveSessionSettings defaults = new InteractiveSessionSettings();
         defaults.setTotalRounds(8);
@@ -1138,41 +1152,23 @@ public class SampleDataSeeder {
         els.add(mcq("gk-5", "Which element has the chemical symbol 'Au'?",
                 List.of("Silver", "Copper", "Aluminum", "Gold"), 3, 200, Difficulty.MEDIUM));
         els.add(new TextQuestion("gk-6",
-                pub("gk-6"), prv("gk-6"),
-                "What is the capital of France?", null,
                 "What is the capital of France?",
                 "Paris", List.of("paree"), false,
-                150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                150, Difficulty.EASY, null,
                 80, true, false, 1,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("gk-6", "What is the capital of France?", true, false, 15)));
         els.add(new TextQuestion("gk-7",
-                pub("gk-7"), prv("gk-7"),
-                "Who wrote the play 'Hamlet'?", null,
                 "Who wrote the play 'Hamlet'?",
                 "Shakespeare", List.of("William Shakespeare"), false,
-                200, Difficulty.MEDIUM,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                20, null, null, null, null, null, null, null, MediaPosition.NONE,
+                200, Difficulty.MEDIUM, null,
                 80, true, false, 1,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("gk-7", "Who wrote the play 'Hamlet'?", true, false, 20)));
         els.add(new NumberQuestion("gk-8",
-                pub("gk-8"), prv("gk-8"),
-                "How many planets are in our solar system?", null,
                 "How many planets are in our solar system?",
                 8.0, 0.0, " planets", 0,
-                150, Difficulty.EASY,
-                true, false, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                15, null, null, null, null, null, null, null, MediaPosition.NONE,
+                150, Difficulty.EASY, null,
                 null, null, true,
-                SEED_USER, SEED_USER, SEED_TIME, SEED_TIME, SEED_TAGS,
-                SEED_CAPTION, SEED_ALT, SEED_REACTIONS, SEED_VERSION));
+                seedChrome("gk-8", "How many planets are in our solar system?", true, false, 15)));
 
         deck.setElements(els);
         return deck;

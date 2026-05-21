@@ -27,7 +27,7 @@ export type DeckElement = NonNullable<DeckDto["elements"]>[number];
 /** Friendly label for the thumbnail — slides have titles, questions have prompts. */
 const elementDisplayName = (element: DeckElement): string => {
   if (element.kind === "Slide") {
-    const trimmed = element.title?.trim() ?? "";
+    const trimmed = element.chrome?.title?.trim() ?? "";
     return trimmed === "" ? "Untitled slide" : trimmed;
   }
   if ("prompt" in element && element.prompt) return element.prompt;

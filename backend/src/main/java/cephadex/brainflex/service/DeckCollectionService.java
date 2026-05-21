@@ -20,7 +20,6 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -185,9 +184,6 @@ public class DeckCollectionService {
         col.setVisibility(request.visibility() == null ? DeckVisibility.PRIVATE : request.visibility());
         applyOrganization(col, request.organizationId(), owner);
         col.setCover(normalizeImage(request.cover()));
-        LocalDateTime now = LocalDateTime.now();
-        col.setCreatedAt(now);
-        col.setUpdatedAt(now);
         return collectionRepository.save(col);
     }
 
@@ -204,7 +200,6 @@ public class DeckCollectionService {
                     ? null
                     : normalizeImage(request.cover()));
         }
-        col.setUpdatedAt(LocalDateTime.now());
         return collectionRepository.save(col);
     }
 
@@ -235,7 +230,6 @@ public class DeckCollectionService {
                 : Math.max(0, Math.min(position, ids.size()));
         ids.add(clamped, deckId);
         col.setDeckIds(ids);
-        col.setUpdatedAt(LocalDateTime.now());
         return collectionRepository.save(col);
     }
 
@@ -247,7 +241,6 @@ public class DeckCollectionService {
             return col;
         }
         col.setDeckIds(ids);
-        col.setUpdatedAt(LocalDateTime.now());
         return collectionRepository.save(col);
     }
 
@@ -277,7 +270,6 @@ public class DeckCollectionService {
                     "Reorder must be a permutation of the existing deck ids");
         }
         col.setDeckIds(new ArrayList<>(nextIds));
-        col.setUpdatedAt(LocalDateTime.now());
         return collectionRepository.save(col);
     }
 

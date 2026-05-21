@@ -78,34 +78,17 @@ public final class ElementShuffler {
 
     private static McqQuestion withShuffledOptions(McqQuestion q, List<McqOption> options) {
         return new McqQuestion(
-                q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                q.prompt(), options,
-                q.correctOptionIds(),
-                q.pointValue(), q.difficulty(),
-                q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
-                q.explanation(),
-                q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
+                q.id(), q.prompt(), options, q.correctOptionIds(),
+                q.pointValue(), q.difficulty(), q.explanation(),
                 q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
-                q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                q.chrome());
     }
 
     private static RankingQuestion withShuffledItems(RankingQuestion q, List<RankingItem> items) {
         return new RankingQuestion(
-                q.id(), q.publicKey(), q.privateKey(), q.title(), q.styledTitle(),
-                q.prompt(), items,
-                q.correctOrder(),
-                q.scoring(),
-                q.pointValue(), q.difficulty(),
-                q.scored(), q.survey(), q.multipleSelections(), q.responseMode(),
-                q.bestAnswerMode(), q.bestAnswerTitle(), q.bestAnswerBonus(),
-                q.explanation(),
-                q.displaySeconds(), q.speakerNotes(), q.background(),
-                q.image(), q.videoUrl(), q.audioUrl(), q.videoAssetId(), q.audioAssetId(), q.mediaPosition(),
+                q.id(), q.prompt(), items, q.correctOrder(), q.scoring(),
+                q.pointValue(), q.difficulty(), q.explanation(),
                 q.shuffleItemsForPresentation(),
-                q.createdByUserId(), q.lastEditedByUserId(), q.createdAt(), q.updatedAt(),
-                q.tagIds(), q.mediaCaption(), q.altText(), q.reactionsEnabled(), q.version());
+                q.chrome());
     }
 }

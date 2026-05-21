@@ -20,14 +20,19 @@ package cephadex.brainflex.service;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -48,6 +53,10 @@ import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.ScheduledInteractiveSessionRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.email.EmailCategory;
+import cephadex.brainflex.service.email.EmailJob;
+import cephadex.brainflex.service.email.EmailService;
+import cephadex.brainflex.service.email.EmailTemplate;
 
 @Service
 public class ScheduledInteractiveSessionService {
@@ -57,6 +66,12 @@ public class ScheduledInteractiveSessionService {
     private static final int TOKEN_BYTES = 24;
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    // ISO-style display "2026-05-20 14:00 UTC". Times are always rendered UTC;
+    // chunk 20 will introduce per-user timezone for localised display. Lives
+    // here (rather than in the template) so the same string drives the email
+    // body and subject without a second format call.
+    private static final DateTimeFormatter EMAIL_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'");
+
     private final ScheduledInteractiveSessionRepository scheduleRepository;
     private final InteractiveSessionInviteRepository inviteRepository;
     private final InteractiveSessionRepository interactiveSessionRepository;
@@ -64,6 +79,10 @@ public class ScheduledInteractiveSessionService {
     private final UserRepository userRepository;
     private final InteractiveSessionService interactiveSessionService;
     private final EmailService emailService;
+    private final ApplicationEventPublisher events;
+
+    @Value("${brainflex.frontend-base-url:http://localhost:5173}")
+    private String frontendBaseUrl;
 
     public ScheduledInteractiveSessionService(ScheduledInteractiveSessionRepository scheduleRepository,
                                               InteractiveSessionInviteRepository inviteRepository,
@@ -71,7 +90,8 @@ public class ScheduledInteractiveSessionService {
                                               DeckRepository deckRepository,
                                               UserRepository userRepository,
                                               InteractiveSessionService interactiveSessionService,
-                                              EmailService emailService) {
+                                              EmailService emailService,
+                                              ApplicationEventPublisher events) {
         this.scheduleRepository = scheduleRepository;
         this.inviteRepository = inviteRepository;
         this.interactiveSessionRepository = interactiveSessionRepository;
@@ -79,6 +99,7 @@ public class ScheduledInteractiveSessionService {
         this.userRepository = userRepository;
         this.interactiveSessionService = interactiveSessionService;
         this.emailService = emailService;
+        this.events = events;
     }
 
     // ---- Read ----
@@ -124,11 +145,15 @@ public class ScheduledInteractiveSessionService {
     public ScheduledInteractiveSession update(String id, User host,
                                               UpdateScheduledInteractiveSessionRequest request) {
         ScheduledInteractiveSession schedule = requireOwnedAndSchedulable(id, host);
-        if (request.scheduledStartAt() != null) schedule.setScheduledStartAt(request.scheduledStartAt());
+        if (request.scheduledStartAt() != null) {
+            schedule.setScheduledStartAt(request.scheduledStartAt());
+            // Pushing the start time forward invalidates the previous "starting
+            // soon" reminder — clear so the sweep re-fires for the new window.
+            schedule.setStartingSoonNotifiedAt(null);
+        }
         if (request.scheduledEndAt() != null) schedule.setScheduledEndAt(request.scheduledEndAt());
         if (request.reminderEmailTemplate() != null) schedule.setReminderEmailTemplate(request.reminderEmailTemplate());
         if (request.settings() != null) schedule.setSettings(request.settings());
-        schedule.setUpdatedAt(LocalDateTime.now());
         return scheduleRepository.save(schedule);
     }
 
@@ -141,7 +166,6 @@ public class ScheduledInteractiveSessionService {
         // Reflect on the schedule for snapshotting.
         if (!schedule.getInvitedEmails().contains(normalised)) {
             schedule.getInvitedEmails().add(normalised);
-            schedule.setUpdatedAt(LocalDateTime.now());
             scheduleRepository.save(schedule);
         }
         Deck deck = deckRepository.findById(schedule.getDeckId())
@@ -156,7 +180,6 @@ public class ScheduledInteractiveSessionService {
                     "Only SCHEDULED rows can be cancelled");
         }
         schedule.setStatus(ScheduleStatus.CANCELLED);
-        schedule.setUpdatedAt(LocalDateTime.now());
         ScheduledInteractiveSession saved = scheduleRepository.save(schedule);
 
         // Best-effort cancel notice.
@@ -164,10 +187,22 @@ public class ScheduledInteractiveSessionService {
         String hostName = host.getName() != null ? host.getName() : host.getUserName();
         String deckName = deck != null ? deck.getName() : "Session";
         List<InteractiveSessionInvite> invites = inviteRepository.findByScheduledInteractiveSessionId(schedule.getId());
-        try {
-            emailService.sendCancelNotice(saved, invites, hostName, deckName);
-        } catch (Exception e) {
-            log.warn("Cancel notice send failed for {}: {}", saved.getId(), e.getMessage());
+        Map<String, Object> cancelModel = new HashMap<>();
+        cancelModel.put("hostName", hostName);
+        cancelModel.put("deckName", deckName);
+        cancelModel.put("scheduledFor", saved.getScheduledStartAt().format(EMAIL_DATE));
+        for (InteractiveSessionInvite invite : invites) {
+            try {
+                emailService.enqueue(EmailJob.builder()
+                        .recipient(invite.getEmail())
+                        .userId(invite.getResolvedUserId())
+                        .category(EmailCategory.TRANSACTIONAL)
+                        .template(EmailTemplate.INVITE_CANCEL)
+                        .model(cancelModel)
+                        .build());
+            } catch (Exception e) {
+                log.warn("Cancel notice enqueue failed for {}: {}", invite.getEmail(), e.getMessage());
+            }
         }
         return saved;
     }
@@ -199,7 +234,6 @@ public class ScheduledInteractiveSessionService {
 
         schedule.setCreatedInteractiveSessionId(session.getId());
         schedule.setStatus(ScheduleStatus.LIVE);
-        schedule.setUpdatedAt(LocalDateTime.now());
         ScheduledInteractiveSession saved = scheduleRepository.save(schedule);
 
         // Link existing invites to the freshly-minted live session id so the
@@ -210,9 +244,21 @@ public class ScheduledInteractiveSessionService {
             invite.setInteractiveSessionId(session.getId());
             inviteRepository.save(invite);
             try {
-                emailService.sendBootReminder(saved, invite, hostName, deck.getName(), session.getRoomCode());
+                Map<String, Object> reminderModel = new HashMap<>();
+                reminderModel.put("hostName", hostName);
+                reminderModel.put("deckName", deck.getName());
+                reminderModel.put("roomCode", session.getRoomCode());
+                reminderModel.put("joinUrl", inviteUrl(invite));
+                reminderModel.put("customReminder", saved.getReminderEmailTemplate());
+                emailService.enqueue(EmailJob.builder()
+                        .recipient(invite.getEmail())
+                        .userId(invite.getResolvedUserId())
+                        .category(EmailCategory.TRANSACTIONAL)
+                        .template(EmailTemplate.INVITE_REMINDER)
+                        .model(reminderModel)
+                        .build());
             } catch (Exception e) {
-                log.warn("Boot reminder send failed for {}: {}", invite.getEmail(), e.getMessage());
+                log.warn("Boot reminder enqueue failed for {}: {}", invite.getEmail(), e.getMessage());
             }
         }
         return session;
@@ -224,7 +270,6 @@ public class ScheduledInteractiveSessionService {
                 .ifPresent(s -> {
                     if (s.getStatus() == ScheduleStatus.LIVE) {
                         s.setStatus(ScheduleStatus.COMPLETED);
-                        s.setUpdatedAt(LocalDateTime.now());
                         scheduleRepository.save(s);
                     }
                 });
@@ -311,11 +356,31 @@ public class ScheduledInteractiveSessionService {
 
         String hostName = host.getName() != null ? host.getName() : host.getUserName();
         try {
-            emailService.sendInitialInvite(schedule, saved, hostName, deck.getName());
+            Map<String, Object> inviteModel = new HashMap<>();
+            inviteModel.put("hostName", hostName);
+            inviteModel.put("deckName", deck.getName());
+            inviteModel.put("scheduledFor", schedule.getScheduledStartAt().format(EMAIL_DATE));
+            inviteModel.put("acceptUrl", inviteUrl(saved));
+            emailService.enqueue(EmailJob.builder()
+                    .recipient(saved.getEmail())
+                    .category(EmailCategory.TRANSACTIONAL)
+                    .template(EmailTemplate.INVITE_INITIAL)
+                    .model(inviteModel)
+                    .build());
         } catch (Exception e) {
-            log.warn("Initial invite send failed for {}: {}", email, e.getMessage());
+            log.warn("Initial invite enqueue failed for {}: {}", email, e.getMessage());
         }
+        // If the invited email already belongs to a registered user, complement
+        // the outbound email with an in-app notification row. Unknown emails
+        // will get an in-app row only after they sign up — chunk 20 territory.
+        userRepository.findByEmail(email).ifPresent(invitee -> events.publishEvent(
+                new NotificationEvents.InteractiveSessionInviteSentEvent(
+                        schedule.getId(), saved.getId(), invitee.getId(), host.getId())));
         return saved;
+    }
+
+    private String inviteUrl(InteractiveSessionInvite invite) {
+        return frontendBaseUrl + "/invite/" + invite.getInviteToken();
     }
 
     private static String generateToken() {
@@ -337,7 +402,9 @@ public class ScheduledInteractiveSessionService {
         InteractiveSessionSettings cfg = s.getSettings();
         return new CreateInteractiveSessionRequest(
                 s.getDeckId(),
-                cfg.getMode(),
+                null,                          // format — defaulted from deck.defaultSessionFormat
+                cfg.getAnswerSubmissionMode(),
+                cfg.getShowResponses(),
                 cfg.getTotalRounds(),
                 cfg.getTimePerQuestion(),
                 cfg.isSpeedBonus(),
@@ -370,7 +437,8 @@ public class ScheduledInteractiveSessionService {
         out.setTimePerQuestion(src.getTimePerQuestion());
         out.setSpeedBonus(src.isSpeedBonus());
         out.setAllowGuests(src.isAllowGuests());
-        out.setMode(src.getMode());
+        out.setAnswerSubmissionMode(src.getAnswerSubmissionMode());
+        out.setShowResponses(src.getShowResponses());
         out.setAllowLateJoin(src.isAllowLateJoin());
         out.setShowScoresImmediately(src.isShowScoresImmediately());
         out.setScoringEnabled(src.isScoringEnabled());

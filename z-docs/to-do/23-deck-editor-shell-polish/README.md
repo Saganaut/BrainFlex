@@ -1,8 +1,32 @@
 # 23 — Deck editor shell polish
 
-**Status:** Not started
+**Status:** Mostly landed — Start button is wired (`useStartInteractiveSession.quickStart`), the new-deck empty-slide skeleton is rendering in the left rail, and the right sidebar has been refactored to the vertical icon rail + drawer pattern with seven panels mounted. Outstanding work below in *Remaining*.
 **Depends on:** nothing structural; coordinate with **21** (Slide design & sidebar polish) — this chunk restructures the *shell* that hosts 21's panels.
 **Unblocks:** every future right-sidebar panel (Participant settings, Sharing preferences) gets a home.
+
+## Remaining work
+
+What still has to happen before this chunk can be ticked off in the parent roadmap:
+
+- **A.1 Preview button.** The SplitBtn dropdown has a "Preview" `DropdownMenuItem` (`DeckEditor.tsx:160`) but it still calls `console.log("preview deck", serverName)`. Wire it to a full-screen read-only preview modal that reuses the `PlayPage` element renderers in a `previewMode` prop, with ←/→ slide navigation and Esc to close (the `LayoutProvider` already handles global Esc).
+- **A.2 empty-deck guard.** `useStartInteractiveSession.quickStart` (`frontend/src/hooks/useStartInteractiveSession.ts`) is wired into `SplitBtn` and shows the loading + error state. Missing: client-side check + Toast when `deck.elements` is empty so we don't mint a session with nothing in it.
+- **A.3 navbar tests.** Button-level tests for the disabled / no-elements state and the Preview → modal open path.
+- **B.2 center-pane empty-state copy.** Confirm the canvas empty-state still points at the picker / ⌘N shortcut; refresh the copy if it's stale.
+- **B.3 left-sidebar test.** New-deck route test that the skeleton tile renders and opens `NewElementPicker` on click.
+- **C.3 SharingPreferencesPanel.** The rail icon + `openPanel === "sharing"` branch exists, but the body is a `PlaceholderPanel` with "Coming soon." copy. Build the real panel: `Deck.publishStatus` toggle (public/unlisted/private), `Deck.license` picker, copy-to-clipboard public URL, `Banner` when private. Note: the collaborator-management UI already lives in the `ShareDeckModal` opened from the navbar's "Share" button — decide whether to keep it there or fold it into this drawer.
+- **C.3 ParticipantSettingsPanel scope expansion.** `ParticipantsPanel.tsx` exists but currently only hosts the per-slide "Allow emoji reactions" toggle. Add the collaborator list / role management surface from chunk 06 (or move it here from `ShareDeckModal`).
+- **C.4 keyboard + a11y verification.** Confirm Esc closes the active drawer + focus returns to the rail icon; confirm each drawer has `role="region" aria-labelledby={headingId}`.
+- **C.5 rail tests.** Toggle behavior + Esc focus restoration + placeholder copy.
+- **IA decision documentation.** The current shell mounts Tags + Reviews + Discussion as their own rail icons (not folded under a "Deck info" icon as the original spec floated). That decision is fine but should be noted in this README before closing out the chunk.
+
+## What's already done
+
+- **A.2 Start button** — `SplitBtn` primary action calls `quickStart(deckId)`. Loading / disabled / error states all wired (`DeckEditor.tsx:144-180`). The dropdown also exposes "Schedule" → `ScheduleSessionModal` (chunk 14).
+- **B.1 first-slide skeleton** — `LeftSidebarContent.tsx` renders a single `emptySlide` button when `elements.length === 0` that opens `NewElementPicker`. Title "Create your first slide", subtitle "Pick a question type to add to the deck."
+- **C.1 shell components** — `RightSidebarContent.tsx` is the orchestrator: vertical `iconStrip` toolbar of `IconBtn`s on the right edge + a sliding `drawer` aside to its left. `View Transitions` API used for swap animations; `openPanel` tracked with a single `useState`. No new state libraries introduced (per cross-cutting rule).
+- **C.2 existing panel migrations** — Edit slide → `EditSlidePanel`, Theme → `ThemePanel`, Tags → `DeckCategorizePanel`, Reviews → `DeckReviewsPanel`, Discussion → `DeckDiscussionPanel`, all hosted in the drawer.
+- **C.3 ParticipantSettingsPanel (partial)** — `ParticipantsPanel.tsx` exists and hosts the per-slide emoji-reactions opt-out (chunk 11). Collaborator-list surface still TODO (see Remaining).
+- **Drawer header + close affordance** — every drawer has an `<h3>` title from `PANEL_TITLES` and an `XMarkIcon` close button.
 
 ## Scope
 
@@ -129,25 +153,25 @@ Map the existing panels to the new rail entries:
 
 - [ ] Preview button opens a full-screen read-only preview modal
 - [ ] Preview supports arrow-key slide navigation + Esc close
-- [ ] Start button creates an interactive session and navigates to the host route
+- [x] Start button creates an interactive session and navigates to the host route
 - [ ] Start button disabled (or Toast on click) when deck has no elements
 - [ ] Button-level tests for both buttons
 
 ### Part B — Left sidebar
 
-- [ ] New-deck flow renders a single non-interactive skeleton slide tile
-- [ ] Clicking the skeleton opens `NewElementPicker`
+- [x] New-deck flow renders a single non-interactive skeleton slide tile
+- [x] Clicking the skeleton opens `NewElementPicker`
 - [ ] Center pane empty-state copy updated to point at the picker / shortcut
 - [ ] Test for empty-deck → skeleton tile present
 
 ### Part C — Right sidebar
 
-- [ ] Decision documented for where Deck categorize / Reviews / Discussion live in the new IA
-- [ ] `RightSidebarRail.tsx` + `RightSidebarDrawer.tsx`
-- [ ] `RightSidebarContent.tsx` refactored to orchestrate rail + drawer
-- [ ] Edit slide and Theme drawers wired to existing panels
-- [ ] `ParticipantSettingsPanel.tsx` (real or placeholder)
-- [ ] `SharingPreferencesPanel.tsx`
+- [ ] Decision documented for where Deck categorize / Reviews / Discussion live in the new IA *(currently each is its own rail icon — record the rationale before closing this chunk)*
+- [x] `RightSidebarRail.tsx` + `RightSidebarDrawer.tsx` *(inlined as `iconStrip` + `drawer` inside `RightSidebarContent.tsx` rather than separate files — same shape)*
+- [x] `RightSidebarContent.tsx` refactored to orchestrate rail + drawer
+- [x] Edit slide and Theme drawers wired to existing panels
+- [x] `ParticipantSettingsPanel.tsx` (real or placeholder) — placeholder exists as `ParticipantsPanel.tsx` (hosts the per-slide reactions toggle); collaborator list still TODO
+- [ ] `SharingPreferencesPanel.tsx` — currently a `PlaceholderPanel` ("Coming soon."); build the real publishStatus + license + share-URL panel
 - [ ] Esc closes the active drawer + focus restoration
 - [ ] Tests for rail toggling, Esc behavior, placeholder copy
 
@@ -155,4 +179,4 @@ Map the existing panels to the new rail entries:
 
 - [ ] Frontend lint + tests pass
 - [ ] No new `box-shadow` rules; no hardcoded color values
-- [ ] Icons sourced from `frontend/src/assets/icons/`
+- [ ] Icons sourced from `frontend/src/assets/icons/` *(current shell uses `@heroicons/react/24/outline` — confirm this is consistent with the rest of the editor before closing)*

@@ -6,7 +6,9 @@
  */
 package cephadex.brainflex.dto;
 
-import cephadex.brainflex.model.enums.InteractiveSessionMode;
+import cephadex.brainflex.model.enums.AnswerSubmissionMode;
+import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -15,7 +17,12 @@ import jakarta.validation.constraints.Size;
 
 public record CreateInteractiveSessionRequest(
         @NotBlank String deckId,
-        InteractiveSessionMode mode,                                  // null → deck default
+        // Top-level session chrome — null falls back to deck.defaultSessionFormat then GAME.
+        SessionFormat format,
+        // Renamed from `mode` in chunk 24 (SIMULTANEOUS / TURN_BASED).
+        AnswerSubmissionMode answerSubmissionMode,    // null → deck default
+        // Session-level entry of the show-responses cascade.
+        ShowResponsesMode showResponses,              // null → deck default → format default
         @Min(1) @Max(60) Integer totalRounds,           // null → deck default
         @Min(0) @Max(120) Integer timePerQuestion,      // null → deck default; 0 = unlimited
         Boolean speedBonus,

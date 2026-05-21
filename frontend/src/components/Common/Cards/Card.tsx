@@ -1,6 +1,7 @@
 // Generic card with header/body/footer slots. Variant and size map to className
 // modifiers in Cards.module.css. Becomes clickable when onClick is provided.
-import { type ReactNode } from "react";
+// `as` lets callers render the card as <article>/<section>/<li> for semantics.
+import { type ElementType, type KeyboardEvent, type ReactNode } from "react";
 import type { BtnVariant, BtnSize } from "../Buttons/BtnTypes";
 import styles from "./Cards.module.css";
 
@@ -11,6 +12,7 @@ interface CardProps {
   variant?: BtnVariant;
   size?: BtnSize;
   onClick?: () => void;
+  as?: ElementType;
 }
 
 const Card = ({
@@ -20,22 +22,37 @@ const Card = ({
   variant = "default",
   size = "md",
   onClick,
+  as: Component = "div",
 }: CardProps) => {
+  const isClickable = onClick != null;
+  const interactiveProps = isClickable
+    ? {
+        role: "button" as const,
+        tabIndex: 0,
+        onKeyDown: (e: KeyboardEvent) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        },
+      }
+    : {};
   return (
-    <div
+    <Component
       onClick={onClick}
+      {...interactiveProps}
       className={[
         styles.card,
         variant !== "default" && styles[variant],
         styles[size],
-        onClick != null && styles.isClickable,
+        isClickable && styles.isClickable,
       ]
         .filter(Boolean)
         .join(" ")}>
       <div className={styles.header}>{header}</div>
       <div className={styles.body}>{body}</div>
       <div className={styles.footer}>{footer}</div>
-    </div>
+    </Component>
   );
 };
 

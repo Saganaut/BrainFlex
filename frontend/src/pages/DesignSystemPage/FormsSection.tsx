@@ -12,6 +12,10 @@ import { Toggle } from "../../components/Common/Input/Toggle/Toggle";
 import { Dropdown } from "../../components/Common/Input/Dropdown/Dropdown";
 import { FileUpload } from "../../components/Common/Input/FileUpload/FileUpload";
 import { InputWithButton } from "../../components/Common/Input/InputWithButton/InputWithButton";
+import {
+  AvatarSelector,
+  AVATAR_OPTIONS,
+} from "../../components/Common/Input/AvatarSelector/AvatarSelector";
 import { TagPicker } from "../../components/Common/TagPicker/TagPicker";
 import { Accordion } from "../../components/Containers/Accordion";
 import styles from "./DesignSystem.module.css";
@@ -52,6 +56,18 @@ const FormsSection = () => {
   const [stretchedText, setStretchedText] = useState("");
   const [pickerTagIds, setPickerTagIds] = useState<string[]>([]);
   const [pickerCuratedTagIds, setPickerCuratedTagIds] = useState<string[]>([]);
+  const [avatar, setAvatar] = useState("avatar-1");
+  const [avatarMany, setAvatarMany] = useState("av-alpha-aqua");
+
+  // Synthesized roster of 9 picks (3 mascots × 3 squads) to exercise the
+  // overflow scroller — the underlying assets stay the 3 player-avatar SVGs.
+  const manyAvatarOptions = ["Alpha", "Bravo", "Charlie"].flatMap((squad) =>
+    AVATAR_OPTIONS.map((option) => ({
+      ...option,
+      value: `av-${squad.toLowerCase()}-${option.label.toLowerCase()}`,
+      label: `${squad} ${option.label}`,
+    })),
+  );
 
   return (
     <section>
@@ -224,6 +240,35 @@ const FormsSection = () => {
               value={searchFaction}
               onChange={setSearchFaction}
               placeholder='Find a faction…'
+            />
+          </div>
+
+          <h4>Avatar Selector</h4>
+          <div className={styles.formExampleRow}>
+            <AvatarSelector
+              name='ds-avatar'
+              legend='Pick your avatar'
+              value={avatar}
+              onChange={setAvatar}
+            />
+            <AvatarSelector
+              name='ds-avatar-disabled'
+              legend='Disabled'
+              value='avatar-2'
+              onChange={() => {
+                /* disabled */
+              }}
+              disabled
+            />
+          </div>
+          <div className={styles.formExampleRow}>
+            <AvatarSelector
+              name='ds-avatar-many'
+              legend='Overflow — scroll for more'
+              value={avatarMany}
+              onChange={setAvatarMany}
+              options={manyAvatarOptions}
+              maxVisible={6}
             />
           </div>
 

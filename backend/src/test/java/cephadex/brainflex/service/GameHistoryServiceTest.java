@@ -41,6 +41,7 @@ import cephadex.brainflex.model.Membership;
 import cephadex.brainflex.model.PlayerPlacement;
 import cephadex.brainflex.model.Team;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GameHistoryRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -51,6 +52,7 @@ class GameHistoryServiceTest {
     @Mock private GameHistoryRepository historyRepository;
     @Mock private DeckRepository deckRepository;
     @Mock private UserRepository userRepository;
+    @Mock private AchievementService achievementService;
 
     @InjectMocks private GameHistoryService gameHistoryService;
 
@@ -269,20 +271,16 @@ class GameHistoryServiceTest {
 
     private InteractiveSessionPlayer player(String userId, String userName, boolean guest) {
         InteractiveSessionPlayer p = new InteractiveSessionPlayer();
-        p.setUserId(userId);
-        p.setUserName(userName);
-        p.setGuest(guest);
+        p.setUser(UserSnapshot.of(userId, userName, null, guest));
         return p;
     }
 
     private PlayerPlacement placement(String userId, String userName, int placement,
             int finalScore, boolean guest) {
         PlayerPlacement p = new PlayerPlacement();
-        p.setUserId(userId);
-        p.setUserName(userName);
+        p.setUser(UserSnapshot.of(userId, userName, null, guest));
         p.setPlacement(placement);
         p.setFinalScore(finalScore);
-        p.setGuest(guest);
         p.setTotalQuestions(10);
         p.setCorrectAnswers(5);
         return p;

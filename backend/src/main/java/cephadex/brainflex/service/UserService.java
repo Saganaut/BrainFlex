@@ -5,30 +5,61 @@ import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import org.springframework.context.annotation.Lazy;
+
 import cephadex.brainflex.dto.RegisterRequest;
 import cephadex.brainflex.dto.UpdateProfileRequest;
+import cephadex.brainflex.model.NotificationPrefs;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.service.OAuthProviderService.ProviderProfile;
+import cephadex.brainflex.service.email.EmailCategory;
+import cephadex.brainflex.service.email.EmailJob;
+import cephadex.brainflex.service.email.EmailService;
+import cephadex.brainflex.service.email.EmailTemplate;
 
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
-    public UserService(UserRepository userRepository) {
+    private final UserRepository userRepository;
+    private final OAuthProviderService oAuthProviderService;
+    private final EmailService emailService;
+    private final OrganizationService organizationService;
+
+    /** {@code @Lazy} on {@link OrganizationService} keeps Spring's bean graph
+     *  acyclic — OrganizationService injects UserRepository directly, while the
+     *  OAuth success handler in SecurityConfig wires both services together
+     *  through constructor injection on UserService. Lazy resolution closes
+     *  the would-be cycle without forcing a setter-based wiring. */
+    public UserService(UserRepository userRepository,
+                       OAuthProviderService oAuthProviderService,
+                       EmailService emailService,
+                       @Lazy OrganizationService organizationService) {
         this.userRepository = userRepository;
+        this.oAuthProviderService = oAuthProviderService;
+        this.emailService = emailService;
+        this.organizationService = organizationService;
     }
 
-    public User register(OAuth2User oAuth2User, RegisterRequest request) {
-        String googleId = oAuth2User.getAttribute("sub");
+    public User register(OAuth2AuthenticationToken token, RegisterRequest request) {
+        ProviderProfile profile = oAuthProviderService.profileOf(token);
 
-        var existingByGoogleId = userRepository.findByGoogleId(googleId);
-        if (existingByGoogleId.isPresent()) {
-            User existing = existingByGoogleId.get();
+        var existingByProvider = oAuthProviderService
+                .findByProviderId(profile.provider(), profile.providerId());
+        if (existingByProvider.isPresent()) {
+            User existing = existingByProvider.get();
             if (!Boolean.TRUE.equals(existing.getIsClosed()))
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "User already registered");
 
@@ -41,29 +72,57 @@ public class UserService {
             existing.setClosedAt(null);
             existing.setUserName(request.username());
             existing.setNewsletter(request.newsletter());
-            existing.setPictureUrl(oAuth2User.getAttribute("picture"));
-            existing.setName(oAuth2User.getAttribute("name"));
+            existing.setPictureUrl(profile.picture());
+            existing.setName(profile.name());
             existing.setLastLogin(LocalDateTime.now());
             if (existing.getEmailVerifiedAt() == null)
                 existing.setEmailVerifiedAt(LocalDateTime.now());
-            return userRepository.save(existing);
+            User reopened = userRepository.save(existing);
+            // Reopening sends the welcome email again — the user just went
+            // through the same flow as a fresh sign-up and seeing a "welcome
+            // back" beat reads better than silence.
+            sendWelcomeEmail(reopened);
+            return reopened;
         }
 
         if (userRepository.findByUserName(request.username()).isPresent())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
 
         User user = new User();
-        user.setGoogleId(googleId);
-        user.setEmail(oAuth2User.getAttribute("email"));
-        user.setName(oAuth2User.getAttribute("name"));
-        user.setPictureUrl(oAuth2User.getAttribute("picture"));
+        oAuthProviderService.setProviderIdOn(user, profile);
+        user.setEmail(profile.email());
+        user.setName(profile.name());
+        user.setPictureUrl(profile.picture());
         user.setUserName(request.username());
         user.setIsGuest(false);
         user.setNewsletter(request.newsletter());
         user.setLastLogin(LocalDateTime.now());
         user.setEmailVerifiedAt(LocalDateTime.now());
 
-        return userRepository.save(user);
+        // Chunk 20 — materialise prefs at registration so reads never have to
+        // chain through withDefaults() once the migration backfills legacy users.
+        NotificationPrefs prefs = NotificationPrefs.withDefaults();
+        prefs.setMarketingEmail(request.newsletter());
+        user.setNotificationPrefs(prefs);
+
+        // Chunk 20 — propagate displayName off the OAuth-supplied name so the
+        // user record carries a renderable handle on day one.
+        if (user.getDisplayName() == null || user.getDisplayName().isBlank()) {
+            user.setDisplayName(firstNonBlank(profile.name(), request.username()));
+        }
+
+        User saved = userRepository.save(user);
+        // Chunk 20 — sweep email-domain-claimed orgs on first registration so
+        // the lobby's "Your orgs" view is populated when the user lands on it.
+        organizationService.autoJoinByEmailDomain(saved);
+        sendWelcomeEmail(saved);
+        return saved;
+    }
+
+    private static String firstNonBlank(String a, String b) {
+        if (a != null && !a.isBlank()) return a;
+        if (b != null && !b.isBlank()) return b;
+        return null;
     }
 
     public User createGuest(String username) {
@@ -85,6 +144,11 @@ public class UserService {
     public User updateProfile(User user, UpdateProfileRequest request) {
         if (request.pictureUrl() != null && !request.pictureUrl().isBlank()) {
             user.setPictureUrl(request.pictureUrl());
+            // Symmetric with AccountController.uploadProfileImage, which clears
+            // pictureUrl when storing uploaded variants. The hydrator prefers
+            // variants over pictureUrl, so leaving stale variants here would
+            // hide the user's freshly-picked built-in avatar.
+            user.getPictureVariants().clear();
         }
         if (request.newsletter() != null) {
             user.setNewsletter(request.newsletter());
@@ -104,14 +168,55 @@ public class UserService {
         user.setIsClosed(true);
         user.setClosedAt(LocalDateTime.now());
         userRepository.save(user);
+        sendAccountClosedEmail(user);
     }
 
-    // For OAuth2-authenticated callers, Authentication.getName() returns the
-    // Google `sub` claim — that's the principal identifier Spring Security
-    // populates from the OIDC token, and it's the stable lookup key Google
-    // gives us. Internal User.id is used everywhere else once the lookup
-    // resolves. Guests carry a `guest:<internalId>` name instead (see
-    // resolveAnyAuthenticatedUser below).
+    private void sendWelcomeEmail(User user) {
+        if (user.getEmail() == null || user.getEmail().isBlank()) return;
+        try {
+            Map<String, Object> model = new HashMap<>();
+            model.put("displayName", displayNameOf(user));
+            emailService.enqueue(EmailJob.builder()
+                    .recipient(user.getEmail())
+                    .userId(user.getId())
+                    .category(EmailCategory.TRANSACTIONAL)
+                    .template(EmailTemplate.WELCOME)
+                    .model(model)
+                    .build());
+        } catch (Exception e) {
+            // Best-effort — registration must not fail because the outbox is down.
+            log.warn("Welcome email enqueue failed for {}: {}", user.getEmail(), e.getMessage());
+        }
+    }
+
+    private void sendAccountClosedEmail(User user) {
+        if (user.getEmail() == null || user.getEmail().isBlank()) return;
+        try {
+            Map<String, Object> model = new HashMap<>();
+            model.put("displayName", displayNameOf(user));
+            emailService.enqueue(EmailJob.builder()
+                    .recipient(user.getEmail())
+                    .userId(user.getId())
+                    .category(EmailCategory.TRANSACTIONAL)
+                    .template(EmailTemplate.ACCOUNT_CLOSED)
+                    .model(model)
+                    .build());
+        } catch (Exception e) {
+            log.warn("Account-closed email enqueue failed for {}: {}", user.getEmail(), e.getMessage());
+        }
+    }
+
+    private static String displayNameOf(User user) {
+        if (user.getName() != null && !user.getName().isBlank()) return user.getName();
+        if (user.getUserName() != null && !user.getUserName().isBlank()) return user.getUserName();
+        return "there";
+    }
+
+    // For OAuth2-authenticated callers, the principal lookup is delegated to
+    // OAuthProviderService, which uses the OAuth2AuthenticationToken's
+    // registration id to pick the right provider column (googleId, discordId,
+    // microsoftId). Guests carry a `guest:<internalId>` name and are handled
+    // separately in resolveAnyAuthenticatedUser.
     public Optional<User> resolveRegisteredUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated())
             return Optional.empty();
@@ -119,7 +224,7 @@ public class UserService {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_USER"));
         if (!isRegistered)
             return Optional.empty();
-        return userRepository.findByGoogleId(authentication.getName());
+        return oAuthProviderService.findByOAuthAuthentication(authentication);
     }
 
     public Optional<User> resolveAnyAuthenticatedUser(Authentication authentication) {
@@ -131,9 +236,9 @@ public class UserService {
         if (!hasRole)
             return Optional.empty();
         String name = authentication.getName();
-        if (name.startsWith("guest:"))
+        if (name != null && name.startsWith("guest:"))
             return userRepository.findById(name.substring(6));
-        return userRepository.findByGoogleId(name);
+        return oAuthProviderService.findByOAuthAuthentication(authentication);
     }
 
     /**

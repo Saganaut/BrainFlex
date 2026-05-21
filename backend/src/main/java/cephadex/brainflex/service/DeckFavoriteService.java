@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -33,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.DeckFavorite;
+import cephadex.brainflex.model.enums.AchievementTrigger;
 import cephadex.brainflex.repository.DeckFavoriteRepository;
 
 @Service
@@ -40,12 +42,18 @@ public class DeckFavoriteService {
 
     private final DeckFavoriteRepository favoriteRepository;
     private final MongoTemplate mongoTemplate;
+    private final AchievementService achievementService;
+    private final ApplicationEventPublisher events;
 
     public DeckFavoriteService(
             DeckFavoriteRepository favoriteRepository,
-            MongoTemplate mongoTemplate) {
+            MongoTemplate mongoTemplate,
+            AchievementService achievementService,
+            ApplicationEventPublisher events) {
         this.favoriteRepository = favoriteRepository;
         this.mongoTemplate = mongoTemplate;
+        this.achievementService = achievementService;
+        this.events = events;
     }
 
     /**
@@ -60,7 +68,21 @@ public class DeckFavoriteService {
         row.setDeckId(deckId);
         try {
             favoriteRepository.insert(row);
-            return incrementFavoriteCount(deckId, 1);
+            long count = incrementFavoriteCount(deckId, 1);
+            // Chunk 17 — only check the deck owner's FAVORITES_RECEIVED on a
+            // real new favorite (the dup-key branch below already left the
+            // counter alone). Per-deck favoriteCount is the trigger value:
+            // "have a deck with N favorites" rather than the harder
+            // cross-deck sum, which would need an aggregation on every star.
+            Deck deck = mongoTemplate.findById(deckId, Deck.class);
+            if (deck != null && deck.getCreatorUserId() != null
+                    && !deck.getCreatorUserId().equals(userId)) {
+                achievementService.evaluate(deck.getCreatorUserId(),
+                        AchievementTrigger.FAVORITES_RECEIVED,
+                        (int) Math.min(count, Integer.MAX_VALUE), null, deckId);
+                events.publishEvent(new NotificationEvents.DeckFavoritedEvent(deckId, userId));
+            }
+            return count;
         } catch (DuplicateKeyException ignored) {
             // Already favorited — read back the current count so the caller
             // can echo it without an extra round trip.

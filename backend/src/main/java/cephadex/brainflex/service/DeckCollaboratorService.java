@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -46,16 +47,19 @@ public class DeckCollaboratorService {
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
     private final UserImageHydrator userImageHydrator;
+    private final ApplicationEventPublisher events;
 
     public DeckCollaboratorService(
             DeckCollaboratorRepository collaboratorRepository,
             DeckRepository deckRepository,
             UserRepository userRepository,
-            UserImageHydrator userImageHydrator) {
+            UserImageHydrator userImageHydrator,
+            ApplicationEventPublisher events) {
         this.collaboratorRepository = collaboratorRepository;
         this.deckRepository = deckRepository;
         this.userRepository = userRepository;
         this.userImageHydrator = userImageHydrator;
+        this.events = events;
     }
 
     // ---- Read ----
@@ -162,7 +166,10 @@ public class DeckCollaboratorService {
                 row.setRole(request.role());
                 return collaboratorRepository.save(row);
             }
-            return insertRow(deckId, user.getId(), null, request.role(), inviter, true);
+            DeckCollaborator inserted = insertRow(deckId, user.getId(), null, request.role(), inviter, true);
+            events.publishEvent(new NotificationEvents.DeckCollaboratorInvitedEvent(
+                    deckId, user.getId(), inviter.getId()));
+            return inserted;
         }
 
         if (!looksLikeEmail(raw)) {
@@ -291,6 +298,14 @@ public class DeckCollaboratorService {
             try {
                 collaboratorRepository.save(row);
                 promoted++;
+                String deckOwnerUserId = collaboratorRepository
+                        .findByDeckIdAndRole(row.getDeckId(), CollaboratorRole.OWNER)
+                        .map(DeckCollaborator::getUserId)
+                        .orElse(null);
+                if (deckOwnerUserId != null) {
+                    events.publishEvent(new NotificationEvents.DeckCollaboratorAcceptedEvent(
+                            row.getDeckId(), user.getId(), deckOwnerUserId));
+                }
             } catch (DuplicateKeyException dup2) {
                 collaboratorRepository.delete(row);
             }

@@ -1,45 +1,45 @@
 // Single theme card: color swatch preview, name, activate/edit/delete actions.
+// Renders both preset themes (no edit/delete) and custom themes (owner-only
+// edit/delete) — callers pass only the action callbacks that apply.
 import { Btn } from "@components/Common/Buttons/Btn";
-import type { ThemeResponse } from "../../store/BrainFlexApi";
 import styles from "./ThemeSection.module.css";
 
 interface ThemeCardProps {
-  theme: ThemeResponse;
+  huePrimary: number;
+  hueAccent: number;
+  name: string;
   isActive: boolean;
-  isOwned: boolean;
-  isOrgShared: boolean;
-  onActivate: (theme: ThemeResponse) => void;
-  onEdit?: (theme: ThemeResponse) => void;
-  onDelete?: (theme: ThemeResponse) => void;
+  isOrgShared?: boolean;
+  onActivate?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 const ThemeCard = ({
-  theme,
+  huePrimary,
+  hueAccent,
+  name,
   isActive,
-  isOwned,
-  isOrgShared,
+  isOrgShared = false,
   onActivate,
   onEdit,
   onDelete,
 }: ThemeCardProps) => {
-  const primary = theme.huePrimary ?? 260;
-  const accent = theme.hueAccent ?? 25;
-
   return (
     <div className={`${styles.card} ${isActive ? styles.cardActive : ""}`}>
       <div className={styles.cardSwatch} aria-hidden='true'>
         <div
           className={styles.swatchPrimary}
-          style={{ background: `oklch(55% 0.2 ${primary}deg)` }}
+          style={{ background: `oklch(55% 0.2 ${huePrimary}deg)` }}
         />
         <div
           className={styles.swatchAccent}
-          style={{ background: `oklch(65% 0.22 ${accent}deg)` }}
+          style={{ background: `oklch(65% 0.22 ${hueAccent}deg)` }}
         />
       </div>
       <div className={styles.cardBody}>
-        <p className={styles.cardName} title={theme.name}>
-          {theme.name ?? "Untitled"}
+        <p className={styles.cardName} title={name}>
+          {name}
         </p>
         <div className={styles.cardMeta}>
           {isActive && (
@@ -53,30 +53,22 @@ const ThemeCard = ({
         </div>
       </div>
       <div className={styles.cardActions}>
-        {!isActive && (
+        {!isActive && onActivate && (
           <Btn
             className={`${styles.cardActionBtn} ${styles.cardActionBtnPrimary}`}
-            onClick={() => {
-              onActivate(theme);
-            }}>
+            onClick={onActivate}>
             Activate
           </Btn>
         )}
-        {isOwned && onEdit && (
-          <Btn
-            className={styles.cardActionBtn}
-            onClick={() => {
-              onEdit(theme);
-            }}>
+        {onEdit && (
+          <Btn className={styles.cardActionBtn} onClick={onEdit}>
             Edit
           </Btn>
         )}
-        {isOwned && onDelete && (
+        {onDelete && (
           <Btn
             className={`${styles.cardActionBtn} ${styles.cardActionBtnDanger}`}
-            onClick={() => {
-              onDelete(theme);
-            }}>
+            onClick={onDelete}>
             Delete
           </Btn>
         )}

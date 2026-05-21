@@ -5,13 +5,12 @@
 // live in the Tags (DeckCategorize) panel; provenance is rendered as a
 // footer outside of here.
 //
-// The element type comes back from the deck cache as the discriminated
-// union of every kind, which makes `{...element, fieldX: val}` type-safe
-// because every member shares these fields.
+// Chunk 25 — mediaCaption / altText / version / lastEditedByUserId all live
+// inside `chrome` now, so the patch shape embeds them under `chrome:` rather
+// than at the top level.
 import { useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { Input } from "@/components/Common/Input/Input/Input";
-import { TextArea } from "@/components/Common/Input/TextArea/TextArea";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
@@ -49,8 +48,11 @@ const CommonOptionsSection = () => {
     if (!element?.id) return;
     const stamped: DeckElement = {
       ...patch,
-      lastEditedByUserId: currentUserId,
-      version: (patch.version ?? 0) + 1,
+      chrome: {
+        ...(patch.chrome ?? {}),
+        lastEditedByUserId: currentUserId,
+        version: (patch.chrome?.version ?? 0) + 1,
+      },
     };
     void updateElement({
       id: deckId,
@@ -66,9 +68,9 @@ const CommonOptionsSection = () => {
   const { schedule, flush } = useDebouncedCommit<DeckElement>(commit, 500);
 
   const [mediaCaption, setMediaCaption] = useState<string>(
-    element?.mediaCaption ?? "",
+    element?.chrome?.mediaCaption ?? "",
   );
-  const [altText, setAltText] = useState<string>(element?.altText ?? "");
+  const [altText, setAltText] = useState<string>(element?.chrome?.altText ?? "");
 
   const [syncedFromId, setSyncedFromId] = useState<string | undefined>(
     element?.id,
@@ -76,18 +78,21 @@ const CommonOptionsSection = () => {
 
   if (element && syncedFromId !== element.id) {
     setSyncedFromId(element.id);
-    setMediaCaption(element.mediaCaption ?? "");
-    setAltText(element.altText ?? "");
+    setMediaCaption(element.chrome?.mediaCaption ?? "");
+    setAltText(element.chrome?.altText ?? "");
   }
 
   if (!element) return null;
 
-  const buildPatch = (overrides: Partial<DeckElement>): DeckElement =>
+  const buildPatch = (chromeOverrides: Partial<NonNullable<DeckElement["chrome"]>>): DeckElement =>
     ({
       ...element,
-      mediaCaption,
-      altText,
-      ...overrides,
+      chrome: {
+        ...element.chrome,
+        mediaCaption,
+        altText,
+        ...chromeOverrides,
+      },
     }) as DeckElement;
 
   const elId = element.id ?? "";

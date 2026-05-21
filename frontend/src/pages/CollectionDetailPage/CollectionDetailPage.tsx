@@ -188,6 +188,22 @@ const CollectionDetailPage = () => {
     await removeDeckFromCollection({ id: collectionId, deckId }).unwrap();
   };
 
+  const grid = (
+    <div className={styles.grid}>
+      {decks.map((deck, index) => (
+        <DeckTile
+          key={deck.id}
+          deck={deck}
+          index={index}
+          isOwner={isOwner}
+          onRemove={(id) => {
+            void handleRemove(id);
+          }}
+        />
+      ))}
+    </div>
+  );
+
   return (
     <div className={styles.page}>
       <CollectionHeader collection={data} />
@@ -202,34 +218,10 @@ const CollectionDetailPage = () => {
           onDragEnd={(event) => {
             handleDragEnd(event);
           }}>
-          <div className={styles.grid}>
-            {decks.map((deck, index) => (
-              <DeckTile
-                key={deck.id}
-                deck={deck}
-                index={index}
-                isOwner={isOwner}
-                onRemove={(id) => {
-                  void handleRemove(id);
-                }}
-              />
-            ))}
-          </div>
+          {grid}
         </DragDropProvider>
       ) : (
-        <div className={styles.grid}>
-          {decks.map((deck, index) => (
-            <DeckTile
-              key={deck.id}
-              deck={deck}
-              index={index}
-              isOwner={isOwner}
-              onRemove={() => {
-                /* read-only */
-              }}
-            />
-          ))}
-        </div>
+        grid
       )}
     </div>
   );

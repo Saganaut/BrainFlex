@@ -6,6 +6,7 @@ import { Link } from "@tanstack/react-router";
 import { Input } from "../Common/Input/Input/Input";
 import { Checkbox } from "../Common/Input/Checkbox/Checkbox";
 import { Btn } from "../Common/Buttons/Btn";
+import { Alert } from "../Common/Alert/Alert";
 export type { RegisterSearch };
 
 interface RegistrationFormProps {
@@ -84,8 +85,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({
           }}
         />
         <div>
+          {submitError != null && submitError !== "" && (
+            <Alert severity='error'>{submitError}</Alert>
+          )}
           <div className={styles.finalRow}>
-            {submitError && <p>{submitError}</p>}
             <Btn type='submit' disabled={!canSubmit || isLoading}>
               Submit
             </Btn>

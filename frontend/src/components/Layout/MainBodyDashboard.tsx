@@ -8,7 +8,9 @@ interface MainBodyDashboardProps {
 
 const MainBodyDashboard = ({ children, className }: MainBodyDashboardProps) => {
   return (
-    <div className={`${styles.mainBodyDashboard} ${className}`}>{children}</div>
+    <main className={`${styles.mainBodyDashboard} ${className}`}>
+      {children}
+    </main>
   );
 };
 

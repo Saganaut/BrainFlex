@@ -19,20 +19,23 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GamesIndexRouteImport } from './routes/games/index'
-import { Route as PulseCreateRouteImport } from './routes/pulse/create'
 import { Route as InviteTokenRouteImport } from './routes/invite/$token'
 import { Route as GamesJoinRouteImport } from './routes/games/join'
 import { Route as CollectionsCollectionIdRouteImport } from './routes/collections/$collectionId'
 import { Route as AuthenticatedScheduledRouteImport } from './routes/_authenticated/scheduled'
 import { Route as AuthenticatedMyFavoritesRouteImport } from './routes/_authenticated/my-favorites'
+import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authenticated/achievements'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as SessionsSessionIdIndexRouteImport } from './routes/sessions/$sessionId/index'
 import { Route as AuthenticatedDecksIndexRouteImport } from './routes/_authenticated/decks/index'
+import { Route as SessionsSessionIdLobbyRouteImport } from './routes/sessions/$sessionId/lobby'
 import { Route as GamesRoomCodeResultsRouteImport } from './routes/games/$roomCode/results'
 import { Route as GamesRoomCodePlayRouteImport } from './routes/games/$roomCode/play'
 import { Route as GamesRoomCodeLobbyRouteImport } from './routes/games/$roomCode/lobby'
 import { Route as DecksDeckIdViewRouteImport } from './routes/decks/$deckId/view'
 import { Route as DecksDeckIdPresentRouteImport } from './routes/decks/$deckId/present'
 import { Route as DecksDeckIdEditRouteImport } from './routes/decks/$deckId/edit'
+import { Route as DecksDeckIdAnalyticsRouteImport } from './routes/decks/$deckId/analytics'
 import { Route as AuthenticatedMyDecksCollectionsRouteImport } from './routes/_authenticated/my-decks/collections'
 import { Route as AuthenticatedGamesCreateRouteImport } from './routes/_authenticated/games/create'
 
@@ -85,11 +88,6 @@ const GamesIndexRoute = GamesIndexRouteImport.update({
   path: '/games/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PulseCreateRoute = PulseCreateRouteImport.update({
-  id: '/pulse/create',
-  path: '/pulse/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
@@ -116,15 +114,31 @@ const AuthenticatedMyFavoritesRoute =
     path: '/my-favorites',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAchievementsRoute =
+  AuthenticatedAchievementsRouteImport.update({
+    id: '/achievements',
+    path: '/achievements',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   id: '/account',
   path: '/account',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const SessionsSessionIdIndexRoute = SessionsSessionIdIndexRouteImport.update({
+  id: '/sessions/$sessionId/',
+  path: '/sessions/$sessionId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedDecksIndexRoute = AuthenticatedDecksIndexRouteImport.update({
   id: '/decks/',
   path: '/decks/',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const SessionsSessionIdLobbyRoute = SessionsSessionIdLobbyRouteImport.update({
+  id: '/sessions/$sessionId/lobby',
+  path: '/sessions/$sessionId/lobby',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const GamesRoomCodeResultsRoute = GamesRoomCodeResultsRouteImport.update({
   id: '/games/$roomCode/results',
@@ -156,6 +170,11 @@ const DecksDeckIdEditRoute = DecksDeckIdEditRouteImport.update({
   path: '/decks/$deckId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DecksDeckIdAnalyticsRoute = DecksDeckIdAnalyticsRouteImport.update({
+  id: '/decks/$deckId/analytics',
+  path: '/decks/$deckId/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedMyDecksCollectionsRoute =
   AuthenticatedMyDecksCollectionsRouteImport.update({
     id: '/my-decks/collections',
@@ -179,22 +198,25 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/achievements': typeof AuthenticatedAchievementsRoute
   '/my-favorites': typeof AuthenticatedMyFavoritesRoute
   '/scheduled': typeof AuthenticatedScheduledRoute
   '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/join': typeof GamesJoinRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/pulse/create': typeof PulseCreateRoute
   '/games/': typeof GamesIndexRoute
   '/games/create': typeof AuthenticatedGamesCreateRoute
   '/my-decks/collections': typeof AuthenticatedMyDecksCollectionsRoute
+  '/decks/$deckId/analytics': typeof DecksDeckIdAnalyticsRoute
   '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
   '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
   '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
+  '/sessions/$sessionId/lobby': typeof SessionsSessionIdLobbyRoute
   '/decks/': typeof AuthenticatedDecksIndexRoute
+  '/sessions/$sessionId/': typeof SessionsSessionIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -206,22 +228,25 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/achievements': typeof AuthenticatedAchievementsRoute
   '/my-favorites': typeof AuthenticatedMyFavoritesRoute
   '/scheduled': typeof AuthenticatedScheduledRoute
   '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/join': typeof GamesJoinRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/pulse/create': typeof PulseCreateRoute
   '/games': typeof GamesIndexRoute
   '/games/create': typeof AuthenticatedGamesCreateRoute
   '/my-decks/collections': typeof AuthenticatedMyDecksCollectionsRoute
+  '/decks/$deckId/analytics': typeof DecksDeckIdAnalyticsRoute
   '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
   '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
   '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
+  '/sessions/$sessionId/lobby': typeof SessionsSessionIdLobbyRoute
   '/decks': typeof AuthenticatedDecksIndexRoute
+  '/sessions/$sessionId': typeof SessionsSessionIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -235,22 +260,25 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/terms-and-conditions': typeof TermsAndConditionsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/achievements': typeof AuthenticatedAchievementsRoute
   '/_authenticated/my-favorites': typeof AuthenticatedMyFavoritesRoute
   '/_authenticated/scheduled': typeof AuthenticatedScheduledRoute
   '/collections/$collectionId': typeof CollectionsCollectionIdRoute
   '/games/join': typeof GamesJoinRoute
   '/invite/$token': typeof InviteTokenRoute
-  '/pulse/create': typeof PulseCreateRoute
   '/games/': typeof GamesIndexRoute
   '/_authenticated/games/create': typeof AuthenticatedGamesCreateRoute
   '/_authenticated/my-decks/collections': typeof AuthenticatedMyDecksCollectionsRoute
+  '/decks/$deckId/analytics': typeof DecksDeckIdAnalyticsRoute
   '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
   '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
   '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
   '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
   '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
+  '/sessions/$sessionId/lobby': typeof SessionsSessionIdLobbyRoute
   '/_authenticated/decks/': typeof AuthenticatedDecksIndexRoute
+  '/sessions/$sessionId/': typeof SessionsSessionIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -264,22 +292,25 @@ export interface FileRouteTypes {
     | '/register'
     | '/terms-and-conditions'
     | '/account'
+    | '/achievements'
     | '/my-favorites'
     | '/scheduled'
     | '/collections/$collectionId'
     | '/games/join'
     | '/invite/$token'
-    | '/pulse/create'
     | '/games/'
     | '/games/create'
     | '/my-decks/collections'
+    | '/decks/$deckId/analytics'
     | '/decks/$deckId/edit'
     | '/decks/$deckId/present'
     | '/decks/$deckId/view'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
     | '/games/$roomCode/results'
+    | '/sessions/$sessionId/lobby'
     | '/decks/'
+    | '/sessions/$sessionId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -291,22 +322,25 @@ export interface FileRouteTypes {
     | '/register'
     | '/terms-and-conditions'
     | '/account'
+    | '/achievements'
     | '/my-favorites'
     | '/scheduled'
     | '/collections/$collectionId'
     | '/games/join'
     | '/invite/$token'
-    | '/pulse/create'
     | '/games'
     | '/games/create'
     | '/my-decks/collections'
+    | '/decks/$deckId/analytics'
     | '/decks/$deckId/edit'
     | '/decks/$deckId/present'
     | '/decks/$deckId/view'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
     | '/games/$roomCode/results'
+    | '/sessions/$sessionId/lobby'
     | '/decks'
+    | '/sessions/$sessionId'
   id:
     | '__root__'
     | '/'
@@ -319,22 +353,25 @@ export interface FileRouteTypes {
     | '/register'
     | '/terms-and-conditions'
     | '/_authenticated/account'
+    | '/_authenticated/achievements'
     | '/_authenticated/my-favorites'
     | '/_authenticated/scheduled'
     | '/collections/$collectionId'
     | '/games/join'
     | '/invite/$token'
-    | '/pulse/create'
     | '/games/'
     | '/_authenticated/games/create'
     | '/_authenticated/my-decks/collections'
+    | '/decks/$deckId/analytics'
     | '/decks/$deckId/edit'
     | '/decks/$deckId/present'
     | '/decks/$deckId/view'
     | '/games/$roomCode/lobby'
     | '/games/$roomCode/play'
     | '/games/$roomCode/results'
+    | '/sessions/$sessionId/lobby'
     | '/_authenticated/decks/'
+    | '/sessions/$sessionId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -350,14 +387,16 @@ export interface RootRouteChildren {
   CollectionsCollectionIdRoute: typeof CollectionsCollectionIdRoute
   GamesJoinRoute: typeof GamesJoinRoute
   InviteTokenRoute: typeof InviteTokenRoute
-  PulseCreateRoute: typeof PulseCreateRoute
   GamesIndexRoute: typeof GamesIndexRoute
+  DecksDeckIdAnalyticsRoute: typeof DecksDeckIdAnalyticsRoute
   DecksDeckIdEditRoute: typeof DecksDeckIdEditRoute
   DecksDeckIdPresentRoute: typeof DecksDeckIdPresentRoute
   DecksDeckIdViewRoute: typeof DecksDeckIdViewRoute
   GamesRoomCodeLobbyRoute: typeof GamesRoomCodeLobbyRoute
   GamesRoomCodePlayRoute: typeof GamesRoomCodePlayRoute
   GamesRoomCodeResultsRoute: typeof GamesRoomCodeResultsRoute
+  SessionsSessionIdLobbyRoute: typeof SessionsSessionIdLobbyRoute
+  SessionsSessionIdIndexRoute: typeof SessionsSessionIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -432,13 +471,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GamesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pulse/create': {
-      id: '/pulse/create'
-      path: '/pulse/create'
-      fullPath: '/pulse/create'
-      preLoaderRoute: typeof PulseCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
@@ -474,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMyFavoritesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/achievements': {
+      id: '/_authenticated/achievements'
+      path: '/achievements'
+      fullPath: '/achievements'
+      preLoaderRoute: typeof AuthenticatedAchievementsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/account': {
       id: '/_authenticated/account'
       path: '/account'
@@ -481,12 +520,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/sessions/$sessionId/': {
+      id: '/sessions/$sessionId/'
+      path: '/sessions/$sessionId'
+      fullPath: '/sessions/$sessionId/'
+      preLoaderRoute: typeof SessionsSessionIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/decks/': {
       id: '/_authenticated/decks/'
       path: '/decks'
       fullPath: '/decks/'
       preLoaderRoute: typeof AuthenticatedDecksIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/sessions/$sessionId/lobby': {
+      id: '/sessions/$sessionId/lobby'
+      path: '/sessions/$sessionId/lobby'
+      fullPath: '/sessions/$sessionId/lobby'
+      preLoaderRoute: typeof SessionsSessionIdLobbyRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/games/$roomCode/results': {
       id: '/games/$roomCode/results'
@@ -530,6 +583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DecksDeckIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/decks/$deckId/analytics': {
+      id: '/decks/$deckId/analytics'
+      path: '/decks/$deckId/analytics'
+      fullPath: '/decks/$deckId/analytics'
+      preLoaderRoute: typeof DecksDeckIdAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/my-decks/collections': {
       id: '/_authenticated/my-decks/collections'
       path: '/my-decks/collections'
@@ -549,6 +609,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedAchievementsRoute: typeof AuthenticatedAchievementsRoute
   AuthenticatedMyFavoritesRoute: typeof AuthenticatedMyFavoritesRoute
   AuthenticatedScheduledRoute: typeof AuthenticatedScheduledRoute
   AuthenticatedGamesCreateRoute: typeof AuthenticatedGamesCreateRoute
@@ -558,6 +619,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedAchievementsRoute: AuthenticatedAchievementsRoute,
   AuthenticatedMyFavoritesRoute: AuthenticatedMyFavoritesRoute,
   AuthenticatedScheduledRoute: AuthenticatedScheduledRoute,
   AuthenticatedGamesCreateRoute: AuthenticatedGamesCreateRoute,
@@ -582,14 +644,16 @@ const rootRouteChildren: RootRouteChildren = {
   CollectionsCollectionIdRoute: CollectionsCollectionIdRoute,
   GamesJoinRoute: GamesJoinRoute,
   InviteTokenRoute: InviteTokenRoute,
-  PulseCreateRoute: PulseCreateRoute,
   GamesIndexRoute: GamesIndexRoute,
+  DecksDeckIdAnalyticsRoute: DecksDeckIdAnalyticsRoute,
   DecksDeckIdEditRoute: DecksDeckIdEditRoute,
   DecksDeckIdPresentRoute: DecksDeckIdPresentRoute,
   DecksDeckIdViewRoute: DecksDeckIdViewRoute,
   GamesRoomCodeLobbyRoute: GamesRoomCodeLobbyRoute,
   GamesRoomCodePlayRoute: GamesRoomCodePlayRoute,
   GamesRoomCodeResultsRoute: GamesRoomCodeResultsRoute,
+  SessionsSessionIdLobbyRoute: SessionsSessionIdLobbyRoute,
+  SessionsSessionIdIndexRoute: SessionsSessionIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

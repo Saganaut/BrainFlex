@@ -4,13 +4,14 @@ import { useFullScreen } from "@/context/useFullScreen";
 
 interface CanvasBodyProps {
   children: ReactNode;
+  className?: string;
 }
 
-const CanvasBody: React.FC<CanvasBodyProps> = ({ children }) => {
+const CanvasBody: React.FC<CanvasBodyProps> = ({ className, children }) => {
   const { isFullScreen } = useFullScreen();
   return (
     <div
-      className={`${styles.canvasBody} ${isFullScreen ? styles.isCollapsed : " "}`}>
+      className={`${styles.canvasBody} ${isFullScreen ? styles.isCollapsed : " "} ${className}`}>
       {children}
     </div>
   );

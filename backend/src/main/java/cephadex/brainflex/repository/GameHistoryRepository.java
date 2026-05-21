@@ -25,4 +25,10 @@ public interface GameHistoryRepository extends MongoRepository<GameHistoryEntry,
     Optional<GameHistoryEntry> findByUserIdAndInteractiveSessionId(String userId, String interactiveSessionId);
 
     boolean existsByUserIdAndInteractiveSessionId(String userId, String interactiveSessionId);
+
+    /** Chunk 17 — drives the GAMES_PLAYED and FIRST_GAME achievement triggers. */
+    long countByUserId(String userId);
+
+    /** Chunk 17 — drives the HOST_GAMES achievement trigger. */
+    long countByUserIdAndWasHostTrue(String userId);
 }

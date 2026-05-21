@@ -13,8 +13,6 @@
  */
 package cephadex.brainflex.model;
 
-import java.time.LocalDateTime;
-
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -25,7 +23,7 @@ import lombok.Data;
 @Data
 @Document(collection = "tags")
 @CompoundIndex(name = "explore_default_idx", def = "{'curated': -1, 'deckCount': -1}")
-public class Tag {
+public class Tag extends Auditable {
 
     @Id
     private String id;
@@ -43,6 +41,12 @@ public class Tag {
     @Indexed
     private boolean curated;
 
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    /**
+     * Chunk 21 — user who first created this tag. Stamped on the user-inline-
+     * create path so we can attribute non-curated tags and (later) GC ones
+     * that fall out of use. Null for legacy/curated rows authored before this
+     * field existed and for system seeds.
+     */
+    @Indexed
+    private String createdByUserId;
 }

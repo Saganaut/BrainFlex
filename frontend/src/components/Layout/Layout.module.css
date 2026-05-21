@@ -55,6 +55,7 @@
 }
 
 .mainBodyDashboard {
+  max-width: var(--max-screen-width);
   flex: 1;
   display: flex;
   min-height: 0;

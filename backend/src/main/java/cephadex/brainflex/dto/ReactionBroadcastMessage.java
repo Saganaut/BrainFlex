@@ -7,12 +7,12 @@ package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
 
+import cephadex.brainflex.model.UserSnapshot;
+
 public record ReactionBroadcastMessage(
         String id,
         String elementId,
-        String userId,
-        String userName,
-        boolean guest,
+        UserSnapshot user,
         String emoji,
         long offsetMs,
         LocalDateTime sentAt) {

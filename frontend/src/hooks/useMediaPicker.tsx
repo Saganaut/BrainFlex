@@ -15,10 +15,10 @@
 // The picker self-closes after onPick is invoked.
 import { useCallback } from "react";
 
-import { useModal } from "@/context/useModal";
 import { MediaPicker } from "@/components/Common/MediaPicker/MediaPicker";
 import type { MediaAssetResponse } from "@/store/BrainFlexApi";
 import type { MediaKind } from "@/utils/mediaValidation";
+import { usePickerModal } from "./usePickerModal";
 
 type PickHandler = (asset: MediaAssetResponse) => void;
 
@@ -30,25 +30,25 @@ const KIND_TITLE: Record<MediaKind, string> = {
 };
 
 const useMediaPicker = (): ((kind: MediaKind, onPick: PickHandler) => void) => {
-  const { openModal, closeModal } = useModal();
+  const openPicker = usePickerModal();
 
   return useCallback(
     (kind: MediaKind, onPick: PickHandler) => {
-      openModal({
+      openPicker({
         title: KIND_TITLE[kind],
-        content: (
+        content: (autoClose) => (
           <MediaPicker
             kind={kind}
             onPick={(asset) => {
               onPick(asset);
-              closeModal();
+              autoClose();
             }}
-            onClose={closeModal}
+            onClose={autoClose}
           />
         ),
       });
     },
-    [openModal, closeModal],
+    [openPicker],
   );
 };
 

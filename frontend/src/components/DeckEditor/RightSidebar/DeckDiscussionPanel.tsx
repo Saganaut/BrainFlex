@@ -14,6 +14,7 @@ import {
 } from "@/store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { CommentThread } from "@/components/Common/CommentThread/CommentThread";
+import { Pagination } from "@/components/Common/Pagination/Pagination";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import styles from "./DeckDiscussionPanel.module.css";
 
@@ -127,25 +128,13 @@ const DeckDiscussionPanel = () => {
 
         {(page > 0 || hasMore) && (
           <div className={styles.pager}>
-            <Btn
-              size='sm'
-              shape='pill'
-              disabled={page === 0 || isFetching}
-              onClick={() => {
-                setPage((p) => Math.max(0, p - 1));
-              }}>
-              Previous
-            </Btn>
-            <span className={styles.pagerInfo}>Page {page + 1}</span>
-            <Btn
-              size='sm'
-              shape='pill'
-              disabled={!hasMore || isFetching}
-              onClick={() => {
-                setPage((p) => p + 1);
-              }}>
-              Next
-            </Btn>
+            <Pagination
+              page={page}
+              hasMore={hasMore}
+              disabled={isFetching}
+              ariaLabel='Comments pagination'
+              onPageChange={setPage}
+            />
           </div>
         )}
       </section>

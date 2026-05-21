@@ -56,7 +56,7 @@ const ScoreBoard = ({
   const teamModeActive = teamById.size > 0;
 
   return (
-    <div className={styles.board}>
+    <section className={styles.board} aria-label={hideScores ? "Players" : "Scores"}>
       <h3 className={styles.title}>{hideScores ? "Players" : "Scores"}</h3>
       <ol className={styles.list}>
         {sorted.map((p, i) => {
@@ -87,6 +87,16 @@ const ScoreBoard = ({
                 )}
               </span>
               {p.isGuest && <span className={styles.guest}>guest</span>}
+              {/* Chunk 13 — Kahoot-style streak chip. Visible at 2x+; the
+                  backend resets on a wrong answer, so a fresh round keeps
+                  the chip until the player either misses or finishes. */}
+              {(p.currentStreak ?? 0) >= 2 && (
+                <span
+                  className={styles.streakChip}
+                  title={`${(p.currentStreak ?? 0).toString()} in a row`}>
+                  {p.currentStreak}x 🔥
+                </span>
+              )}
               {isOffline && (
                 <span className={styles.offlineLabel} title='Disconnected'>
                   offline
@@ -120,7 +130,7 @@ const ScoreBoard = ({
           );
         })}
       </ol>
-    </div>
+    </section>
   );
 };
 export { ScoreBoard };

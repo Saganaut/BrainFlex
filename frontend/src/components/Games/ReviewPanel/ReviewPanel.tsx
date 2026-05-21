@@ -27,48 +27,107 @@ import {
   type FrequencyListItem,
 } from "@/components/Common/Charts/FrequencyList/FrequencyList";
 import { Btn } from "@/components/Common/Buttons/Btn";
+import { Tabs, type TabsItem } from "@/components/Common/Tabs/Tabs";
 import styles from "./ReviewPanel.module.css";
 
 export interface ReviewPanelProps {
   review: InteractiveSessionReviewDto;
 }
 
+const roundTabId = (i: number) => `round-${String(i)}`;
+
 const ReviewPanel = ({ review }: ReviewPanelProps) => {
   const rounds = review.rounds ?? [];
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeId, setActiveId] = useState(() => roundTabId(0));
   const [showDetails, setShowDetails] = useState(false);
 
   if (rounds.length === 0) {
     return <p className={styles.empty}>No rounds to review.</p>;
   }
-  const round = rounds[Math.min(activeIndex, rounds.length - 1)];
-  const element: DeckElement | undefined = round.element;
   const scoringEnabled = review.scoringEnabled !== false;
+  const activeIndex = Math.max(
+    0,
+    rounds.findIndex((_, i) => roundTabId(i) === activeId),
+  );
+  const items: TabsItem[] = rounds.map((round, i) => ({
+    id: roundTabId(i),
+    label: String(i + 1),
+    panel: (
+      <RoundContent
+        round={round}
+        index={i}
+        total={rounds.length}
+        scoringEnabled={scoringEnabled}
+        showDetails={showDetails}
+        onToggleDetails={() => {
+          setShowDetails((prev) => !prev);
+        }}
+      />
+    ),
+  }));
+
+  return (
+    <div className={styles.panel}>
+      <Tabs
+        items={items}
+        value={activeId}
+        onChange={setActiveId}
+        variant='pill'
+        ariaLabel='Round'
+      />
+
+      <div className={styles.navBtns}>
+        <Btn
+          size='sm'
+          type='button'
+          disabled={activeIndex === 0}
+          onClick={() => {
+            setActiveId(roundTabId(Math.max(0, activeIndex - 1)));
+          }}>
+          ← Previous
+        </Btn>
+        <Btn
+          size='sm'
+          type='button'
+          disabled={activeIndex >= rounds.length - 1}
+          onClick={() => {
+            setActiveId(
+              roundTabId(Math.min(rounds.length - 1, activeIndex + 1)),
+            );
+          }}>
+          Next →
+        </Btn>
+      </div>
+    </div>
+  );
+};
+
+interface RoundContentProps {
+  round: RoundReview;
+  index: number;
+  total: number;
+  scoringEnabled: boolean;
+  showDetails: boolean;
+  onToggleDetails: () => void;
+}
+
+const RoundContent = ({
+  round,
+  index,
+  total,
+  scoringEnabled,
+  showDetails,
+  onToggleDetails,
+}: RoundContentProps) => {
+  const element: DeckElement | undefined = round.element;
   const isSlide = element?.kind === "Slide";
   const aggregateView = element ? renderAggregate(round, element) : null;
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.pager} role='tablist' aria-label='Round'>
-        {rounds.map((_, i) => (
-          <button
-            // eslint-disable-next-line react-x/no-array-index-key -- round index is the identity
-            key={i}
-            type='button'
-            role='tab'
-            aria-selected={i === activeIndex}
-            className={`${styles.pagerBtn} ${i === activeIndex ? styles.pagerActive : ""}`}
-            onClick={() => {
-              setActiveIndex(i);
-            }}>
-            {i + 1}
-          </button>
-        ))}
-      </div>
-
+    <div className={styles.roundContent}>
       <div className={styles.questionHeader}>
         <span className={styles.roundLabel}>
-          {isSlide ? "Slide" : "Round"} {activeIndex + 1} / {rounds.length}
+          {isSlide ? "Slide" : "Round"} {index + 1} / {total}
         </span>
         {element && (
           <h3 className={styles.questionText}>{titleFor(element)}</h3>
@@ -87,12 +146,7 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
       )}
 
       {!isSlide && (
-        <Btn
-          size='sm'
-          type='button'
-          onClick={() => {
-            setShowDetails((prev) => !prev);
-          }}>
+        <Btn size='sm' type='button' onClick={onToggleDetails}>
           {showDetails ? "Hide" : "Show"} per-player details
         </Btn>
       )}
@@ -121,27 +175,6 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
           </tbody>
         </table>
       )}
-
-      <div className={styles.navBtns}>
-        <Btn
-          size='sm'
-          type='button'
-          disabled={activeIndex === 0}
-          onClick={() => {
-            setActiveIndex((i) => Math.max(0, i - 1));
-          }}>
-          ← Previous
-        </Btn>
-        <Btn
-          size='sm'
-          type='button'
-          disabled={activeIndex >= rounds.length - 1}
-          onClick={() => {
-            setActiveIndex((i) => Math.min(rounds.length - 1, i + 1));
-          }}>
-          Next →
-        </Btn>
-      </div>
     </div>
   );
 };
@@ -149,7 +182,7 @@ const ReviewPanel = ({ review }: ReviewPanelProps) => {
 // ─── per-kind rendering ───────────────────────────────────────────────────────
 
 const titleFor = (e: DeckElement): string => {
-  if (e.kind === "Slide") return e.title ?? "(untitled slide)";
+  if (e.kind === "Slide") return e.chrome?.title ?? "(untitled slide)";
   return "prompt" in e ? (e.prompt ?? "") : "";
 };
 

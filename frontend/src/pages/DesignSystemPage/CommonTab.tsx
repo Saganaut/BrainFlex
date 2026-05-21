@@ -32,6 +32,7 @@ import { Tag } from "../../components/Common/Tag/Tag";
 import { Avatar } from "../../components/Common/Avatar/Avatar";
 import { EmptyState } from "../../components/Common/EmptyState/EmptyState";
 import { ProgressBar } from "../../components/Common/ProgressBar/ProgressBar";
+import { CountdownTimer } from "../../components/Common/CountdownTimer/CountdownTimer";
 import { Skeleton } from "../../components/Common/Skeleton/Skeleton";
 import { Tooltip } from "../../components/Common/Tooltip/Tooltip";
 import { Tabs } from "../../components/Common/Tabs/Tabs";
@@ -73,6 +74,8 @@ const CommonTab = () => {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [tabsDemoActive, setTabsDemoActive] = useState("overview");
   const [progressValue, setProgressValue] = useState(40);
+  const [countdownRunId, setCountdownRunId] = useState(0);
+  const [countdownDuration, setCountdownDuration] = useState(10);
   const [confirmResult, setConfirmResult] = useState<string | null>(null);
   const [tileChoice, setTileChoice] = useState<string | null>("alpha");
   const [demoPage, setDemoPage] = useState(2);
@@ -111,7 +114,7 @@ const CommonTab = () => {
                 header={<h5>Header</h5>}
                 body={
                   <div>
-                    <img src='https://picsum.photos/200/200' />
+                    <img src='https://picsum.photos/200/200' alt='' />
                     <p>
                       Chuck Norris’ tears cure cancer. Too bad he has never
                       cried. Chuck Norris can have both feet on the ground and
@@ -128,7 +131,7 @@ const CommonTab = () => {
                 header={<h5>Header</h5>}
                 body={
                   <div>
-                    <img src='https://picsum.photos/200/200' />
+                    <img src='https://picsum.photos/200/200' alt='' />
                   </div>
                 }
                 footer={<span>Footer</span>}
@@ -712,6 +715,77 @@ const CommonTab = () => {
                   }}>
                   +10
                 </Btn>
+              </div>
+            </div>
+          </Accordion>
+          <Accordion titleBar='Countdown timer'>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-4)",
+                alignItems: "flex-start",
+              }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "var(--space-6)",
+                }}>
+                <CountdownTimer
+                  key={`a-${countdownRunId.toString()}`}
+                  duration={countdownDuration}
+                  size='lg'
+                />
+                <CountdownTimer
+                  key={`b-${countdownRunId.toString()}`}
+                  duration={countdownDuration}
+                  size='md'
+                  urgentThreshold={3}
+                />
+                <CountdownTimer
+                  key={`c-${countdownRunId.toString()}`}
+                  duration={countdownDuration}
+                  size='sm'
+                  urgentThreshold={2}
+                />
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "var(--space-2)",
+                  alignItems: "center",
+                }}>
+                <Btn
+                  size='sm'
+                  onClick={() => {
+                    setCountdownRunId((id) => id + 1);
+                  }}>
+                  Restart
+                </Btn>
+                <Btn
+                  size='sm'
+                  onClick={() => {
+                    setCountdownDuration((d) => Math.max(3, d - 5));
+                    setCountdownRunId((id) => id + 1);
+                  }}>
+                  −5s
+                </Btn>
+                <Btn
+                  size='sm'
+                  onClick={() => {
+                    setCountdownDuration((d) => d + 5);
+                    setCountdownRunId((id) => id + 1);
+                  }}>
+                  +5s
+                </Btn>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    color: "var(--text-secondary)",
+                  }}>
+                  {countdownDuration}s
+                </span>
               </div>
             </div>
           </Accordion>

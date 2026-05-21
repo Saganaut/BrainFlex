@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1a1a1a; background: #f6f6f6; padding: 24px;">
+  <div style="max-width: 520px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 32px;">
+    <h1 style="font-size: 22px; margin: 0 0 16px;">
+      Your BrainFlex account has been closed
+    </h1>
+    <p>
+      Hi <span th:text="${displayName}">there</span> — we've closed your
+      BrainFlex account as requested. Your decks, scores, and game history are
+      no longer visible to other players.
+    </p>
+    <p>
+      If you change your mind, signing in with the same identity provider
+      within the next 30 days will reopen the account intact.
+    </p>
+    <p style="font-size: 12px; color: #666;">
+      Didn't ask to close your account? Reply to this email and we'll restore it.
+    </p>
+  </div>
+</body>
+</html>

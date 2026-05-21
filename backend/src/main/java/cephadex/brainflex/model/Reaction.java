@@ -21,6 +21,8 @@ import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 
 @Data
@@ -37,12 +39,14 @@ public class Reaction {
     /** Element this reaction landed on; snapshot of the current round at send time. */
     private String elementId;
 
-    private String userId;
+    /** Denormalized sender display snapshot, frozen at send time so deleted
+     *  users don't blank the replay. {@link UserSnapshot#pictureUrl()} is
+     *  unused here — reactions render as emoji bursts, not avatars. */
+    private UserSnapshot user;
 
-    /** Denormalized at send time so deleted users don't blank the replay. */
-    private String userName;
-
-    private boolean guest;
+    @JsonIgnore public String getUserId()   { return user == null ? null : user.userId(); }
+    @JsonIgnore public String getUserName() { return user == null ? null : user.name(); }
+    @JsonIgnore public boolean isGuest()    { return user != null && user.guest(); }
 
     /** Single emoji codepoint, validated against an allow-list before persisting. */
     private String emoji;

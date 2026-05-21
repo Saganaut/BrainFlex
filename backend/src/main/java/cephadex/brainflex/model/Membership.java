@@ -12,6 +12,8 @@
 package cephadex.brainflex.model;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import cephadex.brainflex.model.enums.MembershipStatus;
 import cephadex.brainflex.model.enums.MembershipTier;
@@ -74,4 +76,28 @@ public class Membership {
      * back-fill missed months.
      */
     private LocalDateTime monthlyCountPeriodStart;
+
+    /**
+     * Free-form capability flags resolved at request time. Drives feature gating like
+     * {@code "reactions"}, {@code "team-mode"}, {@code "analytics-pro"},
+     * {@code "ai-generation"}. Defaults empty — the membership tier still grants the
+     * baseline feature set; this set is purely additive overrides. Never null.
+     */
+    private Set<String> featureFlags = new LinkedHashSet<>();
+
+    /**
+     * Soft monthly quota on hosted interactive sessions. {@code 0} means unlimited
+     * (paid tiers); a positive value is the cap consulted by
+     * {@code MembershipService.canStartInteractiveSession}. Stored on the user even when
+     * the seat comes from an org plan so the gate can fast-path without re-resolving.
+     */
+    private int monthlyInteractiveSessionLimit = 0;
+
+    /**
+     * When the current month's quota window ends (start of next calendar month UTC).
+     * Distinct from {@link #monthlyCountPeriodStart}: that field marks the boundary the
+     * counter rolls forward from, while this one is the boundary the UI surfaces in
+     * "resets in 7 days" copy. Null until the first quota check runs.
+     */
+    private LocalDateTime quotaResetsAt;
 }

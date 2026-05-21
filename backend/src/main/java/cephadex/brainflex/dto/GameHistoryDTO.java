@@ -3,21 +3,21 @@
  *
  * Field-for-field projection of the document; the frontend chooses whether to
  * surface team / host / streak fields based on the entry. The wrapping page
- * envelope ({@link GameHistoryPage}) carries pagination metadata.
+ * envelope ({@link Page}) carries pagination metadata.
  */
 package cephadex.brainflex.dto;
 
 import java.time.LocalDateTime;
 
 import cephadex.brainflex.model.GameHistoryEntry;
+import cephadex.brainflex.model.UserSnapshot;
 
 public record GameHistoryDTO(
         String id,
         String interactiveSessionId,
         String deckId,
         String deckName,
-        String hostUserId,
-        String hostName,
+        UserSnapshot host,
         int finalScore,
         int placement,
         int totalQuestions,
@@ -39,8 +39,7 @@ public record GameHistoryDTO(
                 e.getInteractiveSessionId(),
                 e.getDeckId(),
                 e.getDeckName(),
-                e.getHostUserId(),
-                e.getHostName(),
+                e.getHost(),
                 e.getFinalScore(),
                 e.getPlacement(),
                 e.getTotalQuestions(),

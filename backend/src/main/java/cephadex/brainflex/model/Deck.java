@@ -15,11 +15,12 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.enums.DeckPreset;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;
 import cephadex.brainflex.model.enums.PublishStatus;
+import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.enums.ShowResponsesMode;
 import lombok.Data;
 
 @Data
@@ -28,7 +29,7 @@ import lombok.Data;
 // Combined index supports the `/api/decks/explore` query with `sort=top-rated`
 // or `sort=most-played` without a sort stage on top of a filter.
 @CompoundIndex(name = "deck_explore_idx", def = "{'publishStatus': 1, 'visibility': 1, 'averageRating': -1, 'playCount': -1}")
-public class Deck {
+public class Deck extends Auditable {
     @Id
     private String id;
 
@@ -52,8 +53,14 @@ public class Deck {
     private boolean system; // seeded by admin, not editable in the UI
 
     private DeckVisibility visibility = DeckVisibility.PRIVATE;
-    // TODO: We will change the name of presets here and default
-    private DeckPreset recommendedPreset = DeckPreset.GAME;
+    // Author-suggested session shell. The host can still override at create
+    // time — the runtime authority is `InteractiveSession.format`.
+    private SessionFormat defaultSessionFormat = SessionFormat.GAME;
+
+    // Author-set default for response visibility during play. INHERIT means
+    // defer to the session setting (and ultimately the per-format default).
+    // Top of the *runtime-behavior* cascade after the session level.
+    private ShowResponsesMode defaultShowResponses = ShowResponsesMode.INHERIT;
 
     // Presentation chrome
     private Image cover; // thumbnail tile
@@ -105,7 +112,4 @@ public class Deck {
     private double averageRating;
     private int ratingCount;
     private LocalDateTime lastPlayedAt;
-
-    private LocalDateTime createdAt = LocalDateTime.now();
-    private LocalDateTime updatedAt = LocalDateTime.now();
 }

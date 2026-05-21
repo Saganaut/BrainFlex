@@ -40,7 +40,7 @@ const ParticipantsPanel = () => {
   const [updateElement] = useUpdateElementMutation();
 
   const [reactionsEnabled, setReactionsEnabled] = useState<boolean>(
-    element?.reactionsEnabled ?? true,
+    element?.chrome?.reactionsEnabled ?? true,
   );
   const [syncedFromId, setSyncedFromId] = useState<string | undefined>(
     element?.id,
@@ -48,7 +48,7 @@ const ParticipantsPanel = () => {
 
   if (element && syncedFromId !== element.id) {
     setSyncedFromId(element.id);
-    setReactionsEnabled(element.reactionsEnabled ?? true);
+    setReactionsEnabled(element.chrome?.reactionsEnabled ?? true);
   }
 
   if (!element) {
@@ -62,9 +62,12 @@ const ParticipantsPanel = () => {
   const commit = (next: boolean) => {
     const stamped: DeckElement = {
       ...element,
-      reactionsEnabled: next,
-      lastEditedByUserId: currentUserId,
-      version: (element.version ?? 0) + 1,
+      chrome: {
+        ...element.chrome,
+        reactionsEnabled: next,
+        lastEditedByUserId: currentUserId,
+        version: (element.chrome?.version ?? 0) + 1,
+      },
     };
     void updateElement({
       id: deckId,

@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
 import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.Difficulty;
@@ -24,14 +25,10 @@ class WordCloudAggregatorTest {
     private static WordCloudQuestion question(boolean caseSensitive, int maxPerPlayer,
                                               int maxWordLength, List<String> banned) {
         return new WordCloudQuestion(
-                "wc-1", "pub", "priv", "Title", null,
+                "wc-1",
                 "Prompt", maxPerPlayer, maxWordLength, caseSensitive, true, banned,
-                0, Difficulty.MEDIUM,
-                false, true, null, ResponseMode.ACCEPTING_RESPONSES,
-                false, null, 0, null,
-                30, null, null, null, null, null, null, null, MediaPosition.NONE,
-                null, null, null, null, List.of(),
-                null, null, true, 1);
+                0, Difficulty.MEDIUM, null,
+                TestElementChromes.survey("wc-1", "Prompt"));
     }
 
     @Test

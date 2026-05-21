@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
@@ -23,11 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.DeckDTO;
-import cephadex.brainflex.dto.DeckFavoritesPage;
+import cephadex.brainflex.dto.Page;
 import cephadex.brainflex.dto.UpdateProfileRequest;
 import cephadex.brainflex.dto.UserDTO;
 import cephadex.brainflex.model.Deck;
 import cephadex.brainflex.model.DeckFavorite;
+import cephadex.brainflex.model.NotificationPrefs;
 import cephadex.brainflex.model.User;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -36,6 +36,7 @@ import cephadex.brainflex.service.DeckImageHydrationService;
 import cephadex.brainflex.service.DeckTagHydrationService;
 import cephadex.brainflex.service.UserImageHydrator;
 import cephadex.brainflex.service.UserService;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/users")
@@ -75,7 +76,7 @@ public class UserController {
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size) {
                 PageRequest pageRequest = PageRequest.of(page, size, Sort.by("stats.totalPoints").descending());
-                Page<User> userPage = userRepository.findAll(pageRequest);
+                org.springframework.data.domain.Page<User> userPage = userRepository.findAll(pageRequest);
 
                 return userPage.getContent().stream()
                                 .map(user -> new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user)))
@@ -111,6 +112,52 @@ public class UserController {
                                 .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
         }
 
+        /**
+         * Returns the caller's {@link NotificationPrefs}, materialising the
+         * spec defaults on the fly when the user record predates the
+         * profile-backfill migration. The returned object is suitable to PUT
+         * back as-is from the settings page.
+         */
+        @PreAuthorize("hasRole('USER')")
+        @GetMapping("/me/notification-prefs")
+        public ResponseEntity<NotificationPrefs> getNotificationPrefs(Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                                "Registered account required"));
+                NotificationPrefs prefs = caller.getNotificationPrefs();
+                if (prefs == null) {
+                        prefs = NotificationPrefs.withDefaults();
+                        if (caller.getNewsletter() != null) {
+                                prefs.setMarketingEmail(caller.getNewsletter());
+                        }
+                }
+                return ResponseEntity.ok(prefs);
+        }
+
+        /**
+         * Replaces the caller's {@link NotificationPrefs}. The settings page
+         * always sends the full object, so a PUT (not PATCH) maps cleanly. Null
+         * or empty maps inside the body are accepted: the read-side helpers
+         * ({@code inAppEnabled}/{@code emailEnabled}) fall back to spec
+         * defaults per kind.
+         */
+        @PreAuthorize("hasRole('USER')")
+        @PutMapping("/me/notification-prefs")
+        public ResponseEntity<NotificationPrefs> updateNotificationPrefs(
+                        @RequestBody NotificationPrefs prefs,
+                        Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN,
+                                                "Registered account required"));
+                if (prefs == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "NotificationPrefs body is required");
+                }
+                caller.setNotificationPrefs(prefs);
+                userRepository.save(caller);
+                return ResponseEntity.ok(prefs);
+        }
+
         @PostMapping("/me/close")
         public ResponseEntity<Void> closeAccount(Authentication authentication) {
                 return userService.resolveRegisteredUser(authentication)
@@ -131,7 +178,7 @@ public class UserController {
          */
         @PreAuthorize("hasRole('USER')")
         @GetMapping("/me/favorites")
-        public DeckFavoritesPage listMyFavorites(
+        public Page<DeckDTO> listMyFavorites(
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "20") int size,
                         Authentication authentication) {
@@ -142,7 +189,7 @@ public class UserController {
                 int safeSize = Math.max(1, Math.min(50, size));
                 PageRequest pageRequest = PageRequest.of(
                                 safePage, safeSize, Sort.by("favoritedAt").descending());
-                Page<DeckFavorite> rows = deckFavoriteService.listForUser(caller.getId(), pageRequest);
+                org.springframework.data.domain.Page<DeckFavorite> rows = deckFavoriteService.listForUser(caller.getId(), pageRequest);
 
                 List<String> deckIds = new ArrayList<>(rows.getNumberOfElements());
                 for (DeckFavorite row : rows.getContent()) deckIds.add(row.getDeckId());
@@ -163,7 +210,7 @@ public class UserController {
                                 .map(d -> new DeckDTO(d, true))
                                 .toList();
                 boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
-                return new DeckFavoritesPage(items, safePage, safeSize, rows.getTotalElements(), hasMore);
+                return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);
         }
 
 }

@@ -26,6 +26,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -34,6 +35,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.model.DeckComment;
 import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.repository.DeckCommentRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +44,7 @@ class DeckCommentServiceTest {
     @Mock private DeckCommentRepository commentRepository;
     @Mock private MongoTemplate mongoTemplate;
     @Mock private UserImageHydrator userImageHydrator;
+    @Mock private ApplicationEventPublisher events;
 
     @InjectMocks private DeckCommentService deckCommentService;
 
@@ -219,7 +222,7 @@ class DeckCommentServiceTest {
         DeckComment row = new DeckComment();
         row.setId("comment-1");
         row.setDeckId("deck-1");
-        row.setAuthorUserId(userId);
+        row.setAuthor(UserSnapshot.of(userId, null));
         row.setBody("hello");
         row.setUpvoterUserIds(new HashSet<>());
         return row;

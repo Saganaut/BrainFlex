@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cephadex.brainflex.service.AvatarService;
 import cephadex.brainflex.service.AvatarService.AvatarPreset;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/api/avatars")
@@ -28,8 +29,9 @@ public class AvatarController {
         this.avatarService = avatarService;
     }
 
+    @Operation(operationId = "listAvatars")
     @GetMapping
-    public List<AvatarPreset> list() {
+    public List<AvatarPreset> listAvatars() {
         return avatarService.list();
     }
 }

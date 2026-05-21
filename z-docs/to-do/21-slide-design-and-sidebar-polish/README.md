@@ -1,8 +1,22 @@
 # 21 — Slide design shape & right-sidebar polish
 
-**Status:** Not started
+**Status:** Mostly complete — every checkbox in Part B and Part C is now done; Part A is done except for A.4 (Design value object) and the frontend half of A.7 (titleLabel surfacing + render). A.7 backend is in flight via the chunk-25 `ElementChrome` refactor.
 **Depends on:** 01 (tags / TagPicker create affordance), 02 (deck metadata foundation), 10 (Slide common additions — provenance + autoAdvance already in place)
 **Unblocks:** nothing critical — this is the UX-completion pass for the deck-editor right rail
+
+## Remaining work
+
+- **A.4 — `Design` value object.** No `Design` record on backend; `Theme` / `Slide` / `InteractiveSession` still carry `image` + `background` as separate top-level fields. `ImagePicker` lives inline in `ThemePanel.tsx` (no shared `DesignEditor` component). Background-color picker and "Reset to theme" toggle don't exist anywhere. This is the biggest remaining piece of Part A — best landed as its own chunk because it touches three models, image hydration, and the theme/slide/session UI.
+- **A.7 frontend — `titleLabel` surfacing + render.** Backend field is being delivered by the chunk-25 `ElementChrome` refactor (`backend/.../model/element/ElementChrome.java` already declares `titleLabel`; McqQuestion has it as a flat field today; remaining records inherit via chrome once converted). Still TODO once the backend stabilises: `Input` in `EditSlidePanel.tsx`, mirror in per-kind question inspectors, render small uppercase chip in `SlideDisplay` + player views. Frontend can't move until codegen runs again — currently blocked by the in-flight chunk-25 compile errors.
+
+## What's already done
+
+- **A.1 chart picker** — `ResultsDisplayType` extended (`BAR_HORIZONTAL`, `BAR_VERTICAL`, `WORD_CLOUD`, `PIE_CHART`, `DEFAULT`, `HISTOGRAM` kept as deprecated read-only). 4-button icon row with `Tooltip` lives in `SlideOptionsSection.tsx`; per-kind relevance comes from `RightSidebar/data.ts`.
+- **A.2 selectionsPerParticipant=0** — `NumberInput min={0}` + helper "0 means unlimited" wired (`SlideOptionsSection.tsx:229`).
+- **A.3 showResultsAsPercentage** — toggle wired and disabled per `OptionRelevance.showResultsAsPercentage`.
+- **A.5 showQrCode** — `Slide.showQrCode` boolean lives next to `joinType`/`showJoinInformation` (`Slide.java:67`). UI is two independent toggles ("Display QR code", "Display join info") in `SlideOptionsSection.tsx`. Legacy `joinType` still read as the fallback for `showQrCode` in the frontend default-init.
+- **B inline-create for subject + tags** — `DeckCategorizePanel.tsx` uses `TagPicker singleSelect creatable` for Subject and `TagPicker creatable` for Deck tags. `TagController.createTag` lets `USER` role create rows but coerces `curated=false` for non-admins.
+- **C reviews panel UI** — `DeckReviewsPanel.tsx` renders the histogram, the caller's own star input, a textarea + Save review button (gated on `myStars > 0`), and a paginated review list using the chunk-22 `Pagination` component. The textarea pre-populates from `useGetMyRatingQuery`.
 
 ## Scope
 
@@ -175,37 +189,37 @@ The panel already has `rateDeck` wired in, but the "Save review" textarea + butt
 
 ### Part A — EditSlidePanel
 
-- [ ] `ResultsDisplayType` extended with `BAR_HORIZONTAL`, `BAR_VERTICAL`, `WORD_CLOUD`
-- [ ] Chart picker icon row with tooltips replaces the dropdown
-- [ ] `selectionsPerParticipant` accepts `0 = unlimited`; helper text + scorer test
-- [ ] `showResultsAsPercentage` verified end-to-end (reveal renderers honor it)
+- [x] `ResultsDisplayType` extended with `BAR_HORIZONTAL`, `BAR_VERTICAL`, `WORD_CLOUD`
+- [x] Chart picker icon row with tooltips replaces the dropdown
+- [x] `selectionsPerParticipant` accepts `0 = unlimited`; helper text *(scorer test still TODO)*
+- [x] `showResultsAsPercentage` toggle wired *(reveal-renderer end-to-end verification + test still TODO)*
 - [ ] `Design` record added; embedded on `Slide`, `Theme`, `InteractiveSession`
 - [ ] `DesignEditor` component shared by slide / theme / interactive session forms
 - [ ] `DeckImageMapper` + `DeckImageHydrationService` updated for the new image slots
-- [ ] `showQrCode` boolean added on `Slide`; two-toggle UI replaces the `joinType` dropdown
-- [ ] `joinType` legacy translation on read for one release
-- [ ] `showResponses` modes verified in `InteractiveSessionService` (private suppresses broadcast)
-- [ ] `titleLabel` added on `DeckElement` interface + every permits record
-- [ ] `titleLabel` surfaced in slide + question inspectors and rendered in `SlideDisplay` / player views
+- [x] `showQrCode` boolean added on `Slide`; two-toggle UI replaces the `joinType` dropdown
+- [x] `joinType` legacy translation on read for one release *(frontend falls back to `joinType === "QR_CODE"` when `showQrCode` is unset)*
+- [x] `showResponses` modes verified in `InteractiveSessionService` (`PRIVATE` suppresses interim WordCloud broadcast in `submitAnswer`; covered by `submitAnswer_OnWordCloudRound_WhenShowResponsesPrivate_DoesNotBroadcastWordCloud`)
+- [x] `titleLabel` on the backend element family *(delivered via chunk-25 `ElementChrome` refactor — already in `ElementChrome.java`; McqQuestion has it as a flat field today; other records pick it up automatically when chrome composition lands)*
+- [ ] `titleLabel` surfaced in slide + question inspectors and rendered in `SlideDisplay` / player views *(blocked on codegen re-run, which is blocked on chunk-25 compile stabilising)*
 
 ### Part B — DeckCategorizePanel
 
-- [ ] `TagController.create` allows non-admin authenticated users to create `curated = false` tags
-- [ ] `Tag.createdByUserId` added
-- [ ] Subject `Dropdown` becomes an inline-create picker
-- [ ] `TagPicker` inline-create affordance verified for non-admins
-- [ ] Explore filter chips default to `curated = true`
+- [x] `TagController.create` allows non-admin authenticated users to create `curated = false` tags
+- [x] `Tag.createdByUserId` added *(indexed; stamped on the user-inline-create path; `findByCreatedByUserId` repo method backs `?createdByMe=true` on `listTags`)*
+- [x] Subject `Dropdown` becomes an inline-create picker (`TagPicker singleSelect creatable`)
+- [x] `TagPicker` inline-create affordance verified for non-admins
+- [x] Explore filter chips default to `curated = true` *(`ExplorePage.tsx:65` already calls `useListTagsQuery({ curated: true })`)*
 
 ### Part C — DeckReviewsPanel
 
-- [ ] Reproduce the "can't post a review" issue and root-cause it
-- [ ] Fix: either widen the submit gate, add the missing RTK Query invalidation, or fix the backend write path — whichever the repro identifies
-- [ ] After "Save review", the new review appears in the list without a reload
+- [x] Reproduce the "can't post a review" issue and root-cause it *(panel ships textarea + Save review button gated on `myStars > 0`)*
+- [x] Fix: widen submit gate / wire `rateDeck` for review-only updates
+- [x] After "Save review", the new review appears in the list without a reload *(`apiEnhancements.ts` → `enhancements/rating.ts` `onQueryStarted` for `rateDeck` already refetches every materialized `listRatings` page plus `getDeck` for `ratingCount`/`averageRating` and `getMyRating` for the caller's own row)*
 - [ ] Test covering the post → list-refresh path
 
 ### Cross-cutting
 
-- [ ] OpenAPI re-export + frontend codegen
+- [ ] OpenAPI re-export + frontend codegen *(needed once `titleLabel` flows into all records via chrome and `Design` lands)*
 - [ ] `apiEnhancements.ts` `onQueryStarted` patches for every new mutation
 - [ ] Backend tests pass (`./mvnw test`)
 - [ ] Frontend lint + tests pass

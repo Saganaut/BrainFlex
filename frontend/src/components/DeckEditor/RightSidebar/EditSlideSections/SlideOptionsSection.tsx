@@ -3,22 +3,23 @@
 // info, free-form heading + rich participant note — plus the chunk-10
 // `autoAdvanceSeconds` for unattended slideshow mode. The body of this file
 // was lifted out of EditSlidePanel when that panel became a per-kind
-// dispatcher; the same mirror/sync/commit pattern still applies.
-import { useState } from "react";
+// dispatcher; the same mirror/sync/commit pattern still applies. Form state
+// lives in `useSlideOptionsForm` so this file is mostly JSX + commit calls.
 import {
   ChartBarIcon,
   ChartPieIcon,
   HashtagIcon,
 } from "@heroicons/react/24/outline";
 import { Toggle } from "@/components/Common/Input/Toggle/Toggle";
-import { RadioGroup } from "@/components/Common/Input/RadioGroup/RadioGroup";
 import { Input } from "@/components/Common/Input/Input/Input";
 import { NumberInput } from "@/components/Common/Input/NumberInput/NumberInput";
 import { RichTextInput } from "@/components/Common/Input/RichTextInput/RichTextInput";
-import { Tooltip } from "@/components/Common/Tooltip/Tooltip";
+import { ChartPreviewPopover } from "@/components/Common/Charts/ChartPreview/ChartPreviewPopover";
 import { useElementEditor } from "../../SlideContentTypes/useElementEditor";
 import type { Slide } from "@/store/BrainFlexApi";
 import { relevanceFor, type ChartType } from "../data";
+import { useSlideOptionsForm } from "./useSlideOptionsForm";
+import type { SlideOptionsForm } from "./useSlideOptionsForm";
 import styles from "../EditSlidePanel.module.css";
 
 const isSlide = (e: { kind: string }): e is Slide => e.kind === "Slide";
@@ -37,76 +38,38 @@ const CHART_OPTIONS: {
   { value: "PIE_CHART", label: "Pie chart", Icon: ChartPieIcon },
 ];
 
-const SHOW_RESPONSES_OPTIONS: {
-  value: NonNullable<Slide["showResponses"]>;
-  label: string;
-}[] = [
-  { value: "INSTANT", label: "Instant" },
-  { value: "ON_CLICK", label: "On click" },
-  { value: "PRIVATE", label: "Private" },
-];
+const buildPatch = (
+  element: Slide,
+  form: SlideOptionsForm,
+  overrides: Partial<Slide> = {},
+): Slide => ({
+  ...element,
+  resultsDisplayType: form.resultsDisplayType,
+  multipleSelectionsEnabled: form.multipleSelectionsEnabled,
+  selectionsPerParticipant: form.selectionsPerParticipant,
+  showResultsAsPercentage: form.showResultsAsPercentage,
+  showJoinInformation: form.showJoinInformation,
+  showQrCode: form.showQrCode,
+  heading: form.heading,
+  participantInformation:
+    form.participantInformationHtml === ""
+      ? undefined
+      : { html: form.participantInformationHtml },
+  autoAdvanceSeconds: form.autoAdvanceEnabled
+    ? form.autoAdvanceSeconds
+    : undefined,
+  ...overrides,
+});
 
 const SlideOptionsSection = () => {
   const { element, schedule, flush, commit, syncedFromId, markSynced } =
     useElementEditor<Slide>(isSlide);
 
-  const [resultsDisplayType, setResultsDisplayType] = useState<
-    NonNullable<Slide["resultsDisplayType"]>
-  >(element?.resultsDisplayType ?? "DEFAULT");
-  const [multipleSelectionsEnabled, setMultipleSelectionsEnabled] =
-    useState<boolean>(element?.multipleSelectionsEnabled ?? false);
-  const [selectionsPerParticipant, setSelectionsPerParticipant] =
-    useState<number>(element?.selectionsPerParticipant ?? 1);
-  const [showResultsAsPercentage, setShowResultsAsPercentage] =
-    useState<boolean>(element?.showResultsAsPercentage ?? false);
-  // chunk 21 — joinType is the legacy single-source enum. New documents carry
-  // showJoinInformation and showQrCode independently; older documents fall
-  // back to deriving showQrCode from joinType === "QR_CODE".
-  const [showJoinInformation, setShowJoinInformation] = useState<boolean>(
-    element?.showJoinInformation ?? true,
-  );
-  const [showQrCode, setShowQrCode] = useState<boolean>(
-    element?.showQrCode ?? element?.joinType === "QR_CODE",
-  );
-  const [showResponses, setShowResponses] = useState<
-    NonNullable<Slide["showResponses"]>
-  >(element?.showResponses ?? "INSTANT");
-  const [heading, setHeading] = useState<string>(element?.heading ?? "");
-  // RichTextInput consumes/produces an HTML string today, but the backend
-  // field is a TipTap/ProseMirror JSON doc. Until the picker round-trips JSON
-  // we store the HTML in `participantInformation.html` as a one-key Map; a
-  // later codegen pass will swap this for the proper TipTap shape.
-  const [participantInformationHtml, setParticipantInformationHtml] =
-    useState<string>(
-      typeof element?.participantInformation?.html === "string"
-        ? element.participantInformation.html
-        : "",
-    );
-  // chunk 10: null means the host clicks Next manually.
-  const [autoAdvanceEnabled, setAutoAdvanceEnabled] = useState<boolean>(
-    element?.autoAdvanceSeconds !== undefined,
-  );
-  const [autoAdvanceSeconds, setAutoAdvanceSeconds] = useState<number>(
-    element?.autoAdvanceSeconds ?? 30,
-  );
+  const { form, patch, resync } = useSlideOptionsForm(element);
 
   if (element && syncedFromId !== element.id) {
     markSynced(element.id);
-    setResultsDisplayType(element.resultsDisplayType ?? "DEFAULT");
-    setMultipleSelectionsEnabled(element.multipleSelectionsEnabled ?? false);
-    setSelectionsPerParticipant(element.selectionsPerParticipant ?? 1);
-    setShowResultsAsPercentage(element.showResultsAsPercentage ?? false);
-    setShowJoinInformation(element.showJoinInformation ?? true);
-    setShowQrCode(element.showQrCode ?? element.joinType === "QR_CODE");
-    setShowResponses(element.showResponses ?? "INSTANT");
-    setHeading(element.heading ?? "");
-    setParticipantInformationHtml(
-      typeof element.participantInformation?.html === "string"
-        ? element.participantInformation.html
-        : "",
-    );
-    setAutoAdvanceEnabled(element.autoAdvanceSeconds !== undefined);
-    setAutoAdvanceSeconds(element.autoAdvanceSeconds ?? 30);
+    resync(element);
   }
 
   if (!element) return null;
@@ -119,24 +82,6 @@ const SlideOptionsSection = () => {
     slideKind: element.slideKind,
   });
   const chartEnabled = new Set(rel.resultsCharts);
-
-  const buildPatch = (overrides: Partial<Slide>): Slide => ({
-    ...element,
-    resultsDisplayType,
-    multipleSelectionsEnabled,
-    selectionsPerParticipant,
-    showResultsAsPercentage,
-    showJoinInformation,
-    showQrCode,
-    showResponses,
-    heading,
-    participantInformation:
-      participantInformationHtml === ""
-        ? undefined
-        : { html: participantInformationHtml },
-    autoAdvanceSeconds: autoAdvanceEnabled ? autoAdvanceSeconds : undefined,
-    ...overrides,
-  });
 
   const elId = element.id ?? "";
 
@@ -152,9 +97,9 @@ const SlideOptionsSection = () => {
             // Legacy "HISTOGRAM" documents render as BAR_VERTICAL — the
             // backend kept the enum value for read-compat only.
             const normalized: ResultsDisplayValue =
-              resultsDisplayType === "HISTOGRAM"
+              form.resultsDisplayType === "HISTOGRAM"
                 ? "BAR_VERTICAL"
-                : resultsDisplayType;
+                : form.resultsDisplayType;
             const isActive = normalized === value;
             // The whole picker is disabled when the kind has no aggregate viz
             // (Slide / Q&A / Drawing / Matching / Grid / PlaceOnImage); within
@@ -163,7 +108,11 @@ const SlideOptionsSection = () => {
             const isDisabled =
               !rel.resultsDisplayType || !chartEnabled.has(value);
             return (
-              <Tooltip key={value} label={label}>
+              <ChartPreviewPopover
+                key={value}
+                chartType={value}
+                label={label}
+                placement='left'>
                 <button
                   type='button'
                   role='radio'
@@ -182,8 +131,8 @@ const SlideOptionsSection = () => {
                     const next: ResultsDisplayValue = isActive
                       ? "DEFAULT"
                       : value;
-                    setResultsDisplayType(next);
-                    commit(buildPatch({ resultsDisplayType: next }));
+                    const nextForm = patch({ resultsDisplayType: next });
+                    commit(buildPatch(element, nextForm));
                   }}>
                   <Icon
                     className={[
@@ -195,19 +144,20 @@ const SlideOptionsSection = () => {
                     aria-hidden='true'
                   />
                 </button>
-              </Tooltip>
+              </ChartPreviewPopover>
             );
           })}
         </div>
         <Toggle
           id={`slide-percent-${elId}`}
           label='Show results as percentage'
-          checked={showResultsAsPercentage}
+          checked={form.showResultsAsPercentage}
           disabled={!rel.showResultsAsPercentage}
           onChange={(e) => {
-            const next = e.currentTarget.checked;
-            setShowResultsAsPercentage(next);
-            commit(buildPatch({ showResultsAsPercentage: next }));
+            const nextForm = patch({
+              showResultsAsPercentage: e.currentTarget.checked,
+            });
+            commit(buildPatch(element, nextForm));
           }}
         />
       </section>
@@ -217,40 +167,32 @@ const SlideOptionsSection = () => {
         <Toggle
           id={`slide-multi-${elId}`}
           label='Allow multiple selections'
-          checked={multipleSelectionsEnabled}
+          checked={form.multipleSelectionsEnabled}
           disabled={!rel.multipleSelectionsEnabled}
           onChange={(e) => {
-            const next = e.currentTarget.checked;
-            setMultipleSelectionsEnabled(next);
-            commit(buildPatch({ multipleSelectionsEnabled: next }));
+            const nextForm = patch({
+              multipleSelectionsEnabled: e.currentTarget.checked,
+            });
+            commit(buildPatch(element, nextForm));
           }}
         />
-        {multipleSelectionsEnabled && rel.multipleSelectionsEnabled && (
+        {form.multipleSelectionsEnabled && rel.multipleSelectionsEnabled && (
           <NumberInput
             label='Selections per participant'
             id={`slide-multi-count-${elId}`}
             min={0}
-            value={selectionsPerParticipant}
+            value={form.selectionsPerParticipant}
             infoMessage='0 means unlimited'
             onChange={(next) => {
-              setSelectionsPerParticipant(next);
-              schedule(buildPatch({ selectionsPerParticipant: next }));
+              const nextForm = patch({ selectionsPerParticipant: next });
+              schedule(buildPatch(element, nextForm));
             }}
             onBlur={flush}
           />
         )}
-        <RadioGroup
-          name={`slide-show-responses-${elId}`}
-          legend='Show responses'
-          options={SHOW_RESPONSES_OPTIONS}
-          value={showResponses}
-          disabled={!rel.showResponses}
-          onChange={(value) => {
-            const next = value as Slide["showResponses"];
-            setShowResponses(next);
-            commit(buildPatch({ showResponses: next }));
-          }}
-        />
+        {/* showResponses moved to the shared BehaviorSection in chunk 24 so
+            every interactive kind exposes the cascade override, not just
+            Slide. */}
       </section>
 
       <section className={styles.section}>
@@ -258,28 +200,25 @@ const SlideOptionsSection = () => {
         <Toggle
           id={`slide-auto-advance-${elId}`}
           label='Auto-advance after a fixed delay'
-          checked={autoAdvanceEnabled}
+          checked={form.autoAdvanceEnabled}
           disabled={!rel.autoAdvance}
           onChange={(e) => {
-            const next = e.currentTarget.checked;
-            setAutoAdvanceEnabled(next);
-            commit(
-              buildPatch({
-                autoAdvanceSeconds: next ? autoAdvanceSeconds : undefined,
-              }),
-            );
+            const nextForm = patch({
+              autoAdvanceEnabled: e.currentTarget.checked,
+            });
+            commit(buildPatch(element, nextForm));
           }}
         />
-        {autoAdvanceEnabled && (
+        {form.autoAdvanceEnabled && (
           <NumberInput
             id={`slide-auto-advance-seconds-${elId}`}
             label='Seconds before advancing'
             min={1}
             max={600}
-            value={autoAdvanceSeconds}
+            value={form.autoAdvanceSeconds}
             onChange={(next) => {
-              setAutoAdvanceSeconds(next);
-              schedule(buildPatch({ autoAdvanceSeconds: next }));
+              const nextForm = patch({ autoAdvanceSeconds: next });
+              schedule(buildPatch(element, nextForm));
             }}
             onBlur={flush}
           />
@@ -291,23 +230,23 @@ const SlideOptionsSection = () => {
         <Toggle
           id={`slide-show-qr-${elId}`}
           label='Display QR code'
-          checked={showQrCode}
+          checked={form.showQrCode}
           disabled={!rel.showQrCode}
           onChange={(e) => {
-            const next = e.currentTarget.checked;
-            setShowQrCode(next);
-            commit(buildPatch({ showQrCode: next }));
+            const nextForm = patch({ showQrCode: e.currentTarget.checked });
+            commit(buildPatch(element, nextForm));
           }}
         />
         <Toggle
           id={`slide-show-join-${elId}`}
           label='Display join info'
-          checked={showJoinInformation}
+          checked={form.showJoinInformation}
           disabled={!rel.showJoinInformation}
           onChange={(e) => {
-            const next = e.currentTarget.checked;
-            setShowJoinInformation(next);
-            commit(buildPatch({ showJoinInformation: next }));
+            const nextForm = patch({
+              showJoinInformation: e.currentTarget.checked,
+            });
+            commit(buildPatch(element, nextForm));
           }}
         />
       </section>
@@ -318,12 +257,11 @@ const SlideOptionsSection = () => {
           label='Heading'
           id={`slide-heading-${elId}`}
           type='text'
-          value={heading}
+          value={form.heading}
           placeholder='Slide heading…'
           onChange={(e) => {
-            const next = e.target.value;
-            setHeading(next);
-            schedule(buildPatch({ heading: next }));
+            const nextForm = patch({ heading: e.target.value });
+            schedule(buildPatch(element, nextForm));
           }}
           onBlur={flush}
         />
@@ -331,15 +269,10 @@ const SlideOptionsSection = () => {
           label='Information for participants'
           id={`slide-participant-info-${elId}`}
           placeholder='What participants should know before answering…'
-          value={participantInformationHtml}
+          value={form.participantInformationHtml}
           onChange={(html) => {
-            setParticipantInformationHtml(html);
-            schedule(
-              buildPatch({
-                participantInformation:
-                  html === "" ? undefined : { html },
-              }),
-            );
+            const nextForm = patch({ participantInformationHtml: html });
+            schedule(buildPatch(element, nextForm));
           }}
           onBlur={flush}
         />

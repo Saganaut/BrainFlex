@@ -31,7 +31,7 @@ const PlayerInfo = () => {
         <div className={styles.header}>
           <div className={styles.imgWrapper}>
             {/* <img src={user.pictureUrl} /> */}
-            <img src='https://i.pravatar.cc/50' />
+            <img src='https://i.pravatar.cc/50' alt={`${user.userName} avatar`} />
           </div>
           <div>
             <h5>{user.userName}</h5>

@@ -1,21 +1,22 @@
 /**
  * Lobby team picker (chunk 12).
  *
- * Renders a grid of team cards when {@code session.teamMode} is on. Each
+ * Renders a grid of team cards when {@code session.settings.teamMode} is on. Each
  * card shows the team's color, name, member list, and member count. Players
  * tap a card to move themselves via useMovePlayerToTeamMutation; the host
  * gets inline create / rename / recolor / delete controls plus an
  * "Auto-assign me" button when autoBalanceTeams is enabled and the player
  * doesn't yet have a team.
  *
+ * The host can also move any member to a different team via a per-row
+ * "Move to…" select on the member list — a native select keeps the
+ * positioning / outside-click / a11y semantics for free, which matters
+ * because the action is low-frequency and we don't want a bespoke menu
+ * surface here.
+ *
  * Team membership is sourced from the slice (which is fed by both the
  * authoritative session DTO and STOMP /teams broadcasts), so concurrent
  * joins from other players reflect live without polling.
- *
- * Out of scope for this PR: drag-and-drop moves and a richer per-player
- * "move to team" dropdown for hosts. The roadmap calls these out
- * explicitly as follow-up; the tap-to-join flow covers the Mentimeter /
- * Kahoot core team-mode UX.
  */
 import { useState } from "react";
 import { Btn } from "@/components/Common/Buttons/Btn";
@@ -130,11 +131,19 @@ const TeamPicker = ({
           <TeamCard
             key={team.id}
             team={team}
+            allTeams={teams}
             members={players.filter((p) => p.teamId === team.id)}
             isMyTeam={!!myTeamId && myTeamId === team.id}
             isHost={isHost}
             onJoin={() => {
               handleJoin(team.id);
+            }}
+            onMoveMember={(targetUserId, targetTeamId) => {
+              void movePlayerToTeam({
+                roomCode,
+                userId: targetUserId,
+                teamMoveRequest: { teamId: targetTeamId },
+              });
             }}
             onDeleteConfirm={confirm}
             roomCode={roomCode}
@@ -154,20 +163,24 @@ const TeamPicker = ({
 
 interface TeamCardProps {
   team: Team;
+  allTeams: Team[];
   members: InteractiveSessionPlayerDto[];
   isMyTeam: boolean;
   isHost: boolean;
   onJoin: () => void;
+  onMoveMember: (userId: string, teamId: string) => void;
   onDeleteConfirm: ReturnType<typeof useConfirm>;
   roomCode: string;
 }
 
 const TeamCard = ({
   team,
+  allTeams,
   members,
   isMyTeam,
   isHost,
   onJoin,
+  onMoveMember,
   onDeleteConfirm,
   roomCode,
 }: TeamCardProps) => {
@@ -255,7 +268,32 @@ const TeamCard = ({
         <ul className={styles.memberList}>
           {members.map((m) => (
             <li key={m.userId} className={styles.member}>
-              {m.userName ?? "?"}
+              <span className={styles.memberName}>{m.userName ?? "?"}</span>
+              {isHost && m.userId && allTeams.length > 1 && (
+                <select
+                  className={styles.moveSelect}
+                  value=''
+                  aria-label={`Move ${m.userName ?? "player"} to another team`}
+                  onChange={(e) => {
+                    const targetTeamId = e.target.value;
+                    if (!targetTeamId || targetTeamId === team.id || !m.userId)
+                      return;
+                    onMoveMember(m.userId, targetTeamId);
+                    // Reset to placeholder so the same destination can be
+                    // picked again for the next member without re-renders
+                    // freezing the bound value.
+                    e.target.value = "";
+                  }}>
+                  <option value=''>Move to…</option>
+                  {allTeams
+                    .filter((t) => t.id && t.id !== team.id)
+                    .map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                </select>
+              )}
             </li>
           ))}
         </ul>

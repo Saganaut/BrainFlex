@@ -35,7 +35,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import cephadex.brainflex.dto.NotificationResponse;
+import cephadex.brainflex.dto.user.NotificationResponse;
 import cephadex.brainflex.model.enums.NotificationKind;
 import cephadex.brainflex.model.user.Notification;
 import cephadex.brainflex.model.user.User;

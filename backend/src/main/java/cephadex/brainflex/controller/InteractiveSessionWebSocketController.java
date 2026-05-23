@@ -39,15 +39,15 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.AnswerSubmitRequest;
-import cephadex.brainflex.dto.BootPlayerRequest;
-import cephadex.brainflex.dto.ChatSendRequest;
-import cephadex.brainflex.dto.FreezeResponsesRequest;
-import cephadex.brainflex.dto.InteractiveSessionErrorMessage;
-import cephadex.brainflex.dto.ModerateChatRequest;
-import cephadex.brainflex.dto.ReactionSendRequest;
-import cephadex.brainflex.dto.RevealNowRequest;
-import cephadex.brainflex.dto.VoteSubmitRequest;
+import cephadex.brainflex.dto.session.AnswerSubmitRequest;
+import cephadex.brainflex.dto.session.BootPlayerRequest;
+import cephadex.brainflex.dto.session.ChatSendRequest;
+import cephadex.brainflex.dto.session.FreezeResponsesRequest;
+import cephadex.brainflex.dto.session.message.InteractiveSessionErrorMessage;
+import cephadex.brainflex.dto.session.ModerateChatRequest;
+import cephadex.brainflex.dto.session.ReactionSendRequest;
+import cephadex.brainflex.dto.session.RevealNowRequest;
+import cephadex.brainflex.dto.session.VoteSubmitRequest;
 import cephadex.brainflex.service.InteractiveSessionService;
 
 @Controller

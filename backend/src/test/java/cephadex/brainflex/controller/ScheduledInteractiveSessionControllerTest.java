@@ -31,9 +31,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cephadex.brainflex.dto.AddInviteRequest;
-import cephadex.brainflex.dto.CreateScheduledInteractiveSessionRequest;
-import cephadex.brainflex.dto.RedeemInviteResponse;
+import cephadex.brainflex.dto.session.AddInviteRequest;
+import cephadex.brainflex.dto.session.CreateScheduledInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.RedeemInviteResponse;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.enums.ScheduleStatus;
 import cephadex.brainflex.model.session.InteractiveSessionInvite;

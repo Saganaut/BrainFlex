@@ -6,11 +6,15 @@
 import { Link } from "@tanstack/react-router";
 import styles from "./GameOver.module.css";
 import { TeamPodium } from "../TeamPodium/TeamPodium";
-import type { PlayerPlacement, Team } from "../../../store/BrainFlexApi";
+import type {
+  PlayerPlacementResponse,
+  Team,
+} from "../../../store/BrainFlexApi";
 
 interface GameOverProps {
-  placements: PlayerPlacement[];
-  currentUserId?: string;
+  placements: PlayerPlacementResponse[];
+  // Session-scoped playerId of the viewer; their row gets the "me" highlight.
+  currentPlayerId?: string;
   // Team-mode chunk 12: when provided alongside placements that carry teamId,
   // GameOver renders a team podium above the individual podium. Empty array
   // (or undefined) preserves the original individual-only layout.
@@ -21,12 +25,12 @@ const PLACE_LABELS = ["1st", "2nd", "3rd"];
 
 /**
  * Chunk 13 — per-player engagement chips on the placement card. Numbers come
- * straight off `PlayerPlacement`, which `InteractiveSessionService.endGame`
+ * straight off `PlayerPlacementResponse`, which `InteractiveSessionService.endGame`
  * snapshots off the live `InteractiveSessionPlayer` at game-end time. Each
  * chip is suppressed when its value is zero or undefined so a player who
  * never streaked / never sent a reaction doesn't get noisy "0x" badges.
  */
-const PlacementChips = ({ p }: { p: PlayerPlacement }) => {
+const PlacementChips = ({ p }: { p: PlayerPlacementResponse }) => {
   const accuracyPct =
     typeof p.endStats?.accuracy === "number" && p.totalQuestions
       ? Math.round(p.endStats.accuracy * 100)
@@ -72,7 +76,7 @@ const PlacementChips = ({ p }: { p: PlayerPlacement }) => {
   );
 };
 
-const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
+const GameOver = ({ placements, currentPlayerId, teams }: GameOverProps) => {
   const top3 = placements.slice(0, 3);
   const rest = placements.slice(3);
   const teamModeActive =
@@ -86,15 +90,15 @@ const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
         <TeamPodium
           placements={placements}
           teams={teams}
-          currentUserId={currentUserId}
+          currentPlayerId={currentPlayerId}
         />
       )}
 
       <div className={styles.podium}>
         {top3.map((p, i) => (
           <div
-            key={p.user?.userId}
-            className={`${styles.place} ${styles[`place${i + 1}`]} ${p.user?.userId === currentUserId ? styles.me : ""}`}>
+            key={p.playerId}
+            className={`${styles.place} ${styles[`place${i + 1}`]} ${p.playerId === currentPlayerId ? styles.me : ""}`}>
             <span className={styles.placeLabel}>{PLACE_LABELS[i]}</span>
             <span className={styles.placeName}>{p.user?.name}</span>
             <span className={styles.placeScore}>{p.finalScore ?? 0} pts</span>
@@ -107,8 +111,8 @@ const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
         <ol className={styles.restList} start={4}>
           {rest.map((p) => (
             <li
-              key={p.user?.userId}
-              className={`${styles.restRow} ${p.user?.userId === currentUserId ? styles.me : ""}`}>
+              key={p.playerId}
+              className={`${styles.restRow} ${p.playerId === currentPlayerId ? styles.me : ""}`}>
               <div className={styles.restRowMain}>
                 <span className={styles.restName}>{p.user?.name}</span>
                 {p.user?.guest && (

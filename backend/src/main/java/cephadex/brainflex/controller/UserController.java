@@ -22,10 +22,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.DeckResponse;
-import cephadex.brainflex.dto.Page;
-import cephadex.brainflex.dto.UpdateProfileRequest;
-import cephadex.brainflex.dto.UserResponse;
+import cephadex.brainflex.dto.deck.DeckResponse;
+import cephadex.brainflex.dto.shared.Page;
+import cephadex.brainflex.dto.user.UpdateProfileRequest;
+import cephadex.brainflex.dto.user.UserResponse;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckFavorite;
 import cephadex.brainflex.model.user.NotificationPrefs;

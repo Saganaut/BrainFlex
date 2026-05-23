@@ -1,6 +1,6 @@
 .sessionDashboard {
   * {
-    border: 1px dashed black;
+    border: none;
   }
 
   width: 100%;
@@ -20,9 +20,18 @@
 
     .leftSidebar {
       width: fit-content;
+      padding-top: var(--space-4);
     }
 
     .innerDisplay {
+      display: flex;
+      flex: 1;
+      background-color: var(--bg-canvas);
+      padding: var(--p-md);
+      padding-left: var(--space-2);
+      padding-right: var(--space-2);
+      padding-bottom: var(--space-16);
+
       .sessionBoard {
         display: flex;
         height: 100%;
@@ -37,7 +46,10 @@
     }
 
     .rightSidebar {
-      width: fit-content;
+      padding-top: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
     }
   }
 }

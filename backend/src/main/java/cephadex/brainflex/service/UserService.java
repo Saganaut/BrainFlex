@@ -14,8 +14,8 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.RegisterRequest;
-import cephadex.brainflex.dto.UpdateProfileRequest;
+import cephadex.brainflex.dto.user.RegisterRequest;
+import cephadex.brainflex.dto.user.UpdateProfileRequest;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.OAuthProviderService.ProviderProfile;

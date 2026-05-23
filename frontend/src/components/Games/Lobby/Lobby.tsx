@@ -127,7 +127,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   };
 
   const backgroundUrl = resolveInteractiveSessionBackground(
-    session?.settings?.deckBackgroundImageUrl,
+    session?.settings.deckBackgroundImageUrl,
     session?.deckId,
   );
 
@@ -151,9 +151,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
             )}
             <span className={styles.hostLine}>
               <span className={styles.hostLabel}>Hosted by</span>
-              <span className={styles.hostName}>
-                {session.hostName ?? "Host"}
-              </span>
+              <span className={styles.hostName}>{session.hostName}</span>
             </span>
           </div>
         )}
@@ -197,7 +195,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
 
       <section className={styles.playerSection} aria-labelledby='lobby-players-heading'>
         <h2 id='lobby-players-heading' className={styles.playerHeading}>
-          Players ({players.length} / {session?.settings?.maxPlayers ?? 8})
+          Players ({players.length} / {session?.settings.maxPlayers ?? 8})
         </h2>
         <ul className={styles.playerList}>
           {players.map((p) => {
@@ -218,7 +216,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                 ? avatarPresets.find((preset) => preset.key === p.avatarKey)
                     ?.imageUrl
                 : undefined;
-            const avatarSrc = presetUrl ?? p.user?.pictureUrl;
+            const avatarSrc = presetUrl ?? p.user.pictureUrl;
             return (
               <li key={playerId} className={styles.player}>
                 {avatarSrc ? (
@@ -229,11 +227,11 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                   />
                 ) : (
                   <div className={styles.avatarFallback}>
-                    {(p.user?.name?.[0] ?? "?").toUpperCase()}
+                    {(p.user.name?.[0] ?? "?").toUpperCase()}
                   </div>
                 )}
-                <span className={styles.playerName}>{p.user?.name}</span>
-                {p.user?.guest && (
+                <span className={styles.playerName}>{p.user.name}</span>
+                {p.user.guest && (
                   <span className={styles.guestBadge}>guest</span>
                 )}
                 {isPlayerHost && <span className={styles.hostBadge}>host</span>}
@@ -245,7 +243,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                     onClick={() => {
                       void handleBoot(playerId);
                     }}
-                    aria-label={`Remove ${p.user?.name ?? "player"} from the lobby`}>
+                    aria-label={`Remove ${p.user.name ?? "player"} from the lobby`}>
                     Boot
                   </Btn>
                 )}

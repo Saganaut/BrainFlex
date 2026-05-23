@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.AddInviteRequest;
-import cephadex.brainflex.dto.CreateScheduledInteractiveSessionRequest;
-import cephadex.brainflex.dto.InteractiveSessionInviteResponse;
-import cephadex.brainflex.dto.ScheduledInteractiveSessionResponse;
-import cephadex.brainflex.dto.UpdateScheduledInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.AddInviteRequest;
+import cephadex.brainflex.dto.session.CreateScheduledInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.InteractiveSessionInviteResponse;
+import cephadex.brainflex.dto.session.ScheduledInteractiveSessionResponse;
+import cephadex.brainflex.dto.session.UpdateScheduledInteractiveSessionRequest;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.session.InteractiveSessionInvite;
 import cephadex.brainflex.model.session.ScheduledInteractiveSession;

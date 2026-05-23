@@ -25,8 +25,8 @@ import type {
   GridQuestion,
   GuestUser,
   Image,
+  InteractiveSessionPlayerResponse,
   InteractiveSessionResponse,
-  InteractiveSessionPlayerDto,
   InteractiveSessionSettings,
   MatchingQuestion,
   McqOption,
@@ -1170,7 +1170,7 @@ const mockLegolasPlayerId = "player-legolas";
 const mockGimliPlayerId = "player-gimli";
 const mockAragornPlayerId = "player-aragorn";
 
-export const mockFellowshipPlayers: InteractiveSessionPlayerDto[] = [
+export const mockFellowshipPlayers: InteractiveSessionPlayerResponse[] = [
   {
     playerId: mockFrodoPlayerId,
     user: {
@@ -1276,10 +1276,11 @@ export const mockFellowshipSession: InteractiveSessionResponse = {
   phase: "SUBMIT",
   format: "GAME",
   hostPlayerId: mockFrodoPlayerId,
-  hostName: mockFrodoUser.name,
+  hostName: mockFrodoUser.name!,
   hostAvatarUrl: mockFrodoUser.pictureUrl,
-  deckId: mockFellowshipTriviaDeck.id,
-  deckSnapshot: mockFellowshipTriviaDeck.elements,
+  deckId: mockFellowshipTriviaDeck.id!,
+  deckVersion: 1,
+  deckSnapshot: mockFellowshipTriviaDeck.elements!,
   settings: {
     ...mockSessionSettings,
     deckCoverImageUrl: mockFellowshipTriviaDeck.cover?.externalUrl,
@@ -1294,6 +1295,7 @@ export const mockFellowshipSession: InteractiveSessionResponse = {
   spectatorCount: 3,
   lobbyOpenedAt: RECENT,
   currentRound: 2,
+  totalRounds: mockFellowshipTriviaDeck.elements!.length,
   revealedElementIds: [mockTitleSlide.id!, mockMcqQuestion.id!],
   elementResponseModeOverrides: {},
   viewerPlayerId: mockFrodoPlayerId,
@@ -1307,10 +1309,9 @@ export const mockTeamSession: InteractiveSessionResponse = {
   roomCode: "HELMSD",
   customRoomCode: "HELMSD",
   status: "LOBBY",
-  phase: undefined,
   format: "GAME",
   hostPlayerId: mockAragornPlayerId,
-  hostName: mockAragornUser.name,
+  hostName: mockAragornUser.name!,
   hostAvatarUrl: mockAragornUser.pictureUrl,
   viewerPlayerId: mockAragornPlayerId,
   settings: {

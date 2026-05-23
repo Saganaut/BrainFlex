@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import cephadex.brainflex.dto.RegisterRequest;
-import cephadex.brainflex.dto.UserResponse;
+import cephadex.brainflex.dto.user.RegisterRequest;
+import cephadex.brainflex.dto.user.UserResponse;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthoritiesService;

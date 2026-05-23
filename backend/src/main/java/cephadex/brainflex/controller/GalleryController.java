@@ -31,8 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.GalleryImageResponse;
-import cephadex.brainflex.dto.UpdateGalleryImageRequest;
+import cephadex.brainflex.dto.media.GalleryImageResponse;
+import cephadex.brainflex.dto.media.UpdateGalleryImageRequest;
 import cephadex.brainflex.model.image.ImageSize;
 import cephadex.brainflex.model.image.ImageVariant;
 import cephadex.brainflex.model.media.GalleryImage;

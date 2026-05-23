@@ -28,9 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.config.AdminProperties;
-import cephadex.brainflex.dto.CreateTagRequest;
-import cephadex.brainflex.dto.TagResponse;
-import cephadex.brainflex.dto.UpdateTagRequest;
+import cephadex.brainflex.dto.deck.CreateTagRequest;
+import cephadex.brainflex.dto.deck.TagResponse;
+import cephadex.brainflex.dto.deck.UpdateTagRequest;
 import cephadex.brainflex.model.deck.Tag;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.TagService;

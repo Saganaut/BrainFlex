@@ -13,8 +13,8 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type {
   InteractiveSessionResponse,
   InteractiveSessionChatMessageResponse,
-  PlayerPlacement,
-  InteractiveSessionPlayerDto,
+  PlayerPlacementResponse,
+  InteractiveSessionPlayerResponse,
   Team,
 } from "./BrainFlexApi";
 import type { AnswerPayload, DeckElement } from "../types/elements";
@@ -57,7 +57,7 @@ export interface RoundResultPayload {
 }
 
 export interface SessionEndedPayload {
-  placements: PlayerPlacement[];
+  placements: PlayerPlacementResponse[];
 }
 
 // ─── Chunk 24 — PRESENTATION end-of-session + host reveal/freeze ─────────────
@@ -149,14 +149,14 @@ interface InteractiveSessionState {
   // STOMP rebroadcasts don't). Used wherever we'd previously compared against
   // the current user's userId — host detection, "is this row me", etc.
   viewerPlayerId: string | null;
-  players: InteractiveSessionPlayerDto[];
+  players: InteractiveSessionPlayerResponse[];
   currentElement: DeckElement | null;
   round: number;
   totalRounds: number;
   // The local player's submitted payload for this round; null until they answer.
   myAnswer: AnswerPayload | null;
   roundResult: RoundResultPayload | null;
-  finalPlacements: PlayerPlacement[];
+  finalPlacements: PlayerPlacementResponse[];
   roundStartedAt: string | null;
   wsError: WsErrorPayload | null;
   // Session-scoped playerIds of players who have answered the current round.
@@ -266,8 +266,8 @@ export const interactiveSessionSlice = createSlice({
   reducers: {
     setSession(state, action: PayloadAction<InteractiveSessionResponse>) {
       const s = action.payload;
-      state.roomCode = s.roomCode ?? null;
-      state.status = s.status ?? null;
+      state.roomCode = s.roomCode;
+      state.status = s.status;
       // Latch viewerPlayerId on the first non-null value. REST responses
       // populate it via InteractiveSessionResponse.forViewer; STOMP /lobby
       // rebroadcasts always send null (no per-viewer context) so we must
@@ -275,23 +275,22 @@ export const interactiveSessionSlice = createSlice({
       if (s.viewerPlayerId) {
         state.viewerPlayerId = s.viewerPlayerId;
       }
-      state.players = s.players ?? [];
-      state.totalRounds = s.settings?.totalRounds ?? 0;
-      state.round = s.currentRound ?? 0;
-      state.teams = s.teams ?? [];
-      state.teamMode = s.settings?.teamMode ?? false;
-      state.autoBalanceTeams = s.settings?.autoBalanceTeams ?? false;
-      // Chunk 24 — format is frozen on the session at create time. Default
-      // GAME so legacy sessions that pre-date the column still render the
-      // existing chrome instead of falling through to a blank PRESENTATION.
-      state.format = s.format ?? "GAME";
+      state.players = s.players;
+      state.totalRounds = s.settings.totalRounds ?? 0;
+      state.round = s.currentRound;
+      state.teams = s.teams;
+      state.teamMode = s.settings.teamMode ?? false;
+      state.autoBalanceTeams = s.settings.autoBalanceTeams ?? false;
+      // Chunk 24 — format is frozen on the session at create time and always
+      // present on the DTO; drives which chrome (GAME vs PRESENTATION) renders.
+      state.format = s.format;
       // Chunk 24 — host overlays are persisted on the session document so a
       // host reconnect/refresh rebuilds reveal + freeze state from the DTO
       // instead of waiting for the next broadcast. STOMP messages still keep
       // the slice in sync once we're live; this just gives us a correct
       // starting point.
-      state.revealedElementIds = s.revealedElementIds ?? [];
-      const overrides = s.elementResponseModeOverrides ?? {};
+      state.revealedElementIds = s.revealedElementIds;
+      const overrides = s.elementResponseModeOverrides;
       state.frozenElementIds = Object.entries(overrides)
         .filter(([, mode]) => mode === "NOT_ACCEPTING_RESPONSES")
         .map(([elementId]) => elementId);

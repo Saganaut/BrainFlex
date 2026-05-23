@@ -1500,7 +1500,7 @@ export type GetReviewApiArg = {
   roomCode: string;
 };
 export type GetResultsApiResponse =
-  /** status 200 OK */ InteractiveSessionResult;
+  /** status 200 OK */ InteractiveSessionResultResponse;
 export type GetResultsApiArg = {
   roomCode: string;
 };
@@ -2094,20 +2094,20 @@ export type PublicUserSnapshot = {
   pictureUrl?: string;
   guest?: boolean;
 };
-export type InteractiveSessionPlayerDto = {
-  playerId?: string;
-  user?: PublicUserSnapshot;
-  score?: number;
+export type InteractiveSessionPlayerResponse = {
+  playerId: string;
+  user: PublicUserSnapshot;
+  score: number;
   teamId?: string;
   avatarKey?: string;
   colorTag?: string;
-  currentStreak?: number;
-  longestStreak?: number;
-  accuracy?: number;
-  reactionsSent?: number;
-  speedBonusTotal?: number;
-  lateJoin?: boolean;
-  disconnected?: boolean;
+  currentStreak: number;
+  longestStreak: number;
+  accuracy: number;
+  reactionsSent: number;
+  speedBonusTotal: number;
+  lateJoin: boolean;
+  disconnected: boolean;
   lastSeenAt?: string;
 };
 export type Team = {
@@ -2119,18 +2119,18 @@ export type Team = {
   memberCount?: number;
 };
 export type InteractiveSessionResponse = {
-  id?: string;
-  roomCode?: string;
-  inviteToken?: string;
-  status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
-  phase?: "SUBMIT" | "VOTE" | "REVEAL";
-  format?: "GAME" | "PRESENTATION";
-  hostPlayerId?: string;
-  hostName?: string;
+  id: string;
+  roomCode: string;
+  inviteToken: string;
+  status: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
+  phase: "SUBMIT" | "VOTE" | "REVEAL";
+  format: "GAME" | "PRESENTATION";
+  hostPlayerId: string;
+  hostName: string;
   hostAvatarUrl?: string;
-  deckId?: string;
-  deckVersion?: number;
-  deckSnapshot?: (
+  deckId: string;
+  deckVersion: number;
+  deckSnapshot: (
     | AllocationQuestion
     | DrawingQuestion
     | GridQuestion
@@ -2145,20 +2145,20 @@ export type InteractiveSessionResponse = {
     | TextQuestion
     | WordCloudQuestion
   )[];
-  settings?: InteractiveSessionSettings;
-  players?: InteractiveSessionPlayerDto[];
-  teams?: Team[];
+  settings: InteractiveSessionSettings;
+  players: InteractiveSessionPlayerResponse[];
+  teams: Team[];
   customRoomCode?: string;
-  spectatorCount?: number;
-  lobbyOpenedAt?: string;
-  currentRound?: number;
-  totalRounds?: number;
-  revealedElementIds?: string[];
-  elementResponseModeOverrides?: {
+  spectatorCount: number;
+  lobbyOpenedAt: string;
+  currentRound: number;
+  totalRounds: number;
+  revealedElementIds: string[];
+  elementResponseModeOverrides: {
     [key: string]: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
   };
   viewerPlayerId?: string;
-  createdAt?: string;
+  createdAt: string;
   startedAt?: string;
 };
 export type TeamCrudRequest = {
@@ -2174,12 +2174,13 @@ export type UpdatePlayerAvatarRequest = {
 };
 export type InteractiveSessionChatMessageResponse = {
   id?: string;
-  author?: UserSnapshot;
+  authorPlayerId?: string;
+  author?: PublicUserSnapshot;
   fromHost?: boolean;
   body?: string;
   sentAt?: string;
   moderated?: boolean;
-  moderatedByUserId?: string;
+  moderatedByPlayerId?: string;
   moderatedAt?: string;
 };
 export type GalleryImageResponse = {
@@ -2664,9 +2665,9 @@ export type PlayerEndStats = {
   accuracy?: number;
   reactionsSent?: number;
 };
-export type PlayerPlacement = {
+export type PlayerPlacementResponse = {
   playerId?: string;
-  user?: UserSnapshot;
+  user?: PublicUserSnapshot;
   finalScore?: number;
   placement?: number;
   correctAnswers?: number;
@@ -2792,13 +2793,13 @@ export type InteractiveSessionReviewResponse = {
   roomCode?: string;
   endedAt?: string;
   scoringEnabled?: boolean;
-  placements?: PlayerPlacement[];
+  placements?: PlayerPlacementResponse[];
   rounds?: RoundReview[];
 };
-export type InteractiveSessionResult = {
+export type InteractiveSessionResultResponse = {
   id?: string;
   interactiveSessionId?: string;
-  placements?: PlayerPlacement[];
+  placements?: PlayerPlacementResponse[];
   endedAt?: string;
 };
 export type HealthCheckResponse = {

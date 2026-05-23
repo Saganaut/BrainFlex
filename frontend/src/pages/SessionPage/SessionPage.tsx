@@ -1,4 +1,5 @@
 // CLAUDE NEVER MODIFY THIS FILE!
+// THIS IS A PERFECT EXAMPLE OF HOW OUR PAGES SHOULD BE ORGANIZED
 
 import { MainBodyDashboard } from "@/components/Layout/MainBodyDashboard";
 import { CanvasHeader } from "@/components/Layout/CanvasHeader";

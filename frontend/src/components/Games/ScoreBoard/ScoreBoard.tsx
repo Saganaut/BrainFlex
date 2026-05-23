@@ -4,7 +4,7 @@
  * The local player's row is highlighted for quick self-identification.
  *
  * Identity is session-scoped: every player is identified by the
- * {@link InteractiveSessionPlayerDto.playerId} session-scoped handle — never
+ * {@link InteractiveSessionPlayerResponse.playerId} session-scoped handle — never
  * the underlying account userId.
  *
  * Optional dashboard extensions:
@@ -15,12 +15,12 @@
 import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./ScoreBoard.module.css";
 import type {
-  InteractiveSessionPlayerDto,
+  InteractiveSessionPlayerResponse,
   Team,
 } from "../../../store/BrainFlexApi";
 
 export interface ScoreBoardProps {
-  players: InteractiveSessionPlayerDto[];
+  players: InteractiveSessionPlayerResponse[];
   // Session-scoped playerId of the viewer, used to highlight their row.
   currentPlayerId?: string;
   // When true the host configured scores to stay hidden during play — render the
@@ -56,7 +56,7 @@ const ScoreBoard = ({
 }: ScoreBoardProps) => {
   const sorted = hideScores
     ? players
-    : [...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    : [...players].sort((a, b) => b.score - a.score);
 
   const answeredSet = new Set(answeredPlayerIds ?? []);
   const offlineSet = new Set(offlinePlayerIds ?? []);
@@ -83,7 +83,7 @@ const ScoreBoard = ({
               className={`${styles.row} ${isSelf ? styles.me : ""} ${isOffline ? styles.offline : ""}`}>
               {!hideScores && <span className={styles.rank}>{i + 1}</span>}
               <span className={styles.name}>
-                {p.user?.name}
+                {p.user.name}
                 {team && (
                   <span
                     className={styles.teamChip}
@@ -98,14 +98,14 @@ const ScoreBoard = ({
                   </span>
                 )}
               </span>
-              {p.user?.guest && <span className={styles.guest}>guest</span>}
+              {p.user.guest && <span className={styles.guest}>guest</span>}
               {/* Chunk 13 — Kahoot-style streak chip. Visible at 2x+; the
                   backend resets on a wrong answer, so a fresh round keeps
                   the chip until the player either misses or finishes. */}
-              {(p.currentStreak ?? 0) >= 2 && (
+              {p.currentStreak >= 2 && (
                 <span
                   className={styles.streakChip}
-                  title={`${(p.currentStreak ?? 0).toString()} in a row`}>
+                  title={`${p.currentStreak.toString()} in a row`}>
                   {p.currentStreak}x 🔥
                 </span>
               )}
@@ -123,7 +123,7 @@ const ScoreBoard = ({
                 </span>
               )}
               {!hideScores && (
-                <span className={styles.score}>{p.score ?? 0}</span>
+                <span className={styles.score}>{p.score}</span>
               )}
               {isHost && !isSelf && onBootPlayer && playerId && (
                 <Btn
@@ -134,7 +134,7 @@ const ScoreBoard = ({
                   onClick={() => {
                     onBootPlayer(playerId);
                   }}
-                  aria-label={`Remove ${p.user?.name ?? "player"} from the interactiveSession`}>
+                  aria-label={`Remove ${p.user.name ?? "player"} from the interactiveSession`}>
                   Boot
                 </Btn>
               )}

@@ -30,9 +30,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.NotificationResponse;
-import cephadex.brainflex.dto.Page;
-import cephadex.brainflex.dto.UnreadNotificationCountResponse;
+import cephadex.brainflex.dto.user.NotificationResponse;
+import cephadex.brainflex.dto.shared.Page;
+import cephadex.brainflex.dto.user.UnreadNotificationCountResponse;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.NotificationService;
 import cephadex.brainflex.service.UserService;

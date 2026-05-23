@@ -39,8 +39,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.CreateDeckCollectionRequest;
-import cephadex.brainflex.dto.UpdateDeckCollectionRequest;
+import cephadex.brainflex.dto.deck.CreateDeckCollectionRequest;
+import cephadex.brainflex.dto.deck.UpdateDeckCollectionRequest;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckCollection;
 import cephadex.brainflex.model.image.Image;

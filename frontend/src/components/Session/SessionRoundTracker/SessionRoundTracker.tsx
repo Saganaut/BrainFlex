@@ -6,10 +6,11 @@ const SessionRoundTracker = () => {
   console.log("interactiveSession", interactiveSession);
   return (
     <div className={styles.sessionRoundTracker}>
-      {interactiveSession.deckSnapshot?.map((element, index) => {
+      {interactiveSession.deckSnapshot.map((element, index) => {
+        console.log("index", index);
         return (
           <SessionRoundThumbnail
-            isActive={index === interactiveSession.currentRound}
+            isActive={index == interactiveSession.currentRound}
             key={element.id}
             element={element}
           />

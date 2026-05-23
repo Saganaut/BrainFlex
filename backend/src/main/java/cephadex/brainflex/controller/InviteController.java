@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import cephadex.brainflex.dto.RedeemInviteResponse;
+import cephadex.brainflex.dto.session.RedeemInviteResponse;
 import cephadex.brainflex.service.ScheduledInteractiveSessionService;
 import cephadex.brainflex.service.UserService;
 

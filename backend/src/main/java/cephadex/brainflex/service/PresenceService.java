@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.dto.PresenceMessage;
+import cephadex.brainflex.dto.session.message.PresenceMessage;
 
 @Service
 public class PresenceService {

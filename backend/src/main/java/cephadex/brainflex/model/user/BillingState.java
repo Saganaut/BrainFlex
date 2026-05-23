@@ -11,7 +11,7 @@
  *
  * Stripe identifiers are stored as opaque strings so the integration can be slotted
  * in later without a schema change. They never leave the backend — wire DTOs strip
- * them — see {@link cephadex.brainflex.dto.MembershipResponse}.
+ * them — see {@link cephadex.brainflex.dto.org.MembershipResponse}.
  *
  * Fields intentionally NOT included here:
  *  - {@code seatLimit} (OrganizationPlan-only — seat math doesn't apply to individual memberships).

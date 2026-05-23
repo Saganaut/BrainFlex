@@ -26,9 +26,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.CreateEmbedRequest;
-import cephadex.brainflex.dto.MediaAssetResponse;
-import cephadex.brainflex.dto.UpdateMediaAssetRequest;
+import cephadex.brainflex.dto.media.CreateEmbedRequest;
+import cephadex.brainflex.dto.media.MediaAssetResponse;
+import cephadex.brainflex.dto.media.UpdateMediaAssetRequest;
 import cephadex.brainflex.model.image.ImageSize;
 import cephadex.brainflex.model.image.ImageVariant;
 import cephadex.brainflex.model.enums.MediaKind;

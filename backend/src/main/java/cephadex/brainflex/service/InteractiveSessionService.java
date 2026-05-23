@@ -48,24 +48,24 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cephadex.brainflex.dto.AnswerProgressMessage;
-import cephadex.brainflex.dto.AnswerSubmitRequest;
-import cephadex.brainflex.dto.ChatSendRequest;
-import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
-import cephadex.brainflex.dto.InteractiveSessionChatMessageResponse;
-import cephadex.brainflex.dto.InteractiveSessionEndedMessage;
-import cephadex.brainflex.dto.InteractiveSessionResponse;
-import cephadex.brainflex.dto.InteractiveSessionReviewResponse;
-import cephadex.brainflex.dto.PlayerRoundResponse;
-import cephadex.brainflex.dto.ReactionBroadcastMessage;
-import cephadex.brainflex.dto.ReactionSendRequest;
-import cephadex.brainflex.dto.RoundResultMessage;
-import cephadex.brainflex.dto.RoundStartMessage;
-import cephadex.brainflex.dto.TeamUpdateMessage;
-import cephadex.brainflex.dto.VotePhaseStartMessage;
-import cephadex.brainflex.dto.VoteProgressMessage;
-import cephadex.brainflex.dto.VoteSubmitRequest;
-import cephadex.brainflex.dto.WordCloudUpdateMessage;
+import cephadex.brainflex.dto.session.message.AnswerProgressMessage;
+import cephadex.brainflex.dto.session.AnswerSubmitRequest;
+import cephadex.brainflex.dto.session.ChatSendRequest;
+import cephadex.brainflex.dto.session.CreateInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.InteractiveSessionChatMessageResponse;
+import cephadex.brainflex.dto.session.message.InteractiveSessionEndedMessage;
+import cephadex.brainflex.dto.session.InteractiveSessionResponse;
+import cephadex.brainflex.dto.session.InteractiveSessionReviewResponse;
+import cephadex.brainflex.dto.session.PlayerRoundResponse;
+import cephadex.brainflex.dto.session.message.ReactionBroadcastMessage;
+import cephadex.brainflex.dto.session.ReactionSendRequest;
+import cephadex.brainflex.dto.session.message.RoundResultMessage;
+import cephadex.brainflex.dto.session.message.RoundStartMessage;
+import cephadex.brainflex.dto.session.message.TeamUpdateMessage;
+import cephadex.brainflex.dto.session.message.VotePhaseStartMessage;
+import cephadex.brainflex.dto.session.message.VoteProgressMessage;
+import cephadex.brainflex.dto.session.VoteSubmitRequest;
+import cephadex.brainflex.dto.session.message.WordCloudUpdateMessage;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.DrawingAnswer;
 import cephadex.brainflex.model.answer.Stroke;
@@ -630,7 +630,11 @@ public class InteractiveSessionService {
 
         InteractiveSessionResult result = interactiveSessionResultRepository.findByInteractiveSessionId(session.getId())
                 .orElse(null);
-        List<PlayerPlacement> placements = result != null ? result.getPlacements() : List.of();
+        List<cephadex.brainflex.dto.session.PlayerPlacementResponse> placements = result != null
+                ? result.getPlacements().stream()
+                        .map(cephadex.brainflex.dto.session.PlayerPlacementResponse::new)
+                        .toList()
+                : List.of();
 
         List<InteractiveSessionReviewResponse.RoundReview> rounds = new ArrayList<>();
         List<DeckElement> snap = session.getContent().getElements();
@@ -924,7 +928,7 @@ public class InteractiveSessionService {
             interactiveSessionCache.put(session);
             messagingTemplate.convertAndSend(
                     "/topic/interactive-session/" + roomCode + "/responsesRevealed",
-                    new cephadex.brainflex.dto.ResponsesRevealedMessage(session.getCurrentRound(), current.id()));
+                    new cephadex.brainflex.dto.session.message.ResponsesRevealedMessage(session.getCurrentRound(), current.id()));
         }
     }
 
@@ -1448,7 +1452,7 @@ public class InteractiveSessionService {
         // subscribe to both topics and let `session.format` decide which one
         // they react to, so the two are mutually exclusive per session.
         if (session.getContent().getFormat() == cephadex.brainflex.model.enums.SessionFormat.PRESENTATION) {
-            List<cephadex.brainflex.dto.SessionSummaryMessage.RoundSummary> roundSummaries = new ArrayList<>();
+            List<cephadex.brainflex.dto.session.message.SessionSummaryMessage.RoundSummary> roundSummaries = new ArrayList<>();
             int roundsPlayed = Math.min(session.getCurrentRound() + 1, session.getContent().getElements().size());
             boolean anyScoring = false;
             for (int i = 0; i < roundsPlayed; i++) {
@@ -1467,15 +1471,15 @@ public class InteractiveSessionService {
                     if (roundIdx < 0)
                         break;
                 }
-                roundSummaries.add(new cephadex.brainflex.dto.SessionSummaryMessage.RoundSummary(
+                roundSummaries.add(new cephadex.brainflex.dto.session.message.SessionSummaryMessage.RoundSummary(
                         i, el, aggregated));
             }
             messagingTemplate.convertAndSend(
                     "/topic/interactive-session/" + session.getRoomCode() + "/summary",
-                    new cephadex.brainflex.dto.SessionSummaryMessage(roundsPlayed, anyScoring, roundSummaries));
+                    new cephadex.brainflex.dto.session.message.SessionSummaryMessage(roundsPlayed, anyScoring, roundSummaries));
         } else {
-            List<cephadex.brainflex.dto.PlayerPlacementResponse> wirePlacements = placements.stream()
-                    .map(cephadex.brainflex.dto.PlayerPlacementResponse::new)
+            List<cephadex.brainflex.dto.session.PlayerPlacementResponse> wirePlacements = placements.stream()
+                    .map(cephadex.brainflex.dto.session.PlayerPlacementResponse::new)
                     .toList();
             messagingTemplate.convertAndSend(
                     "/topic/interactive-session/" + session.getRoomCode() + "/ended",

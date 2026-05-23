@@ -9,21 +9,24 @@ export const reviewSampleData: InteractiveSessionReviewResponse = {
   scoringEnabled: true,
   placements: [
     {
-      user: { userId: "u1", name: "Aragorn" },
+      playerId: "u1",
+      user: { name: "Aragorn" },
       finalScore: 750,
       placement: 1,
       correctAnswers: 4,
       totalQuestions: 5,
     },
     {
-      user: { userId: "u2", name: "Legolas" },
+      playerId: "u2",
+      user: { name: "Legolas" },
       finalScore: 500,
       placement: 2,
       correctAnswers: 3,
       totalQuestions: 5,
     },
     {
-      user: { userId: "u3", name: "Gimli" },
+      playerId: "u3",
+      user: { name: "Gimli" },
       finalScore: 350,
       placement: 3,
       correctAnswers: 2,

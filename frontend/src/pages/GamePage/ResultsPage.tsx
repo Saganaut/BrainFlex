@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { GameOver } from "../../components/Games/GameOver/GameOver";
 import { ReviewPanel } from "../../components/Games/ReviewPanel/ReviewPanel";
 import { SessionSummary } from "../../components/Games/SessionSummary/SessionSummary";
-import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useInteractiveSession } from "../../hooks/useInteractiveSession";
 import {
   useGetInteractiveSessionQuery,
@@ -16,7 +15,7 @@ import {
   useGetReviewQuery,
 } from "../../store/BrainFlexApi";
 import { setSession } from "../../store/interactiveSessionSlice";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./Results.module.css";
 
@@ -27,7 +26,6 @@ type View = "standings" | "review";
 const ResultsPage = () => {
   const { roomCode } = routeApi.useParams();
   const dispatch = useAppDispatch();
-  const userState = useCurrentUser();
   const game = useInteractiveSession();
 
   const { data: session } = useGetInteractiveSessionQuery({ roomCode });
@@ -44,10 +42,11 @@ const ResultsPage = () => {
     if (session) dispatch(setSession(session));
   }, [session, dispatch]);
 
-  const userId =
-    userState.state === "registered" || userState.state === "guest"
-      ? userState.user.id
-      : undefined;
+  // Session-scoped playerId of the caller — latched in the slice on the
+  // initial REST fetch above. Used to highlight the viewer's own placement.
+  const viewerPlayerId = useAppSelector(
+    (s) => s.interactiveSession.viewerPlayerId,
+  );
 
   // Chunk 24 — PRESENTATION sessions never have placements; the wire payload
   // is `SessionSummaryMessage` on /summary instead of `/ended`. The slice's
@@ -109,7 +108,7 @@ const ResultsPage = () => {
       {view === "standings" ? (
         <GameOver
           placements={placements}
-          currentUserId={userId}
+          currentPlayerId={viewerPlayerId ?? undefined}
           teams={session?.teams ?? []}
         />
       ) : reviewLoading ? (

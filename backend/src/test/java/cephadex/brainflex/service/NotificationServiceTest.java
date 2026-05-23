@@ -40,7 +40,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.NotificationResponse;
+import cephadex.brainflex.dto.user.NotificationResponse;
 import cephadex.brainflex.model.user.Notification;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.model.enums.NotificationKind;

@@ -28,14 +28,14 @@ import {
   useDeleteTeamMutation,
   useMovePlayerToTeamMutation,
   type Team,
-  type InteractiveSessionPlayerDto,
+  type InteractiveSessionPlayerResponse,
 } from "../../../store/BrainFlexApi";
 import styles from "./TeamPicker.module.css";
 
 interface TeamPickerProps {
   roomCode: string;
   teams: Team[];
-  players: InteractiveSessionPlayerDto[];
+  players: InteractiveSessionPlayerResponse[];
   // Session-scoped playerId of the viewer.
   currentPlayerId?: string;
   isHost: boolean;
@@ -165,7 +165,7 @@ const TeamPicker = ({
 interface TeamCardProps {
   team: Team;
   allTeams: Team[];
-  members: InteractiveSessionPlayerDto[];
+  members: InteractiveSessionPlayerResponse[];
   isMyTeam: boolean;
   isHost: boolean;
   onJoin: () => void;
@@ -273,12 +273,12 @@ const TeamCard = ({
         <ul className={styles.memberList}>
           {members.map((m) => (
             <li key={m.playerId} className={styles.member}>
-              <span className={styles.memberName}>{m.user?.name ?? "?"}</span>
+              <span className={styles.memberName}>{m.user.name ?? "?"}</span>
               {isHost && m.playerId && allTeams.length > 1 && (
                 <select
                   className={styles.moveSelect}
                   value=''
-                  aria-label={`Move ${m.user?.name ?? "player"} to another team`}
+                  aria-label={`Move ${m.user.name ?? "player"} to another team`}
                   onChange={(e) => {
                     const targetTeamId = e.target.value;
                     if (

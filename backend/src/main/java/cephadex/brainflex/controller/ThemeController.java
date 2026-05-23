@@ -22,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.CreateThemeRequest;
-import cephadex.brainflex.dto.ThemeResponse;
-import cephadex.brainflex.dto.UpdateThemeRequest;
+import cephadex.brainflex.dto.theme.CreateThemeRequest;
+import cephadex.brainflex.dto.theme.ThemeResponse;
+import cephadex.brainflex.dto.theme.UpdateThemeRequest;
 import cephadex.brainflex.model.enums.ThemeMode;
 import cephadex.brainflex.model.image.ImageSize;
 import cephadex.brainflex.model.media.StoredImageVariant;

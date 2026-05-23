@@ -21,8 +21,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cephadex.brainflex.dto.RegisterRequest;
-import cephadex.brainflex.dto.UserResponse;
+import cephadex.brainflex.dto.user.RegisterRequest;
+import cephadex.brainflex.dto.user.UserResponse;
 import cephadex.brainflex.model.user.PlayerStats;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;

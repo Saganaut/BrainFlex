@@ -30,8 +30,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.DeckCollaboratorResponse;
-import cephadex.brainflex.dto.InviteCollaboratorRequest;
+import cephadex.brainflex.dto.deck.DeckCollaboratorResponse;
+import cephadex.brainflex.dto.deck.InviteCollaboratorRequest;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;

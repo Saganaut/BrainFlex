@@ -1,3 +1,4 @@
+import { Container } from "@/components/Containers/Container";
 import styles from "./SessionBoard.module.css";
 
 interface SessionBoardProps {
@@ -6,9 +7,9 @@ interface SessionBoardProps {
 
 const SessionBoard = ({ className }: SessionBoardProps) => {
   return (
-    <div className={` ${styles.sessionBoard} ${className}`}>
-      Session Board Control
-    </div>
+    <Container
+      name={"SessionBoard"}
+      className={` ${styles.sessionBoard} ${className}`}></Container>
   );
 };
 

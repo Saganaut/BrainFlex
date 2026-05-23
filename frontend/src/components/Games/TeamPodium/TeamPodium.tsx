@@ -10,21 +10,28 @@
  * Rendered ABOVE the existing individual podium on GameOver. If team mode
  * was disabled for the session — or no placements have a teamId — the
  * component returns null so individual mode is unaffected.
+ *
+ * Identity is session-scoped: every placement carries the session
+ * {@code playerId}; the underlying account userId never crosses the wire.
  */
 import styles from "./TeamPodium.module.css";
-import type { PlayerPlacement, Team } from "../../../store/BrainFlexApi";
+import type {
+  PlayerPlacementResponse,
+  Team,
+} from "../../../store/BrainFlexApi";
 
 interface TeamPodiumProps {
-  placements: PlayerPlacement[];
+  placements: PlayerPlacementResponse[];
   teams: Team[];
-  currentUserId?: string;
+  // Session-scoped playerId of the viewer; their team gets the "me" highlight.
+  currentPlayerId?: string;
 }
 
 interface TeamStanding {
   team: Team;
   totalScore: number;
-  members: PlayerPlacement[];
-  mvp: PlayerPlacement | null;
+  members: PlayerPlacementResponse[];
+  mvp: PlayerPlacementResponse | null;
 }
 
 const PLACE_LABELS = ["1st", "2nd", "3rd"];
@@ -32,10 +39,10 @@ const PLACE_LABELS = ["1st", "2nd", "3rd"];
 const TeamPodium = ({
   placements,
   teams,
-  currentUserId,
+  currentPlayerId,
 }: TeamPodiumProps) => {
   const teamById = new Map(teams.map((t) => [t.id ?? "", t]));
-  const byTeam = new Map<string, PlayerPlacement[]>();
+  const byTeam = new Map<string, PlayerPlacementResponse[]>();
   for (const p of placements) {
     if (!p.teamId) continue;
     const list = byTeam.get(p.teamId) ?? [];
@@ -52,7 +59,7 @@ const TeamPodium = ({
       (acc, m) => acc + (m.finalScore ?? 0),
       0,
     );
-    const mvp = members.reduce<PlayerPlacement | null>(
+    const mvp = members.reduce<PlayerPlacementResponse | null>(
       (best, m) =>
         !best || (m.finalScore ?? 0) > (best.finalScore ?? 0) ? m : best,
       null,
@@ -68,8 +75,8 @@ const TeamPodium = ({
       <div className={styles.podium}>
         {top3.map((s, i) => {
           const containsMe =
-            !!currentUserId &&
-            s.members.some((m) => m.user?.userId === currentUserId);
+            !!currentPlayerId &&
+            s.members.some((m) => m.playerId === currentPlayerId);
           return (
             <div
               key={s.team.id}

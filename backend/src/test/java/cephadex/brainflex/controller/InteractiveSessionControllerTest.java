@@ -33,7 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.CreateInteractiveSessionRequest;
 import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.model.enums.AnswerSubmissionMode;
 import cephadex.brainflex.model.enums.SessionLifecycle;

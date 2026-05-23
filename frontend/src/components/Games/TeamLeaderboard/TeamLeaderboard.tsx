@@ -13,13 +13,13 @@
  */
 import styles from "./TeamLeaderboard.module.css";
 import type {
-  InteractiveSessionPlayerDto,
+  InteractiveSessionPlayerResponse,
   Team,
 } from "../../../store/BrainFlexApi";
 
 interface TeamLeaderboardProps {
   teams: Team[];
-  players: InteractiveSessionPlayerDto[];
+  players: InteractiveSessionPlayerResponse[];
   // Session-scoped playerId of the viewer; their team gets the "me" highlight.
   currentPlayerId?: string;
   hideScores?: boolean;

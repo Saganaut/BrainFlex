@@ -29,9 +29,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.AchievementResponse;
-import cephadex.brainflex.dto.UserAchievementResponse;
-import cephadex.brainflex.dto.UserAchievementsPage;
+import cephadex.brainflex.dto.user.AchievementResponse;
+import cephadex.brainflex.dto.user.UserAchievementResponse;
+import cephadex.brainflex.dto.user.UserAchievementsPage;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.enums.AchievementTrigger;
 import cephadex.brainflex.model.enums.PublishStatus;

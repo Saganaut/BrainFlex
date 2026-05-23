@@ -102,11 +102,11 @@ const DashboardTab = () => {
               currentPlayerId={playersData.currentPlayerId}
               answeredPlayerIds={playersData.players
                 .slice(0, Math.ceil(playersData.players.length / 2))
-                .map((p) => p.playerId ?? "")
+                .map((p) => p.playerId)
                 .filter(Boolean)}
               offlinePlayerIds={playersData.players
                 .slice(-1)
-                .map((p) => p.playerId ?? "")
+                .map((p) => p.playerId)
                 .filter(Boolean)}
               isHost
               onBootPlayer={(pid) => {

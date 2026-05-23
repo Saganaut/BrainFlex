@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.CreateOrganizationRequest;
-import cephadex.brainflex.dto.JoinByCodeRequest;
-import cephadex.brainflex.dto.JoinOrganizationRequest;
-import cephadex.brainflex.dto.OrganizationResponse;
-import cephadex.brainflex.dto.UpdateOrganizationRequest;
+import cephadex.brainflex.dto.org.CreateOrganizationRequest;
+import cephadex.brainflex.dto.session.JoinByCodeRequest;
+import cephadex.brainflex.dto.org.JoinOrganizationRequest;
+import cephadex.brainflex.dto.org.OrganizationResponse;
+import cephadex.brainflex.dto.org.UpdateOrganizationRequest;
 import cephadex.brainflex.model.org.Organization;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.OrganizationRepository;

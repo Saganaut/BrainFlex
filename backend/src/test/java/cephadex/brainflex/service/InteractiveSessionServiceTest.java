@@ -32,12 +32,12 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.model.enums.BestAnswerScoring;
-import cephadex.brainflex.dto.AnswerSubmitRequest;
-import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
-import cephadex.brainflex.dto.RoundResultMessage;
-import cephadex.brainflex.dto.VotePhaseStartMessage;
-import cephadex.brainflex.dto.VoteSubmitRequest;
-import cephadex.brainflex.dto.WordCloudUpdateMessage;
+import cephadex.brainflex.dto.session.AnswerSubmitRequest;
+import cephadex.brainflex.dto.session.CreateInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.message.RoundResultMessage;
+import cephadex.brainflex.dto.session.message.VotePhaseStartMessage;
+import cephadex.brainflex.dto.session.VoteSubmitRequest;
+import cephadex.brainflex.dto.session.message.WordCloudUpdateMessage;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.session.PlayerAnswer;
 import cephadex.brainflex.model.session.InteractiveSession;
@@ -60,11 +60,11 @@ import cephadex.brainflex.model.enums.AnswerSubmissionMode;
 import cephadex.brainflex.model.enums.SessionLifecycle;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.RoundPhase;
-import cephadex.brainflex.dto.ChatSendRequest;
-import cephadex.brainflex.dto.TeamUpdateMessage;
-import cephadex.brainflex.dto.ReactionBroadcastMessage;
-import cephadex.brainflex.dto.ReactionSendRequest;
-import cephadex.brainflex.dto.InteractiveSessionChatMessageResponse;
+import cephadex.brainflex.dto.session.ChatSendRequest;
+import cephadex.brainflex.dto.session.message.TeamUpdateMessage;
+import cephadex.brainflex.dto.session.message.ReactionBroadcastMessage;
+import cephadex.brainflex.dto.session.ReactionSendRequest;
+import cephadex.brainflex.dto.session.InteractiveSessionChatMessageResponse;
 import cephadex.brainflex.model.session.Reaction;
 import cephadex.brainflex.model.session.InteractiveSessionChatMessage;
 import cephadex.brainflex.repository.DeckRepository;
@@ -1259,16 +1259,16 @@ class InteractiveSessionServiceTest {
         // Canonical topic broadcast still fires for the host/audience view.
         verify(messagingTemplate).convertAndSend(
                 org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/round"),
-                any(cephadex.brainflex.dto.RoundStartMessage.class));
+                any(cephadex.brainflex.dto.session.message.RoundStartMessage.class));
         // Each player receives a personalized RoundStartMessage on their user queue.
         verify(messagingTemplate).convertAndSendToUser(
                 org.mockito.ArgumentMatchers.eq("guest:p1"),
                 org.mockito.ArgumentMatchers.eq("/queue/interactiveSession/ABCD12/round"),
-                any(cephadex.brainflex.dto.RoundStartMessage.class));
+                any(cephadex.brainflex.dto.session.message.RoundStartMessage.class));
         verify(messagingTemplate).convertAndSendToUser(
                 org.mockito.ArgumentMatchers.eq("guest:p2"),
                 org.mockito.ArgumentMatchers.eq("/queue/interactiveSession/ABCD12/round"),
-                any(cephadex.brainflex.dto.RoundStartMessage.class));
+                any(cephadex.brainflex.dto.session.message.RoundStartMessage.class));
     }
 
     @Test
@@ -1298,9 +1298,9 @@ class InteractiveSessionServiceTest {
 
         verify(messagingTemplate).convertAndSend(
                 org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/round"),
-                any(cephadex.brainflex.dto.RoundStartMessage.class));
+                any(cephadex.brainflex.dto.session.message.RoundStartMessage.class));
         verify(messagingTemplate, never()).convertAndSendToUser(
-                anyString(), anyString(), any(cephadex.brainflex.dto.RoundStartMessage.class));
+                anyString(), anyString(), any(cephadex.brainflex.dto.session.message.RoundStartMessage.class));
     }
 
     // ---- Chunk 13 ----

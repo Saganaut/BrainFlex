@@ -14,7 +14,6 @@ import { ScoreBoard } from "../../components/Games/ScoreBoard/ScoreBoard";
 import { TeamLeaderboard } from "../../components/Games/TeamLeaderboard/TeamLeaderboard";
 import { VotePanel } from "../../components/Games/VotePanel/VotePanel";
 import { WsErrorBanner } from "../../components/Games/WsErrorBanner/WsErrorBanner";
-import { useCurrentUser } from "../../hooks/useCurrentUser";
 import { useInteractiveSession } from "../../hooks/useInteractiveSession";
 import { useInteractiveSessionWebSocket } from "../../hooks/useInteractiveSessionWebSocket";
 import { Btn } from "@/components/Common/Buttons/Btn";
@@ -38,7 +37,6 @@ const PlayPage = () => {
   const { roomCode } = routeApi.useParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const userState = useCurrentUser();
   const game = useInteractiveSession();
   const {
     sendAnswer,
@@ -60,10 +58,6 @@ const PlayPage = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const confirm = useConfirm();
 
-  const userId =
-    userState.state === "registered" || userState.state === "guest"
-      ? userState.user.id
-      : undefined;
   // viewerPlayerId is the session-scoped public handle of the caller; latched
   // in the slice from REST responses so STOMP rebroadcasts don't clear it.
   const viewerPlayerId = useAppSelector(
@@ -87,11 +81,11 @@ const PlayPage = () => {
   // `answerSubmissionMode === "TURN_BASED"` check above narrows settings to
   // non-null for TypeScript.
   const isAutoAdvanceTurnBased =
-    session?.settings?.answerSubmissionMode === "TURN_BASED" &&
+    session?.settings.answerSubmissionMode === "TURN_BASED" &&
     !!session.settings.autoAdvance;
   const autoAdvanceEnabled =
     isHost && !!game.roundResult && isAutoAdvanceTurnBased;
-  const podiumDuration = session?.settings?.podiumDuration ?? 15;
+  const podiumDuration = session?.settings.podiumDuration ?? 15;
   const [autoAdvanceProgress, setAutoAdvanceProgress] = useState(0);
   const [autoAdvanceRemaining, setAutoAdvanceRemaining] =
     useState(podiumDuration);
@@ -114,7 +108,7 @@ const PlayPage = () => {
       clearInterval(id);
     };
   }, [autoAdvanceEnabled, podiumDuration, game.round]);
-  const isTurnBased = session?.settings?.answerSubmissionMode === "TURN_BASED";
+  const isTurnBased = session?.settings.answerSubmissionMode === "TURN_BASED";
   // Chunk 24 — frozen session format drives chrome (GAME = persistent
   // leaderboard, PRESENTATION = no leaderboard, aggregated data view at
   // round-end). Fall back to GAME for legacy sessions written before the
@@ -123,16 +117,16 @@ const PlayPage = () => {
   // Host disables the question timer by setting timePerQuestion = 0.
   // Per-element displaySeconds always overrides on the server; the frontend
   // here just respects "is there any countdown?" for the QuestionCard chrome.
-  const interactiveSessionUnlimited = (session?.settings?.timePerQuestion ?? 1) === 0;
+  const interactiveSessionUnlimited = (session?.settings.timePerQuestion ?? 1) === 0;
   const hideScoresDuringPlay =
-    session?.settings?.showScoresImmediately === false;
+    session?.settings.showScoresImmediately === false;
   // Chunk 11 / 12 surfaces — gated by per-session settings + the live state
   // of teams[]. Defaults match the backend: reactions + chat default on,
   // teamMode + teams default empty / off.
-  const reactionsEnabled = session?.settings?.reactionsEnabled !== false;
-  const chatEnabled = session?.settings?.chatEnabled !== false;
+  const reactionsEnabled = session?.settings.reactionsEnabled !== false;
+  const chatEnabled = session?.settings.chatEnabled !== false;
   const teams = session?.teams ?? [];
-  const teamMode = (session?.settings?.teamMode ?? false) && teams.length > 0;
+  const teamMode = (session?.settings.teamMode ?? false) && teams.length > 0;
 
   useEffect(() => {
     if (session) dispatch(setSession(session));
@@ -199,7 +193,7 @@ const PlayPage = () => {
       const elementSeconds = game.currentElement.chrome?.displaySeconds ?? 0;
       const effective = elementSeconds > 0
         ? elementSeconds
-        : interactiveSessionUnlimited ? 0 : (session?.settings?.timePerQuestion ?? 0);
+        : interactiveSessionUnlimited ? 0 : (session?.settings.timePerQuestion ?? 0);
       if (effective <= 0 && !isSlide) return;
       totalSeconds = effective > 0 ? effective : 8; // slide fallback
       start = new Date(game.roundStartedAt).getTime();
@@ -240,7 +234,7 @@ const PlayPage = () => {
   };
 
   const backgroundUrl = resolveInteractiveSessionBackground(
-    session?.settings?.deckBackgroundImageUrl,
+    session?.settings.deckBackgroundImageUrl,
     session?.deckId,
   );
   const bgStyle: React.CSSProperties = {
@@ -294,7 +288,7 @@ const PlayPage = () => {
     ? game.votePhaseSeconds
     : elementSeconds > 0
       ? elementSeconds
-      : (session?.settings?.timePerQuestion ?? 0);
+      : (session?.settings.timePerQuestion ?? 0);
 
   return (
     <div className={styles.play} style={bgStyle}>
@@ -383,14 +377,10 @@ const PlayPage = () => {
           />
         )}
         {chatEnabled && (
-          // ChatPanel still keys on the real userId — chat messages travel
-          // on InteractiveSessionChatMessageResponse, not the session DTO, and
-          // that surface hasn't been migrated to playerIds yet. Tracked as a
-          // follow-up to the InteractiveSession DTO refactor.
           <ChatPanel
             roomCode={roomCode}
             isHost={isHost}
-            currentUserId={userId}
+            currentPlayerId={viewerPlayerId ?? undefined}
           />
         )}
         {isHost && !isSlide && (

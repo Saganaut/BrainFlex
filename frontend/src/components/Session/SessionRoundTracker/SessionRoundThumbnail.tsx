@@ -23,12 +23,14 @@ const SessionRoundThumbnail = ({
   className,
   roundPhase,
   element,
+  isActive,
 }: SessionRoundThumbnailInterface) => {
   console.log("element", element);
+  console.log("isActive", isActive);
   const phaseKey = roundPhase ? phaseClasses[roundPhase] : "inactive";
   return (
     <div
-      className={`${styles.sessionRoundThumbnail} ${className ?? ""} ${styles[phaseKey] ?? ""}`}>
+      className={`${styles.sessionRoundThumbnail} ${className ?? ""} ${styles[phaseKey] ?? ""} ${isActive ? styles.isActive : " "}`}>
       <SlideTypeGraphicSvg kind={element.kind} />
     </div>
   );

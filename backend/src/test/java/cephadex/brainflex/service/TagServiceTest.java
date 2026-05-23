@@ -26,8 +26,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.CreateTagRequest;
-import cephadex.brainflex.dto.UpdateTagRequest;
+import cephadex.brainflex.dto.deck.CreateTagRequest;
+import cephadex.brainflex.dto.deck.UpdateTagRequest;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.Tag;
 import cephadex.brainflex.repository.TagRepository;

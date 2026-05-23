@@ -37,10 +37,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
-import cephadex.brainflex.dto.CreateScheduledInteractiveSessionRequest;
-import cephadex.brainflex.dto.RedeemInviteResponse;
-import cephadex.brainflex.dto.UpdateScheduledInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.CreateInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.CreateScheduledInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.RedeemInviteResponse;
+import cephadex.brainflex.dto.session.UpdateScheduledInteractiveSessionRequest;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.enums.ScheduleStatus;
 import cephadex.brainflex.model.session.InteractiveSession;

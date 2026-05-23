@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import cephadex.brainflex.config.AdminProperties;
-import cephadex.brainflex.dto.CreateTagRequest;
+import cephadex.brainflex.dto.deck.CreateTagRequest;
 import cephadex.brainflex.model.deck.Tag;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.TagService;

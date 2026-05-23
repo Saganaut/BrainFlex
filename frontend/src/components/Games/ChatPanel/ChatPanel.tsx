@@ -33,7 +33,10 @@ import styles from "./ChatPanel.module.css";
 interface ChatPanelProps {
   roomCode: string;
   isHost: boolean;
-  currentUserId?: string;
+  // Session-scoped playerId of the viewer; used to highlight "own" messages.
+  // The real userId is never used on this surface — the chat DTO carries
+  // authorPlayerId/moderatedByPlayerId instead.
+  currentPlayerId?: string;
   /** Pass false when the host has disabled chat in InteractiveSessionSettings. */
   enabled?: boolean;
 }
@@ -43,7 +46,7 @@ const CHAT_PAGE_SIZE = 50;
 const ChatPanel = ({
   roomCode,
   isHost,
-  currentUserId,
+  currentPlayerId,
   enabled = true,
 }: ChatPanelProps) => {
   const dispatch = useAppDispatch();
@@ -122,10 +125,12 @@ const ChatPanel = ({
             )}
             {messages.map((m) => (
               <ChatRow
-                key={m.id ?? `${m.author?.userId}-${m.sentAt}`}
+                key={m.id ?? `${m.authorPlayerId ?? "anon"}-${m.sentAt ?? ""}`}
                 message={m}
                 isHost={isHost}
-                isOwn={!!currentUserId && m.author?.userId === currentUserId}
+                isOwn={
+                  !!currentPlayerId && m.authorPlayerId === currentPlayerId
+                }
                 onHide={() => {
                   handleHide(m.id);
                 }}

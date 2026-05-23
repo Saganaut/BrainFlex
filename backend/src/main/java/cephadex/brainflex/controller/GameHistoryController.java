@@ -27,8 +27,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.GameHistoryResponse;
-import cephadex.brainflex.dto.Page;
+import cephadex.brainflex.dto.session.GameHistoryResponse;
+import cephadex.brainflex.dto.shared.Page;
 import cephadex.brainflex.model.session.GameHistoryEntry;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;

@@ -27,7 +27,7 @@ const SessionInfoDisplay = () => {
 
   return (
     <div className={styles.sessionInfoDisplay}>
-      <DisplayJoinCode code={interactiveSession.roomCode ?? "No code"} />
+      <DisplayJoinCode code={interactiveSession.roomCode} />
     </div>
   );
 };
@@ -38,7 +38,7 @@ const SessionHeader = () => {
   return (
     <div className={styles.sessionHeader}>
       <SessionRoundDisplay />
-      {interactiveSession.settings?.timePerQuestion && <SessionTimer />}
+      {interactiveSession.settings.timePerQuestion && <SessionTimer />}
       <SessionInfoDisplay />
     </div>
   );

@@ -35,7 +35,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.InviteCollaboratorRequest;
+import cephadex.brainflex.dto.deck.InviteCollaboratorRequest;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.user.User;

@@ -1,4 +1,24 @@
 import type { ScoreBoardProps } from "../../components/Games/ScoreBoard/ScoreBoard";
+import type {
+  PlayerPlacementResponse,
+  PublicUserSnapshot,
+} from "../../store/BrainFlexApi";
+
+const placement = (
+  playerId: string,
+  name: string,
+  finalScore: number,
+  rank: number,
+  correctAnswers: number,
+  guest = false,
+): PlayerPlacementResponse => ({
+  playerId,
+  user: { name, guest } satisfies PublicUserSnapshot,
+  finalScore,
+  placement: rank,
+  correctAnswers,
+  totalQuestions: 10,
+});
 
 export interface ThemePreset {
   label: string;
@@ -37,81 +57,22 @@ export const questionCardData = {
   },
 };
 
-export const gameOverData = {
-  currentUserId: "user-001",
+// Mocks identify players by session-scoped playerId — the real userId never
+// surfaces on the wire after the InteractiveSession DTO migration.
+export const gameOverData: {
+  currentPlayerId: string;
+  placements: PlayerPlacementResponse[];
+} = {
+  currentPlayerId: "player-001",
   placements: [
-    {
-      userId: "user-003",
-      userName: "Gandalf the Grey",
-      finalScore: 9500,
-      placement: 1,
-      correctAnswers: 10,
-      totalQuestions: 10,
-      guest: false,
-    },
-    {
-      userId: "user-004",
-      userName: "Aragorn",
-      finalScore: 1250,
-      placement: 2,
-      correctAnswers: 9,
-      totalQuestions: 10,
-      guest: false,
-    },
-    {
-      userId: "user-005",
-      userName: "Legolas Greenleaf",
-      finalScore: 1150,
-      placement: 3,
-      correctAnswers: 8,
-      totalQuestions: 10,
-      guest: false,
-    },
-    {
-      userId: "user-006",
-      userName: "Gimli Son of Gloin",
-      finalScore: 1149,
-      placement: 4,
-      correctAnswers: 8,
-      totalQuestions: 10,
-      guest: false,
-    },
-    {
-      userId: "user-002",
-      userName: "Samwise Gamgee",
-      finalScore: 900,
-      placement: 5,
-      correctAnswers: 7,
-      totalQuestions: 10,
-      guest: false,
-    },
-    {
-      userId: "user-001",
-      userName: "Frodo Baggins",
-      finalScore: 850,
-      placement: 6,
-      correctAnswers: 6,
-      totalQuestions: 10,
-      guest: false,
-    },
-    {
-      userId: "guest-999",
-      userName: "Strider",
-      finalScore: 320,
-      placement: 7,
-      correctAnswers: 3,
-      totalQuestions: 10,
-      guest: true,
-    },
-    {
-      userId: "guest-888",
-      userName: "Peregrin Took",
-      finalScore: 150,
-      placement: 8,
-      correctAnswers: 1,
-      totalQuestions: 10,
-      guest: true,
-    },
+    placement("player-003", "Gandalf the Grey", 9500, 1, 10),
+    placement("player-004", "Aragorn", 1250, 2, 9),
+    placement("player-005", "Legolas Greenleaf", 1150, 3, 8),
+    placement("player-006", "Gimli Son of Gloin", 1149, 4, 8),
+    placement("player-002", "Samwise Gamgee", 900, 5, 7),
+    placement("player-001", "Frodo Baggins", 850, 6, 6),
+    placement("player-guest-999", "Strider", 320, 7, 3, true),
+    placement("player-guest-888", "Peregrin Took", 150, 8, 1, true),
   ],
 };
 export const colorPalette = [
@@ -323,6 +284,19 @@ export const semanticTokenGroups: SemanticTokenGroup[] = [
   },
 ];
 
+// Per-player chrome stats the ScoreBoard snapshot doesn't exercise — zeroed so
+// each mock below only has to specify the fields it actually demonstrates
+// (playerId / user / score).
+const playerStatDefaults = {
+  currentStreak: 0,
+  longestStreak: 0,
+  accuracy: 0,
+  reactionsSent: 0,
+  speedBonusTotal: 0,
+  lateJoin: false,
+  disconnected: false,
+};
+
 // Player identity is the session-scoped playerId (never the underlying userId).
 // The mocks use stable "player-<name>" handles so design-system snapshots stay
 // readable across regenerations.
@@ -400,7 +374,7 @@ export const playersData: ScoreBoardProps = {
       },
       score: 50,
     },
-  ],
+  ].map((player) => ({ ...playerStatDefaults, ...player })),
   currentPlayerId: "player-001",
 };
 

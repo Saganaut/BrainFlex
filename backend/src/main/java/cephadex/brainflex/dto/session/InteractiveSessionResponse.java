@@ -105,7 +105,15 @@ public record InteractiveSessionResponse(
                 String viewerPlayerId,
                 @Schema(requiredMode = REQUIRED) Instant createdAt,
                 // startedAt is null until the session transitions out of the lobby.
-                Instant startedAt) {
+                Instant startedAt,
+                // Chunk 25 — host timer-pause overlay, exposed so a reconnecting
+                // host (and any device that joins mid-round) rebuilds the paused
+                // countdown without waiting for the next /timerState broadcast.
+                // timerPaused is true while the round countdown is frozen;
+                // timerRemainingMillis is the millis left at the pause point
+                // (null while running).
+                @Schema(requiredMode = REQUIRED) boolean timerPaused,
+                Long timerRemainingMillis) {
 
         /**
          * Broadcast constructor — no viewer context. {@code viewerPlayerId} is
@@ -163,7 +171,9 @@ public record InteractiveSessionResponse(
                                                 : Map.copyOf(session.getElementResponseModeOverrides()),
                                 viewerPlayerId,
                                 session.getCreatedAt(),
-                                session.getStartedAt());
+                                session.getStartedAt(),
+                                session.isTimerPaused(),
+                                session.getTimerRemainingMillis());
         }
 
         private static String resolveHostPlayerId(InteractiveSession session) {

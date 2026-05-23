@@ -79,6 +79,32 @@ export interface ResponsesRevealedPayload {
   elementId: string;
 }
 
+// ─── Chunk 25 — host admin controls (end-submit / pause-resume timer) ────────
+
+/**
+ * STOMP /submissionsClosing — the host ended the submit phase. Every
+ * participant device that holds an unsubmitted draft for `elementId` should
+ * flush it via sendAnswer within `graceMillis` before the round freezes.
+ */
+export interface SubmissionsClosingPayload {
+  round: number;
+  elementId: string;
+  graceMillis: number;
+}
+
+/**
+ * STOMP /timerState — the host paused or resumed the round countdown. On
+ * pause, `remainingMillis` is the time left; on resume it's null and
+ * `roundStartedAt` is the freshly-shifted origin to recompute the countdown
+ * from.
+ */
+export interface TimerStatePayload {
+  round: number;
+  paused: boolean;
+  remainingMillis: number | null;
+  roundStartedAt: string;
+}
+
 export interface WsErrorPayload {
   operation: string;
   roomCode: string;
@@ -225,6 +251,23 @@ interface InteractiveSessionState {
   // PRESENTATION end-of-session aggregated payload. Populated from
   // SessionSummaryMessage on /summary; null until the host ends the session.
   sessionSummary: SessionSummaryPayload | null;
+
+  // ---- Chunk 25 — host timer-pause + end-submit ----
+  // Mirror of the session's timer-pause overlay. timerPaused freezes the
+  // countdown; timerRemainingMillis is the time left at the pause point (null
+  // while running). Latched from the DTO on setSession and kept live by the
+  // /timerState broadcast.
+  timerPaused: boolean;
+  timerRemainingMillis: number | null;
+  // One-shot signal that the host ended the submit phase. The active board
+  // content component watches `nonce` and flushes its draft answer for
+  // `elementId`, then clears this via submissionsClosingConsumed. Null when no
+  // close is in flight.
+  submissionsClosing: {
+    elementId: string;
+    graceMillis: number;
+    nonce: number;
+  } | null;
 }
 
 const initialState: InteractiveSessionState = {
@@ -258,6 +301,9 @@ const initialState: InteractiveSessionState = {
   revealedElementIds: [],
   frozenElementIds: [],
   sessionSummary: null,
+  timerPaused: false,
+  timerRemainingMillis: null,
+  submissionsClosing: null,
 };
 
 export const interactiveSessionSlice = createSlice({
@@ -294,6 +340,10 @@ export const interactiveSessionSlice = createSlice({
       state.frozenElementIds = Object.entries(overrides)
         .filter(([, mode]) => mode === "NOT_ACCEPTING_RESPONSES")
         .map(([elementId]) => elementId);
+      // Chunk 25 — rebuild timer-pause state from the DTO so a host reconnect
+      // (or a device joining mid-round) starts paused if the round is paused.
+      state.timerPaused = s.timerPaused;
+      state.timerRemainingMillis = s.timerRemainingMillis ?? null;
     },
 
     roundStarted(state, action: PayloadAction<RoundStartPayload>) {
@@ -314,6 +364,10 @@ export const interactiveSessionSlice = createSlice({
       state.myVote = null;
       state.votedThisRound = [];
       state.wordCloudCounts = {};
+      // Chunk 25 — a fresh round clears any pause/closing state from the last.
+      state.timerPaused = false;
+      state.timerRemainingMillis = null;
+      state.submissionsClosing = null;
     },
 
     votePhaseStarted(state, action: PayloadAction<VotePhaseStartPayload>) {
@@ -435,6 +489,41 @@ export const interactiveSessionSlice = createSlice({
       const idx = state.frozenElementIds.indexOf(elementId);
       if (frozen && idx < 0) state.frozenElementIds.push(elementId);
       if (!frozen && idx >= 0) state.frozenElementIds.splice(idx, 1);
+    },
+
+    /**
+     * Chunk 25 — host paused/resumed the round countdown. The /timerState
+     * broadcast is authoritative; we also re-anchor roundStartedAt on resume so
+     * the countdown component recomputes from the shifted origin.
+     */
+    timerStateReceived(state, action: PayloadAction<TimerStatePayload>) {
+      if (action.payload.round !== state.round) return;
+      state.timerPaused = action.payload.paused;
+      state.timerRemainingMillis = action.payload.remainingMillis;
+      state.roundStartedAt = action.payload.roundStartedAt;
+    },
+
+    /**
+     * Chunk 25 — host ended the submit phase. Raise a one-shot signal (bumped
+     * `nonce`) the active board content component watches so it can flush a
+     * typed-but-unsubmitted draft before the round freezes. Stale broadcasts
+     * for a different round are dropped.
+     */
+    submissionsClosingReceived(
+      state,
+      action: PayloadAction<SubmissionsClosingPayload>,
+    ) {
+      if (action.payload.round !== state.round) return;
+      state.submissionsClosing = {
+        elementId: action.payload.elementId,
+        graceMillis: action.payload.graceMillis,
+        nonce: Date.now(),
+      };
+    },
+
+    /** Cleared by the content component once it has flushed (or had nothing to flush). */
+    submissionsClosingConsumed(state) {
+      state.submissionsClosing = null;
     },
 
     wsErrorReceived(state, action: PayloadAction<WsErrorPayload>) {
@@ -561,6 +650,9 @@ export const {
   sessionSummaryReceived,
   responsesRevealed,
   freezeStateChanged,
+  timerStateReceived,
+  submissionsClosingReceived,
+  submissionsClosingConsumed,
 } = interactiveSessionSlice.actions;
 
 export default interactiveSessionSlice.reducer;

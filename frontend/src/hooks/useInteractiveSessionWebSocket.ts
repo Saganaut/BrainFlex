@@ -25,6 +25,8 @@ import {
   sessionSummaryReceived,
   responsesRevealed,
   freezeStateChanged,
+  timerStateReceived,
+  submissionsClosingReceived,
   type RoundStartPayload,
   type RoundResultPayload,
   type SessionEndedPayload,
@@ -36,6 +38,8 @@ import {
   type TeamUpdatePayload,
   type SessionSummaryPayload,
   type ResponsesRevealedPayload,
+  type TimerStatePayload,
+  type SubmissionsClosingPayload,
 } from "../store/interactiveSessionSlice";
 import type {
   InteractiveSessionResponse,
@@ -179,6 +183,25 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
             );
           },
         );
+        // Chunk 25 — host admin controls. submissionsClosing tells participant
+        // devices to flush their drafts when the host ends the submit phase;
+        // timerState flips the countdown on pause/resume.
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/submissionsClosing`,
+          (msg) => {
+            dispatch(
+              submissionsClosingReceived(
+                JSON.parse(msg.body) as SubmissionsClosingPayload,
+              ),
+            );
+          },
+        );
+        client.subscribe(
+          `/topic/interactive-session/${roomCode}/timerState`,
+          (msg) => {
+            dispatch(timerStateReceived(JSON.parse(msg.body) as TimerStatePayload));
+          },
+        );
         client.subscribe(`/topic/presence`, (msg) => {
           dispatch(presenceUpdated(JSON.parse(msg.body) as PresencePayload));
         });
@@ -290,5 +313,34 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
       },
       [roomCode, send, dispatch],
     ),
+
+    /**
+     * Chunk 25 — host ends the submit phase for the current round. The server
+     * broadcasts submissionsClosing (devices flush drafts), then after a grace
+     * window freezes the round and reveals results.
+     */
+    sendEndSubmitPhase: useCallback(
+      (elementId: string) => {
+        send(`/app/interactive-session/${roomCode}/endSubmit`, { elementId });
+      },
+      [roomCode, send],
+    ),
+
+    /** Chunk 25 — host restarts the session from round 1 (keeps players, clears scores). */
+    sendRestart: useCallback(() => {
+      send(`/app/interactive-session/${roomCode}/restart`);
+    }, [roomCode, send]),
+
+    /**
+     * Chunk 25 — host pauses / resumes the round countdown. The authoritative
+     * paused state comes back on /timerState, so no optimistic local dispatch.
+     */
+    sendPauseTimer: useCallback(() => {
+      send(`/app/interactive-session/${roomCode}/pauseTimer`);
+    }, [roomCode, send]),
+
+    sendResumeTimer: useCallback(() => {
+      send(`/app/interactive-session/${roomCode}/resumeTimer`);
+    }, [roomCode, send]),
   };
 }

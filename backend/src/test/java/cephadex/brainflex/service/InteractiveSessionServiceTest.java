@@ -5,6 +5,7 @@
  */
 package cephadex.brainflex.service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,8 +35,13 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.dto.session.AnswerSubmitRequest;
 import cephadex.brainflex.dto.session.CreateInteractiveSessionRequest;
+import cephadex.brainflex.dto.session.InteractiveSessionResponse;
 import cephadex.brainflex.dto.session.message.RoundResultMessage;
+import cephadex.brainflex.dto.session.message.RoundStartMessage;
+import cephadex.brainflex.dto.session.message.SubmissionsClosingMessage;
+import cephadex.brainflex.dto.session.message.TimerStateMessage;
 import cephadex.brainflex.dto.session.message.VotePhaseStartMessage;
+import cephadex.brainflex.model.enums.ResponseMode;
 import cephadex.brainflex.dto.session.VoteSubmitRequest;
 import cephadex.brainflex.dto.session.message.WordCloudUpdateMessage;
 import cephadex.brainflex.model.deck.Deck;
@@ -1435,6 +1441,278 @@ class InteractiveSessionServiceTest {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> interactiveSessionService.joinInteractiveSession("ABCD12", guest));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    // ---- Chunk 25: host admin controls (end-submit / pause / resume / restart) ----
+
+    @Test
+    void endSubmitPhase_WhenHostInSubmitPhase_BroadcastsSubmissionsClosing() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        DeckElement el = session.getContent().getElements().get(0);
+
+        interactiveSessionService.endSubmitPhase("ABCD12", el.id(), "guest:p1");
+
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/submissionsClosing"),
+                any(SubmissionsClosingMessage.class));
+    }
+
+    @Test
+    void endSubmitPhase_WhenNotHost_ThrowsForbidden() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        DeckElement el = session.getContent().getElements().get(0);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> interactiveSessionService.endSubmitPhase("ABCD12", el.id(), "guest:p2"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(messagingTemplate, never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/submissionsClosing"),
+                any(Object.class));
+    }
+
+    @Test
+    void endSubmitPhase_OnStaleElementId_NoOps() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        interactiveSessionService.endSubmitPhase("ABCD12", "not-the-current-element", "guest:p1");
+
+        verify(messagingTemplate, never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/submissionsClosing"),
+                any(Object.class));
+    }
+
+    @Test
+    void finalizeSubmitClose_FreezesRoundAndBroadcastsRoundResult() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(interactiveSessionRepository.save(any(InteractiveSession.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        DeckElement el = session.getContent().getElements().get(0);
+
+        interactiveSessionService.finalizeSubmitClose("ABCD12", 0, el.id());
+
+        assertEquals(ResponseMode.NOT_ACCEPTING_RESPONSES,
+                session.getElementResponseModeOverrides().get(el.id()));
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/roundResult"),
+                any(RoundResultMessage.class));
+    }
+
+    @Test
+    void submitAnswer_DuringClosingGrace_AcceptedEvenWhenFrozen() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        DeckElement el = session.getContent().getElements().get(0);
+
+        // Host ends submit → element enters the closing grace window.
+        interactiveSessionService.endSubmitPhase("ABCD12", el.id(), "guest:p1");
+        // And the round is frozen (host had already frozen, or the grace just
+        // landed) — the auto-flush must still be accepted.
+        session.getElementResponseModeOverrides().put(el.id(), ResponseMode.NOT_ACCEPTING_RESPONSES);
+
+        interactiveSessionService.submitAnswer("ABCD12",
+                new AnswerSubmitRequest(el.id(), new McqAnswer(List.of(el.id() + "-a"))), "guest:p2");
+
+        boolean p2Answered = session.getPlayers().stream()
+                .filter(p -> "p2".equals(p.getUserId()))
+                .flatMap(p -> p.getAnswers().stream())
+                .anyMatch(a -> a.getElementId().equals(el.id()));
+        assertTrue(p2Answered);
+    }
+
+    @Test
+    void submitAnswer_WhenFrozenOutsideGrace_Throws409() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        DeckElement el = session.getContent().getElements().get(0);
+        session.getElementResponseModeOverrides().put(el.id(), ResponseMode.NOT_ACCEPTING_RESPONSES);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> interactiveSessionService.submitAnswer("ABCD12",
+                        new AnswerSubmitRequest(el.id(), new McqAnswer(List.of(el.id() + "-a"))), "guest:p2"));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    @Test
+    void pauseTimer_WhenHostOnTimedRound_SetsRemainingAndBroadcasts() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        session.setRoundStartedAt(Instant.now());
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(interactiveSessionRepository.save(any(InteractiveSession.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        interactiveSessionService.pauseTimer("ABCD12", "guest:p1");
+
+        assertTrue(session.isTimerPaused());
+        assertNotNull(session.getTimerRemainingMillis());
+        assertTrue(session.getTimerRemainingMillis() > 0
+                && session.getTimerRemainingMillis() <= 30_000L);
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/timerState"),
+                any(TimerStateMessage.class));
+    }
+
+    @Test
+    void pauseTimer_WhenAlreadyPaused_NoOps() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        session.setTimerPaused(true);
+        session.setTimerRemainingMillis(12_345L);
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        interactiveSessionService.pauseTimer("ABCD12", "guest:p1");
+
+        assertEquals(12_345L, session.getTimerRemainingMillis());
+        verify(messagingTemplate, never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/timerState"),
+                any(Object.class));
+    }
+
+    @Test
+    void pauseTimer_WhenNoCountdownRunning_NoOps() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        session.setRoundStartedAt(null); // unlimited / not started
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        interactiveSessionService.pauseTimer("ABCD12", "guest:p1");
+
+        assertFalse(session.isTimerPaused());
+        verify(messagingTemplate, never()).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/timerState"),
+                any(Object.class));
+    }
+
+    @Test
+    void pauseTimer_WhenNotHost_ThrowsForbidden() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> interactiveSessionService.pauseTimer("ABCD12", "guest:p2"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void resumeTimer_AfterPause_ClearsPausedAndBroadcasts() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        session.setTimerPaused(true);
+        session.setTimerRemainingMillis(20_000L);
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(interactiveSessionRepository.save(any(InteractiveSession.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        interactiveSessionService.resumeTimer("ABCD12", "guest:p1");
+
+        assertFalse(session.isTimerPaused());
+        assertEquals(null, session.getTimerRemainingMillis());
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/timerState"),
+                argThat((Object msg) -> msg instanceof TimerStateMessage tsm && !tsm.paused()));
+    }
+
+    @Test
+    void restart_WhenHost_ResetsScoresAndRebroadcastsRoundOne() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        session.setCurrentRound(2);
+        DeckElement el = session.getContent().getElements().get(0);
+        InteractiveSessionPlayer p1 = session.getPlayers().get(0);
+        p1.setScore(500);
+        p1.setCurrentStreak(3);
+        PlayerAnswer prior = new PlayerAnswer();
+        prior.setElementId(el.id());
+        p1.getAnswers().add(prior);
+        session.getRevealedElementIds().add(el.id());
+        session.getElementResponseModeOverrides().put(el.id(), ResponseMode.NOT_ACCEPTING_RESPONSES);
+
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(interactiveSessionRepository.save(any(InteractiveSession.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(interactiveSessionResultRepository.findByInteractiveSessionId("session1"))
+                .thenReturn(Optional.empty());
+
+        interactiveSessionService.restart("ABCD12", "guest:p1");
+
+        assertEquals(0, session.getCurrentRound());
+        assertEquals(SessionLifecycle.IN_PROGRESS, session.getStatus());
+        assertEquals(RoundPhase.SUBMIT, session.getPhase());
+        assertTrue(session.getPlayers().stream().allMatch(p -> p.getScore() == 0));
+        assertTrue(session.getPlayers().stream().allMatch(p -> p.getAnswers().isEmpty()));
+        assertEquals(0, p1.getCurrentStreak());
+        assertTrue(session.getRevealedElementIds().isEmpty());
+        assertTrue(session.getElementResponseModeOverrides().isEmpty());
+        assertFalse(session.isTimerPaused());
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/round"),
+                any(RoundStartMessage.class));
+        verify(messagingTemplate).convertAndSend(
+                org.mockito.ArgumentMatchers.eq("/topic/interactive-session/ABCD12/lobby"),
+                any(InteractiveSessionResponse.class));
+    }
+
+    @Test
+    void restart_DeletesPriorResult() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        session.setStatus(SessionLifecycle.FINISHED);
+        InteractiveSessionResult result = new InteractiveSessionResult();
+        result.setId("result1");
+        result.setInteractiveSessionId("session1");
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+        when(interactiveSessionRepository.save(any(InteractiveSession.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(interactiveSessionResultRepository.findByInteractiveSessionId("session1"))
+                .thenReturn(Optional.of(result));
+
+        interactiveSessionService.restart("ABCD12", "guest:p1");
+
+        verify(interactiveSessionResultRepository).delete(result);
+    }
+
+    @Test
+    void restart_WhenNotHost_ThrowsForbidden() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> interactiveSessionService.restart("ABCD12", "guest:p2"));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    void restart_WhenCancelled_ThrowsConflict() {
+        InteractiveSession session = inProgressSessionWithTwoPlayers();
+        session.setStatus(SessionLifecycle.CANCELLED);
+        when(interactiveSessionCache.get("ABCD12")).thenReturn(Optional.of(session));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> interactiveSessionService.restart("ABCD12", "guest:p1"));
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+    }
+
+    /**
+     * In-progress, SIMULTANEOUS session with a 30s/question window and two
+     * players (host is p1). Three regular (non-best-answer) MCQ rounds so
+     * completing round 0 advances rather than ending.
+     */
+    private InteractiveSession inProgressSessionWithTwoPlayers() {
+        InteractiveSession s = new InteractiveSession();
+        s.setId("session1");
+        s.setRoomCode("ABCD12");
+        s.setHostUserId("p1");
+        s.setStatus(SessionLifecycle.IN_PROGRESS);
+        s.setPhase(RoundPhase.SUBMIT);
+        InteractiveSessionSettings settings = new InteractiveSessionSettings();
+        settings.setAnswerSubmissionMode(AnswerSubmissionMode.SIMULTANEOUS);
+        settings.setTotalRounds(3);
+        settings.setTimePerQuestion(30);
+        settings.setSpeedBonus(false);
+        s.getContent().setSettings(settings);
+        s.setCurrentRound(0);
+        s.getContent().setElements(sampleElements(3));
+        s.setRoundStartedAt(Instant.now());
+        s.setPlayers(new ArrayList<>(List.of(player("p1"), player("p2"))));
+        return s;
     }
 
     /** Stripped-down session ready to accept a submit (IN_PROGRESS, 1 element). */

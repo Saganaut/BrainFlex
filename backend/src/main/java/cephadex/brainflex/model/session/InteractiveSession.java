@@ -108,4 +108,23 @@ public class InteractiveSession extends Auditable {
     // advance only via natural lifecycle (no explicit clear step).
     private Set<String> revealedElementIds = new HashSet<>();
     private Map<String, ResponseMode> elementResponseModeOverrides = new HashMap<>();
+
+    // Chunk 25 — host timer pause. The round countdown is server-scheduled, so
+    // pausing means cancelling the pending timeout and remembering how much
+    // time was left. timerPaused gates whether a countdown is frozen;
+    // timerRemainingMillis is the millis left at the moment of pause (null while
+    // running); timerPausedAt is the wall-clock pause instant (audit/debug,
+    // mirroring the other Instant fields).
+    private boolean timerPaused = false;
+    private Long timerRemainingMillis;
+    private Instant timerPausedAt;
+
+    // Bumped on every timer cancel (pause / restart / end-submit finalize) so a
+    // scheduled timeout that has already been handed to the executor no-ops
+    // when it eventually fires. This is the *persisted* authority — it survives
+    // a cache miss / backend restart, unlike the in-memory ScheduledFuture the
+    // service also tracks for eager cancellation. Pairs with the existing
+    // `currentRound != timedRound` guard in handleRoundTimeout to cover
+    // pause/resume/restart that happen within the same round index.
+    private int timerGeneration = 0;
 }

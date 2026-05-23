@@ -37,9 +37,12 @@ const useStartInteractiveSession = (): UseStartInteractiveSession => {
         createInteractiveSessionRequest: { deckId },
       }).unwrap();
       if (session.roomCode) {
+        // Gen-2 SessionPage: one page that opens on the lobby stage and switches
+        // to the game as the host starts. The `$sessionId` param carries the
+        // room code (the join code the REST/STOMP APIs key on).
         await navigate({
-          to: "/games/$roomCode/lobby",
-          params: { roomCode: session.roomCode },
+          to: "/sessions/$sessionId",
+          params: { sessionId: session.roomCode },
         });
       } else {
         setError("InteractiveSession was created but no room code was returned.");

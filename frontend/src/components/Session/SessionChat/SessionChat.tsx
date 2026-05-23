@@ -1,17 +1,26 @@
 // SessionChat — the floating chat/reaction widget anchored to the bottom-right
 // corner of an interactive session. It is intentionally small: its primary job
 // is letting players fire off quick emoji reactions during a live game, with an
-// optional text composer for actual messages. This file is presentation-only —
-// open/close and draft-text are local UI state; all data (messages, sending a
-// reaction, sending a message) is delivered through props so the session layer
-// can wire it to the live socket later.
-import { useState } from "react";
+// optional text composer for actual messages.
+//
+// This file is split into two layers, mirroring the rest of the Session board
+// (e.g. SessionPlayerList): `SessionChatView` is presentation-only — open/close
+// and draft-text are local UI state and everything else arrives through props —
+// while `SessionChat` (the default export the page renders) is the thin
+// container that pulls the live session out of `useSession()` and feeds the
+// view. The view stays prop-driven so it can be pointed at the real STOMP /chat
+// socket later without touching its rendering; today the container is mock-
+// backed because the Gen-2 board runs entirely on mock data.
+import { useEffect, useRef, useState } from "react";
 import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
+import { useSession } from "@/pages/SessionPage/useSession";
+import { mockFellowshipChat } from "@/utils/MockData";
+import type { InteractiveSessionChatMessageResponse } from "@/store/BrainFlexApi";
 import styles from "./SessionChat.module.css";
 
 interface ChatMessage {
@@ -26,7 +35,7 @@ interface ChatMessage {
   isSelf?: boolean;
 }
 
-interface SessionChatProps {
+interface SessionChatViewProps {
   /** Newest-last list of messages to render in the scroll area. */
   messages?: ChatMessage[];
   /** Emoji offered in the quick-reaction row. */
@@ -46,7 +55,11 @@ interface SessionChatProps {
 
 const DEFAULT_REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "👏"];
 
-const SessionChat = ({
+// How close to the bottom (px) still counts as "pinned" — leaves slack for
+// sub-pixel rounding and the gap below the last bubble.
+const BOTTOM_PROXIMITY_PX = 24;
+
+const SessionChatView = ({
   messages = [],
   reactions = DEFAULT_REACTIONS,
   allowText = true,
@@ -56,9 +69,25 @@ const SessionChat = ({
   onReact,
   onSendMessage,
   className,
-}: SessionChatProps) => {
+}: SessionChatViewProps) => {
   const [open, setOpen] = useState(defaultOpen);
   const [draft, setDraft] = useState("");
+
+  // Auto-scroll behaviour: keep the newest message in view, but only while the
+  // reader is already pinned to the bottom. If they've scrolled up to read
+  // history we leave their position alone. `atBottomRef` tracks that pinned
+  // state as a ref (not state) because it updates on every scroll frame and
+  // must never trigger a re-render.
+  const listRef = useRef<HTMLOListElement>(null);
+  const atBottomRef = useRef(true);
+
+  useEffect(() => {
+    if (!open) return;
+    const list = listRef.current;
+    if (list && atBottomRef.current) {
+      list.scrollTop = list.scrollHeight;
+    }
+  }, [open, messages.length]);
 
   const sendDraft = () => {
     const text = draft.trim();
@@ -86,7 +115,16 @@ const SessionChat = ({
             />
           </header>
 
-          <ol className={styles.messages} aria-live='polite'>
+          <ol
+            ref={listRef}
+            className={styles.messages}
+            aria-live='polite'
+            onScroll={(event) => {
+              const list = event.currentTarget;
+              atBottomRef.current =
+                list.scrollHeight - list.scrollTop - list.clientHeight <
+                BOTTOM_PROXIMITY_PX;
+            }}>
             {messages.length === 0 ? (
               <li className={styles.empty}>No messages yet — say hi 👋</li>
             ) : (
@@ -153,6 +191,10 @@ const SessionChat = ({
           className={styles.launcher}
           aria-label='Open chat'
           onClick={() => {
+            // Reopen pinned to the newest message — the list remounts fresh, so
+            // a stale "scrolled up" flag from a previous session would otherwise
+            // leave it parked at the top.
+            atBottomRef.current = true;
             setOpen(true);
           }}>
           <ChatBubbleLeftRightIcon className={styles.launcherIcon} />
@@ -167,5 +209,70 @@ const SessionChat = ({
   );
 };
 
-export { SessionChat };
-export type { ChatMessage, SessionChatProps };
+// Translate a session chat DTO into the view's flat ChatMessage. Host lines and
+// the viewer's own lines both come back from the same `players` roster, so the
+// only viewer-relative bit is `isSelf` (drives right-alignment).
+const toChatMessage = (
+  message: InteractiveSessionChatMessageResponse,
+  viewerPlayerId: string | undefined,
+): ChatMessage => ({
+  id: message.id ?? `${message.authorPlayerId ?? "anon"}-${message.sentAt ?? ""}`,
+  author: message.author?.name ?? "anon",
+  body: message.body ?? "",
+  kind: "text",
+  isSelf:
+    viewerPlayerId !== undefined && message.authorPlayerId === viewerPlayerId,
+});
+
+const newClientId = () =>
+  `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+interface SessionChatProps {
+  className?: string;
+}
+
+const SessionChat = ({ className }: SessionChatProps) => {
+  const { interactiveSession } = useSession();
+  const viewerPlayerId = interactiveSession.viewerPlayerId;
+  const { chatEnabled, reactionsEnabled } = interactiveSession.settings;
+  const viewerName =
+    interactiveSession.players.find((p) => p.playerId === viewerPlayerId)?.user
+      .name ?? "You";
+
+  // Local, client-only message log. Seeded from the mock history and appended to
+  // on send/react. When the real socket lands this becomes the STOMP /chat feed
+  // (see ChatPanel's `chatHistoryLoaded` + optimistic-send pattern); the view
+  // below is already prop-driven so only this seam changes.
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    mockFellowshipChat.map((m) => toChatMessage(m, viewerPlayerId)),
+  );
+
+  const append = (body: string, kind: ChatMessage["kind"]) => {
+    setMessages((prev) => [
+      ...prev,
+      { id: newClientId(), author: viewerName, body, kind, isSelf: true },
+    ]);
+  };
+
+  // `undefined` lets the view fall back to its DEFAULT_REACTIONS; an empty array
+  // hides the reaction row when the host has disabled reactions.
+  const reactions = (reactionsEnabled ?? true) ? undefined : [];
+
+  return (
+    <SessionChatView
+      className={className}
+      messages={messages}
+      allowText={chatEnabled ?? true}
+      reactions={reactions}
+      onSendMessage={(text) => {
+        append(text, "text");
+      }}
+      onReact={(emoji) => {
+        append(emoji, "reaction");
+      }}
+    />
+  );
+};
+
+export { SessionChat, SessionChatView };
+export type { ChatMessage, SessionChatViewProps };

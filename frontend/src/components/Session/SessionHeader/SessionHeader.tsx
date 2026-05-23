@@ -16,7 +16,7 @@ const SessionRoundDisplay = () => {
 
   return (
     <div className={styles.sessionRoundDisplay}>
-      <div>Deck Name:{currentDeck.name}</div>
+      <div>Deck Name:{currentDeck?.name ?? ""}</div>
       <div>Round: {interactiveSession.currentRound}</div>
     </div>
   );

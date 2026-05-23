@@ -2160,6 +2160,8 @@ export type InteractiveSessionResponse = {
   viewerPlayerId?: string;
   createdAt: string;
   startedAt?: string;
+  timerPaused: boolean;
+  timerRemainingMillis?: number;
 };
 export type TeamCrudRequest = {
   name?: string;

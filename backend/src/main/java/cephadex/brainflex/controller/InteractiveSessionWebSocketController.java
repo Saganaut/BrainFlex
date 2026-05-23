@@ -11,6 +11,8 @@
  *   /topic/interactive-session/{roomCode}/voted       — VoteProgressMessage (who has voted)
  *   /topic/interactive-session/{roomCode}/roundResult — RoundResultMessage (reveal; optional BestAnswerOutcome)
  *   /topic/interactive-session/{roomCode}/ended       — InteractiveSessionEndedMessage (final placements)
+ *   /topic/interactive-session/{roomCode}/submissionsClosing — SubmissionsClosingMessage (flush drafts; chunk 25)
+ *   /topic/interactive-session/{roomCode}/timerState  — TimerStateMessage (pause/resume; chunk 25)
  *   /user/queue/errors                     — InteractiveSessionErrorMessage, principal-specific
  *
  * Client sends (client → server via /app prefix):
@@ -22,6 +24,10 @@
  *   /app/interactive-session/{roomCode}/reaction       — audience emoji burst
  *   /app/interactive-session/{roomCode}/chat           — audience chat message
  *   /app/interactive-session/{roomCode}/chat/moderate  — host hides one message
+ *   /app/interactive-session/{roomCode}/endSubmit      — host ends submit phase (chunk 25)
+ *   /app/interactive-session/{roomCode}/restart        — host restarts from round 1 (chunk 25)
+ *   /app/interactive-session/{roomCode}/pauseTimer     — host pauses the round countdown (chunk 25)
+ *   /app/interactive-session/{roomCode}/resumeTimer    — host resumes the round countdown (chunk 25)
  */
 package cephadex.brainflex.controller;
 
@@ -42,6 +48,7 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.dto.session.AnswerSubmitRequest;
 import cephadex.brainflex.dto.session.BootPlayerRequest;
 import cephadex.brainflex.dto.session.ChatSendRequest;
+import cephadex.brainflex.dto.session.EndSubmitRequest;
 import cephadex.brainflex.dto.session.FreezeResponsesRequest;
 import cephadex.brainflex.dto.session.message.InteractiveSessionErrorMessage;
 import cephadex.brainflex.dto.session.ModerateChatRequest;
@@ -201,6 +208,46 @@ public class InteractiveSessionWebSocketController {
             Principal principal) {
         interactiveSessionService.freezeResponses(roomCode, request.elementId(),
                 request.mode(), principal.getName());
+    }
+
+    /**
+     * Chunk 25 — host ends the submit phase for the current round. Broadcasts a
+     * SubmissionsClosingMessage so devices flush typed-but-unsubmitted drafts,
+     * then (after a grace window) freezes the round and reveals results.
+     */
+    @MessageMapping("/interactive-session/{roomCode}/endSubmit")
+    public void endSubmit(
+            @DestinationVariable String roomCode,
+            @Payload EndSubmitRequest request,
+            Principal principal) {
+        interactiveSessionService.endSubmitPhase(roomCode, request.elementId(), principal.getName());
+    }
+
+    /**
+     * Chunk 25 — host restarts the session from round 1, keeping the roster but
+     * clearing scores/answers and the reveal/freeze overlays.
+     */
+    @MessageMapping("/interactive-session/{roomCode}/restart")
+    public void restart(
+            @DestinationVariable String roomCode,
+            Principal principal) {
+        interactiveSessionService.restart(roomCode, principal.getName());
+    }
+
+    /** Chunk 25 — host pauses the current round's countdown. */
+    @MessageMapping("/interactive-session/{roomCode}/pauseTimer")
+    public void pauseTimer(
+            @DestinationVariable String roomCode,
+            Principal principal) {
+        interactiveSessionService.pauseTimer(roomCode, principal.getName());
+    }
+
+    /** Chunk 25 — host resumes a paused round countdown. */
+    @MessageMapping("/interactive-session/{roomCode}/resumeTimer")
+    public void resumeTimer(
+            @DestinationVariable String roomCode,
+            Principal principal) {
+        interactiveSessionService.resumeTimer(roomCode, principal.getName());
     }
 
     /**

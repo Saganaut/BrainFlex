@@ -25,6 +25,7 @@ import type {
   GridQuestion,
   GuestUser,
   Image,
+  InteractiveSessionChatMessageResponse,
   InteractiveSessionPlayerResponse,
   InteractiveSessionResponse,
   InteractiveSessionSettings,
@@ -583,10 +584,10 @@ export const mockMcqQuestion: McqQuestion = {
   id: "el_mcq_ring_bearer",
   prompt: "Who carried the One Ring from the Shire to Mount Doom?",
   options: [
-    opt("opt_aragorn", "Aragorn", "var(--color-red-500)"),
-    opt("opt_frodo", "Frodo Baggins", "var(--color-blue-500)"),
-    opt("opt_sam", "Samwise Gamgee", "var(--color-green-500)"),
-    opt("opt_boromir", "Boromir", "var(--color-yellow-500)"),
+    opt("opt_aragorn", "Aragorn", "var(--red-500)"),
+    opt("opt_frodo", "Frodo Baggins", "var(--blue-500)"),
+    opt("opt_sam", "Samwise Gamgee", "var(--green-500)"),
+    opt("opt_boromir", "Boromir", "var(--yellow-500)"),
   ],
   correctOptionIds: ["opt_frodo"],
   pointValue: 100,
@@ -1180,7 +1181,7 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerResponse[] = [
     },
     score: 1450,
     avatarKey: "frodo",
-    colorTag: "var(--color-blue-500)",
+    colorTag: "var(--blue-500)",
     currentStreak: 3,
     longestStreak: 5,
     accuracy: 0.82,
@@ -1199,7 +1200,7 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerResponse[] = [
     },
     score: 1320,
     avatarKey: "sam",
-    colorTag: "var(--color-green-500)",
+    colorTag: "var(--green-500)",
     currentStreak: 2,
     longestStreak: 4,
     accuracy: 0.78,
@@ -1218,7 +1219,7 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerResponse[] = [
     },
     score: 1200,
     avatarKey: "legolas",
-    colorTag: "var(--color-yellow-500)",
+    colorTag: "var(--yellow-500)",
     currentStreak: 1,
     longestStreak: 3,
     accuracy: 0.71,
@@ -1237,7 +1238,7 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerResponse[] = [
     },
     score: 980,
     avatarKey: "gimli",
-    colorTag: "var(--color-red-500)",
+    colorTag: "var(--red-500)",
     currentStreak: 0,
     longestStreak: 2,
     accuracy: 0.64,
@@ -1249,11 +1250,56 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerResponse[] = [
   },
 ];
 
+// Seed audience-chat history for the Fellowship session, newest-last to match
+// how SessionChat renders its scroll area. Authors line up with
+// `mockFellowshipPlayers` (same playerIds + display names); Frodo is the host
+// and the viewer, so his line carries `fromHost` and renders as the viewer's
+// own message. Exists so the Gen-2 SessionChat widget has something live to
+// show while the board runs on mock data (no STOMP /chat socket yet).
+export const mockFellowshipChat: InteractiveSessionChatMessageResponse[] = [
+  {
+    id: "chat_fellowship_1",
+    authorPlayerId: mockSamPlayerId,
+    author: { name: mockSamUser.userName, guest: false },
+    fromHost: false,
+    body: "Good luck everyone — for the Shire!",
+    sentAt: "2026-05-20T09:55:00Z",
+    moderated: false,
+  },
+  {
+    id: "chat_fellowship_2",
+    authorPlayerId: mockLegolasPlayerId,
+    author: { name: mockLegolasGuest.userName, guest: true },
+    fromHost: false,
+    body: "That last question was tricky 😅",
+    sentAt: "2026-05-20T09:57:30Z",
+    moderated: false,
+  },
+  {
+    id: "chat_fellowship_3",
+    authorPlayerId: mockGimliPlayerId,
+    author: { name: mockGimliGuest.userName, guest: true },
+    fromHost: false,
+    body: "Nobody tosses a dwarf 🪓",
+    sentAt: "2026-05-20T09:58:40Z",
+    moderated: false,
+  },
+  {
+    id: "chat_fellowship_4",
+    authorPlayerId: mockFrodoPlayerId,
+    author: { name: mockFrodoUser.userName, guest: false },
+    fromHost: true,
+    body: "Round 2 coming up — eyes on the board.",
+    sentAt: "2026-05-20T09:59:10Z",
+    moderated: false,
+  },
+];
+
 export const mockTeams: Team[] = [
   {
     id: "team_west",
     name: "Free Peoples of the West",
-    color: "var(--color-blue-500)",
+    color: "var(--blue-500)",
     captainPlayerId: mockFrodoPlayerId,
     score: 2770,
     memberCount: 2,
@@ -1261,7 +1307,7 @@ export const mockTeams: Team[] = [
   {
     id: "team_east",
     name: "Allies of Erebor",
-    color: "var(--color-red-500)",
+    color: "var(--red-500)",
     captainPlayerId: mockGimliPlayerId,
     score: 2180,
     memberCount: 2,
@@ -1301,6 +1347,7 @@ export const mockFellowshipSession: InteractiveSessionResponse = {
   viewerPlayerId: mockFrodoPlayerId,
   createdAt: RECENT,
   startedAt: RECENT,
+  timerPaused: false,
 };
 
 export const mockTeamSession: InteractiveSessionResponse = {

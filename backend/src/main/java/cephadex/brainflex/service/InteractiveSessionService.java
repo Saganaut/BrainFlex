@@ -29,10 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -138,8 +140,25 @@ public class InteractiveSessionService {
     private static final int CHAT_MAX_BODY = 500;
     private static final int CHAT_PAGE_MAX_SIZE = 100;
 
+    // Chunk 25 — grace window the server keeps a round open after the host
+    // ends the submit phase, so participant devices have time to flush their
+    // typed-but-unsubmitted drafts before the round freezes and reveals.
+    private static final int SUBMIT_CLOSE_GRACE_MILLIS = 1500;
+
     private final ConcurrentHashMap<String, Object> roundLocks = new ConcurrentHashMap<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(4);
+
+    // Chunk 25 — in-memory handle on each room's pending round-timer task so
+    // pause/restart/end-submit can eagerly cancel it instead of waiting for it
+    // to fire and no-op. Not persisted (a ScheduledFuture can't be); the
+    // session's persisted timerGeneration is the durable guard if this is lost.
+    private final ConcurrentHashMap<String, ScheduledFuture<?>> roundTimerHandles = new ConcurrentHashMap<>();
+
+    // Chunk 25 — keys ("roomCode:elementId") for rounds inside the end-submit
+    // grace window. submitAnswer consults this so the auto-flush of drafts is
+    // accepted even if the host had already frozen the round. Cleared when the
+    // grace window finalizes.
+    private final Set<String> closingElementKeys = ConcurrentHashMap.newKeySet();
 
     /**
      * Per-answer byte cap for DRAWING submissions. Inline stroke lists can get
@@ -203,6 +222,8 @@ public class InteractiveSessionService {
     @PreDestroy
     public void shutdown() {
         scheduler.shutdownNow();
+        roundTimerHandles.clear();
+        closingElementKeys.clear();
     }
 
     // ---- CRUD ----
@@ -730,7 +751,11 @@ public class InteractiveSessionService {
             if (effectiveMode == null) {
                 effectiveMode = current.responseMode();
             }
-            if (effectiveMode == cephadex.brainflex.model.enums.ResponseMode.NOT_ACCEPTING_RESPONSES) {
+            // Chunk 25 — during the end-submit grace window, accept the
+            // auto-flush of typed-but-unsubmitted drafts even though the round
+            // is being closed (and may already carry a freeze override).
+            boolean closing = closingElementKeys.contains(roomCode + ":" + current.id());
+            if (effectiveMode == cephadex.brainflex.model.enums.ResponseMode.NOT_ACCEPTING_RESPONSES && !closing) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Responses are frozen");
             }
 
@@ -966,6 +991,228 @@ public class InteractiveSessionService {
         }
     }
 
+    /**
+     * Chunk 25 — host ends the submit phase for the current round. Rather than
+     * silently dropping un-submitted drafts, this broadcasts a
+     * {@link cephadex.brainflex.dto.session.message.SubmissionsClosingMessage}
+     * so every participant device flushes its typed-but-unsubmitted draft via
+     * the normal answer path; after {@link #SUBMIT_CLOSE_GRACE_MILLIS} the round
+     * is frozen and revealed (see {@link #finalizeSubmitClose}). No-op on a
+     * stale elementId, outside SUBMIT, or on a slide (slides accept no answers).
+     */
+    public void endSubmitPhase(String roomCode, String elementId, String hostPrincipalName) {
+        synchronized (getLock(roomCode)) {
+            InteractiveSession session = loadActiveSession(roomCode);
+            validateHost(session, hostPrincipalName);
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
+                return;
+            if (session.getPhase() != RoundPhase.SUBMIT)
+                return;
+
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
+            if (elementId == null || !elementId.equals(current.id()))
+                return; // stale
+            if (current instanceof Slide)
+                return; // slides accept no answers
+
+            int round = session.getCurrentRound();
+            String elId = current.id();
+            closingElementKeys.add(roomCode + ":" + elId);
+            messagingTemplate.convertAndSend(
+                    "/topic/interactive-session/" + roomCode + "/submissionsClosing",
+                    new cephadex.brainflex.dto.session.message.SubmissionsClosingMessage(
+                            round, elId, SUBMIT_CLOSE_GRACE_MILLIS));
+
+            // Wait off the handler thread for devices to flush, then close + reveal.
+            scheduler.schedule(() -> {
+                try {
+                    finalizeSubmitClose(roomCode, round, elId);
+                } catch (Exception ignored) {
+                }
+            }, SUBMIT_CLOSE_GRACE_MILLIS, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    /**
+     * Chunk 25 — fires {@link #SUBMIT_CLOSE_GRACE_MILLIS} after
+     * {@link #endSubmitPhase}: freezes the round (so any straggler past the
+     * grace window is rejected with a 409) and reveals results through the
+     * normal {@link #completeRound} path. No-ops if the round already advanced
+     * during the grace window (e.g. everyone flushed and all-answered fired).
+     * Package-private so it can be unit-tested without the scheduler.
+     */
+    void finalizeSubmitClose(String roomCode, int round, String elementId) {
+        synchronized (getLock(roomCode)) {
+            closingElementKeys.remove(roomCode + ":" + elementId);
+            InteractiveSession session = interactiveSessionCache.get(roomCode)
+                    .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
+            if (session == null)
+                return;
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
+                return;
+            if (session.getCurrentRound() != round)
+                return;
+            if (session.getPhase() != RoundPhase.SUBMIT)
+                return;
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
+            if (!current.id().equals(elementId))
+                return;
+
+            session.getElementResponseModeOverrides().put(current.id(),
+                    cephadex.brainflex.model.enums.ResponseMode.NOT_ACCEPTING_RESPONSES);
+            cancelRoundTimer(session);
+            interactiveSessionRepository.save(session);
+            interactiveSessionCache.put(session);
+            completeRound(session);
+        }
+    }
+
+    /**
+     * Chunk 25 — host pauses the round countdown. Cancels the pending timeout,
+     * remembers the millis remaining, and broadcasts the paused state. No-op
+     * when there is no running countdown (unlimited round / TURN_BASED with no
+     * per-question timer) or when already paused.
+     */
+    public void pauseTimer(String roomCode, String hostPrincipalName) {
+        synchronized (getLock(roomCode)) {
+            InteractiveSession session = loadActiveSession(roomCode);
+            validateHost(session, hostPrincipalName);
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
+                return;
+            if (session.isTimerPaused())
+                return; // idempotent
+            if (session.getRoundStartedAt() == null)
+                return; // no countdown running
+
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
+            int windowSeconds = effectiveDisplaySeconds(current, session.getContent().getSettings());
+            if (windowSeconds <= 0)
+                return; // unlimited — nothing to pause
+
+            long totalMillis = windowSeconds * 1000L;
+            long elapsed = Math.max(0L, Duration.between(session.getRoundStartedAt(), Instant.now()).toMillis());
+            long remaining = Math.max(0L, totalMillis - elapsed);
+
+            cancelRoundTimer(session);
+            session.setTimerPaused(true);
+            session.setTimerRemainingMillis(remaining);
+            session.setTimerPausedAt(Instant.now());
+            interactiveSessionRepository.save(session);
+            interactiveSessionCache.put(session);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/interactive-session/" + roomCode + "/timerState",
+                    new cephadex.brainflex.dto.session.message.TimerStateMessage(
+                            session.getCurrentRound(), true, remaining, session.getRoundStartedAt()));
+            messagingTemplate.convertAndSend(
+                    "/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
+        }
+    }
+
+    /**
+     * Chunk 25 — host resumes a paused round countdown. Reschedules the timeout
+     * for the remembered remaining millis and shifts {@code roundStartedAt} back
+     * by the elapsed-before-pause so the remaining window (and the speed-bonus
+     * math, which keys off roundStartedAt) picks up where it left off. No-op
+     * when not paused.
+     */
+    public void resumeTimer(String roomCode, String hostPrincipalName) {
+        synchronized (getLock(roomCode)) {
+            InteractiveSession session = loadActiveSession(roomCode);
+            validateHost(session, hostPrincipalName);
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
+                return;
+            if (!session.isTimerPaused())
+                return;
+
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
+            int windowSeconds = effectiveDisplaySeconds(current, session.getContent().getSettings());
+            long totalMillis = windowSeconds * 1000L;
+            long remaining = session.getTimerRemainingMillis() == null
+                    ? totalMillis
+                    : session.getTimerRemainingMillis();
+
+            Instant shiftedStart = Instant.now().minusMillis(Math.max(0L, totalMillis - remaining));
+            session.setRoundStartedAt(shiftedStart);
+            session.setTimerPaused(false);
+            session.setTimerRemainingMillis(null);
+            session.setTimerPausedAt(null);
+            interactiveSessionRepository.save(session);
+            interactiveSessionCache.put(session);
+
+            scheduleRoundTimerMillis(roomCode, session.getCurrentRound(), remaining, session.getTimerGeneration());
+
+            messagingTemplate.convertAndSend(
+                    "/topic/interactive-session/" + roomCode + "/timerState",
+                    new cephadex.brainflex.dto.session.message.TimerStateMessage(
+                            session.getCurrentRound(), false, null, shiftedStart));
+            messagingTemplate.convertAndSend(
+                    "/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
+        }
+    }
+
+    /**
+     * Chunk 25 — host restarts a session from round 1, keeping the player
+     * roster but clearing all scores/answers/streaks and the reveal/freeze
+     * overlays. Allowed from IN_PROGRESS (replay) or FINISHED (rematch);
+     * rejected from LOBBY (nothing to restart) and CANCELLED (dead). A prior
+     * FINISHED run's result document is dropped so it can't shadow the replay;
+     * play-count / game-history from that run are intentionally left intact.
+     */
+    public void restart(String roomCode, String hostPrincipalName) {
+        synchronized (getLock(roomCode)) {
+            InteractiveSession session = loadActiveSession(roomCode);
+            validateHost(session, hostPrincipalName);
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS
+                    && session.getStatus() != SessionLifecycle.FINISHED) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Session cannot be restarted from its current state");
+            }
+
+            cancelRoundTimer(session);
+
+            for (InteractiveSessionPlayer player : session.getPlayers()) {
+                player.setScore(0);
+                player.getAnswers().clear();
+                player.getVotes().clear();
+                player.setCurrentStreak(0);
+                player.setSpeedBonusTotal(0);
+                player.setEndStats(cephadex.brainflex.model.session.PlayerEndStats.empty());
+            }
+            for (Team team : session.getTeams()) {
+                team.setScore(0);
+            }
+            session.getRevealedElementIds().clear();
+            session.getElementResponseModeOverrides().clear();
+            closingElementKeys.removeIf(k -> k.startsWith(roomCode + ":"));
+
+            session.setCurrentRound(0);
+            session.setStatus(SessionLifecycle.IN_PROGRESS);
+            session.setPhase(RoundPhase.SUBMIT);
+            session.setStartedAt(Instant.now());
+            session.setRoundStartedAt(Instant.now());
+            session.setEndedAt(null);
+            session.setTimerPaused(false);
+            session.setTimerRemainingMillis(null);
+            session.setTimerPausedAt(null);
+
+            interactiveSessionResultRepository.findByInteractiveSessionId(session.getId())
+                    .ifPresent(interactiveSessionResultRepository::delete);
+
+            interactiveSessionRepository.save(session);
+            interactiveSessionCache.put(session);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
+            DeckElement first = session.getContent().getElements().get(0);
+            broadcastRoundStart(session, first);
+            scheduleElementTimer(session, 0, first);
+        }
+    }
+
     public void leaveGame(String roomCode, String principalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
@@ -994,7 +1241,7 @@ public class InteractiveSessionService {
 
     // ---- Round transitions ----
 
-    private void handleRoundTimeout(String roomCode, int timedRound) {
+    private void handleRoundTimeout(String roomCode, int timedRound, int generation) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = interactiveSessionCache.get(roomCode)
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
@@ -1003,6 +1250,10 @@ public class InteractiveSessionService {
             if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
             if (session.getCurrentRound() != timedRound)
+                return;
+            // Chunk 25 — a paused/restarted/ended-submit timer bumps the
+            // generation; a callback carrying the stale value must not fire.
+            if (session.getTimerGeneration() != generation)
                 return;
 
             DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
@@ -1422,6 +1673,9 @@ public class InteractiveSessionService {
         interactiveSessionResultRepository.save(result);
         interactiveSessionRepository.save(session);
         interactiveSessionCache.evict(session.getRoomCode());
+        // Chunk 25 — drop the round-timer handle; the pending timeout (if any)
+        // will no-op on the status guard, but don't leak the future.
+        roundTimerHandles.remove(session.getRoomCode());
 
         // Bump the deck's denormalized play counter atomically so Explore's
         // "most played" / "trending" sorts reflect this finish without a
@@ -1675,7 +1929,7 @@ public class InteractiveSessionService {
         }
         if (seconds <= 0)
             seconds = SLIDE_DEFAULT_SECONDS;
-        scheduleRoundTimer(session.getRoomCode(), round, seconds);
+        scheduleRoundTimerMillis(session.getRoomCode(), round, seconds * 1000L, session.getTimerGeneration());
     }
 
     /**
@@ -1692,13 +1946,36 @@ public class InteractiveSessionService {
         return 0;
     }
 
-    private void scheduleRoundTimer(String roomCode, int round, int timeLimitSeconds) {
-        scheduler.schedule(() -> {
+    /**
+     * Schedule (or reschedule, on resume) the round timeout. {@code generation}
+     * is the value of {@link InteractiveSession#getTimerGeneration()} captured
+     * at schedule time; when the task fires it is compared against the session's
+     * current generation and no-ops on a mismatch (i.e. the timer was cancelled
+     * by a pause/restart/end-submit since it was scheduled). The handle is
+     * tracked per room so those actions can also cancel eagerly.
+     */
+    private void scheduleRoundTimerMillis(String roomCode, int round, long timeLimitMillis, int generation) {
+        ScheduledFuture<?> future = scheduler.schedule(() -> {
             try {
-                handleRoundTimeout(roomCode, round);
+                handleRoundTimeout(roomCode, round, generation);
             } catch (Exception ignored) {
             }
-        }, timeLimitSeconds, TimeUnit.SECONDS);
+        }, Math.max(0L, timeLimitMillis), TimeUnit.MILLISECONDS);
+        roundTimerHandles.put(roomCode, future);
+    }
+
+    /**
+     * Cancel the pending round timer for a room and bump the session's
+     * timerGeneration so any already-dispatched timeout no-ops when it fires.
+     * Caller must persist the session afterward. Called by pause / restart /
+     * end-submit finalize.
+     */
+    private void cancelRoundTimer(InteractiveSession session) {
+        session.setTimerGeneration(session.getTimerGeneration() + 1);
+        ScheduledFuture<?> future = roundTimerHandles.remove(session.getRoomCode());
+        if (future != null) {
+            future.cancel(false);
+        }
     }
 
     // ---- Utility ----

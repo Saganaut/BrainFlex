@@ -472,9 +472,11 @@ const CreateGamePage = () => {
         },
       }).unwrap();
       if (session.roomCode) {
+        // Gen-2 SessionPage (one page; opens on the lobby stage). The
+        // `$sessionId` param carries the room code.
         await navigate({
-          to: "/games/$roomCode/lobby",
-          params: { roomCode: session.roomCode },
+          to: "/sessions/$sessionId",
+          params: { sessionId: session.roomCode },
         });
       }
     } catch (err) {

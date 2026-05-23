@@ -7,13 +7,13 @@
  */
 package cephadex.brainflex.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import cephadex.brainflex.model.element.DeckElement;
 
 public record RoundStartMessage(
-        int round,
-        int totalRounds,
-        DeckElement element,
-        LocalDateTime startedAt) {
+                int round,
+                int totalRounds,
+                DeckElement element,
+                Instant startedAt) {
 }

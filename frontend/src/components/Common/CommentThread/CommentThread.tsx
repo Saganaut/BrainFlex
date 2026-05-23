@@ -20,14 +20,17 @@ import {
 } from "@heroicons/react/24/outline";
 import { HandThumbUpIcon as ThumbOutline } from "@heroicons/react/24/outline";
 import { HandThumbUpIcon as ThumbSolid } from "@heroicons/react/24/solid";
-import { useListRepliesQuery, type DeckCommentDto } from "@/store/BrainFlexApi";
+import {
+  useListRepliesQuery,
+  type DeckCommentResponse,
+} from "@/store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { resolveAvatarSrc } from "@/utils/avatarUrl";
 import styles from "./CommentThread.module.css";
 
 interface CommentThreadProps {
   deckId: string;
-  items: DeckCommentDto[];
+  items: DeckCommentResponse[];
   currentUserId: string | null;
   canInteract: boolean;
   onToggleUpvote: (commentId: string) => void;
@@ -67,7 +70,7 @@ const CommentThread = ({
 
 interface CommentNodeProps {
   deckId: string;
-  comment: DeckCommentDto;
+  comment: DeckCommentResponse;
   currentUserId: string | null;
   canInteract: boolean;
   onToggleUpvote: (commentId: string) => void;
@@ -90,7 +93,7 @@ const CommentNode = ({
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [editing, setEditing] = useState(false);
   const replyCount = comment.replyCount ?? 0;
-  const isAuthor = currentUserId === comment.authorUserId;
+  const isAuthor = currentUserId === comment.author?.userId;
 
   return (
     <li className={styles.item}>
@@ -167,7 +170,7 @@ const CommentNode = ({
 };
 
 interface CommentBodyProps {
-  comment: DeckCommentDto;
+  comment: DeckCommentResponse;
   canInteract: boolean;
   isAuthor: boolean;
   editing: boolean;
@@ -202,16 +205,16 @@ const CommentBody = ({
         .filter(Boolean)
         .join(" ")}>
       <header className={styles.header}>
-        {comment.authorPictureUrl != null &&
-          comment.authorPictureUrl !== "" && (
+        {comment.author?.pictureUrl != null &&
+          comment.author.pictureUrl !== "" && (
             <img
-              src={resolveAvatarSrc(comment.authorPictureUrl)}
+              src={resolveAvatarSrc(comment.author.pictureUrl)}
               alt=''
               className={styles.avatar}
             />
           )}
         <span className={styles.author}>
-          {comment.authorName ?? "Anonymous"}
+          {comment.author?.name ?? "Anonymous"}
         </span>
         {comment.edited === true && !isDeleted && (
           <span className={styles.editedTag}>edited</span>
@@ -331,7 +334,7 @@ const RepliesList = ({
 };
 
 interface ReplyItemProps {
-  reply: DeckCommentDto;
+  reply: DeckCommentResponse;
   currentUserId: string | null;
   canInteract: boolean;
   onToggleUpvote: (commentId: string) => void;
@@ -354,7 +357,7 @@ const ReplyItem = ({
       <CommentBody
         comment={reply}
         canInteract={canInteract}
-        isAuthor={currentUserId === reply.authorUserId}
+        isAuthor={currentUserId === reply.author?.userId}
         editing={editing}
         onToggleUpvote={() => {
           onToggleUpvote(reply.id ?? "");

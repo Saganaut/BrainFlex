@@ -41,14 +41,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.CreateDeckCollectionRequest;
 import cephadex.brainflex.dto.UpdateDeckCollectionRequest;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckCollection;
-import cephadex.brainflex.model.GalleryImage;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.element.ImageSize;
-import cephadex.brainflex.model.element.ImageVariant;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckCollection;
+import cephadex.brainflex.model.image.Image;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.image.ImageVariant;
 import cephadex.brainflex.model.enums.DeckVisibility;
+import cephadex.brainflex.model.media.GalleryImage;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckCollectionRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GalleryImageRepository;
@@ -85,18 +85,21 @@ public class DeckCollectionService {
      * the DTO is built so clients never see a stale URL.
      */
     public void hydrateCover(DeckCollection col) {
-        if (col == null || col.getCover() == null) return;
+        if (col == null || col.getCover() == null)
+            return;
         Image cover = col.getCover();
-        if (cover.useExternalImg()) return;
+        if (cover.useExternalImg())
+            return;
         String galleryId = cover.internalImgId();
         if (galleryId == null || galleryId.isBlank()) {
             col.setCover(cover.withVariants(Map.of()));
             return;
         }
         GalleryImage record = galleryImageRepository.findById(galleryId).orElse(null);
-        Map<ImageSize, ImageVariant> fresh = (record != null && record.getVariants() != null && !record.getVariants().isEmpty())
-                ? s3Service.refreshGalleryImage(galleryId, record.getVariants())
-                : Map.of();
+        Map<ImageSize, ImageVariant> fresh = (record != null && record.getVariants() != null
+                && !record.getVariants().isEmpty())
+                        ? s3Service.refreshGalleryImage(galleryId, record.getVariants())
+                        : Map.of();
         col.setCover(cover.withVariants(fresh));
     }
 
@@ -110,8 +113,8 @@ public class DeckCollectionService {
      * Read a collection enforcing visibility rules.
      *
      * PUBLIC / UNLISTED → anyone with the id
-     * ORG               → registered users in the matching organization
-     * PRIVATE           → owner only
+     * ORG → registered users in the matching organization
+     * PRIVATE → owner only
      *
      * Throws 401 (no caller) or 403 (caller, wrong scope) on a denied read.
      */
@@ -122,8 +125,8 @@ public class DeckCollectionService {
         if (visibility == DeckVisibility.PUBLIC || visibility == DeckVisibility.UNLISTED) {
             return col;
         }
-        User user = caller.orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to view this collection"));
+        User user = caller.orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to view this collection"));
         if (visibility == DeckVisibility.ORG) {
             String orgId = col.getOrganizationId();
             List<String> memberships = user.getOrganizationIds();
@@ -145,7 +148,8 @@ public class DeckCollectionService {
      */
     public List<Deck> resolveDecks(DeckCollection col, Optional<User> caller) {
         List<String> ids = col.getDeckIds();
-        if (ids == null || ids.isEmpty()) return List.of();
+        if (ids == null || ids.isEmpty())
+            return List.of();
         List<Deck> hits = deckRepository.findAllById(ids);
         Set<String> visibleIds = new HashSet<>();
         for (Deck deck : hits) {
@@ -158,11 +162,13 @@ public class DeckCollectionService {
         }
         // Preserve the curator's order rather than Mongo's findAllById order.
         java.util.Map<String, Deck> byId = new java.util.HashMap<>();
-        for (Deck deck : hits) byId.put(deck.getId(), deck);
+        for (Deck deck : hits)
+            byId.put(deck.getId(), deck);
         List<Deck> ordered = new ArrayList<>(ids.size());
         for (String deckId : ids) {
             Deck deck = byId.get(deckId);
-            if (deck != null && visibleIds.contains(deckId)) ordered.add(deck);
+            if (deck != null && visibleIds.contains(deckId))
+                ordered.add(deck);
         }
         return ordered;
     }
@@ -189,11 +195,13 @@ public class DeckCollectionService {
 
     public DeckCollection update(String id, User caller, UpdateDeckCollectionRequest request) {
         DeckCollection col = requireOwned(id, caller);
-        if (request.name() != null) col.setName(request.name());
+        if (request.name() != null)
+            col.setName(request.name());
         if (request.description() != null) {
             col.setDescription(request.description().isBlank() ? null : request.description());
         }
-        if (request.visibility() != null) col.setVisibility(request.visibility());
+        if (request.visibility() != null)
+            col.setVisibility(request.visibility());
         if (request.cover() != null) {
             // An Image.empty() clears the cover; a blank URL also clears it.
             col.setCover(request.cover().isBlank() && request.cover().internalImgId() == null
@@ -278,7 +286,8 @@ public class DeckCollectionService {
      * owner reads only, mirroring the deck rule.
      */
     public void incrementViewCount(String collectionId) {
-        if (collectionId == null || collectionId.isBlank()) return;
+        if (collectionId == null || collectionId.isBlank())
+            return;
         mongoTemplate.updateFirst(
                 new Query(Criteria.where("_id").is(collectionId)),
                 new Update().inc("viewCount", 1),
@@ -316,8 +325,10 @@ public class DeckCollectionService {
      * collection covers are hydrated through the same gallery flow.
      */
     private static Image normalizeImage(Image image) {
-        if (image == null) return null;
-        if (image.useExternalImg()) return image;
+        if (image == null)
+            return null;
+        if (image.useExternalImg())
+            return image;
         return image.withVariants(Map.of());
     }
 }

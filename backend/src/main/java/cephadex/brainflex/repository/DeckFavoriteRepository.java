@@ -16,8 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.DeckFavorite;
-
+import cephadex.brainflex.model.deck.DeckFavorite;
 public interface DeckFavoriteRepository extends MongoRepository<DeckFavorite, String> {
 
     Optional<DeckFavorite> findByUserIdAndDeckId(String userId, String deckId);

@@ -14,7 +14,7 @@ import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.DeckCollaborator;
+import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;
 
 public interface DeckCollaboratorRepository extends MongoRepository<DeckCollaborator, String> {

@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.MediaAsset;
+import cephadex.brainflex.model.media.MediaAsset;
 import cephadex.brainflex.model.enums.MediaKind;
 
 public interface MediaAssetRepository extends MongoRepository<MediaAsset, String> {

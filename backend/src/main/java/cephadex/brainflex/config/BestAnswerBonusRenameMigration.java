@@ -39,47 +39,52 @@ import com.mongodb.client.result.UpdateResult;
 @ConditionalOnProperty(name = "migrate.best-answer-bonus", havingValue = "true")
 public class BestAnswerBonusRenameMigration {
 
-    @Bean
-    @SuppressWarnings("unused")
-    ApplicationRunner runBestAnswerBonusRename(
-            MongoTemplate mongoTemplate,
-            ApplicationContext applicationContext) {
-        return (ApplicationArguments args) -> {
-            try {
-                System.out.println("=== bestAnswerBonus → bestAnswerPoints rename: starting ===");
+        @Bean
+        @SuppressWarnings("unused")
+        ApplicationRunner runBestAnswerBonusRename(
+                        MongoTemplate mongoTemplate,
+                        ApplicationContext applicationContext) {
+                return (ApplicationArguments args) -> {
+                        try {
+                                System.out.println("=== bestAnswerBonus → bestAnswerPoints rename: starting ===");
 
-                Document filter = new Document(
-                        "elements.bestAnswerBonus", new Document("$exists", true));
+                                Document filter = new Document(
+                                                "elements.bestAnswerBonus", new Document("$exists", true));
 
-                List<Document> pipeline = List.of(
-                        new Document("$set", new Document("elements",
-                                new Document("$map", new Document()
-                                        .append("input", "$elements")
-                                        .append("as", "el")
-                                        .append("in", new Document("$mergeObjects", List.of(
-                                                "$$el",
-                                                new Document("bestAnswerPoints",
-                                                        new Document("$ifNull", List.of(
-                                                                "$$el.bestAnswerPoints",
-                                                                "$$el.bestAnswerBonus"))))))))),
-                        new Document("$set", new Document("elements",
-                                new Document("$map", new Document()
-                                        .append("input", "$elements")
-                                        .append("as", "el")
-                                        .append("in", new Document("$unsetField", new Document()
-                                                .append("field", "bestAnswerBonus")
-                                                .append("input", "$$el")))))));
+                                List<Document> pipeline = List.of(
+                                                new Document("$set", new Document("elements",
+                                                                new Document("$map", new Document()
+                                                                                .append("input", "$elements")
+                                                                                .append("as", "el")
+                                                                                .append("in", new Document(
+                                                                                                "$mergeObjects",
+                                                                                                List.of(
+                                                                                                                "$$el",
+                                                                                                                new Document("bestAnswerPoints",
+                                                                                                                                new Document("$ifNull",
+                                                                                                                                                List.of(
+                                                                                                                                                                "$$el.bestAnswerPoints",
+                                                                                                                                                                "$$el.bestAnswerBonus"))))))))),
+                                                new Document("$set", new Document("elements",
+                                                                new Document("$map", new Document()
+                                                                                .append("input", "$elements")
+                                                                                .append("as", "el")
+                                                                                .append("in", new Document(
+                                                                                                "$unsetField",
+                                                                                                new Document()
+                                                                                                                .append("field", "bestAnswerBonus")
+                                                                                                                .append("input", "$$el")))))));
 
-                UpdateResult result = mongoTemplate.getCollection("decks")
-                        .updateMany(filter, pipeline);
+                                UpdateResult result = mongoTemplate.getCollection("decks")
+                                                .updateMany(filter, pipeline);
 
-                System.out.println("=== bestAnswerBonus → bestAnswerPoints rename: done ===");
-                System.out.println("  decks matched:    " + result.getMatchedCount());
-                System.out.println("  decks modified:   " + result.getModifiedCount());
-            } finally {
-                int exit = SpringApplication.exit(applicationContext, () -> 0);
-                System.exit(exit);
-            }
-        };
-    }
+                                System.out.println("=== bestAnswerBonus → bestAnswerPoints rename: done ===");
+                                System.out.println("  decks matched:    " + result.getMatchedCount());
+                                System.out.println("  decks modified:   " + result.getModifiedCount());
+                        } finally {
+                                int exit = SpringApplication.exit(applicationContext, () -> 0);
+                                System.exit(exit);
+                        }
+                };
+        }
 }

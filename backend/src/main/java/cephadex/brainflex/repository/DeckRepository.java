@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.PublishStatus;
 

@@ -1,7 +1,7 @@
 /**
  * Cache-sync rules for deck-element + deck-lifecycle mutations.
  *
- * Every mutation in this group returns the canonical updated DeckDto with
+ * Every mutation in this group returns the canonical updated DeckResponse with
  * presigned `imgUrl` values fully hydrated (the controller runs the same
  * DeckImageHydrationService.hydrate on every mutation response that it runs
  * on `getDeck`). We splice that response into the `getDeck` query cache so
@@ -11,7 +11,7 @@
  * Imported for its side effect via the `../apiEnhancements` barrel; do not
  * remove that import or these mutations will silently fall out of sync.
  */
-import { BrainFlex, type DeckDto } from "../BrainFlexApi";
+import { BrainFlex, type DeckResponse } from "../BrainFlexApi";
 import type { CacheSyncApi } from "./types";
 
 const syncDeckCache = async (arg: { id: string }, api: CacheSyncApi) => {
@@ -21,7 +21,7 @@ const syncDeckCache = async (arg: { id: string }, api: CacheSyncApi) => {
       BrainFlex.util.upsertQueryData(
         "getDeck",
         { id: arg.id },
-        data as DeckDto,
+        data as DeckResponse,
       ),
     );
   } catch {
@@ -50,7 +50,7 @@ BrainFlex.enhanceEndpoints({
     updateDeck: {
       onQueryStarted: (arg, api) => syncDeckCache(arg, api),
     },
-    // Publish lifecycle mutations also return the canonical DeckDto, so the
+    // Publish lifecycle mutations also return the canonical DeckResponse, so the
     // status pill in the editor navbar updates instantly without a refetch.
     publishDeck: {
       onQueryStarted: (arg, api) => syncDeckCache(arg, api),

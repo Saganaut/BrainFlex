@@ -35,106 +35,107 @@ import cephadex.brainflex.model.element.WordCloudQuestion;
 
 public final class ElementRedactor {
 
-    private ElementRedactor() {}
-
-    public static DeckElement redact(DeckElement element) {
-        return switch (element) {
-            case Slide s -> s; // nothing to redact
-            case McqQuestion q -> new McqQuestion(
-                    q.id(), q.prompt(), q.options(),
-                    null,        // correctOptionIds — redacted before reveal
-                    q.pointValue(), q.difficulty(),
-                    null,        // explanation
-                    q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
-                    q.chrome());
-            case TextQuestion q -> new TextQuestion(
-                    q.id(), q.prompt(),
-                    null,        // correctAnswer
-                    List.of(),   // acceptedVariants
-                    q.caseSensitive(),
-                    q.pointValue(), q.difficulty(),
-                    null,        // explanation
-                    q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
-                    q.chrome());
-            case NumberQuestion q -> new NumberQuestion(
-                    q.id(), q.prompt(),
-                    0.0,         // correctValue
-                    0.0,         // tolerance
-                    q.unitLabel(), q.decimalPlaces(),
-                    q.pointValue(), q.difficulty(),
-                    null,        // explanation
-                    q.minValue(), q.maxValue(), q.allowNegative(),
-                    q.chrome());
-            case RankingQuestion q -> new RankingQuestion(
-                    q.id(), q.prompt(), q.items(),
-                    List.of(),   // correctOrder
-                    q.scoring(),
-                    q.pointValue(), q.difficulty(),
-                    null,        // explanation
-                    q.shuffleItemsForPresentation(),
-                    q.chrome());
-            case ScalesQuestion q -> new ScalesQuestion(
-                    q.id(), q.prompt(), q.statements(),
-                    q.scaleMin(), q.scaleMax(), q.minLabel(), q.maxLabel(),
-                    List.of(),   // correctRatings
-                    q.pointValue(), q.difficulty(),
-                    null,        // explanation
-                    q.chrome());
-            case QAndAQuestion q -> q; // no answer key to hide
-            case GridQuestion q -> new GridQuestion(
-                    q.id(), q.prompt(), q.rows(), q.cols(), q.cells(),
-                    java.util.Set.of(),  // correctCellIndexes
-                    q.multipleCorrect(),
-                    q.pointValue(), q.difficulty(),
-                    null,        // explanation
-                    q.chrome());
-            case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
-                    q.id(), q.prompt(), q.targetImage(),
-                    0.0,         // correctX
-                    0.0,         // correctY
-                    q.tolerance(), q.scoring(),
-                    q.pointValue(), q.difficulty(),
-                    null,        // explanation
-                    q.chrome());
-            case WordCloudQuestion q -> q; // survey: no answer key to hide
-            case AllocationQuestion q -> q; // survey: no answer key to hide
-            case MatchingQuestion q -> redactMatching(q);
-            case DrawingQuestion q -> q; // survey: no answer key to hide
-        };
-    }
-
-    /**
-     * Redact a MatchingQuestion for broadcast: strip the explanation and
-     * shuffle the pairs[] list so the natural authoring order isn't leaked.
-     * The pair list itself is still the source of truth for both columns
-     * (each MatchingPair ties left and right via a single id), so the frontend
-     * renders the left column in pairs[] order and shuffles the RIGHT column
-     * visually before painting it — the answer key is enforced server-side by
-     * pair.id == pair.id matching regardless of display order.
-     */
-    private static MatchingQuestion redactMatching(MatchingQuestion q) {
-        var pairs = q.pairs();
-        var shuffled = pairs == null ? null : new ArrayList<>(pairs);
-        if (shuffled != null && shuffled.size() > 1) {
-            Collections.shuffle(shuffled);
+        private ElementRedactor() {
         }
-        return new MatchingQuestion(
-                q.id(), q.prompt(), shuffled, q.scoring(),
-                q.pointValue(), q.difficulty(),
-                null,        // explanation
-                q.chrome());
-    }
 
-    /**
-     * Also strips the host-only `speakerNotes` field — used when broadcasting an
-     * element to non-host participants. The host sees the un-redacted version
-     * via a separate /user/queue/host channel (future).
-     */
-    public static DeckElement redactForParticipant(DeckElement element) {
-        DeckElement redacted = redact(element);
-        // For v1 speakerNotes is included in the redact() output above; we expose this
-        // method now so callers can opt into per-recipient stripping later without
-        // changing call sites.
-        return redacted;
-    }
+        public static DeckElement redact(DeckElement element) {
+                return switch (element) {
+                        case Slide s -> s; // nothing to redact
+                        case McqQuestion q -> new McqQuestion(
+                                        q.id(), q.prompt(), q.options(),
+                                        null, // correctOptionIds — redacted before reveal
+                                        q.pointValue(), q.difficulty(),
+                                        null, // explanation
+                                        q.shuffleOptions(), q.allowMultipleSelect(), q.maxSelections(),
+                                        q.chrome());
+                        case TextQuestion q -> new TextQuestion(
+                                        q.id(), q.prompt(),
+                                        null, // correctAnswer
+                                        List.of(), // acceptedVariants
+                                        q.caseSensitive(),
+                                        q.pointValue(), q.difficulty(),
+                                        null, // explanation
+                                        q.maxLength(), q.trimWhitespace(), q.fuzzyMatch(), q.fuzzyDistance(),
+                                        q.chrome());
+                        case NumberQuestion q -> new NumberQuestion(
+                                        q.id(), q.prompt(),
+                                        0.0, // correctValue
+                                        0.0, // tolerance
+                                        q.unitLabel(), q.decimalPlaces(),
+                                        q.pointValue(), q.difficulty(),
+                                        null, // explanation
+                                        q.minValue(), q.maxValue(), q.allowNegative(),
+                                        q.chrome());
+                        case RankingQuestion q -> new RankingQuestion(
+                                        q.id(), q.prompt(), q.items(),
+                                        List.of(), // correctOrder
+                                        q.scoring(),
+                                        q.pointValue(), q.difficulty(),
+                                        null, // explanation
+                                        q.shuffleItemsForPresentation(),
+                                        q.chrome());
+                        case ScalesQuestion q -> new ScalesQuestion(
+                                        q.id(), q.prompt(), q.statements(),
+                                        q.scaleMin(), q.scaleMax(), q.minLabel(), q.maxLabel(),
+                                        List.of(), // correctRatings
+                                        q.pointValue(), q.difficulty(),
+                                        null, // explanation
+                                        q.chrome());
+                        case QAndAQuestion q -> q; // no answer key to hide
+                        case GridQuestion q -> new GridQuestion(
+                                        q.id(), q.prompt(), q.rows(), q.cols(), q.cells(),
+                                        java.util.Set.of(), // correctCellIndexes
+                                        q.multipleCorrect(),
+                                        q.pointValue(), q.difficulty(),
+                                        null, // explanation
+                                        q.chrome());
+                        case PlaceOnImageQuestion q -> new PlaceOnImageQuestion(
+                                        q.id(), q.prompt(), q.targetImage(),
+                                        0.0, // correctX
+                                        0.0, // correctY
+                                        q.tolerance(), q.scoring(),
+                                        q.pointValue(), q.difficulty(),
+                                        null, // explanation
+                                        q.chrome());
+                        case WordCloudQuestion q -> q; // survey: no answer key to hide
+                        case AllocationQuestion q -> q; // survey: no answer key to hide
+                        case MatchingQuestion q -> redactMatching(q);
+                        case DrawingQuestion q -> q; // survey: no answer key to hide
+                };
+        }
+
+        /**
+         * Redact a MatchingQuestion for broadcast: strip the explanation and
+         * shuffle the pairs[] list so the natural authoring order isn't leaked.
+         * The pair list itself is still the source of truth for both columns
+         * (each MatchingPair ties left and right via a single id), so the frontend
+         * renders the left column in pairs[] order and shuffles the RIGHT column
+         * visually before painting it — the answer key is enforced server-side by
+         * pair.id == pair.id matching regardless of display order.
+         */
+        private static MatchingQuestion redactMatching(MatchingQuestion q) {
+                var pairs = q.pairs();
+                var shuffled = pairs == null ? null : new ArrayList<>(pairs);
+                if (shuffled != null && shuffled.size() > 1) {
+                        Collections.shuffle(shuffled);
+                }
+                return new MatchingQuestion(
+                                q.id(), q.prompt(), shuffled, q.scoring(),
+                                q.pointValue(), q.difficulty(),
+                                null, // explanation
+                                q.chrome());
+        }
+
+        /**
+         * Also strips the host-only `speakerNotes` field — used when broadcasting an
+         * element to non-host participants. The host sees the un-redacted version
+         * via a separate /user/queue/host channel (future).
+         */
+        public static DeckElement redactForParticipant(DeckElement element) {
+                DeckElement redacted = redact(element);
+                // For v1 speakerNotes is included in the redact() output above; we expose this
+                // method now so callers can opt into per-recipient stripping later without
+                // changing call sites.
+                return redacted;
+        }
 }

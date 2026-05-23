@@ -13,8 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.Notification;
-
+import cephadex.brainflex.model.user.Notification;
 public interface NotificationRepository extends MongoRepository<Notification, String> {
 
     Page<Notification> findAllByUserId(String userId, Pageable pageable);

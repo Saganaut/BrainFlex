@@ -19,7 +19,7 @@
 package cephadex.brainflex.service;
 
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -41,13 +41,13 @@ import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
 import cephadex.brainflex.dto.CreateScheduledInteractiveSessionRequest;
 import cephadex.brainflex.dto.RedeemInviteResponse;
 import cephadex.brainflex.dto.UpdateScheduledInteractiveSessionRequest;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionInvite;
-import cephadex.brainflex.model.InteractiveSessionSettings;
-import cephadex.brainflex.model.ScheduledInteractiveSession;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.enums.ScheduleStatus;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionInvite;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
+import cephadex.brainflex.model.session.ScheduledInteractiveSession;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
@@ -70,7 +70,8 @@ public class ScheduledInteractiveSessionService {
     // chunk 20 will introduce per-user timezone for localised display. Lives
     // here (rather than in the template) so the same string drives the email
     // body and subject without a second format call.
-    private static final DateTimeFormatter EMAIL_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'");
+    private static final DateTimeFormatter EMAIL_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm 'UTC'")
+            .withZone(java.time.ZoneOffset.UTC);
 
     private final ScheduledInteractiveSessionRepository scheduleRepository;
     private final InteractiveSessionInviteRepository inviteRepository;
@@ -85,13 +86,13 @@ public class ScheduledInteractiveSessionService {
     private String frontendBaseUrl;
 
     public ScheduledInteractiveSessionService(ScheduledInteractiveSessionRepository scheduleRepository,
-                                              InteractiveSessionInviteRepository inviteRepository,
-                                              InteractiveSessionRepository interactiveSessionRepository,
-                                              DeckRepository deckRepository,
-                                              UserRepository userRepository,
-                                              InteractiveSessionService interactiveSessionService,
-                                              EmailService emailService,
-                                              ApplicationEventPublisher events) {
+            InteractiveSessionInviteRepository inviteRepository,
+            InteractiveSessionRepository interactiveSessionRepository,
+            DeckRepository deckRepository,
+            UserRepository userRepository,
+            InteractiveSessionService interactiveSessionService,
+            EmailService emailService,
+            ApplicationEventPublisher events) {
         this.scheduleRepository = scheduleRepository;
         this.inviteRepository = inviteRepository;
         this.interactiveSessionRepository = interactiveSessionRepository;
@@ -131,7 +132,7 @@ public class ScheduledInteractiveSessionService {
         schedule.setReminderEmailTemplate(request.reminderEmailTemplate());
         schedule.setSettings(request.settings() != null
                 ? request.settings()
-                : copyOf(deck.getDefaultSettings()));
+                : copyOf(deck.getContent().getSettings()));
         schedule.setInvitedEmails(normaliseEmails(request.invitedEmails()));
         schedule = scheduleRepository.save(schedule);
 
@@ -143,7 +144,7 @@ public class ScheduledInteractiveSessionService {
     }
 
     public ScheduledInteractiveSession update(String id, User host,
-                                              UpdateScheduledInteractiveSessionRequest request) {
+            UpdateScheduledInteractiveSessionRequest request) {
         ScheduledInteractiveSession schedule = requireOwnedAndSchedulable(id, host);
         if (request.scheduledStartAt() != null) {
             schedule.setScheduledStartAt(request.scheduledStartAt());
@@ -151,9 +152,12 @@ public class ScheduledInteractiveSessionService {
             // soon" reminder — clear so the sweep re-fires for the new window.
             schedule.setStartingSoonNotifiedAt(null);
         }
-        if (request.scheduledEndAt() != null) schedule.setScheduledEndAt(request.scheduledEndAt());
-        if (request.reminderEmailTemplate() != null) schedule.setReminderEmailTemplate(request.reminderEmailTemplate());
-        if (request.settings() != null) schedule.setSettings(request.settings());
+        if (request.scheduledEndAt() != null)
+            schedule.setScheduledEndAt(request.scheduledEndAt());
+        if (request.reminderEmailTemplate() != null)
+            schedule.setReminderEmailTemplate(request.reminderEmailTemplate());
+        if (request.settings() != null)
+            schedule.setSettings(request.settings());
         return scheduleRepository.save(schedule);
     }
 
@@ -185,12 +189,12 @@ public class ScheduledInteractiveSessionService {
         // Best-effort cancel notice.
         Deck deck = deckRepository.findById(schedule.getDeckId()).orElse(null);
         String hostName = host.getName() != null ? host.getName() : host.getUserName();
-        String deckName = deck != null ? deck.getName() : "Session";
+        String deckName = deck != null ? deck.getContent().getName() : "Session";
         List<InteractiveSessionInvite> invites = inviteRepository.findByScheduledInteractiveSessionId(schedule.getId());
         Map<String, Object> cancelModel = new HashMap<>();
         cancelModel.put("hostName", hostName);
         cancelModel.put("deckName", deckName);
-        cancelModel.put("scheduledFor", saved.getScheduledStartAt().format(EMAIL_DATE));
+        cancelModel.put("scheduledFor", EMAIL_DATE.format(saved.getScheduledStartAt()));
         for (InteractiveSessionInvite invite : invites) {
             try {
                 emailService.enqueue(EmailJob.builder()
@@ -246,7 +250,7 @@ public class ScheduledInteractiveSessionService {
             try {
                 Map<String, Object> reminderModel = new HashMap<>();
                 reminderModel.put("hostName", hostName);
-                reminderModel.put("deckName", deck.getName());
+                reminderModel.put("deckName", deck.getContent().getName());
                 reminderModel.put("roomCode", session.getRoomCode());
                 reminderModel.put("joinUrl", inviteUrl(invite));
                 reminderModel.put("customReminder", saved.getReminderEmailTemplate());
@@ -264,7 +268,10 @@ public class ScheduledInteractiveSessionService {
         return session;
     }
 
-    /** Called via {@link InteractiveSessionEndedListener} when a live session finishes. */
+    /**
+     * Called via {@link InteractiveSessionEndedListener} when a live session
+     * finishes.
+     */
     public void markComplete(String interactiveSessionId) {
         scheduleRepository.findByCreatedInteractiveSessionId(interactiveSessionId)
                 .ifPresent(s -> {
@@ -278,12 +285,13 @@ public class ScheduledInteractiveSessionService {
     public RedeemInviteResponse redeem(String token, String resolvedUserId) {
         InteractiveSessionInvite invite = inviteRepository.findByInviteToken(token)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invite not found"));
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         if (invite.getExpiresAt() != null && invite.getExpiresAt().isBefore(now)) {
             throw new ResponseStatusException(HttpStatus.GONE, "Invite expired");
         }
         invite.setRedeemedAt(now);
-        if (resolvedUserId != null) invite.setResolvedUserId(resolvedUserId);
+        if (resolvedUserId != null)
+            invite.setResolvedUserId(resolvedUserId);
         inviteRepository.save(invite);
 
         String roomCode = null;
@@ -294,17 +302,19 @@ public class ScheduledInteractiveSessionService {
         }
         String deckName = null;
         String hostName = null;
-        LocalDateTime scheduledStartAt = null;
+        Instant scheduledStartAt = null;
         if (invite.getScheduledInteractiveSessionId() != null) {
-            Optional<ScheduledInteractiveSession> schedule =
-                    scheduleRepository.findById(invite.getScheduledInteractiveSessionId());
+            Optional<ScheduledInteractiveSession> schedule = scheduleRepository
+                    .findById(invite.getScheduledInteractiveSessionId());
             if (schedule.isPresent()) {
                 ScheduledInteractiveSession s = schedule.get();
                 scheduledStartAt = s.getScheduledStartAt();
                 Deck deck = deckRepository.findById(s.getDeckId()).orElse(null);
-                if (deck != null) deckName = deck.getName();
+                if (deck != null)
+                    deckName = deck.getContent().getName();
                 User host = userRepository.findById(s.getHostUserId()).orElse(null);
-                if (host != null) hostName = host.getName() != null ? host.getName() : host.getUserName();
+                if (host != null)
+                    hostName = host.getName() != null ? host.getName() : host.getUserName();
             }
         }
         return new RedeemInviteResponse(
@@ -336,9 +346,9 @@ public class ScheduledInteractiveSessionService {
     }
 
     private InteractiveSessionInvite createAndSendInvite(ScheduledInteractiveSession schedule,
-                                                         String email,
-                                                         User host,
-                                                         Deck deck) {
+            String email,
+            User host,
+            Deck deck) {
         if (inviteRepository.existsByEmailAndScheduledInteractiveSessionId(email, schedule.getId())) {
             // Idempotent — return the existing row instead of duplicating.
             return inviteRepository.findByScheduledInteractiveSessionId(schedule.getId()).stream()
@@ -351,15 +361,15 @@ public class ScheduledInteractiveSessionService {
         invite.setEmail(email);
         invite.setInvitedByUserId(host.getId());
         invite.setInviteToken(generateToken());
-        invite.setExpiresAt(schedule.getScheduledStartAt().plusHours(2));
+        invite.setExpiresAt(schedule.getScheduledStartAt().plus(java.time.Duration.ofHours(2)));
         InteractiveSessionInvite saved = inviteRepository.save(invite);
 
         String hostName = host.getName() != null ? host.getName() : host.getUserName();
         try {
             Map<String, Object> inviteModel = new HashMap<>();
             inviteModel.put("hostName", hostName);
-            inviteModel.put("deckName", deck.getName());
-            inviteModel.put("scheduledFor", schedule.getScheduledStartAt().format(EMAIL_DATE));
+            inviteModel.put("deckName", deck.getContent().getName());
+            inviteModel.put("scheduledFor", EMAIL_DATE.format(schedule.getScheduledStartAt()));
             inviteModel.put("acceptUrl", inviteUrl(saved));
             emailService.enqueue(EmailJob.builder()
                     .recipient(saved.getEmail())
@@ -390,7 +400,8 @@ public class ScheduledInteractiveSessionService {
     }
 
     private static List<String> normaliseEmails(List<String> raw) {
-        if (raw == null) return new ArrayList<>();
+        if (raw == null)
+            return new ArrayList<>();
         return raw.stream()
                 .filter(e -> e != null && !e.isBlank())
                 .map(e -> e.trim().toLowerCase(Locale.ROOT))
@@ -402,7 +413,7 @@ public class ScheduledInteractiveSessionService {
         InteractiveSessionSettings cfg = s.getSettings();
         return new CreateInteractiveSessionRequest(
                 s.getDeckId(),
-                null,                          // format — defaulted from deck.defaultSessionFormat
+                null, // format — defaulted from deck.defaultSessionFormat
                 cfg.getAnswerSubmissionMode(),
                 cfg.getShowResponses(),
                 cfg.getTotalRounds(),
@@ -418,8 +429,8 @@ public class ScheduledInteractiveSessionService {
                 cfg.isTeamMode(),
                 cfg.getTeamCount(),
                 cfg.isAutoBalanceTeams(),
-                null,                          // customRoomCode — let the live service generate one
-                null,                          // anonymousMode — defaulted by settings copy in InteractiveSessionService
+                null, // customRoomCode — let the live service generate one
+                null, // anonymousMode — defaulted by settings copy in InteractiveSessionService
                 cfg.isShuffleQuestions(),
                 cfg.isShuffleAnswers(),
                 cfg.isAutoAdvance(),
@@ -430,7 +441,8 @@ public class ScheduledInteractiveSessionService {
     }
 
     private static InteractiveSessionSettings copyOf(InteractiveSessionSettings src) {
-        if (src == null) return new InteractiveSessionSettings();
+        if (src == null)
+            return new InteractiveSessionSettings();
         InteractiveSessionSettings out = new InteractiveSessionSettings();
         out.setMaxPlayers(src.getMaxPlayers());
         out.setTotalRounds(src.getTotalRounds());

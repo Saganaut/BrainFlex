@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { useListThemesQuery } from "../store/BrainFlexApi";
 import { useCurrentUser } from "./useCurrentUser";
 import { useTheme } from "./useTheme";
+import { apiToUiMode } from "../utils/themeMode";
 
 const useActiveThemeSync = () => {
   const userState = useCurrentUser();
@@ -32,7 +33,8 @@ const useActiveThemeSync = () => {
     if (!active) return;
     if (typeof active.huePrimary === "number") setHuePrimary(active.huePrimary);
     if (typeof active.hueAccent === "number") setHueAccent(active.hueAccent);
-    if (active.mode === "light" || active.mode === "dark") setTheme(active.mode);
+    const uiMode = apiToUiMode(active.mode);
+    if (uiMode === "light" || uiMode === "dark") setTheme(uiMode);
     // useTheme's setters are new function references each render but wrap
     // React state setters that no-op on identical input; only the server-side
     // identity should drive this effect.

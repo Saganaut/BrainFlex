@@ -12,7 +12,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.UserAchievement;
+import cephadex.brainflex.model.user.UserAchievement;
 
 public interface UserAchievementRepository extends MongoRepository<UserAchievement, String> {
 

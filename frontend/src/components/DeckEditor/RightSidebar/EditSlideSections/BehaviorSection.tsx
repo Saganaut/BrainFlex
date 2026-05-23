@@ -12,7 +12,7 @@
 import { useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { RadioGroup } from "@/components/Common/Input/RadioGroup/RadioGroup";
-import { useGetDeckQuery, type DeckDto } from "@/store/BrainFlexApi";
+import { useGetDeckQuery, type DeckResponse } from "@/store/BrainFlexApi";
 import {
   formatDefaultShowResponses,
   resolveShowResponses,
@@ -22,7 +22,7 @@ import { useElementEditor } from "../../SlideContentTypes/useElementEditor";
 import { relevanceFor } from "../data";
 import styles from "../EditSlidePanel.module.css";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -50,15 +50,13 @@ const BehaviorSection = () => {
   // suppresses itself via the relevance check below.
   const slideShowResponses =
     element?.kind === "Slide" ? element.showResponses : undefined;
-  const initial =
-    (slideShowResponses as ShowResponsesMode | undefined) ?? "INHERIT";
-  const [showResponses, setShowResponses] = useState<ShowResponsesMode>(initial);
+  const initial = slideShowResponses ?? "INHERIT";
+  const [showResponses, setShowResponses] =
+    useState<ShowResponsesMode>(initial);
 
   if (element && syncedFromId !== element.id) {
     markSynced(element.id);
-    setShowResponses(
-      (slideShowResponses as ShowResponsesMode | undefined) ?? "INHERIT",
-    );
+    setShowResponses(slideShowResponses ?? "INHERIT");
   }
 
   if (!element) return null;
@@ -67,8 +65,7 @@ const BehaviorSection = () => {
   // Slide kind suppresses it — non-interactive content has nothing to gate).
   // `slideKind` only narrows on the Slide member of the union; for other
   // kinds the field is undefined and relevanceFor doesn't read it.
-  const slideKind =
-    element.kind === "Slide" ? element.slideKind : undefined;
+  const slideKind = element.kind === "Slide" ? element.slideKind : undefined;
   const rel = relevanceFor({ kind: element.kind, slideKind });
   if (!rel.showResponses) return null;
 
@@ -97,15 +94,14 @@ const BehaviorSection = () => {
           const next = value as ShowResponsesMode;
           setShowResponses(next);
           if (element.kind === "Slide") {
-            commit({ ...element, showResponses: next } as DeckElement);
+            commit({ ...element, showResponses: next });
           }
         }}
       />
       {showResponses === "INHERIT" && (
         <p className={styles.behaviorHint}>
           Inheriting <strong>{resolvedFallback}</strong>{" "}
-          {deck?.defaultShowResponses &&
-          deck.defaultShowResponses !== "INHERIT"
+          {deck?.defaultShowResponses && deck.defaultShowResponses !== "INHERIT"
             ? "from this deck"
             : `(${deck?.defaultSessionFormat ?? "GAME"} default)`}
         </p>

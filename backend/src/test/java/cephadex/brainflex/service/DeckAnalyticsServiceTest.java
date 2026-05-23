@@ -18,13 +18,13 @@
  *   - Reactions + total session chat populate the per-element stats.
  *   - Exceptions in any sub-step do not bubble out of recordSessionFinish.
  *   - PR3 — GAME / PRESENTATION finishes route into the matching
- *     {@link cephadex.brainflex.model.FormatRollup}; PRESENTATION leaves
+ *     {@link cephadex.brainflex.model.session.FormatRollup}; PRESENTATION leaves
  *     {@code averageScore} alone so unscored sessions don't pollute the
  *     game-mode score average; mixed decks populate both rollups.
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,13 +52,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.enums.SessionFormat;
-import cephadex.brainflex.model.DeckAnalytics;
-import cephadex.brainflex.model.ElementStats;
-import cephadex.brainflex.model.FormatRollup;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionPlayer;
-import cephadex.brainflex.model.PlayerAnswer;
-import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.deck.DeckAnalytics;
+import cephadex.brainflex.model.session.ElementStats;
+import cephadex.brainflex.model.session.FormatRollup;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionPlayer;
+import cephadex.brainflex.model.session.PlayerAnswer;
+import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.DrawingAnswer;
@@ -104,8 +104,8 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_FirstPlay_InitializesCountersAndAverages() {
         InteractiveSession session = baseSession();
-        session.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
-        session.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 30));
+        session.setStartedAt(Instant.parse("2026-05-20T08:00:00Z"));
+        session.setEndedAt(Instant.parse("2026-05-20T08:30:00Z"));
         session.getPlayers().add(playerWithScore("p-1", 100, 0.80));
         session.getPlayers().add(playerWithScore("p-2", 50, 0.40));
 
@@ -128,8 +128,8 @@ class DeckAnalyticsServiceTest {
     void recordSessionFinish_TwoPlays_AveragesAreRunningWelford() {
         // First game: one player, score 100.
         InteractiveSession game1 = baseSession();
-        game1.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
-        game1.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 10));   // 10 min
+        game1.setStartedAt(Instant.parse("2026-05-20T08:00:00Z"));
+        game1.setEndedAt(Instant.parse("2026-05-20T08:10:00Z"));   // 10 min
         game1.getPlayers().add(playerWithScore("p-1", 100, 1.0));
         service.recordSessionFinish(game1);
 
@@ -137,8 +137,8 @@ class DeckAnalyticsServiceTest {
         // Second game: same deck, returns the stored rollup; one player, score 50.
         when(analyticsRepository.findById("deck-1")).thenReturn(Optional.of(afterGame1));
         InteractiveSession game2 = baseSession();
-        game2.setStartedAt(LocalDateTime.of(2026, 5, 21, 8, 0));
-        game2.setEndedAt(LocalDateTime.of(2026, 5, 21, 8, 20));   // 20 min
+        game2.setStartedAt(Instant.parse("2026-05-21T08:00:00Z"));
+        game2.setEndedAt(Instant.parse("2026-05-21T08:20:00Z"));   // 20 min
         game2.getPlayers().add(playerWithScore("p-2", 50, 0.5));
         service.recordSessionFinish(game2);
 
@@ -155,7 +155,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_Slide_SkippedFromPerElementRollup() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(slide("slide-1"));
+        session.getContent().getElements().add(slide("slide-1"));
         session.getPlayers().add(playerWithScore("p-1", 100, 1.0));
 
         service.recordSessionFinish(session);
@@ -168,7 +168,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_QAndA_PresentedButNoAnswerRollup() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(qAndA("qa-1"));
+        session.getContent().getElements().add(qAndA("qa-1"));
         InteractiveSessionPlayer p = playerWithScore("p-1", 0, 0.0);
         // No PlayerAnswer for Q&A — submissions live in audience_submissions.
         session.getPlayers().add(p);
@@ -184,7 +184,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_TimeoutAnswer_DoesNotCountAsAnswered() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("mcq-1"));
+        session.getContent().getElements().add(mcqElement("mcq-1"));
         InteractiveSessionPlayer p = playerWithScore("p-1", 0, 0.0);
         p.getAnswers().add(answer("mcq-1", new TimeoutAnswer(), false, 0L));
         session.getPlayers().add(p);
@@ -203,7 +203,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_McqAnswer_CountsHitsPerOptionId() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("mcq-1"));
+        session.getContent().getElements().add(mcqElement("mcq-1"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 1500);
         addAnswer(session, "p-2", "mcq-1", new McqAnswer(List.of("opt-b")), false, 2000);
         addAnswer(session, "p-3", "mcq-1", new McqAnswer(List.of("opt-a", "opt-b")), false, 3000);
@@ -217,7 +217,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_NumberAnswer_BucketsByIntegerFloor() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("num-1"));  // kind doesn't matter for bucketing
+        session.getContent().getElements().add(mcqElement("num-1"));  // kind doesn't matter for bucketing
         addAnswer(session, "p-1", "num-1", new NumberAnswer(42.0), true, 1000);
         addAnswer(session, "p-2", "num-1", new NumberAnswer(42.7), false, 1500);
         addAnswer(session, "p-3", "num-1", new NumberAnswer(50.0), false, 800);
@@ -231,7 +231,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_TextAnswer_NormalizesCaseAndTrims() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("text-1"));
+        session.getContent().getElements().add(mcqElement("text-1"));
         addAnswer(session, "p-1", "text-1", new TextAnswer("  Frodo "), true, 0);
         addAnswer(session, "p-2", "text-1", new TextAnswer("frodo"), true, 0);
         addAnswer(session, "p-3", "text-1", new TextAnswer("Sam"), false, 0);
@@ -245,7 +245,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_RankingAnswer_SumsPlacementsPerItem() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("rank-1"));
+        session.getContent().getElements().add(mcqElement("rank-1"));
         // Player 1 ranks item-x first, item-y second.
         addAnswer(session, "p-1", "rank-1",
                 new RankingAnswer(List.of("item-x", "item-y")), true, 0);
@@ -262,7 +262,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_ScalesAnswer_SumsRatingsPerStatement() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("scales-1"));
+        session.getContent().getElements().add(mcqElement("scales-1"));
         addAnswer(session, "p-1", "scales-1",
                 new ScalesAnswer(Map.of("s-a", 5, "s-b", 3)), true, 0);
         addAnswer(session, "p-2", "scales-1",
@@ -277,7 +277,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_GridAnswer_CountsCellHits() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("grid-1"));
+        session.getContent().getElements().add(mcqElement("grid-1"));
         addAnswer(session, "p-1", "grid-1", new GridAnswer(Set.of(3, 5)), true, 0);
         addAnswer(session, "p-2", "grid-1", new GridAnswer(Set.of(3, 7)), false, 0);
 
@@ -291,7 +291,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_PlaceOnImageAnswer_BucketsTo10x10Grid() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("place-1"));
+        session.getContent().getElements().add(mcqElement("place-1"));
         // (0.05, 0.05) → (row 0, col 0); (0.07, 0.04) → also (0, 0); (0.55, 0.95) → (9, 5)
         addAnswer(session, "p-1", "place-1", new PlaceOnImageAnswer(0.05, 0.05), true, 0);
         addAnswer(session, "p-2", "place-1", new PlaceOnImageAnswer(0.07, 0.04), true, 0);
@@ -306,7 +306,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_WordCloudAnswer_NormalizesAndCounts() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("wc-1"));
+        session.getContent().getElements().add(mcqElement("wc-1"));
         addAnswer(session, "p-1", "wc-1", new WordCloudAnswer(List.of("Hope", "Faith")), false, 0);
         addAnswer(session, "p-2", "wc-1", new WordCloudAnswer(List.of("hope", "love")), false, 0);
 
@@ -320,7 +320,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_AllocationAnswer_SumsPointsPerOption() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("alloc-1"));
+        session.getContent().getElements().add(mcqElement("alloc-1"));
         addAnswer(session, "p-1", "alloc-1",
                 new AllocationAnswer(Map.of("opt-a", 60, "opt-b", 40)), false, 0);
         addAnswer(session, "p-2", "alloc-1",
@@ -335,7 +335,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_MatchingAnswer_BucketsByPairString() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("match-1"));
+        session.getContent().getElements().add(mcqElement("match-1"));
         addAnswer(session, "p-1", "match-1",
                 new MatchingAnswer(Map.of("L-1", "R-x", "L-2", "R-y")), true, 0);
         addAnswer(session, "p-2", "match-1",
@@ -351,7 +351,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_DrawingAnswer_RecordsAnsweredCountButEmptyDistribution() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("draw-1"));
+        session.getContent().getElements().add(mcqElement("draw-1"));
         addAnswer(session, "p-1", "draw-1", new DrawingAnswer(List.of()), false, 1000);
         addAnswer(session, "p-2", "draw-1", new DrawingAnswer(List.of()), false, 1500);
 
@@ -367,7 +367,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_AverageTimeMs_IsTotalDividedByAnsweredCount() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("mcq-1"));
+        session.getContent().getElements().add(mcqElement("mcq-1"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 1000);
         addAnswer(session, "p-2", "mcq-1", new McqAnswer(List.of("opt-a")), true, 3000);
 
@@ -380,7 +380,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_ReactionRepository_FoldedIntoElementStats() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("mcq-1"));
+        session.getContent().getElements().add(mcqElement("mcq-1"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 0);
         when(reactionRepository.countByInteractiveSessionIdAndElementId("session-1", "mcq-1"))
                 .thenReturn(7L);
@@ -392,9 +392,9 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_TotalSessionChat_AttachesToFirstScoredElement() {
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(slide("slide-1"));      // skipped
-        session.getDeckSnapshot().add(mcqElement("mcq-1"));    // gets the chat count
-        session.getDeckSnapshot().add(mcqElement("mcq-2"));
+        session.getContent().getElements().add(slide("slide-1"));      // skipped
+        session.getContent().getElements().add(mcqElement("mcq-1"));    // gets the chat count
+        session.getContent().getElements().add(mcqElement("mcq-2"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 0);
         addAnswer(session, "p-1", "mcq-2", new McqAnswer(List.of("opt-a")), true, 0);
         when(chatRepository.countByInteractiveSessionId("session-1")).thenReturn(12L);
@@ -410,9 +410,9 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_GameOnly_PopulatesGameRollupNotPresentation() {
         InteractiveSession session = baseSession();
-        session.setFormat(SessionFormat.GAME);
-        session.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
-        session.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 30));
+        session.getContent().setFormat(SessionFormat.GAME);
+        session.setStartedAt(Instant.parse("2026-05-20T08:00:00Z"));
+        session.setEndedAt(Instant.parse("2026-05-20T08:30:00Z"));
         session.getPlayers().add(playerWithScore("p-1", 100, 0.80));
         session.getPlayers().add(playerWithScore("p-2", 50, 0.40));
 
@@ -443,9 +443,9 @@ class DeckAnalyticsServiceTest {
         // averageScore would make a real game's average look worse later if
         // the same deck mixes formats. The recorder skips that update.
         InteractiveSession session = baseSession();
-        session.setFormat(SessionFormat.PRESENTATION);
-        session.setStartedAt(LocalDateTime.of(2026, 5, 20, 9, 0));
-        session.setEndedAt(LocalDateTime.of(2026, 5, 20, 9, 15));
+        session.getContent().setFormat(SessionFormat.PRESENTATION);
+        session.setStartedAt(Instant.parse("2026-05-20T09:00:00Z"));
+        session.setEndedAt(Instant.parse("2026-05-20T09:15:00Z"));
         session.getPlayers().add(playerWithScore("p-1", 0, 0.50));
         session.getPlayers().add(playerWithScore("p-2", 0, 0.30));
 
@@ -470,9 +470,9 @@ class DeckAnalyticsServiceTest {
     void recordSessionFinish_MixedFormats_BothRollupsPopulatedIndependently() {
         // First finish: GAME with one 100-point player.
         InteractiveSession game = baseSession();
-        game.setFormat(SessionFormat.GAME);
-        game.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
-        game.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 10));
+        game.getContent().setFormat(SessionFormat.GAME);
+        game.setStartedAt(Instant.parse("2026-05-20T08:00:00Z"));
+        game.setEndedAt(Instant.parse("2026-05-20T08:10:00Z"));
         game.getPlayers().add(playerWithScore("p-1", 100, 1.0));
         service.recordSessionFinish(game);
         DeckAnalytics afterGame = captureSaved();
@@ -481,9 +481,9 @@ class DeckAnalyticsServiceTest {
         when(analyticsRepository.findById("deck-1")).thenReturn(Optional.of(afterGame));
         InteractiveSession pres = baseSession();
         pres.setId("session-2");
-        pres.setFormat(SessionFormat.PRESENTATION);
-        pres.setStartedAt(LocalDateTime.of(2026, 5, 21, 10, 0));
-        pres.setEndedAt(LocalDateTime.of(2026, 5, 21, 10, 20));
+        pres.getContent().setFormat(SessionFormat.PRESENTATION);
+        pres.setStartedAt(Instant.parse("2026-05-21T10:00:00Z"));
+        pres.setEndedAt(Instant.parse("2026-05-21T10:20:00Z"));
         pres.getPlayers().add(playerWithScore("p-2", 0, 0.70));
         pres.getPlayers().add(playerWithScore("p-3", 0, 0.50));
         service.recordSessionFinish(pres);
@@ -518,7 +518,7 @@ class DeckAnalyticsServiceTest {
         when(analyticsRepository.findById("deck-1")).thenReturn(Optional.of(legacy));
 
         InteractiveSession session = baseSession();
-        session.setFormat(SessionFormat.GAME);
+        session.getContent().setFormat(SessionFormat.GAME);
         session.getPlayers().add(playerWithScore("p-1", 100, 1.0));
 
         service.recordSessionFinish(session);
@@ -548,7 +548,7 @@ class DeckAnalyticsServiceTest {
                 .thenThrow(new RuntimeException("mongo down"));
 
         InteractiveSession session = baseSession();
-        session.getDeckSnapshot().add(mcqElement("mcq-1"));
+        session.getContent().getElements().add(mcqElement("mcq-1"));
         // Must not throw — the analytics call is failure-isolated from endGame.
         service.recordSessionFinish(session);
     }
@@ -566,9 +566,9 @@ class DeckAnalyticsServiceTest {
         s.setId("session-1");
         s.setDeckId("deck-1");
         s.setPlayers(new ArrayList<>());
-        s.setDeckSnapshot(new ArrayList<>());
-        s.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
-        s.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 10));
+        s.getContent().setElements(new ArrayList<>());
+        s.setStartedAt(Instant.parse("2026-05-20T08:00:00Z"));
+        s.setEndedAt(Instant.parse("2026-05-20T08:10:00Z"));
         return s;
     }
 
@@ -576,7 +576,7 @@ class DeckAnalyticsServiceTest {
         InteractiveSessionPlayer p = new InteractiveSessionPlayer();
         p.setUser(UserSnapshot.of(userId, null));
         p.setScore(score);
-        p.setAccuracy(accuracy);
+        p.setEndStats(p.getEndStats().withAccuracy(accuracy));
         return p;
     }
 
@@ -604,7 +604,7 @@ class DeckAnalyticsServiceTest {
 
     private DeckElement mcqElement(String id) {
         return new cephadex.brainflex.model.element.McqQuestion(
-                id, null, List.of(), List.of(),
+                id, null, List.of(), Set.of(),
                 10, null, null,
                 false, false, 0,
                 TestElementChromes.scored(id, "title"));

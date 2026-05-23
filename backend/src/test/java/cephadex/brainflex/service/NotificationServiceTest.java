@@ -40,9 +40,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.NotificationDTO;
-import cephadex.brainflex.model.Notification;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.NotificationResponse;
+import cephadex.brainflex.model.user.Notification;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.model.enums.NotificationKind;
 import cephadex.brainflex.repository.NotificationRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -94,7 +94,7 @@ class NotificationServiceTest {
         assertEquals(false, row.isRead());
 
         verify(messagingTemplate).convertAndSendToUser(eq("google-1"),
-                eq(NotificationService.USER_DESTINATION), any(NotificationDTO.class));
+                eq(NotificationService.USER_DESTINATION), any(NotificationResponse.class));
     }
 
     @Test
@@ -111,7 +111,7 @@ class NotificationServiceTest {
     void send_SkipsGuests() {
         User guest = new User();
         guest.setId("guest-1");
-        guest.setIsGuest(true);
+        guest.setGuest(true);
         when(userRepository.findById("guest-1")).thenReturn(Optional.of(guest));
 
         Notification saved = service.send(
@@ -161,7 +161,7 @@ class NotificationServiceTest {
         Notification row = persistedRow("n-1", "u-recipient", false);
         when(notificationRepository.findById("n-1")).thenReturn(Optional.of(row));
 
-        NotificationDTO dto = service.markRead("n-1", "u-recipient");
+        NotificationResponse dto = service.markRead("n-1", "u-recipient");
 
         assertTrue(dto.read());
         assertNotNull(dto.readAt());
@@ -190,7 +190,7 @@ class NotificationServiceTest {
         User u = new User();
         u.setId(id);
         u.setName(name);
-        u.setIsGuest(false);
+        u.setGuest(false);
         u.setGoogleId(googleId);
         return u;
     }

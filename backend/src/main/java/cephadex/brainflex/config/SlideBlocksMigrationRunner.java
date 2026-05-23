@@ -24,11 +24,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.element.BodyBlock;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.Slide;
-import cephadex.brainflex.model.element.SlideBlock;
+import cephadex.brainflex.model.element.block.BodyBlock;
+import cephadex.brainflex.model.element.block.SlideBlock;
 import cephadex.brainflex.repository.DeckRepository;
 
 @Configuration
@@ -51,8 +51,9 @@ public class SlideBlocksMigrationRunner {
 
                 for (Deck deck : deckRepository.findAll()) {
                     decksScanned++;
-                    List<DeckElement> elements = deck.getElements();
-                    if (elements == null || elements.isEmpty()) continue;
+                    List<DeckElement> elements = deck.getContent().getElements();
+                    if (elements == null || elements.isEmpty())
+                        continue;
 
                     boolean deckChanged = false;
                     List<DeckElement> migrated = new ArrayList<>(elements.size());
@@ -76,7 +77,7 @@ public class SlideBlocksMigrationRunner {
                         }
                     }
                     if (deckChanged) {
-                        deck.setElements(migrated);
+                        deck.getContent().setElements(migrated);
                         deckRepository.save(deck);
                         decksUpdated++;
                     }
@@ -98,10 +99,12 @@ public class SlideBlocksMigrationRunner {
         return slide.blocks() != null && !slide.blocks().isEmpty();
     }
 
-    /** Reconstruct a Slide with a substituted `blocks` list. Lives here rather
-     *  than in {@link cephadex.brainflex.service.DeckElementCloner} because
-     *  the cloner intentionally preserves blocks on every clone — this is the
-     *  one path that wants to replace them. */
+    /**
+     * Reconstruct a Slide with a substituted `blocks` list. Lives here rather
+     * than in {@link cephadex.brainflex.service.DeckElementCloner} because
+     * the cloner intentionally preserves blocks on every clone — this is the
+     * one path that wants to replace them.
+     */
     private static Slide withBlocks(Slide s, List<SlideBlock> blocks) {
         return new Slide(
                 s.id(), s.slideKind(), s.body(), blocks,

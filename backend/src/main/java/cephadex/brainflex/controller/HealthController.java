@@ -1,6 +1,6 @@
 package cephadex.brainflex.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -22,7 +22,6 @@ public class HealthController {
         this.redisConnectionFactory = redisConnectionFactory;
     }
 
-
     @GetMapping("/api/health")
     public ResponseEntity<HealthCheckResponse> getHealth() {
         String overallStatus = "UP";
@@ -35,7 +34,7 @@ public class HealthController {
         } catch (Exception e) {
             overallStatus = "DEGRADED";
         }
-        
+
         try {
             String ping = redisConnectionFactory.getConnection().ping();
             redisStatus = "PONG".equals(ping) ? "CONNECTED" : "DISCONNECTED";
@@ -43,11 +42,11 @@ public class HealthController {
             overallStatus = "DEGRADED";
         }
         return ResponseEntity.ok(new HealthCheckResponse(
-            overallStatus,
-            "BrainFlex API is running",
-            LocalDateTime.now(),
-            dbStatus,
-            redisStatus));
+                overallStatus,
+                "BrainFlex API is running",
+                Instant.now(),
+                dbStatus,
+                redisStatus));
 
     }
 }

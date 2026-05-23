@@ -11,7 +11,7 @@ import { useState } from "react";
 import {
   useExploreDecksQuery,
   useListTagsQuery,
-  type DeckDto,
+  type DeckResponse,
   type ExploreDecksApiArg,
 } from "@/store/BrainFlexApi";
 import { DeckCard } from "@/components/Common/Cards/DeckCard";
@@ -20,7 +20,7 @@ import { Pagination } from "@/components/Common/Pagination/Pagination";
 import styles from "./ExplorePage.module.css";
 
 type SortKey = "trending" | "new" | "top-rated" | "most-played";
-type DifficultyKey = NonNullable<DeckDto["difficulty"]>;
+type DifficultyKey = NonNullable<DeckResponse["difficulty"]>;
 type LanguageKey = "en" | "es" | "fr" | "de";
 
 const PAGE_SIZE = 12;

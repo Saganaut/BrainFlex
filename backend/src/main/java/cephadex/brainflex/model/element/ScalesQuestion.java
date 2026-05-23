@@ -13,6 +13,7 @@ import java.util.List;
 
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.element.parts.ScaleStatement;
 
 public record ScalesQuestion(
         String id,

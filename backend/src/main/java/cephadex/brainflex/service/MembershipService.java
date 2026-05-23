@@ -15,12 +15,12 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.Membership;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.org.Membership;
+import cephadex.brainflex.model.user.User;
 
 @Service
 public class MembershipService {
@@ -28,23 +28,26 @@ public class MembershipService {
     /**
      * Returns {@code true} when {@code user} is allowed to host another interactive
      * session this month. Two short-circuits:
-     *   - {@code Membership.monthlyInteractiveSessionLimit == 0} means "unlimited"
-     *     (the paid tiers' default) and always returns true.
-     *   - If the counter's {@code monthlyCountPeriodStart} sits in an earlier
-     *     calendar month than {@code LocalDateTime.now()}, the counter is treated as
-     *     zero — the roll-over write happens in {@link GameHistoryService} on the
-     *     next finish, so reading a stale counter from a prior month would otherwise
-     *     keep the user gated even after their fresh quota window opened.
+     * - {@code Membership.monthlyInteractiveSessionLimit == 0} means "unlimited"
+     * (the paid tiers' default) and always returns true.
+     * - If the counter's {@code monthlyCountPeriodStart} sits in an earlier
+     * calendar month than {@code Instant.now()}, the counter is treated as
+     * zero — the roll-over write happens in {@link GameHistoryService} on the
+     * next finish, so reading a stale counter from a prior month would otherwise
+     * keep the user gated even after their fresh quota window opened.
      */
     public boolean canStartInteractiveSession(User user) {
-        if (user == null) return false;
+        if (user == null)
+            return false;
         Membership membership = user.getMembership();
-        if (membership == null) return true;
+        if (membership == null)
+            return true;
 
         int limit = membership.getMonthlyInteractiveSessionLimit();
-        if (limit <= 0) return true;
+        if (limit <= 0)
+            return true;
 
-        int count = monthlyCountFor(membership, LocalDateTime.now());
+        int count = monthlyCountFor(membership, Instant.now());
         return count < limit;
     }
 
@@ -54,12 +57,16 @@ public class MembershipService {
      * mirroring the roll-over logic in {@link GameHistoryService} so the read-side
      * gate and the write-side bump agree.
      */
-    public int monthlyCountFor(Membership membership, LocalDateTime now) {
-        if (membership == null) return 0;
-        LocalDateTime periodStart = membership.getMonthlyCountPeriodStart();
-        if (periodStart == null) return membership.getMonthlyInteractiveSessionCount();
-        boolean sameMonth = periodStart.getYear() == now.getYear()
-                && periodStart.getMonthValue() == now.getMonthValue();
+    public int monthlyCountFor(Membership membership, Instant now) {
+        if (membership == null)
+            return 0;
+        Instant periodStart = membership.getMonthlyCountPeriodStart();
+        if (periodStart == null)
+            return membership.getMonthlyInteractiveSessionCount();
+        java.time.ZonedDateTime psZ = periodStart.atZone(java.time.ZoneOffset.UTC);
+        java.time.ZonedDateTime nowZ = now.atZone(java.time.ZoneOffset.UTC);
+        boolean sameMonth = psZ.getYear() == nowZ.getYear()
+                && psZ.getMonthValue() == nowZ.getMonthValue();
         return sameMonth ? membership.getMonthlyInteractiveSessionCount() : 0;
     }
 }

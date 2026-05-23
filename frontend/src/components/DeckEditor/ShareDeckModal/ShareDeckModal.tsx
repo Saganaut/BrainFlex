@@ -20,7 +20,7 @@ import {
   useUpdateCollaboratorRoleMutation,
   useRemoveCollaboratorMutation,
   useTransferOwnershipMutation,
-  type DeckCollaboratorDto,
+  type DeckCollaboratorResponse,
 } from "@/store/BrainFlexApi";
 import { resolveAvatarSrc } from "@/utils/avatarUrl";
 import styles from "./ShareDeckModal.module.css";
@@ -87,14 +87,15 @@ const ShareDeckModal = ({
   };
 
   const handleRoleChange = async (
-    row: DeckCollaboratorDto,
+    row: DeckCollaboratorResponse,
     next: InviteRole,
   ) => {
-    if (row.userId == null || isBusy) return;
+    const userId = row.user?.userId;
+    if (userId == null || isBusy) return;
     try {
       await updateRole({
         id: deckId,
-        userId: row.userId,
+        userId,
         updateCollaboratorRoleRequest: { role: next },
       }).unwrap();
     } catch (err) {
@@ -102,22 +103,24 @@ const ShareDeckModal = ({
     }
   };
 
-  const handleRemove = async (row: DeckCollaboratorDto) => {
-    if (row.userId == null || isBusy) return;
+  const handleRemove = async (row: DeckCollaboratorResponse) => {
+    const userId = row.user?.userId;
+    if (userId == null || isBusy) return;
     try {
-      await remove({ id: deckId, userId: row.userId }).unwrap();
+      await remove({ id: deckId, userId }).unwrap();
     } catch (err) {
       setError(extractErrorMessage(err, "Failed to remove"));
     }
   };
 
-  const handleTransfer = async (row: DeckCollaboratorDto) => {
-    if (row.userId == null || isBusy) return;
+  const handleTransfer = async (row: DeckCollaboratorResponse) => {
+    const userId = row.user?.userId;
+    if (userId == null || isBusy) return;
     setError(undefined);
     try {
       await transfer({
         id: deckId,
-        transferOwnershipRequest: { userId: row.userId },
+        transferOwnershipRequest: { userId },
       }).unwrap();
     } catch (err) {
       setError(extractErrorMessage(err, "Failed to transfer ownership"));
@@ -181,20 +184,22 @@ const ShareDeckModal = ({
       ) : (
         <ul className={styles.list} role='list'>
           {rows.map((row) => {
-            const isSelf = callerUserId != null && row.userId === callerUserId;
+            const isSelf =
+              callerUserId != null && row.user?.userId === callerUserId;
             const isRowOwner = row.role === "OWNER";
             const canManageRow = callerIsOwner && !isRowOwner;
             const canSelfLeave = isSelf && !isRowOwner;
             const displayName =
-              row.userName ?? row.name ?? row.email ?? "Unknown user";
-            const isPending = row.userId == null;
+              row.userName ?? row.user?.name ?? row.email ?? "Unknown user";
+            const isPending = row.user?.userId == null;
 
             return (
               <li key={row.id} className={styles.row}>
                 <div className={styles.avatarSlot}>
-                  {row.pictureUrl != null && row.pictureUrl !== "" ? (
+                  {row.user?.pictureUrl != null &&
+                  row.user.pictureUrl !== "" ? (
                     <img
-                      src={resolveAvatarSrc(row.pictureUrl)}
+                      src={resolveAvatarSrc(row.user.pictureUrl)}
                       alt=''
                       className={styles.avatar}
                       loading='lazy'
@@ -240,7 +245,7 @@ const ShareDeckModal = ({
                       label={ROLE_LABEL[row.role ?? "VIEWER"]}
                     />
                   )}
-                  {canManageRow && row.userId != null && (
+                  {canManageRow && row.user?.userId != null && (
                     <Btn
                       size='sm'
                       fill='ghost'

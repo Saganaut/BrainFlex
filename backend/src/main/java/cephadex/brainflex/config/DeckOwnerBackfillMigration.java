@@ -20,7 +20,7 @@
  */
 package cephadex.brainflex.config;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -33,8 +33,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.dao.DuplicateKeyException;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckCollaborator;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;
@@ -79,8 +79,8 @@ public class DeckOwnerBackfillMigration {
                     row.setUserId(creatorId);
                     row.setRole(CollaboratorRole.OWNER);
                     row.setInvitedByUserId(creatorId);
-                    LocalDateTime stamp = deck.getCreatedAt() == null
-                            ? LocalDateTime.now()
+                    Instant stamp = deck.getCreatedAt() == null
+                            ? Instant.now()
                             : deck.getCreatedAt();
                     row.setInvitedAt(stamp);
                     row.setAcceptedAt(stamp);

@@ -5,14 +5,14 @@
  */
 package cephadex.brainflex.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-import cephadex.brainflex.model.InteractiveSessionSettings;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
 import jakarta.validation.constraints.Future;
 
 public record UpdateScheduledInteractiveSessionRequest(
-        @Future LocalDateTime scheduledStartAt,
-        LocalDateTime scheduledEndAt,
-        InteractiveSessionSettings settings,
-        String reminderEmailTemplate) {
+                @Future Instant scheduledStartAt,
+                Instant scheduledEndAt,
+                InteractiveSessionSettings settings,
+                String reminderEmailTemplate) {
 }

@@ -54,7 +54,12 @@ const buildPatch = (
   participantInformation:
     form.participantInformationHtml === ""
       ? undefined
-      : { html: form.participantInformationHtml },
+      : // Codegen types this as a generic Map<string, object>; we store the
+        // rich-text HTML under a single `html` key (see useSlideOptionsForm).
+        ({ html: form.participantInformationHtml } as unknown as Record<
+          string,
+          object
+        >),
   autoAdvanceSeconds: form.autoAdvanceEnabled
     ? form.autoAdvanceSeconds
     : undefined,

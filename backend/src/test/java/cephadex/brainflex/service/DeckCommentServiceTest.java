@@ -9,22 +9,23 @@
  */
 package cephadex.brainflex.service;
 
-import java.util.HashSet;
-import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.HashSet;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -33,20 +34,25 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.model.DeckComment;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.shared.UserSnapshot;
+import cephadex.brainflex.model.user.User;
+import cephadex.brainflex.model.deck.DeckComment;
 import cephadex.brainflex.repository.DeckCommentRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DeckCommentServiceTest {
 
-    @Mock private DeckCommentRepository commentRepository;
-    @Mock private MongoTemplate mongoTemplate;
-    @Mock private UserImageHydrator userImageHydrator;
-    @Mock private ApplicationEventPublisher events;
+    @Mock
+    private DeckCommentRepository commentRepository;
+    @Mock
+    private MongoTemplate mongoTemplate;
+    @Mock
+    private UserImageHydrator userImageHydrator;
+    @Mock
+    private ApplicationEventPublisher events;
 
-    @InjectMocks private DeckCommentService deckCommentService;
+    @InjectMocks
+    private DeckCommentService deckCommentService;
 
     private User author(String id, String name) {
         User u = new User();
@@ -92,9 +98,8 @@ class DeckCommentServiceTest {
         depth1.setParentCommentId("comment-root");
         when(commentRepository.findById("comment-depth-1")).thenReturn(Optional.of(depth1));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                deckCommentService.create(
-                        "deck-1", author("user-1", "kevin"), "deeper reply", "comment-depth-1"));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> deckCommentService.create(
+                "deck-1", author("user-1", "kevin"), "deeper reply", "comment-depth-1"));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }
 
@@ -106,19 +111,16 @@ class DeckCommentServiceTest {
         parent.setParentCommentId(null);
         when(commentRepository.findById("comment-parent")).thenReturn(Optional.of(parent));
 
-        assertThrows(ResponseStatusException.class, () ->
-                deckCommentService.create(
-                        "deck-1", author("user-1", "kevin"), "wrong deck", "comment-parent"));
+        assertThrows(ResponseStatusException.class, () -> deckCommentService.create(
+                "deck-1", author("user-1", "kevin"), "wrong deck", "comment-parent"));
     }
 
     @Test
     void create_RejectsBlankBody() {
-        assertThrows(ResponseStatusException.class, () ->
-                deckCommentService.create(
-                        "deck-1", author("user-1", "kevin"), "   ", null));
-        assertThrows(ResponseStatusException.class, () ->
-                deckCommentService.create(
-                        "deck-1", author("user-1", "kevin"), null, null));
+        assertThrows(ResponseStatusException.class, () -> deckCommentService.create(
+                "deck-1", author("user-1", "kevin"), "   ", null));
+        assertThrows(ResponseStatusException.class, () -> deckCommentService.create(
+                "deck-1", author("user-1", "kevin"), null, null));
     }
 
     @Test
@@ -141,8 +143,8 @@ class DeckCommentServiceTest {
         DeckComment row = newCommentBy("user-1");
         when(commentRepository.findById("comment-1")).thenReturn(Optional.of(row));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                deckCommentService.edit("deck-1", "comment-1",
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> deckCommentService.edit("deck-1", "comment-1",
                         author("user-2", "alice"), "hacked"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
         verify(commentRepository, never()).save(any(DeckComment.class));
@@ -201,8 +203,8 @@ class DeckCommentServiceTest {
 
     @Test
     void toggleUpvote_RequiresUser() {
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                deckCommentService.toggleUpvote("deck-1", "comment-1", null));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> deckCommentService.toggleUpvote("deck-1", "comment-1", null));
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
     }
 
@@ -212,8 +214,8 @@ class DeckCommentServiceTest {
         row.setDeckId("deck-1");
         when(commentRepository.findById("comment-1")).thenReturn(Optional.of(row));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                deckCommentService.edit("deck-OTHER", "comment-1",
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> deckCommentService.edit("deck-OTHER", "comment-1",
                         author("user-1", "kevin"), "stuff"));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }

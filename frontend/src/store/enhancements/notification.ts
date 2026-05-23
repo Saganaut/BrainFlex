@@ -23,22 +23,31 @@
 import {
   BrainFlex,
   type ListNotificationsApiArg,
-  type NotificationDto,
+  type NotificationResponse,
 } from "../BrainFlexApi";
 import type { CacheSyncApi } from "./types";
+
+// `updateQueryData` thunks are dispatched for their PatchCollection handle so
+// we can `.undo()` on reject. CacheSyncApi.dispatch is intentionally typed
+// `unknown` (it dispatches many action shapes), so narrow the handle here.
+interface PatchHandle {
+  undo: () => void;
+}
 
 const optimisticMarkNotificationRead = async (
   arg: { id: string },
   api: CacheSyncApi,
 ) => {
   const queries = api.getState().api?.queries ?? {};
-  const patches: { undo: () => void }[] = [];
+  const patches: PatchHandle[] = [];
   // Decide whether the row was previously unread *before* patching cached
   // pages, so the badge-decrement decision is independent of the iteration
   // order and ESLint can narrow the type cleanly.
   const wasUnread = Object.values(queries).some((entry) => {
     if (entry?.endpointName !== "listNotifications") return false;
-    const cached = (entry.data as { items?: NotificationDto[] } | undefined)?.items;
+    const cached = (
+      entry.data as { items?: NotificationResponse[] } | undefined
+    )?.items;
     return cached?.some((row) => row.id === arg.id && !row.read) ?? false;
   });
   for (const entry of Object.values(queries)) {
@@ -59,7 +68,7 @@ const optimisticMarkNotificationRead = async (
             }
           },
         ),
-      ),
+      ) as PatchHandle,
     );
   }
   if (wasUnread) {
@@ -74,15 +83,17 @@ const optimisticMarkNotificationRead = async (
             }
           },
         ),
-      ),
+      ) as PatchHandle,
     );
   }
   try {
     const { data } = await api.queryFulfilled;
-    const authoritative = data as NotificationDto;
+    const authoritative = data as NotificationResponse;
     for (const entry of Object.values(queries)) {
       if (entry?.endpointName !== "listNotifications") continue;
-      const queryArg = entry.originalArgs as ListNotificationsApiArg | undefined;
+      const queryArg = entry.originalArgs as
+        | ListNotificationsApiArg
+        | undefined;
       if (!queryArg) continue;
       api.dispatch(
         BrainFlex.util.updateQueryData(
@@ -91,7 +102,8 @@ const optimisticMarkNotificationRead = async (
           (draft) => {
             if (!draft.items) return;
             for (const row of draft.items) {
-              if (row.id === authoritative.id) Object.assign(row, authoritative);
+              if (row.id === authoritative.id)
+                Object.assign(row, authoritative);
             }
           },
         ),
@@ -105,7 +117,7 @@ const optimisticMarkNotificationRead = async (
 const optimisticMarkAllNotificationsRead = async (api: CacheSyncApi) => {
   const queries = api.getState().api?.queries ?? {};
   const nowIso = new Date().toISOString();
-  const patches: { undo: () => void }[] = [];
+  const patches: PatchHandle[] = [];
   for (const entry of Object.values(queries)) {
     if (!entry) continue;
     if (entry.endpointName !== "listNotifications") continue;
@@ -126,7 +138,7 @@ const optimisticMarkAllNotificationsRead = async (api: CacheSyncApi) => {
             }
           },
         ),
-      ),
+      ) as PatchHandle,
     );
   }
   patches.push(
@@ -138,7 +150,7 @@ const optimisticMarkAllNotificationsRead = async (api: CacheSyncApi) => {
           draft.count = 0;
         },
       ),
-    ),
+    ) as PatchHandle,
   );
   try {
     const { data } = await api.queryFulfilled;
@@ -164,13 +176,15 @@ const optimisticDismissNotification = async (
   api: CacheSyncApi,
 ) => {
   const queries = api.getState().api?.queries ?? {};
-  const patches: { undo: () => void }[] = [];
+  const patches: PatchHandle[] = [];
   // See {@link optimisticMarkNotificationRead}: decide whether the dismissed
   // row was unread before mutating cached pages, so the badge decrement is
   // independent of iteration order.
   const wasUnread = Object.values(queries).some((entry) => {
     if (entry?.endpointName !== "listNotifications") return false;
-    const cached = (entry.data as { items?: NotificationDto[] } | undefined)?.items;
+    const cached = (
+      entry.data as { items?: NotificationResponse[] } | undefined
+    )?.items;
     return cached?.some((row) => row.id === arg.id && !row.read) ?? false;
   });
   for (const entry of Object.values(queries)) {
@@ -186,10 +200,7 @@ const optimisticDismissNotification = async (
             if (!draft.items) return;
             const before = draft.items.length;
             draft.items = draft.items.filter((row) => row.id !== arg.id);
-            if (
-              draft.totalElements != null &&
-              before > draft.items.length
-            ) {
+            if (draft.totalElements != null && before > draft.items.length) {
               draft.totalElements = Math.max(
                 0,
                 draft.totalElements - (before - draft.items.length),
@@ -197,7 +208,7 @@ const optimisticDismissNotification = async (
             }
           },
         ),
-      ),
+      ) as PatchHandle,
     );
   }
   if (wasUnread) {
@@ -212,7 +223,7 @@ const optimisticDismissNotification = async (
             }
           },
         ),
-      ),
+      ) as PatchHandle,
     );
   }
   try {

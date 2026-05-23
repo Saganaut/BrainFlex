@@ -7,7 +7,7 @@ package cephadex.brainflex.dto;
 
 import java.util.List;
 
-import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.image.Image;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;

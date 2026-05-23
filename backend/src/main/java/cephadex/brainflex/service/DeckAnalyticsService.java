@@ -57,7 +57,7 @@
 package cephadex.brainflex.service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,12 +66,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.DeckAnalytics;
-import cephadex.brainflex.model.ElementStats;
-import cephadex.brainflex.model.FormatRollup;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionPlayer;
-import cephadex.brainflex.model.PlayerAnswer;
 import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.DrawingAnswer;
@@ -85,9 +79,15 @@ import cephadex.brainflex.model.answer.ScalesAnswer;
 import cephadex.brainflex.model.answer.TextAnswer;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
+import cephadex.brainflex.model.deck.DeckAnalytics;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.session.ElementStats;
+import cephadex.brainflex.model.session.FormatRollup;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionPlayer;
+import cephadex.brainflex.model.session.PlayerAnswer;
 import cephadex.brainflex.repository.DeckAnalyticsRepository;
 import cephadex.brainflex.repository.InteractiveSessionChatMessageRepository;
 import cephadex.brainflex.repository.ReactionRepository;
@@ -120,11 +120,12 @@ public class DeckAnalyticsService {
      * The caller ({@code InteractiveSessionService.endGame}) calls it exactly
      * once; the backfill resets the collection before replaying. Handles both
      * GAME and PRESENTATION sessions — the format is read off
-     * {@code session.getFormat()} and used to route into the matching
+     * {@code session.getContent().getFormat()} and used to route into the matching
      * {@link FormatRollup}.
      */
     public void recordSessionFinish(InteractiveSession session) {
-        if (session == null || session.getDeckId() == null) return;
+        if (session == null || session.getDeckId() == null)
+            return;
         try {
             DeckAnalytics analytics = analyticsRepository.findById(session.getDeckId())
                     .orElseGet(() -> {
@@ -145,7 +146,10 @@ public class DeckAnalyticsService {
         }
     }
 
-    /** Read-side accessor used by the controller; null when the deck has never been played. */
+    /**
+     * Read-side accessor used by the controller; null when the deck has never been
+     * played.
+     */
     public DeckAnalytics findByDeckId(String deckId) {
         return analyticsRepository.findById(deckId).orElse(null);
     }
@@ -163,17 +167,18 @@ public class DeckAnalyticsService {
         analytics.setTotalPlays(newTotalPlays);
 
         List<InteractiveSessionPlayer> players = session.getPlayers() == null
-                ? List.of() : session.getPlayers();
+                ? List.of()
+                : session.getPlayers();
         for (InteractiveSessionPlayer p : players) {
             int newTotalPlayers = analytics.getTotalPlayers() + 1;
             analytics.setAverageScore(incrementalAvgDouble(
                     analytics.getAverageScore(), p.getScore(), newTotalPlayers));
             analytics.setAverageAccuracy(incrementalAvgDouble(
-                    analytics.getAverageAccuracy(), p.getAccuracy(), newTotalPlayers));
+                    analytics.getAverageAccuracy(), p.getEndStats().accuracy(), newTotalPlayers));
             analytics.setTotalPlayers(newTotalPlayers);
         }
 
-        LocalDateTime endedAt = session.getEndedAt() != null ? session.getEndedAt() : LocalDateTime.now();
+        Instant endedAt = session.getEndedAt() != null ? session.getEndedAt() : Instant.now();
         if (analytics.getLastPlayedAt() == null || endedAt.isAfter(analytics.getLastPlayedAt())) {
             analytics.setLastPlayedAt(endedAt);
         }
@@ -189,12 +194,15 @@ public class DeckAnalyticsService {
      * which presentations can include).
      */
     private void applyPerFormatRollup(DeckAnalytics analytics, InteractiveSession session) {
-        SessionFormat fmt = session.getFormat() != null ? session.getFormat() : SessionFormat.GAME;
+        SessionFormat fmt = session.getContent().getFormat() != null ? session.getContent().getFormat()
+                : SessionFormat.GAME;
 
         // Legacy docs predating PR3 deserialize with null rollups; lazily
         // create them so the first post-PR3 finish doesn't NPE.
-        if (analytics.getGameRollup() == null) analytics.setGameRollup(new FormatRollup());
-        if (analytics.getPresentationRollup() == null) analytics.setPresentationRollup(new FormatRollup());
+        if (analytics.getGameRollup() == null)
+            analytics.setGameRollup(new FormatRollup());
+        if (analytics.getPresentationRollup() == null)
+            analytics.setPresentationRollup(new FormatRollup());
 
         FormatRollup rollup = fmt == SessionFormat.GAME
                 ? analytics.getGameRollup()
@@ -207,7 +215,8 @@ public class DeckAnalyticsService {
         rollup.setSessionCount(newSessionCount);
 
         List<InteractiveSessionPlayer> players = session.getPlayers() == null
-                ? List.of() : session.getPlayers();
+                ? List.of()
+                : session.getPlayers();
         for (InteractiveSessionPlayer p : players) {
             int newParticipantCount = rollup.getParticipantCount() + 1;
             if (fmt == SessionFormat.GAME) {
@@ -215,36 +224,41 @@ public class DeckAnalyticsService {
                         rollup.getAverageScore(), p.getScore(), newParticipantCount));
             }
             rollup.setAverageAccuracy(incrementalAvgDouble(
-                    rollup.getAverageAccuracy(), p.getAccuracy(), newParticipantCount));
+                    rollup.getAverageAccuracy(), p.getEndStats().accuracy(), newParticipantCount));
             rollup.setParticipantCount(newParticipantCount);
         }
 
-        LocalDateTime endedAt = session.getEndedAt() != null ? session.getEndedAt() : LocalDateTime.now();
+        Instant endedAt = session.getEndedAt() != null ? session.getEndedAt() : Instant.now();
         if (rollup.getLastRunAt() == null || endedAt.isAfter(rollup.getLastRunAt())) {
             rollup.setLastRunAt(endedAt);
         }
     }
 
     private void applyPerElementRollup(DeckAnalytics analytics, InteractiveSession session) {
-        if (session.getDeckSnapshot() == null) return;
+        if (session.getContent().getElements() == null)
+            return;
         Map<String, ElementStats> perElement = analytics.getPerElement();
         if (perElement == null) {
             perElement = new HashMap<>();
             analytics.setPerElement(perElement);
         }
 
-        for (DeckElement element : session.getDeckSnapshot()) {
-            if (element == null || element.kind() == ElementKind.SLIDE) continue;
+        for (DeckElement element : session.getContent().getElements()) {
+            if (element == null || element.kind() == ElementKind.SLIDE)
+                continue;
             String elementId = element.id();
-            if (elementId == null) continue;
+            if (elementId == null)
+                continue;
 
             ElementStats stats = perElement.computeIfAbsent(elementId, k -> new ElementStats());
             stats.setPresentedCount(stats.getPresentedCount() + 1);
 
             for (InteractiveSessionPlayer player : session.getPlayers()) {
-                if (player.getAnswers() == null) continue;
+                if (player.getAnswers() == null)
+                    continue;
                 for (PlayerAnswer answer : player.getAnswers()) {
-                    if (!elementId.equals(answer.getElementId())) continue;
+                    if (!elementId.equals(answer.getElementId()))
+                        continue;
                     applyAnswer(element, stats, answer);
                 }
             }
@@ -264,8 +278,9 @@ public class DeckAnalyticsService {
         // round the chat happened in.
         long totalChat = chatRepository.countByInteractiveSessionId(session.getId());
         if (totalChat > 0) {
-            for (DeckElement element : session.getDeckSnapshot()) {
-                if (element == null || element.kind() == ElementKind.SLIDE) continue;
+            for (DeckElement element : session.getContent().getElements()) {
+                if (element == null || element.kind() == ElementKind.SLIDE)
+                    continue;
                 ElementStats first = perElement.get(element.id());
                 if (first != null) {
                     first.setChatMessagesDuringRound(
@@ -304,17 +319,21 @@ public class DeckAnalyticsService {
             case WordCloudAnswer wc -> bucketWordCloud(dist, wc);
             case AllocationAnswer alloc -> bucketAllocation(dist, alloc);
             case MatchingAnswer match -> bucketMatching(dist, match);
-            case DrawingAnswer drawing -> { /* survey only: no per-stroke bucketing */ }
-            case TimeoutAnswer ignored -> { /* unreachable: handled above */ }
+            case DrawingAnswer drawing -> {
+                /* survey only: no per-stroke bucketing */ }
+            case TimeoutAnswer ignored -> {
+                /* unreachable: handled above */ }
         }
     }
 
     // ── Per-kind distribution buckets ────────────────────────────────────
 
     private void bucketMcq(Map<String, Integer> dist, McqAnswer answer) {
-        if (answer.optionIds() == null) return;
+        if (answer.optionIds() == null)
+            return;
         for (String optionId : answer.optionIds()) {
-            if (optionId == null) continue;
+            if (optionId == null)
+                continue;
             dist.merge(optionId, 1, Integer::sum);
         }
     }
@@ -326,38 +345,46 @@ public class DeckAnalyticsService {
     }
 
     private void bucketText(Map<String, Integer> dist, TextAnswer answer) {
-        if (answer.text() == null) return;
+        if (answer.text() == null)
+            return;
         String normalized = answer.text().trim().toLowerCase();
-        if (normalized.isEmpty()) return;
+        if (normalized.isEmpty())
+            return;
         if (!dist.containsKey(normalized) && dist.size() >= TEXT_DISTRIBUTION_CAP) {
-            return;  // cap distribution growth; existing keys still increment
+            return; // cap distribution growth; existing keys still increment
         }
         dist.merge(normalized, 1, Integer::sum);
     }
 
     /** Sum-style: distribution[itemId] += zero-based placement. */
     private void bucketRanking(Map<String, Integer> dist, RankingAnswer answer) {
-        if (answer.orderedItemIds() == null) return;
+        if (answer.orderedItemIds() == null)
+            return;
         for (int i = 0; i < answer.orderedItemIds().size(); i++) {
             String itemId = answer.orderedItemIds().get(i);
-            if (itemId == null) continue;
+            if (itemId == null)
+                continue;
             dist.merge(itemId, i, Integer::sum);
         }
     }
 
     /** Sum-style: distribution[statementId] += chosen rating. */
     private void bucketScales(Map<String, Integer> dist, ScalesAnswer answer) {
-        if (answer.ratings() == null) return;
+        if (answer.ratings() == null)
+            return;
         for (Map.Entry<String, Integer> e : answer.ratings().entrySet()) {
-            if (e.getKey() == null || e.getValue() == null) continue;
+            if (e.getKey() == null || e.getValue() == null)
+                continue;
             dist.merge(e.getKey(), e.getValue(), Integer::sum);
         }
     }
 
     private void bucketGrid(Map<String, Integer> dist, GridAnswer answer) {
-        if (answer.selectedCellIndexes() == null) return;
+        if (answer.selectedCellIndexes() == null)
+            return;
         for (Integer cell : answer.selectedCellIndexes()) {
-            if (cell == null) continue;
+            if (cell == null)
+                continue;
             dist.merge(Integer.toString(cell), 1, Integer::sum);
         }
     }
@@ -371,30 +398,41 @@ public class DeckAnalyticsService {
     }
 
     private void bucketWordCloud(Map<String, Integer> dist, WordCloudAnswer answer) {
-        if (answer.words() == null) return;
+        if (answer.words() == null)
+            return;
         for (String word : answer.words()) {
-            if (word == null) continue;
+            if (word == null)
+                continue;
             String normalized = word.trim().toLowerCase();
-            if (normalized.isEmpty()) continue;
-            if (!dist.containsKey(normalized) && dist.size() >= WORD_CLOUD_DISTRIBUTION_CAP) continue;
+            if (normalized.isEmpty())
+                continue;
+            if (!dist.containsKey(normalized) && dist.size() >= WORD_CLOUD_DISTRIBUTION_CAP)
+                continue;
             dist.merge(normalized, 1, Integer::sum);
         }
     }
 
     /** Sum-style: distribution[optionId] += points allocated. */
     private void bucketAllocation(Map<String, Integer> dist, AllocationAnswer answer) {
-        if (answer.optionIdToPoints() == null) return;
+        if (answer.optionIdToPoints() == null)
+            return;
         for (Map.Entry<String, Integer> e : answer.optionIdToPoints().entrySet()) {
-            if (e.getKey() == null || e.getValue() == null) continue;
+            if (e.getKey() == null || e.getValue() == null)
+                continue;
             dist.merge(e.getKey(), e.getValue(), Integer::sum);
         }
     }
 
-    /** Bucket by "leftId>rightId" pair string so the dashboard can see actual pair frequency. */
+    /**
+     * Bucket by "leftId>rightId" pair string so the dashboard can see actual pair
+     * frequency.
+     */
     private void bucketMatching(Map<String, Integer> dist, MatchingAnswer answer) {
-        if (answer.leftIdToRightId() == null) return;
+        if (answer.leftIdToRightId() == null)
+            return;
         for (Map.Entry<String, String> e : answer.leftIdToRightId().entrySet()) {
-            if (e.getKey() == null || e.getValue() == null) continue;
+            if (e.getKey() == null || e.getValue() == null)
+                continue;
             String key = e.getKey() + ">" + e.getValue();
             dist.merge(key, 1, Integer::sum);
         }
@@ -403,17 +441,20 @@ public class DeckAnalyticsService {
     // ── Math helpers ────────────────────────────────────────────────────
 
     private static double incrementalAvgDouble(double oldAvg, double x, int newCount) {
-        if (newCount <= 0) return oldAvg;
+        if (newCount <= 0)
+            return oldAvg;
         return oldAvg + (x - oldAvg) / newCount;
     }
 
     private static long incrementalAvgLong(long oldAvg, long x, int newCount) {
-        if (newCount <= 0) return oldAvg;
+        if (newCount <= 0)
+            return oldAvg;
         return oldAvg + (x - oldAvg) / newCount;
     }
 
     private static long computeDurationMs(InteractiveSession session) {
-        if (session.getStartedAt() == null || session.getEndedAt() == null) return 0L;
+        if (session.getStartedAt() == null || session.getEndedAt() == null)
+            return 0L;
         return Duration.between(session.getStartedAt(), session.getEndedAt()).toMillis();
     }
 

@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import cephadex.brainflex.dto.UserDTO;
-import cephadex.brainflex.model.StoredImageVariant;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.ImageSize;
+import cephadex.brainflex.dto.UserResponse;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.media.StoredImageVariant;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.ImageProcessingService;
 import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
@@ -55,7 +55,7 @@ public class AccountController {
     // callers; the inline resolveRegisteredUser check below upgrades that to
     // require a registered (non-guest) user.
     @PostMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<UserDTO.RegisteredUser> uploadProfileImage(
+    public ResponseEntity<UserResponse.RegisteredUser> uploadProfileImage(
             @RequestParam("image") MultipartFile file,
             Authentication authentication) throws IOException {
 
@@ -75,6 +75,6 @@ public class AccountController {
         user.setPictureUrl(null);
         userRepository.save(user);
 
-        return ResponseEntity.ok(new UserDTO.RegisteredUser(user, userImageHydrator.pictureImageOf(user)));
+        return ResponseEntity.ok(new UserResponse.RegisteredUser(user, userImageHydrator.pictureImageOf(user)));
     }
 }

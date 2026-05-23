@@ -13,8 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.webp.WebpWriter;
 
-import cephadex.brainflex.model.element.ImageSize;
-
+import cephadex.brainflex.model.image.ImageSize;
 /**
  * Stateless image processing: validate → resize → convert to WebP, producing
  * one rendition per {@link ImageSize} tier. Designed to be extracted to a
@@ -45,7 +44,9 @@ public class ImageProcessingService {
     public record ProcessedVariant(byte[] bytes, int width, int height) {
     }
 
-    /** Avatar: max 1 MB, max 500×500 source, JPEG/PNG/WebP/GIF → WebP renditions. */
+    /**
+     * Avatar: max 1 MB, max 500×500 source, JPEG/PNG/WebP/GIF → WebP renditions.
+     */
     public Map<ImageSize, ProcessedVariant> processAvatar(MultipartFile file) throws IOException {
         return process(file, MAX_AVATAR_BYTES, MAX_AVATAR_DIMENSION, ALLOWED_TYPES, "1 MB");
     }
@@ -55,13 +56,19 @@ public class ImageProcessingService {
         return process(file, MAX_LOGO_BYTES, MAX_LOGO_DIMENSION, ALLOWED_TYPES, "2 MB");
     }
 
-    /** Background: max 5 MB, max 2000px source on the longest side, JPEG/PNG/WebP → WebP renditions. */
+    /**
+     * Background: max 5 MB, max 2000px source on the longest side, JPEG/PNG/WebP →
+     * WebP renditions.
+     */
     public Map<ImageSize, ProcessedVariant> processBackground(MultipartFile file) throws IOException {
         return process(file, MAX_BACKGROUND_BYTES, MAX_BACKGROUND_DIMENSION, ALLOWED_TYPES_NO_GIF, "5 MB");
     }
 
-    /** Gallery: max 5 MB, max 2000px source on the longest side, JPEG/PNG/WebP → WebP renditions.
-     *  Shares the background tier intentionally — same use-case (slide content). */
+    /**
+     * Gallery: max 5 MB, max 2000px source on the longest side, JPEG/PNG/WebP →
+     * WebP renditions.
+     * Shares the background tier intentionally — same use-case (slide content).
+     */
     public Map<ImageSize, ProcessedVariant> processGalleryImage(MultipartFile file) throws IOException {
         return process(file, MAX_BACKGROUND_BYTES, MAX_BACKGROUND_DIMENSION, ALLOWED_TYPES_NO_GIF, "5 MB");
     }
@@ -102,7 +109,8 @@ public class ImageProcessingService {
             // Skip pixel-identical duplicates: if a smaller tier was clamped
             // to the source width, every larger tier collapses to the same
             // bitmap. Store the rendition under the smallest tier only.
-            if (targetWidth == lastWidth) continue;
+            if (targetWidth == lastWidth)
+                continue;
             ImmutableImage scaled = (targetWidth >= sourceWidth)
                     ? source
                     : source.scaleToWidth(targetWidth);

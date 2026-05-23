@@ -21,6 +21,7 @@ import java.util.List;
 
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.image.Image;
 
 public record DrawingQuestion(
         String id,

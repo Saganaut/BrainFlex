@@ -14,14 +14,15 @@ package cephadex.brainflex.config;
 
 import org.springframework.stereotype.Component;
 
-import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.UserRole;
+import cephadex.brainflex.model.user.User;
 
 @Component
 public class AdminProperties {
 
     public boolean isAdmin(User user) {
-        if (user == null) return false;
+        if (user == null)
+            return false;
         var roles = user.getRoles();
         return roles != null && roles.contains(UserRole.ADMIN);
     }

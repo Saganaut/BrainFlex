@@ -30,9 +30,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.OrganizationDTO;
-import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.UpdateOrganizationRequest;
+import cephadex.brainflex.model.org.Organization;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.UserRepository;
 
@@ -51,7 +51,7 @@ class OrganizationServiceTest {
         when(organizationRepository.findById("org-1")).thenReturn(Optional.of(org));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> service.update("org-1", caller, new OrganizationDTO.UpdateOrganizationRequest(
+                () -> service.update("org-1", caller, new UpdateOrganizationRequest(
                         "New name", null, null, null, null, null, null)));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
@@ -64,7 +64,7 @@ class OrganizationServiceTest {
         when(organizationRepository.save(any(Organization.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        OrganizationDTO.UpdateOrganizationRequest req = new OrganizationDTO.UpdateOrganizationRequest(
+        UpdateOrganizationRequest req = new UpdateOrganizationRequest(
                 "New name", "New desc", "https://example.com", "Earth",
                 "  EXAMPLE.com  ", true, "theme-7");
 
@@ -90,7 +90,7 @@ class OrganizationServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         Organization saved = service.update("org-1", user("owner-1"),
-                new OrganizationDTO.UpdateOrganizationRequest(
+                new UpdateOrganizationRequest(
                         null, "", null, null, "  ", null, null));
 
         assertNull(saved.getDescription());
@@ -104,7 +104,7 @@ class OrganizationServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
                 () -> service.update("org-1", user("owner-1"),
-                        new OrganizationDTO.UpdateOrganizationRequest(
+                        new UpdateOrganizationRequest(
                                 "  ", null, null, null, null, null, null)));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
     }

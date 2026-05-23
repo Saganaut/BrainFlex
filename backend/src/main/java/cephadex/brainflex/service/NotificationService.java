@@ -28,7 +28,7 @@
 package cephadex.brainflex.service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,13 +47,13 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.NotificationDTO;
-import cephadex.brainflex.model.Notification;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.dto.NotificationResponse;
 import cephadex.brainflex.model.enums.NotificationKind;
+import cephadex.brainflex.model.shared.UserSnapshot;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.NotificationRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.model.user.Notification;
 
 @Service
 public class NotificationService {
@@ -107,11 +107,13 @@ public class NotificationService {
             Map<String, String> meta,
             User actor) {
         try {
-            if (userId == null || userId.isBlank() || kind == null) return null;
+            if (userId == null || userId.isBlank() || kind == null)
+                return null;
             // Never notify the actor about their own action — the action UI
             // already gave them feedback, and a self-notification reads as a
             // bug to the user.
-            if (actor != null && userId.equals(actor.getId())) return null;
+            if (actor != null && userId.equals(actor.getId()))
+                return null;
 
             // Throttle DECK_FAVORITED: one row per (deckOwner, actor, deck) per
             // 24h. We dedupe before the insert so the row count matches what
@@ -124,10 +126,12 @@ public class NotificationService {
             }
 
             User recipient = userRepository.findById(userId).orElse(null);
-            if (recipient == null) return null;
+            if (recipient == null)
+                return null;
             // Guests have no inbox UI; suppress to avoid orphaned rows on
             // accounts the system never reads back.
-            if (Boolean.TRUE.equals(recipient.getIsGuest())) return null;
+            if (recipient.isGuest())
+                return null;
 
             Notification row = new Notification();
             row.setId(UUID.randomUUID().toString());
@@ -142,7 +146,7 @@ public class NotificationService {
                 row.setActor(UserSnapshot.of(actor.getId(), actorName, userImageHydrator.pictureUrlOf(actor)));
             }
             row.setRead(false);
-            row.setCreatedAt(LocalDateTime.now());
+            row.setCreatedAt(Instant.now());
             Notification saved = notificationRepository.insert(row);
 
             pushOverStomp(recipient, saved);
@@ -162,13 +166,15 @@ public class NotificationService {
 
     /** Paginated newest-first for the dropdown / inbox. */
     public Page<Notification> listForUser(String userId, Pageable pageable) {
-        if (userId == null) throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to view notifications");
+        if (userId == null)
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sign in to view notifications");
         return notificationRepository.findAllByUserId(userId, pageable);
     }
 
     /** Badge count. */
     public long unreadCount(String userId) {
-        if (userId == null) return 0;
+        if (userId == null)
+            return 0;
         return notificationRepository.countByUserIdAndReadFalse(userId);
     }
 
@@ -176,25 +182,27 @@ public class NotificationService {
      * Flip {@code read} to true for a single row. Refuses to read another
      * user's row.
      */
-    public NotificationDTO markRead(String id, String userId) {
+    public NotificationResponse markRead(String id, String userId) {
         Notification row = requireOwnedRow(id, userId);
-        if (row.isRead()) return NotificationDTO.from(row);
-        LocalDateTime now = LocalDateTime.now();
+        if (row.isRead())
+            return NotificationResponse.from(row);
+        Instant now = Instant.now();
         mongoTemplate.updateFirst(
                 new Query(Criteria.where("_id").is(id)),
                 new Update().set("read", true).set("readAt", now),
                 Notification.class);
         row.setRead(true);
         row.setReadAt(now);
-        return NotificationDTO.from(row);
+        return NotificationResponse.from(row);
     }
 
     /** Flip every unread row for the user to read. Returns the rewritten count. */
     public long markAllRead(String userId) {
-        if (userId == null) return 0;
+        if (userId == null)
+            return 0;
         var result = mongoTemplate.updateMulti(
                 new Query(Criteria.where("userId").is(userId).and("read").is(false)),
-                new Update().set("read", true).set("readAt", LocalDateTime.now()),
+                new Update().set("read", true).set("readAt", Instant.now()),
                 Notification.class);
         return result.getModifiedCount();
     }
@@ -221,9 +229,10 @@ public class NotificationService {
 
     private void pushOverStomp(User recipient, Notification row) {
         String principal = oAuthProviderService.principalNameFor(recipient);
-        if (principal == null) return;
+        if (principal == null)
+            return;
         try {
-            messagingTemplate.convertAndSendToUser(principal, USER_DESTINATION, NotificationDTO.from(row));
+            messagingTemplate.convertAndSendToUser(principal, USER_DESTINATION, NotificationResponse.from(row));
         } catch (Exception e) {
             // The row is already persisted; a STOMP push failure is harmless
             // because the next polling tick / page focus will hydrate it.

@@ -28,9 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.config.AdminProperties;
-import cephadex.brainflex.dto.TagDTO;
-import cephadex.brainflex.model.Tag;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.CreateTagRequest;
+import cephadex.brainflex.dto.TagResponse;
+import cephadex.brainflex.dto.UpdateTagRequest;
+import cephadex.brainflex.model.deck.Tag;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.TagService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
@@ -62,7 +64,7 @@ public class TagController {
      */
     @GetMapping
     @PreAuthorize("hasRole('USER')")
-    public List<TagDTO.TagResponse> listTags(
+    public List<TagResponse> listTags(
             @RequestParam(name = "curated", required = false) Boolean curated,
             @RequestParam(name = "parentTagId", required = false) String parentTagId,
             @RequestParam(name = "search", required = false) String search,
@@ -86,30 +88,32 @@ public class TagController {
         } else {
             tags = tagService.listAll();
         }
-        return tags.stream().map(TagDTO.TagResponse::new).toList();
+        return tags.stream().map(TagResponse::new).toList();
     }
 
-    /** Returns one tag together with its immediate children (one-level expansion). */
+    /**
+     * Returns one tag together with its immediate children (one-level expansion).
+     */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public TagDTO.TagResponse getTag(@PathVariable String id) {
+    public TagResponse getTag(@PathVariable String id) {
         Tag tag = tagService.get(id);
-        List<TagDTO.TagResponse> children = tagService.children(id).stream()
-                .map(TagDTO.TagResponse::new)
+        List<TagResponse> children = tagService.children(id).stream()
+                .map(TagResponse::new)
                 .toList();
-        return new TagDTO.TagResponse(tag, children);
+        return new TagResponse(tag, children);
     }
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TagDTO.TagResponse> createTag(
-            @Valid @RequestBody TagDTO.CreateTagRequest request,
+    public ResponseEntity<TagResponse> createTag(
+            @Valid @RequestBody CreateTagRequest request,
             Authentication authentication) {
         User caller = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
-        TagDTO.CreateTagRequest sanitized = adminProperties.isAdmin(caller)
+        CreateTagRequest sanitized = adminProperties.isAdmin(caller)
                 ? request
-                : new TagDTO.CreateTagRequest(
+                : new CreateTagRequest(
                         request.id(),
                         request.displayName(),
                         request.parentTagId(),
@@ -117,15 +121,15 @@ public class TagController {
                         request.iconUrl(),
                         false);
         Tag created = tagService.create(sanitized, caller.getId());
-        return ResponseEntity.status(HttpStatus.CREATED).body(new TagDTO.TagResponse(created));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new TagResponse(created));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public TagDTO.TagResponse updateTag(
+    public TagResponse updateTag(
             @PathVariable String id,
-            @Valid @RequestBody TagDTO.UpdateTagRequest request) {
-        return new TagDTO.TagResponse(tagService.update(id, request));
+            @Valid @RequestBody UpdateTagRequest request) {
+        return new TagResponse(tagService.update(id, request));
     }
 
     @DeleteMapping("/{id}")

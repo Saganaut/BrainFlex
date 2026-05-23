@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 import {
-  type NotificationDto,
+  type NotificationResponse,
   useDismissNotificationMutation,
   useListNotificationsQuery,
   useMarkAllNotificationsReadMutation,
@@ -17,7 +17,7 @@ import styles from "./NotificationBell.module.css";
 
 interface DayBucket {
   label: string;
-  items: NotificationDto[];
+  items: NotificationResponse[];
 }
 
 const NotificationDropdown = () => {
@@ -33,7 +33,7 @@ const NotificationDropdown = () => {
   );
   const hasUnread = (data?.items ?? []).some((row) => !row.read);
 
-  const handleRowClick = (row: NotificationDto) => {
+  const handleRowClick = (row: NotificationResponse) => {
     if (!row.read && row.id) {
       // Fire-and-forget; the optimistic cache patch keeps the UI in sync.
       void markRead({ id: row.id });
@@ -76,10 +76,7 @@ const NotificationDropdown = () => {
                       ? `Unread: ${row.title ?? "notification"}`
                       : (row.title ?? "Notification")
                   }
-                  className={[
-                    styles.row,
-                    !row.read && styles.rowUnread,
-                  ]
+                  className={[styles.row, !row.read && styles.rowUnread]
                     .filter(Boolean)
                     .join(" ")}
                   onClick={() => {
@@ -91,10 +88,10 @@ const NotificationDropdown = () => {
                       handleRowClick(row);
                     }
                   }}>
-                  {row.actorPictureUrl ? (
+                  {row.actor?.pictureUrl ? (
                     <img
                       className={styles.avatar}
-                      src={resolveAvatarSrc(row.actorPictureUrl)}
+                      src={resolveAvatarSrc(row.actor.pictureUrl)}
                       alt=''
                     />
                   ) : (
@@ -134,14 +131,14 @@ const NotificationDropdown = () => {
 /** Buckets rows into Today / Yesterday / This week / Earlier groups, newest
  *  first. Server returns rows already ordered by createdAt DESC, so the
  *  bucketing only needs one pass without re-sorting. */
-function groupByDay(rows: NotificationDto[]): DayBucket[] {
+function groupByDay(rows: NotificationResponse[]): DayBucket[] {
   const now = new Date();
   const today = startOfDay(now);
   const yesterday = new Date(today.getTime() - DAY_MS);
   const oneWeekAgo = new Date(today.getTime() - 6 * DAY_MS);
 
   const order = ["Today", "Yesterday", "This week", "Earlier"] as const;
-  const byLabel = new Map<string, NotificationDto[]>();
+  const byLabel = new Map<string, NotificationResponse[]>();
   for (const label of order) byLabel.set(label, []);
 
   for (const row of rows) {

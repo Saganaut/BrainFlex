@@ -13,11 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionSettings;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
 import cephadex.brainflex.model.element.Slide;
-import cephadex.brainflex.model.element.SlideBlock;
+import cephadex.brainflex.model.element.block.SlideBlock;
 import cephadex.brainflex.model.enums.JoinType;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.ResponseMode;
@@ -84,16 +84,16 @@ class ShowResponsesResolverTest {
 
     private static InteractiveSession session(SessionFormat format, ShowResponsesMode mode) {
         InteractiveSession s = new InteractiveSession();
-        s.setFormat(format);
+        s.getContent().setFormat(format);
         InteractiveSessionSettings settings = new InteractiveSessionSettings();
         settings.setShowResponses(mode);
-        s.setSettings(settings);
+        s.getContent().setSettings(settings);
         return s;
     }
 
     private static Deck deck(ShowResponsesMode mode) {
         Deck d = new Deck();
-        d.setDefaultShowResponses(mode);
+        d.getContent().setShowResponses(mode);
         return d;
     }
 

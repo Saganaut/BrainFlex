@@ -7,6 +7,7 @@
 package cephadex.brainflex.service;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,10 +18,10 @@ import org.junit.jupiter.api.Test;
 
 import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.element.McqOption;
+import cephadex.brainflex.model.element.parts.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
-import cephadex.brainflex.model.element.RankingItem;
+import cephadex.brainflex.model.element.parts.RankingItem;
 import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.MediaPosition;
@@ -36,7 +37,7 @@ class ElementShufflerTest {
         }
         return new McqQuestion(
                 id,
-                "Pick one", opts, List.of("opt-0"),
+                "Pick one", opts, Set.of("opt-0"),
                 100, Difficulty.EASY, null,
                 shuffleOptions, false, 0,
                 TestElementChromes.scored(id, "Pick one"));

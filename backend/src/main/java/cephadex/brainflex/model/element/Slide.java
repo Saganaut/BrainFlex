@@ -24,6 +24,8 @@ import cephadex.brainflex.model.enums.JoinType;
 import cephadex.brainflex.model.enums.ResultsDisplayType;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
 import cephadex.brainflex.model.enums.SlideKind;
+import cephadex.brainflex.model.element.block.SlideBlock;
+import cephadex.brainflex.model.element.block.BodyBlock;
 
 public record Slide(
         String id,

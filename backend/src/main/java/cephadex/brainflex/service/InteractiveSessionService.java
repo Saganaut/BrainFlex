@@ -23,7 +23,7 @@ package cephadex.brainflex.service;
 
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,12 +35,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -53,55 +52,56 @@ import cephadex.brainflex.dto.AnswerProgressMessage;
 import cephadex.brainflex.dto.AnswerSubmitRequest;
 import cephadex.brainflex.dto.ChatSendRequest;
 import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
+import cephadex.brainflex.dto.InteractiveSessionChatMessageResponse;
+import cephadex.brainflex.dto.InteractiveSessionEndedMessage;
+import cephadex.brainflex.dto.InteractiveSessionResponse;
+import cephadex.brainflex.dto.InteractiveSessionReviewResponse;
+import cephadex.brainflex.dto.PlayerRoundResponse;
 import cephadex.brainflex.dto.ReactionBroadcastMessage;
 import cephadex.brainflex.dto.ReactionSendRequest;
 import cephadex.brainflex.dto.RoundResultMessage;
 import cephadex.brainflex.dto.RoundStartMessage;
-import cephadex.brainflex.dto.InteractiveSessionChatMessageDTO;
-import cephadex.brainflex.dto.InteractiveSessionDTO;
-import cephadex.brainflex.dto.InteractiveSessionEndedMessage;
-import cephadex.brainflex.dto.InteractiveSessionReviewDTO;
 import cephadex.brainflex.dto.TeamUpdateMessage;
 import cephadex.brainflex.dto.VotePhaseStartMessage;
 import cephadex.brainflex.dto.VoteProgressMessage;
 import cephadex.brainflex.dto.VoteSubmitRequest;
 import cephadex.brainflex.dto.WordCloudUpdateMessage;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.PlayerAnswer;
-import cephadex.brainflex.model.PlayerPlacement;
-import cephadex.brainflex.model.Reaction;
-import cephadex.brainflex.model.RoundVote;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionChatMessage;
-import cephadex.brainflex.model.InteractiveSessionPlayer;
-import cephadex.brainflex.model.InteractiveSessionResult;
-import cephadex.brainflex.model.InteractiveSessionSettings;
-import cephadex.brainflex.model.Team;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.DrawingAnswer;
 import cephadex.brainflex.model.answer.Stroke;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.DrawingQuestion;
-import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.image.Image;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.AnswerSubmissionMode;
-import cephadex.brainflex.model.enums.InteractiveSessionStatus;
-import cephadex.brainflex.model.enums.InteractiveSessionPhase;
+import cephadex.brainflex.model.enums.RoundPhase;
+import cephadex.brainflex.model.enums.SessionLifecycle;
 import cephadex.brainflex.model.enums.SessionFormat;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
+import cephadex.brainflex.model.org.Team;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionChatMessage;
+import cephadex.brainflex.model.session.InteractiveSessionPlayer;
+import cephadex.brainflex.model.session.InteractiveSessionResult;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
+import cephadex.brainflex.model.session.PlayerAnswer;
+import cephadex.brainflex.model.session.PlayerPlacement;
+import cephadex.brainflex.model.session.Reaction;
+import cephadex.brainflex.model.session.RoundVote;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
-import cephadex.brainflex.repository.ReactionRepository;
 import cephadex.brainflex.repository.InteractiveSessionChatMessageRepository;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.InteractiveSessionResultRepository;
+import cephadex.brainflex.repository.ReactionRepository;
 import cephadex.brainflex.repository.UserRepository;
 import jakarta.annotation.PreDestroy;
+import cephadex.brainflex.model.shared.UserSnapshot;
 
 @Service
 public class InteractiveSessionService {
@@ -217,14 +217,14 @@ public class InteractiveSessionService {
         // persisted deck).
         deckImageHydrationService.hydrate(deck);
 
-        List<DeckElement> elements = deck.getElements();
+        List<DeckElement> elements = deck.getContent().getElements();
         if (elements == null || elements.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_CONTENT, "Deck has no elements");
         }
 
         // Start from the deck's author-suggested defaults, then layer the host's
         // overrides.
-        InteractiveSessionSettings settings = copyOf(deck.getDefaultSettings());
+        InteractiveSessionSettings settings = copyOf(deck.getContent().getSettings());
         if (request.answerSubmissionMode() != null)
             settings.setAnswerSubmissionMode(request.answerSubmissionMode());
         if (request.showResponses() != null)
@@ -279,27 +279,31 @@ public class InteractiveSessionService {
 
         // Frozen presentation assets — kept on settings so they travel with
         // the settings copy and can never be re-read off a live Deck mid-game.
-        settings.setDeckCoverImageUrl(urlOf(deck.getCover()));
-        settings.setDeckBackgroundImageUrl(urlOf(deck.getBackground()));
-        settings.setThemeId(deck.getThemeId());
+        settings.setDeckCoverImageUrl(urlOf(deck.getContent().getCover()));
+        settings.setDeckBackgroundImageUrl(urlOf(deck.getContent().getBackground()));
+        settings.setThemeId(deck.getContent().getThemeId());
 
         InteractiveSession session = new InteractiveSession();
         session.setHostUserId(host.getId());
         session.setDeckId(request.deckId());
-        session.setDeckSnapshot(snapshot);
-        session.setSettings(settings);
+        // Version pin — record which authored revision was snapshotted, so
+        // audit/replay can answer "which deck version was played?" without
+        // trusting the frozen content copy. Deck.version bumps on every save.
+        session.setDeckVersion(deck.getVersion());
+        session.getContent().setElements(snapshot);
+        session.getContent().setSettings(settings);
         // Freeze the format at create time: request override → deck default → GAME.
         // Re-reading the deck mid-session would let an author drag a live session
         // between chrome flavors, which is exactly the desync deckSnapshot exists
         // to prevent.
         SessionFormat format = request.format();
         if (format == null) {
-            format = deck.getDefaultSessionFormat();
+            format = deck.getContent().getFormat();
         }
         if (format == null) {
             format = SessionFormat.GAME;
         }
-        session.setFormat(format);
+        session.getContent().setFormat(format);
 
         // Chunk 13 — customRoomCode is the host-typed override. We validate the
         // shape via @Pattern on the request, then collision-check against
@@ -322,7 +326,7 @@ public class InteractiveSessionService {
         // round-trip through UserRepository on every refresh.
         session.setHostName(host.getName() != null ? host.getName() : host.getUserName());
         session.setHostAvatarUrl(userImageHydrator.pictureUrlOf(host));
-        session.setLobbyOpenedAt(LocalDateTime.now());
+        session.setLobbyOpenedAt(Instant.now());
         if (request.anonymousMode() != null) {
             settings.setAnonymousMode(request.anonymousMode());
         }
@@ -374,7 +378,8 @@ public class InteractiveSessionService {
      * Mutates the team's score + memberCount in place but does NOT touch
      * persistence — callers save the parent interactiveSession.
      */
-    private static void assignPlayerToTeam(InteractiveSession session, InteractiveSessionPlayer player, String preferredTeamId) {
+    private static void assignPlayerToTeam(InteractiveSession session, InteractiveSessionPlayer player,
+            String preferredTeamId) {
         List<Team> teams = session.getTeams();
         if (teams == null || teams.isEmpty())
             return;
@@ -417,13 +422,13 @@ public class InteractiveSessionService {
     }
 
     public InteractiveSession joinInteractiveSession(String roomCode, User player, String preferredTeamId,
-                                  String avatarKey, String colorTag) {
+            String avatarKey, String colorTag) {
         InteractiveSession session = getByRoomCode(roomCode);
 
-        InteractiveSessionStatus status = session.getStatus();
-        if (status == InteractiveSessionStatus.FINISHED || status == InteractiveSessionStatus.CANCELLED)
+        SessionLifecycle status = session.getStatus();
+        if (status == SessionLifecycle.FINISHED || status == SessionLifecycle.CANCELLED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is over");
-        if (status == InteractiveSessionStatus.IN_PROGRESS && !session.getSettings().isAllowLateJoin())
+        if (status == SessionLifecycle.IN_PROGRESS && !session.getContent().getSettings().isAllowLateJoin())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession has already started");
 
         boolean alreadyJoined = session.getPlayers().stream()
@@ -431,14 +436,14 @@ public class InteractiveSessionService {
         if (alreadyJoined)
             return session;
 
-        if (!session.getSettings().isAllowGuests() && Boolean.TRUE.equals(player.getIsGuest()))
+        if (!session.getContent().getSettings().isAllowGuests() && player.isGuest())
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This interactiveSession does not allow guests");
 
         // Chunk 13 — requireFullName disallows nickname-only joins. Guests
         // have no registered name on file, so requireFullName implicitly
         // blocks them too (even if allowGuests is on).
-        if (session.getSettings().isRequireFullName()) {
-            if (Boolean.TRUE.equals(player.getIsGuest()))
+        if (session.getContent().getSettings().isRequireFullName()) {
+            if (player.isGuest())
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                         "This interactiveSession requires a real account (guests not allowed)");
             if (player.getName() == null || player.getName().isBlank())
@@ -446,7 +451,7 @@ public class InteractiveSessionService {
                         "This interactiveSession requires a full name on your account");
         }
 
-        if (session.getPlayers().size() >= session.getSettings().getMaxPlayers())
+        if (session.getPlayers().size() >= session.getContent().getSettings().getMaxPlayers())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is full");
 
         InteractiveSessionPlayer newPlayer = playerFromUser(player);
@@ -467,15 +472,15 @@ public class InteractiveSessionService {
 
         // Chunk 13 — late-join tag is purely informational on the player
         // record (lobby vs. mid-game arrival); allowLateJoin is the gate.
-        if (status == InteractiveSessionStatus.IN_PROGRESS) {
+        if (status == SessionLifecycle.IN_PROGRESS) {
             newPlayer.setLateJoin(true);
         }
 
-        if (session.getSettings().isTeamMode()) {
+        if (session.getContent().getSettings().isTeamMode()) {
             // Manual team mode demands an explicit, valid teamId. Auto-balance
             // mode treats the value as a hint — assignPlayerToTeam picks the
             // smallest team when the hint is missing or invalid.
-            if (!session.getSettings().isAutoBalanceTeams()) {
+            if (!session.getContent().getSettings().isAutoBalanceTeams()) {
                 if (preferredTeamId == null) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                             "teamId is required when auto-balance is disabled");
@@ -493,8 +498,9 @@ public class InteractiveSessionService {
         session = interactiveSessionRepository.save(session);
         interactiveSessionCache.put(session);
 
-        messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
-        if (session.getSettings().isTeamMode()) {
+        messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                new InteractiveSessionResponse(session));
+        if (session.getContent().getSettings().isTeamMode()) {
             broadcastTeamUpdate(session);
         }
         return session;
@@ -502,7 +508,8 @@ public class InteractiveSessionService {
 
     /**
      * Chunk 13 — flip {@code disconnected} + bump {@code lastSeenAt} on the
-     * caller's {@link InteractiveSessionPlayer} record in every IN_PROGRESS interactiveSession
+     * caller's {@link InteractiveSessionPlayer} record in every IN_PROGRESS
+     * interactiveSession
      * they're part of. Called by {@link PresenceService} on WS connect /
      * disconnect events. A player can only really be in one active game at
      * a time, but the query is over all matching IN_PROGRESS interactiveSessions so
@@ -517,8 +524,8 @@ public class InteractiveSessionService {
             return;
         try {
             List<InteractiveSession> sessions = interactiveSessionRepository.findByStatusAndPlayersUserId(
-                    InteractiveSessionStatus.IN_PROGRESS, userId);
-            LocalDateTime now = LocalDateTime.now();
+                    SessionLifecycle.IN_PROGRESS, userId);
+            Instant now = Instant.now();
             for (InteractiveSession session : sessions) {
                 synchronized (getLock(session.getRoomCode())) {
                     InteractiveSession live = loadActiveSession(session.getRoomCode());
@@ -539,7 +546,7 @@ public class InteractiveSessionService {
                         interactiveSessionCache.put(live);
                         messagingTemplate.convertAndSend(
                                 "/topic/interactive-session/" + live.getRoomCode() + "/lobby",
-                                new InteractiveSessionDTO(live));
+                                new InteractiveSessionResponse(live));
                     }
                 }
             }
@@ -562,7 +569,7 @@ public class InteractiveSessionService {
 
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != InteractiveSessionStatus.LOBBY)
+            if (session.getStatus() != SessionLifecycle.LOBBY)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Avatar can only be changed in the lobby");
 
             InteractiveSessionPlayer player = session.getPlayers().stream()
@@ -591,20 +598,22 @@ public class InteractiveSessionService {
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
             messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
-                    new InteractiveSessionDTO(session));
+                    new InteractiveSessionResponse(session));
             return session;
         }
     }
 
     public void cancelInteractiveSession(String roomCode, User requestingUser) {
         InteractiveSession session = authorizationService.requireInteractiveSessionHost(roomCode, requestingUser);
-        if (session.getStatus() == InteractiveSessionStatus.FINISHED || session.getStatus() == InteractiveSessionStatus.CANCELLED)
+        if (session.getStatus() == SessionLifecycle.FINISHED
+                || session.getStatus() == SessionLifecycle.CANCELLED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is already ended");
 
-        session.setStatus(InteractiveSessionStatus.CANCELLED);
+        session.setStatus(SessionLifecycle.CANCELLED);
         interactiveSessionRepository.save(session);
         interactiveSessionCache.evict(roomCode);
-        messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
+        messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                new InteractiveSessionResponse(session));
     }
 
     public Optional<InteractiveSessionResult> getResults(String roomCode) {
@@ -614,19 +623,24 @@ public class InteractiveSessionService {
 
     // ---- Review ----
 
-    public InteractiveSessionReviewDTO buildReview(String roomCode) {
+    public InteractiveSessionReviewResponse buildReview(String roomCode) {
         InteractiveSession session = getByRoomCode(roomCode);
-        if (session.getStatus() != InteractiveSessionStatus.FINISHED)
+        if (session.getStatus() != SessionLifecycle.FINISHED)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is not yet finished");
 
-        InteractiveSessionResult result = interactiveSessionResultRepository.findByInteractiveSessionId(session.getId()).orElse(null);
+        InteractiveSessionResult result = interactiveSessionResultRepository.findByInteractiveSessionId(session.getId())
+                .orElse(null);
         List<PlayerPlacement> placements = result != null ? result.getPlacements() : List.of();
 
-        List<InteractiveSessionReviewDTO.RoundReview> rounds = new ArrayList<>();
-        List<DeckElement> snap = session.getDeckSnapshot();
+        List<InteractiveSessionReviewResponse.RoundReview> rounds = new ArrayList<>();
+        List<DeckElement> snap = session.getContent().getElements();
+        // Per-player running total — accumulates pointsAwarded in snapshot
+        // order so each PlayerRoundResponse row carries "cumulative score after
+        // this round" (matching the semantics of the live broadcast).
+        Map<String, Integer> runningTotal = new HashMap<>();
         for (int i = 0; i < snap.size(); i++) {
             DeckElement element = snap.get(i);
-            List<InteractiveSessionReviewDTO.PlayerRoundDetail> details = new ArrayList<>();
+            List<PlayerRoundResponse> details = new ArrayList<>();
             int timedOut = 0;
             for (InteractiveSessionPlayer player : session.getPlayers()) {
                 PlayerAnswer ans = player.getAnswers().stream()
@@ -634,20 +648,21 @@ public class InteractiveSessionService {
                         .findFirst().orElse(null);
                 if (ans == null)
                     continue;
-                details.add(new InteractiveSessionReviewDTO.PlayerRoundDetail(
-                        player.getUserId(), player.getUserName(),
-                        ans.getPayload(), ans.isCorrect(), ans.getPointsAwarded()));
+                int newTotal = runningTotal.merge(player.getPlayerId(), ans.getPointsAwarded(), Integer::sum);
+                details.add(new PlayerRoundResponse(
+                        player.getPlayerId(), player.getUserName(),
+                        ans.getPayload(), ans.isCorrect(), ans.getPointsAwarded(), newTotal));
                 if (ans.getPayload() instanceof TimeoutAnswer)
                     timedOut++;
             }
-            rounds.add(new InteractiveSessionReviewDTO.RoundReview(i, element, timedOut, details));
+            rounds.add(new InteractiveSessionReviewResponse.RoundReview(i, element, timedOut, details));
         }
 
-        return new InteractiveSessionReviewDTO(
+        return new InteractiveSessionReviewResponse(
                 session.getId(),
                 session.getRoomCode(),
                 session.getEndedAt(),
-                session.getSettings().isScoringEnabled(),
+                session.getContent().getSettings().isScoringEnabled(),
                 placements,
                 rounds);
     }
@@ -659,7 +674,7 @@ public class InteractiveSessionService {
             InteractiveSession session = getByRoomCode(roomCode);
             validateHost(session, principalName);
 
-            if (session.getStatus() != InteractiveSessionStatus.LOBBY)
+            if (session.getStatus() != SessionLifecycle.LOBBY)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession has already started");
 
             // Chunk 13 — when the host opts in to shuffleQuestions, permute
@@ -667,22 +682,22 @@ public class InteractiveSessionService {
             // stable for the rest of the show. Seed is the interactiveSession id so a
             // backend restart can re-derive the same order (deckSnapshot is
             // persisted, so this is more of a safety net than a hot path).
-            if (session.getSettings().isShuffleQuestions()) {
-                List<DeckElement> shuffled = new ArrayList<>(session.getDeckSnapshot());
+            if (session.getContent().getSettings().isShuffleQuestions()) {
+                List<DeckElement> shuffled = new ArrayList<>(session.getContent().getElements());
                 java.util.Collections.shuffle(shuffled,
                         new java.util.Random(session.getId().hashCode()));
-                session.setDeckSnapshot(shuffled);
+                session.getContent().setElements(shuffled);
             }
 
-            session.setStatus(InteractiveSessionStatus.IN_PROGRESS);
-            session.setPhase(InteractiveSessionPhase.SUBMIT);
-            session.setStartedAt(LocalDateTime.now());
+            session.setStatus(SessionLifecycle.IN_PROGRESS);
+            session.setPhase(RoundPhase.SUBMIT);
+            session.setStartedAt(Instant.now());
             session.setCurrentRound(0);
-            session.setRoundStartedAt(LocalDateTime.now());
+            session.setRoundStartedAt(Instant.now());
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
 
-            DeckElement first = session.getDeckSnapshot().get(0);
+            DeckElement first = session.getContent().getElements().get(0);
             broadcastRoundStart(session, first);
             scheduleElementTimer(session, 0, first);
         }
@@ -691,12 +706,12 @@ public class InteractiveSessionService {
     public void submitAnswer(String roomCode, AnswerSubmitRequest request, String principalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
-            if (session.getPhase() != InteractiveSessionPhase.SUBMIT)
+            if (session.getPhase() != RoundPhase.SUBMIT)
                 return;
 
-            DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
             if (!current.id().equals(request.elementId()))
                 return; // stale answer
             if (current instanceof Slide)
@@ -706,8 +721,8 @@ public class InteractiveSessionService {
             // wins over the authored responseMode for the duration of the
             // session. 409 on a frozen submission so the player UI can
             // surface "answers are closed" instead of silently dropping.
-            cephadex.brainflex.model.enums.ResponseMode effectiveMode =
-                    session.getElementResponseModeOverrides().get(current.id());
+            cephadex.brainflex.model.enums.ResponseMode effectiveMode = session.getElementResponseModeOverrides()
+                    .get(current.id());
             if (effectiveMode == null) {
                 effectiveMode = current.responseMode();
             }
@@ -758,7 +773,7 @@ public class InteractiveSessionService {
             // setting; chunks 15/16 need it) and the player's streak as it
             // was BEFORE this answer is applied, so reveal can render
             // "5x streak!" without the client walking the history.
-            LocalDateTime now = LocalDateTime.now();
+            Instant now = Instant.now();
             long timeTakenMs = session.getRoundStartedAt() == null
                     ? 0L
                     : Math.max(0L, Duration.between(session.getRoundStartedAt(), now).toMillis());
@@ -790,17 +805,18 @@ public class InteractiveSessionService {
             // break streaks", which is the right semantic).
             if (result.correct()) {
                 player.setCurrentStreak(player.getCurrentStreak() + 1);
-                if (player.getCurrentStreak() > player.getLongestStreak()) {
-                    player.setLongestStreak(player.getCurrentStreak());
+                if (player.getCurrentStreak() > player.getEndStats().longestStreak()) {
+                    player.setEndStats(player.getEndStats().withLongestStreak(player.getCurrentStreak()));
                 }
             } else {
                 player.setCurrentStreak(0);
             }
             int answered = player.getAnswers().size();
             int correctSoFar = (int) player.getAnswers().stream().filter(PlayerAnswer::isCorrect).count();
-            player.setAccuracy(answered == 0 ? 0.0 : (double) correctSoFar / answered);
+            double accuracy = answered == 0 ? 0.0 : (double) correctSoFar / answered;
+            player.setEndStats(player.getEndStats().withAccuracy(accuracy));
 
-            if (session.getSettings().isTeamMode() && points != 0) {
+            if (session.getContent().getSettings().isTeamMode() && points != 0) {
                 recomputeTeamScore(session, player.getTeamId());
                 broadcastTeamUpdate(session);
             }
@@ -825,27 +841,29 @@ public class InteractiveSessionService {
         }
     }
 
-    public void bootPlayer(String roomCode, String hostPrincipalName, String targetUserId) {
+    public void bootPlayer(String roomCode, String hostPrincipalName, String targetPlayerId) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
             validateHost(session, hostPrincipalName);
-            if (session.getStatus() == InteractiveSessionStatus.FINISHED || session.getStatus() == InteractiveSessionStatus.CANCELLED)
+            if (session.getStatus() == SessionLifecycle.FINISHED
+                    || session.getStatus() == SessionLifecycle.CANCELLED)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is already over");
-            if (session.getHostUserId().equals(targetUserId))
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Host cannot boot themselves");
 
             InteractiveSessionPlayer victim = session.getPlayers().stream()
-                    .filter(p -> p.getUserId().equals(targetUserId))
+                    .filter(p -> p.getPlayerId().equals(targetPlayerId))
                     .findFirst().orElse(null);
             if (victim == null)
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not in this interactiveSession");
+            if (session.getHostUserId().equals(victim.getUserId()))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Host cannot boot themselves");
             session.getPlayers().remove(victim);
             removePlayerFromTeam(session, victim);
 
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
-            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
-            if (session.getSettings().isTeamMode()) {
+            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
+            if (session.getContent().getSettings().isTeamMode()) {
                 broadcastTeamUpdate(session);
             }
         }
@@ -855,7 +873,7 @@ public class InteractiveSessionService {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
             validateHost(session, hostPrincipalName);
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is not in progress");
             endGame(session);
         }
@@ -865,9 +883,9 @@ public class InteractiveSessionService {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = getByRoomCode(roomCode);
             validateHost(session, principalName);
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
-            if (session.getSettings().getAnswerSubmissionMode() != AnswerSubmissionMode.TURN_BASED)
+            if (session.getContent().getSettings().getAnswerSubmissionMode() != AnswerSubmissionMode.TURN_BASED)
                 return;
             startNextRound(roomCode);
         }
@@ -883,19 +901,25 @@ public class InteractiveSessionService {
     public void revealNow(String roomCode, String elementId, String hostPrincipalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS) return;
-            if (session.getPhase() != InteractiveSessionPhase.SUBMIT) return;
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
+                return;
+            if (session.getPhase() != RoundPhase.SUBMIT)
+                return;
             String hostUserId = resolveUserId(hostPrincipalName);
-            if (!hostUserId.equals(session.getHostUserId())) return;
+            if (!hostUserId.equals(session.getHostUserId()))
+                return;
 
-            DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
-            if (elementId == null || !elementId.equals(current.id())) return; // stale
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
+            if (elementId == null || !elementId.equals(current.id()))
+                return; // stale
 
             Deck deck = deckRepository.findById(session.getDeckId()).orElse(null);
             ShowResponsesMode resolved = showResponsesResolver.resolve(session, deck, current);
-            if (resolved != ShowResponsesMode.ON_CLICK) return;
+            if (resolved != ShowResponsesMode.ON_CLICK)
+                return;
 
-            if (!session.getRevealedElementIds().add(current.id())) return; // already revealed
+            if (!session.getRevealedElementIds().add(current.id()))
+                return; // already revealed
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
             messagingTemplate.convertAndSend(
@@ -912,33 +936,37 @@ public class InteractiveSessionService {
      * handler routes back to the player as a InteractiveSessionErrorMessage).
      */
     public void freezeResponses(String roomCode, String elementId,
-                                 cephadex.brainflex.model.enums.ResponseMode mode,
-                                 String hostPrincipalName) {
+            cephadex.brainflex.model.enums.ResponseMode mode,
+            String hostPrincipalName) {
         if (mode == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "mode is required");
         }
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS) return;
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
+                return;
             String hostUserId = resolveUserId(hostPrincipalName);
-            if (!hostUserId.equals(session.getHostUserId())) return;
+            if (!hostUserId.equals(session.getHostUserId()))
+                return;
 
-            DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
-            if (elementId == null || !elementId.equals(current.id())) return; // stale
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
+            if (elementId == null || !elementId.equals(current.id()))
+                return; // stale
 
             session.getElementResponseModeOverrides().put(current.id(), mode);
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
             messagingTemplate.convertAndSend(
                     "/topic/interactive-session/" + roomCode + "/lobby",
-                    new InteractiveSessionDTO(session));
+                    new InteractiveSessionResponse(session));
         }
     }
 
     public void leaveGame(String roomCode, String principalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() == InteractiveSessionStatus.FINISHED || session.getStatus() == InteractiveSessionStatus.CANCELLED)
+            if (session.getStatus() == SessionLifecycle.FINISHED
+                    || session.getStatus() == SessionLifecycle.CANCELLED)
                 return;
 
             String userId = resolveUserId(principalName);
@@ -952,8 +980,9 @@ public class InteractiveSessionService {
 
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
-            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
-            if (session.getSettings().isTeamMode()) {
+            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
+            if (session.getContent().getSettings().isTeamMode()) {
                 broadcastTeamUpdate(session);
             }
         }
@@ -967,12 +996,12 @@ public class InteractiveSessionService {
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
             if (session == null)
                 return;
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
             if (session.getCurrentRound() != timedRound)
                 return;
 
-            DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
             if (current instanceof Slide) {
                 advanceToNextRound(session);
                 return;
@@ -982,7 +1011,7 @@ public class InteractiveSessionService {
     }
 
     private void advanceToNextRound(InteractiveSession session) {
-        boolean isLast = session.getCurrentRound() >= session.getDeckSnapshot().size() - 1;
+        boolean isLast = session.getCurrentRound() >= session.getContent().getElements().size() - 1;
         if (isLast) {
             interactiveSessionRepository.save(session);
             endGame(session);
@@ -996,7 +1025,7 @@ public class InteractiveSessionService {
     }
 
     private void completeRound(InteractiveSession session) {
-        DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
+        DeckElement element = session.getContent().getElements().get(session.getCurrentRound());
         stampTimeoutAnswers(session, element);
 
         // Best Answer mode hijacks the normal complete-round flow: instead of
@@ -1030,7 +1059,7 @@ public class InteractiveSessionService {
             timeout.setPayload(new TimeoutAnswer());
             timeout.setCorrect(false);
             timeout.setPointsAwarded(0);
-            timeout.setAnsweredAt(LocalDateTime.now());
+            timeout.setAnsweredAt(Instant.now());
             // Deliberately no submissionId — timed-out players are not vote-eligible.
             player.getAnswers().add(timeout);
         }
@@ -1060,13 +1089,13 @@ public class InteractiveSessionService {
         boolean redactPayload = element instanceof WordCloudQuestion
                 || element instanceof AllocationQuestion;
 
-        List<RoundResultMessage.PlayerRoundResult> results = session.getPlayers().stream()
+        List<PlayerRoundResponse> results = session.getPlayers().stream()
                 .map(player -> {
                     PlayerAnswer ans = player.getAnswers().stream()
                             .filter(a -> a.getElementId().equals(element.id()))
                             .findFirst().orElseThrow();
-                    return new RoundResultMessage.PlayerRoundResult(
-                            player.getUserId(), player.getUserName(),
+                    return new PlayerRoundResponse(
+                            player.getPlayerId(), player.getUserName(),
                             redactPayload ? null : ans.getPayload(),
                             ans.isCorrect(), ans.getPointsAwarded(),
                             player.getScore());
@@ -1075,13 +1104,16 @@ public class InteractiveSessionService {
 
         messagingTemplate.convertAndSend(
                 "/topic/interactive-session/" + session.getRoomCode() + "/roundResult",
-                new RoundResultMessage(session.getCurrentRound(), session.getFormat(),
+                new RoundResultMessage(session.getCurrentRound(), session.getContent().getFormat(),
                         element, results, bestAnswer));
     }
 
-    /** Advance to the next round (or end the interactiveSession if this was the last). */
+    /**
+     * Advance to the next round (or end the interactiveSession if this was the
+     * last).
+     */
     private void advanceRound(InteractiveSession session) {
-        boolean isLast = session.getCurrentRound() >= session.getDeckSnapshot().size() - 1;
+        boolean isLast = session.getCurrentRound() >= session.getContent().getElements().size() - 1;
         if (isLast) {
             interactiveSessionRepository.save(session);
             endGame(session);
@@ -1089,11 +1121,11 @@ public class InteractiveSessionService {
         }
         session.setCurrentRound(session.getCurrentRound() + 1);
         session.setRoundStartedAt(null);
-        session.setPhase(InteractiveSessionPhase.SUBMIT);
+        session.setPhase(RoundPhase.SUBMIT);
         interactiveSessionRepository.save(session);
         interactiveSessionCache.put(session);
 
-        if (session.getSettings().getAnswerSubmissionMode() == AnswerSubmissionMode.SIMULTANEOUS) {
+        if (session.getContent().getSettings().getAnswerSubmissionMode() == AnswerSubmissionMode.SIMULTANEOUS) {
             String roomCode = session.getRoomCode();
             scheduler.schedule(() -> {
                 try {
@@ -1101,8 +1133,8 @@ public class InteractiveSessionService {
                 } catch (Exception ignored) {
                 }
             }, BETWEEN_ROUNDS_DELAY_SECONDS, TimeUnit.SECONDS);
-        } else if (session.getSettings().getAnswerSubmissionMode() == AnswerSubmissionMode.TURN_BASED
-                && session.getSettings().isAutoAdvance()) {
+        } else if (session.getContent().getSettings().getAnswerSubmissionMode() == AnswerSubmissionMode.TURN_BASED
+                && session.getContent().getSettings().isAutoAdvance()) {
             // Chunk 13 — when the host turns on autoAdvance for a TURN_BASED
             // session, advance from the reveal to the next round on a timer
             // (podiumDuration seconds) instead of waiting for the host's
@@ -1110,7 +1142,7 @@ public class InteractiveSessionService {
             // the wait; startNextRound is idempotent against currentRound so
             // a double-fire here is a no-op.
             String roomCode = session.getRoomCode();
-            int delay = Math.max(0, session.getSettings().getPodiumDuration());
+            int delay = Math.max(0, session.getContent().getSettings().getPodiumDuration());
             scheduler.schedule(() -> {
                 try {
                     startNextRound(roomCode);
@@ -1127,8 +1159,8 @@ public class InteractiveSessionService {
      * broadcast them anonymously, and schedule the vote-phase timer.
      */
     private void startVotePhase(InteractiveSession session, DeckElement element) {
-        session.setPhase(InteractiveSessionPhase.VOTE);
-        session.setRoundStartedAt(LocalDateTime.now());
+        session.setPhase(RoundPhase.VOTE);
+        session.setRoundStartedAt(Instant.now());
 
         List<VotePhaseStartMessage.AnonymizedSubmission> submissions = session.getPlayers().stream()
                 .flatMap(p -> p.getAnswers().stream())
@@ -1136,7 +1168,7 @@ public class InteractiveSessionService {
                 .map(a -> new VotePhaseStartMessage.AnonymizedSubmission(a.getSubmissionId(), a.getPayload()))
                 .toList();
 
-        int timePerVote = effectiveDisplaySeconds(element, session.getSettings());
+        int timePerVote = effectiveDisplaySeconds(element, session.getContent().getSettings());
 
         interactiveSessionRepository.save(session);
         interactiveSessionCache.put(session);
@@ -1155,16 +1187,19 @@ public class InteractiveSessionService {
         }
     }
 
-    /** Client → server vote handler (called from InteractiveSessionWebSocketController). */
+    /**
+     * Client → server vote handler (called from
+     * InteractiveSessionWebSocketController).
+     */
     public void submitVote(String roomCode, VoteSubmitRequest request, String principalName) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
-            if (session.getPhase() != InteractiveSessionPhase.VOTE)
+            if (session.getPhase() != RoundPhase.VOTE)
                 return;
 
-            DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
+            DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
             if (!current.id().equals(request.elementId()))
                 return; // stale vote
 
@@ -1191,7 +1226,7 @@ public class InteractiveSessionService {
             RoundVote vote = new RoundVote();
             vote.setElementId(current.id());
             vote.setVotedSubmissionId(request.submissionId());
-            vote.setVotedAt(LocalDateTime.now());
+            vote.setVotedAt(Instant.now());
             voter.getVotes().add(vote);
             interactiveSessionCache.put(session);
 
@@ -1206,7 +1241,8 @@ public class InteractiveSessionService {
     }
 
     /**
-     * Tally votes, dispatch to the element's resolved {@link cephadex.brainflex.service.bestanswer.BestAnswerScoringStrategy}
+     * Tally votes, dispatch to the element's resolved
+     * {@link cephadex.brainflex.service.bestanswer.BestAnswerScoringStrategy}
      * to compute per-player awards, and broadcast the de-anonymized REVEAL on
      * the standard /roundResult channel with a BestAnswerOutcome attached.
      *
@@ -1218,23 +1254,25 @@ public class InteractiveSessionService {
      * (e.g. decay scoring) define winners the same way for free.
      */
     private void completeVotePhase(InteractiveSession session) {
-        DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
+        DeckElement element = session.getContent().getElements().get(session.getCurrentRound());
         int configuredPoints = Math.max(0, element.bestAnswerPoints());
 
         // Build the per-user submission index the strategy needs. Submissions
         // without a submissionId (timeouts) are excluded.
-        Map<String, cephadex.brainflex.model.PlayerAnswer> submissionsByUserId = new HashMap<>();
+        Map<String, cephadex.brainflex.model.session.PlayerAnswer> submissionsByUserId = new HashMap<>();
         for (InteractiveSessionPlayer p : session.getPlayers()) {
             for (PlayerAnswer a : p.getAnswers()) {
-                if (!element.id().equals(a.getElementId())) continue;
-                if (a.getSubmissionId() == null) continue;
+                if (!element.id().equals(a.getElementId()))
+                    continue;
+                if (a.getSubmissionId() == null)
+                    continue;
                 submissionsByUserId.put(p.getUserId(), a);
             }
         }
 
-        List<cephadex.brainflex.model.RoundVote> votes = new ArrayList<>();
+        List<cephadex.brainflex.model.session.RoundVote> votes = new ArrayList<>();
         for (InteractiveSessionPlayer p : session.getPlayers()) {
-            for (cephadex.brainflex.model.RoundVote v : p.getVotes()) {
+            for (cephadex.brainflex.model.session.RoundVote v : p.getVotes()) {
                 if (element.id().equals(v.getElementId())) {
                     votes.add(v);
                 }
@@ -1248,34 +1286,38 @@ public class InteractiveSessionService {
         // the award math so the SubmissionTally always shows the real counts.
         Map<String, Integer> voteCounts = new HashMap<>();
         submissionsByUserId.values().forEach(a -> voteCounts.put(a.getSubmissionId(), 0));
-        for (cephadex.brainflex.model.RoundVote v : votes) {
-            if (v.getVotedSubmissionId() == null) continue;
+        for (cephadex.brainflex.model.session.RoundVote v : votes) {
+            if (v.getVotedSubmissionId() == null)
+                continue;
             voteCounts.computeIfPresent(v.getVotedSubmissionId(), (k, c) -> c + 1);
         }
 
         List<RoundResultMessage.SubmissionTally> tallies = new ArrayList<>();
-        List<String> winnerUserIds = new ArrayList<>();
+        List<String> winnerPlayerIds = new ArrayList<>();
         int maxAward = 0;
         for (InteractiveSessionPlayer p : session.getPlayers()) {
             for (PlayerAnswer a : p.getAnswers()) {
-                if (!element.id().equals(a.getElementId())) continue;
-                if (a.getSubmissionId() == null) continue;
+                if (!element.id().equals(a.getElementId()))
+                    continue;
+                if (a.getSubmissionId() == null)
+                    continue;
                 int count = voteCounts.getOrDefault(a.getSubmissionId(), 0);
                 tallies.add(new RoundResultMessage.SubmissionTally(
-                        a.getSubmissionId(), p.getUserId(), p.getUserName(),
+                        a.getSubmissionId(), p.getPlayerId(), p.getUserName(),
                         a.getPayload(), count));
                 Integer award = awards.get(p.getUserId());
                 if (award != null && award > 0) {
-                    winnerUserIds.add(p.getUserId());
+                    winnerPlayerIds.add(p.getPlayerId());
                     a.setBestAnswerWinner(true);
                     a.setPointsAwarded(a.getPointsAwarded() + award);
                     p.setScore(p.getScore() + award);
-                    if (award > maxAward) maxAward = award;
+                    if (award > maxAward)
+                        maxAward = award;
                 }
             }
         }
 
-        if (session.getSettings().isTeamMode() && !winnerUserIds.isEmpty()) {
+        if (session.getContent().getSettings().isTeamMode() && !winnerPlayerIds.isEmpty()) {
             session.getTeams().forEach(t -> recomputeTeamScore(session, t.getId()));
             broadcastTeamUpdate(session);
         }
@@ -1286,19 +1328,19 @@ public class InteractiveSessionService {
         // shape of the round, and the rolled-up score deltas live on the
         // updated player rows the next leaderboard broadcast picks up.
         broadcastRoundResult(session, element,
-                new RoundResultMessage.BestAnswerOutcome(tallies, winnerUserIds, maxAward));
+                new RoundResultMessage.BestAnswerOutcome(tallies, winnerPlayerIds, maxAward));
         advanceRound(session);
     }
 
     private void broadcastVoteProgress(InteractiveSession session, String elementId) {
-        List<String> votedUserIds = session.getPlayers().stream()
+        List<String> votedPlayerIds = session.getPlayers().stream()
                 .filter(p -> p.getVotes().stream().anyMatch(v -> elementId.equals(v.getElementId())))
-                .map(InteractiveSessionPlayer::getUserId)
+                .map(InteractiveSessionPlayer::getPlayerId)
                 .toList();
         messagingTemplate.convertAndSend(
                 "/topic/interactive-session/" + session.getRoomCode() + "/voted",
                 new VoteProgressMessage(
-                        session.getCurrentRound(), votedUserIds, session.getPlayers().size()));
+                        session.getCurrentRound(), votedPlayerIds, session.getPlayers().size()));
     }
 
     private void scheduleVoteTimer(String roomCode, int round, int timeLimitSeconds) {
@@ -1316,11 +1358,11 @@ public class InteractiveSessionService {
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
             if (session == null)
                 return;
-            if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
+            if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
             if (session.getCurrentRound() != timedRound)
                 return;
-            if (session.getPhase() != InteractiveSessionPhase.VOTE)
+            if (session.getPhase() != RoundPhase.VOTE)
                 return;
             completeVotePhase(session);
         }
@@ -1330,23 +1372,23 @@ public class InteractiveSessionService {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = interactiveSessionCache.get(roomCode)
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
-            if (session == null || session.getStatus() != InteractiveSessionStatus.IN_PROGRESS)
+            if (session == null || session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
 
-            session.setRoundStartedAt(LocalDateTime.now());
-            session.setPhase(InteractiveSessionPhase.SUBMIT);
+            session.setRoundStartedAt(Instant.now());
+            session.setPhase(RoundPhase.SUBMIT);
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
 
-            DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
+            DeckElement element = session.getContent().getElements().get(session.getCurrentRound());
             broadcastRoundStart(session, element);
             scheduleElementTimer(session, session.getCurrentRound(), element);
         }
     }
 
     private void endGame(InteractiveSession session) {
-        session.setStatus(InteractiveSessionStatus.FINISHED);
-        session.setEndedAt(LocalDateTime.now());
+        session.setStatus(SessionLifecycle.FINISHED);
+        session.setEndedAt(Instant.now());
 
         List<InteractiveSessionPlayer> ranked = session.getPlayers().stream()
                 .sorted((a, b) -> b.getScore() - a.getScore())
@@ -1360,14 +1402,12 @@ public class InteractiveSessionService {
             p.setFinalScore(sp.getScore());
             p.setPlacement(i + 1);
             p.setCorrectAnswers((int) sp.getAnswers().stream().filter(PlayerAnswer::isCorrect).count());
-            p.setTotalQuestions(session.getDeckSnapshot().size());
+            p.setTotalQuestions(session.getContent().getElements().size());
             p.setTeamId(sp.getTeamId());
             // Chunk 13 — snapshot the per-player engagement / accuracy stats
             // so the placement card can render without re-loading the
             // (potentially evicted) InteractiveSession document.
-            p.setLongestStreak(sp.getLongestStreak());
-            p.setAccuracy(sp.getAccuracy());
-            p.setReactionsSent(sp.getReactionsSent());
+            p.setEndStats(sp.getEndStats());
             p.setSpeedBonusTotal(sp.getSpeedBonusTotal());
             placements.add(p);
         }
@@ -1407,13 +1447,14 @@ public class InteractiveSessionService {
         // emits the aggregated SessionSummaryMessage on /summary. Clients
         // subscribe to both topics and let `session.format` decide which one
         // they react to, so the two are mutually exclusive per session.
-        if (session.getFormat() == cephadex.brainflex.model.enums.SessionFormat.PRESENTATION) {
+        if (session.getContent().getFormat() == cephadex.brainflex.model.enums.SessionFormat.PRESENTATION) {
             List<cephadex.brainflex.dto.SessionSummaryMessage.RoundSummary> roundSummaries = new ArrayList<>();
-            int roundsPlayed = Math.min(session.getCurrentRound() + 1, session.getDeckSnapshot().size());
+            int roundsPlayed = Math.min(session.getCurrentRound() + 1, session.getContent().getElements().size());
             boolean anyScoring = false;
             for (int i = 0; i < roundsPlayed; i++) {
-                DeckElement el = session.getDeckSnapshot().get(i);
-                if (el.scored()) anyScoring = true;
+                DeckElement el = session.getContent().getElements().get(i);
+                if (el.scored())
+                    anyScoring = true;
                 List<Object> aggregated = new ArrayList<>();
                 final int roundIdx = i;
                 for (InteractiveSessionPlayer p : session.getPlayers()) {
@@ -1423,7 +1464,8 @@ public class InteractiveSessionService {
                         }
                     }
                     // suppress unused warning
-                    if (roundIdx < 0) break;
+                    if (roundIdx < 0)
+                        break;
                 }
                 roundSummaries.add(new cephadex.brainflex.dto.SessionSummaryMessage.RoundSummary(
                         i, el, aggregated));
@@ -1432,9 +1474,12 @@ public class InteractiveSessionService {
                     "/topic/interactive-session/" + session.getRoomCode() + "/summary",
                     new cephadex.brainflex.dto.SessionSummaryMessage(roundsPlayed, anyScoring, roundSummaries));
         } else {
+            List<cephadex.brainflex.dto.PlayerPlacementResponse> wirePlacements = placements.stream()
+                    .map(cephadex.brainflex.dto.PlayerPlacementResponse::new)
+                    .toList();
             messagingTemplate.convertAndSend(
                     "/topic/interactive-session/" + session.getRoomCode() + "/ended",
-                    new InteractiveSessionEndedMessage(placements));
+                    new InteractiveSessionEndedMessage(wirePlacements));
         }
 
         // Chunk 14 — let ScheduledInteractiveSessionService transition the parent
@@ -1452,23 +1497,25 @@ public class InteractiveSessionService {
      * themselves.
      */
     private int computeSpeedBonus(int basePoints, InteractiveSession session) {
-        InteractiveSessionSettings s = session.getSettings();
-        if (!s.isSpeedBonus() || s.getAnswerSubmissionMode() != AnswerSubmissionMode.SIMULTANEOUS || session.getRoundStartedAt() == null) {
+        InteractiveSessionSettings s = session.getContent().getSettings();
+        if (!s.isSpeedBonus() || s.getAnswerSubmissionMode() != AnswerSubmissionMode.SIMULTANEOUS
+                || session.getRoundStartedAt() == null) {
             return 0;
         }
-        DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
+        DeckElement element = session.getContent().getElements().get(session.getCurrentRound());
         int timeWindow = effectiveDisplaySeconds(element, s);
         if (timeWindow <= 0)
             return 0;
         long totalMillis = timeWindow * 1000L;
-        long elapsed = Duration.between(session.getRoundStartedAt(), LocalDateTime.now()).toMillis();
+        long elapsed = Duration.between(session.getRoundStartedAt(), Instant.now()).toMillis();
         elapsed = Math.min(Math.max(elapsed, 0), totalMillis);
         double speedFraction = 1.0 - ((double) elapsed / totalMillis);
         return Math.max(0, (int) (basePoints * 0.5 * speedFraction));
     }
 
     /**
-     * Rolls forward the registered user's {@link cephadex.brainflex.model.PlayerStats}
+     * Rolls forward the registered user's
+     * {@link cephadex.brainflex.model.user.PlayerStats}
      * snapshot after a finished game. Guests are excluded by the caller — their
      * accounts are ephemeral and not tracked on the leaderboard.
      *
@@ -1484,7 +1531,17 @@ public class InteractiveSessionService {
             stats.setTotalPoints(stats.getTotalPoints() + finalScore);
             if (finalScore > stats.getHighScore())
                 stats.setHighScore(finalScore);
-            stats.setCurrentStreak(stats.getCurrentStreak() + 1);
+            java.time.ZoneId zone;
+            try {
+                zone = user.getTimezone() == null ? java.time.ZoneOffset.UTC
+                        : java.time.ZoneId.of(user.getTimezone());
+            } catch (java.time.DateTimeException ex) {
+                zone = java.time.ZoneOffset.UTC;
+            }
+            int nextStreak = cephadex.brainflex.model.user.PlayerStats.nextDailyLoginStreak(
+                    stats.getDailyLoginStreak(), stats.getLastPlayedAt(), java.time.Instant.now(), zone);
+            stats.setDailyLoginStreak(nextStreak);
+            stats.setLastPlayedAt(java.time.Instant.now());
             userRepository.save(user);
             // Chunk 17 — evaluate the lifetime-points achievement here, after
             // the points were actually persisted. The user doc is already in
@@ -1502,7 +1559,7 @@ public class InteractiveSessionService {
                 "/topic/interactive-session/" + session.getRoomCode() + "/round",
                 new RoundStartMessage(
                         session.getCurrentRound(),
-                        session.getDeckSnapshot().size(),
+                        session.getContent().getElements().size(),
                         redacted,
                         session.getRoundStartedAt()));
         // Per-player overlay: when the element opts into shuffle, each player
@@ -1513,20 +1570,19 @@ public class InteractiveSessionService {
         // InteractiveSessionSettings.shuffleAnswers on top — the per-element flag from
         // chunk 10 only fires when the host hasn't disabled shuffling at the
         // session level.
-        if (session.getSettings().isShuffleAnswers() && ElementShuffler.shouldShuffle(redacted)) {
+        if (session.getContent().getSettings().isShuffleAnswers() && ElementShuffler.shouldShuffle(redacted)) {
             String roomCode = session.getRoomCode();
             for (InteractiveSessionPlayer player : session.getPlayers()) {
                 String principal = player.getPrincipalName();
                 if (principal == null)
                     continue;
-                DeckElement personalized =
-                        ElementShuffler.shuffleForPlayer(redacted, roomCode, player.getUserId());
+                DeckElement personalized = ElementShuffler.shuffleForPlayer(redacted, roomCode, player.getUserId());
                 messagingTemplate.convertAndSendToUser(
                         principal,
                         "/queue/interactiveSession/" + roomCode + "/round",
                         new RoundStartMessage(
                                 session.getCurrentRound(),
-                                session.getDeckSnapshot().size(),
+                                session.getContent().getElements().size(),
                                 personalized,
                                 session.getRoundStartedAt()));
             }
@@ -1552,7 +1608,8 @@ public class InteractiveSessionService {
      */
     private boolean isDrawingAnswerWithinLimits(DrawingQuestion question, DrawingAnswer answer) {
         List<Stroke> strokes = answer.strokes();
-        if (strokes == null) return true;
+        if (strokes == null)
+            return true;
         if (question.maxStrokesPerPlayer() > 0 && strokes.size() > question.maxStrokesPerPlayer())
             return false;
         if (question.maxPointsPerStroke() > 0) {
@@ -1584,14 +1641,14 @@ public class InteractiveSessionService {
     }
 
     private void broadcastAnswerProgress(InteractiveSession session, String elementId) {
-        List<String> answeredUserIds = session.getPlayers().stream()
+        List<String> answeredPlayerIds = session.getPlayers().stream()
                 .filter(p -> p.getAnswers().stream().anyMatch(a -> a.getElementId().equals(elementId)))
-                .map(InteractiveSessionPlayer::getUserId)
+                .map(InteractiveSessionPlayer::getPlayerId)
                 .toList();
         messagingTemplate.convertAndSend(
                 "/topic/interactive-session/" + session.getRoomCode() + "/answered",
                 new AnswerProgressMessage(
-                        session.getCurrentRound(), answeredUserIds, session.getPlayers().size()));
+                        session.getCurrentRound(), answeredPlayerIds, session.getPlayers().size()));
     }
 
     /**
@@ -1607,7 +1664,7 @@ public class InteractiveSessionService {
     }
 
     private void scheduleElementTimer(InteractiveSession session, int round, DeckElement element) {
-        int seconds = effectiveDisplaySeconds(element, session.getSettings());
+        int seconds = effectiveDisplaySeconds(element, session.getContent().getSettings());
         if (seconds <= 0 && !(element instanceof Slide)) {
             // unlimited for questions; slides force a sane minimum so they advance
             return;
@@ -1672,13 +1729,14 @@ public class InteractiveSessionService {
                 user.getId(),
                 user.getUserName(),
                 userImageHydrator.pictureUrlOf(user),
-                Boolean.TRUE.equals(user.getIsGuest())));
+                user.isGuest()));
         p.setPrincipalName(oAuthProviderService.principalNameFor(user));
         return p;
     }
 
     /**
-     * Defensive copy so the deck's `defaultSettings` isn't mutated by a interactiveSession.
+     * Defensive copy so the deck's `defaultSettings` isn't mutated by a
+     * interactiveSession.
      */
     private static InteractiveSessionSettings copyOf(InteractiveSessionSettings src) {
         InteractiveSessionSettings out = new InteractiveSessionSettings();
@@ -1731,32 +1789,36 @@ public class InteractiveSessionService {
     }
 
     private static String urlOf(Image image) {
-        if (image == null) return null;
+        if (image == null)
+            return null;
         return image.largestUrl();
     }
 
     // ---- Audience engagement (chunk 11) ----
 
     /**
-     * Accept a reaction from a participant. Validates the interactiveSession + per-slide
+     * Accept a reaction from a participant. Validates the interactiveSession +
+     * per-slide
      * gating flags, the emoji allow-list, and the per-player rate limit, then
      * persists the reaction, bumps the Redis hash counter, and broadcasts the
      * burst on {@code /topic/interactive-session/{roomCode}/reaction}.
      *
      * Returns the persisted reaction for the REST fallback path (the STOMP
      * caller doesn't need it). Reactions are accepted in any phase of an
-     * in-progress interactiveSession — players react to the round result reveal as much
+     * in-progress interactiveSession — players react to the round result reveal as
+     * much
      * as they do to the submission phase.
      */
     public Reaction acceptReaction(String roomCode, ReactionSendRequest request, String principalName) {
         InteractiveSession session = loadActiveSession(roomCode);
-        if (session.getStatus() != InteractiveSessionStatus.IN_PROGRESS) {
+        if (session.getStatus() != SessionLifecycle.IN_PROGRESS) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is not in progress");
         }
-        if (!session.getSettings().isReactionsEnabled()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Reactions are disabled for this interactiveSession");
+        if (!session.getContent().getSettings().isReactionsEnabled()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Reactions are disabled for this interactiveSession");
         }
-        DeckElement current = session.getDeckSnapshot().get(session.getCurrentRound());
+        DeckElement current = session.getContent().getElements().get(session.getCurrentRound());
         if (!current.reactionsEnabled()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Reactions are disabled for this slide");
         }
@@ -1776,7 +1838,7 @@ public class InteractiveSessionService {
 
         long offsetMs = session.getRoundStartedAt() == null
                 ? 0L
-                : Math.max(0L, Duration.between(session.getRoundStartedAt(), LocalDateTime.now()).toMillis());
+                : Math.max(0L, Duration.between(session.getRoundStartedAt(), Instant.now()).toMillis());
 
         Reaction reaction = new Reaction();
         reaction.setId(UUID.randomUUID().toString());
@@ -1785,12 +1847,12 @@ public class InteractiveSessionService {
         reaction.setUser(UserSnapshot.of(userId, player.getUserName(), null, player.isGuest()));
         reaction.setEmoji(request.emoji());
         reaction.setOffsetMs(offsetMs);
-        reaction.setSentAt(LocalDateTime.now());
+        reaction.setSentAt(Instant.now());
         reactionRepository.save(reaction);
 
         // Engagement counter so post-game placement cards can show "23 reactions
         // sent" without re-aggregating the reaction collection.
-        player.setReactionsSent(player.getReactionsSent() + 1);
+        player.setEndStats(player.getEndStats().withReactionsSent(player.getEndStats().reactionsSent() + 1));
         interactiveSessionRepository.save(session);
         interactiveSessionCache.put(session);
 
@@ -1810,20 +1872,23 @@ public class InteractiveSessionService {
     }
 
     /**
-     * Accept a chat message. Validates the interactiveSession setting, the trimmed body
+     * Accept a chat message. Validates the interactiveSession setting, the trimmed
+     * body
      * length, and the per-player rate limit, then persists the row and
-     * broadcasts it on {@code /topic/interactive-session/{roomCode}/chat}. The author's
+     * broadcasts it on {@code /topic/interactive-session/{roomCode}/chat}. The
+     * author's
      * {@code fromHost} flag is computed server-side so clients can't spoof a
      * host badge.
      */
-    public InteractiveSessionChatMessageDTO acceptChat(String roomCode, ChatSendRequest request, String principalName) {
+    public InteractiveSessionChatMessageResponse acceptChat(String roomCode, ChatSendRequest request,
+            String principalName) {
         InteractiveSession session = loadActiveSession(roomCode);
         // Chat is allowed before start and after finish too — lobbies and review
         // pages benefit from it — but a cancelled session is dead.
-        if (session.getStatus() == InteractiveSessionStatus.CANCELLED) {
+        if (session.getStatus() == SessionLifecycle.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession has been cancelled");
         }
-        if (!session.getSettings().isChatEnabled()) {
+        if (!session.getContent().getSettings().isChatEnabled()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chat is disabled for this interactiveSession");
         }
 
@@ -1849,14 +1914,15 @@ public class InteractiveSessionService {
         InteractiveSessionChatMessage row = new InteractiveSessionChatMessage();
         row.setId(UUID.randomUUID().toString());
         row.setInteractiveSessionId(session.getId());
+        row.setAuthorPlayerId(player.getPlayerId());
         row.setAuthor(UserSnapshot.of(userId, player.getUserName(), player.getPictureUrl(), player.isGuest()));
         row.setFromHost(session.getHostUserId().equals(userId));
         row.setBody(trimmed);
-        row.setSentAt(LocalDateTime.now());
+        row.setSentAt(Instant.now());
         chatRepository.save(row);
 
         // Host moderation hasn't happened yet → broadcast the unredacted body.
-        InteractiveSessionChatMessageDTO broadcast = InteractiveSessionChatMessageDTO.redactedFor(row, true);
+        InteractiveSessionChatMessageResponse broadcast = InteractiveSessionChatMessageResponse.redactedFor(row, true);
         messagingTemplate.convertAndSend(
                 "/topic/interactive-session/" + roomCode + "/chat",
                 broadcast);
@@ -1869,7 +1935,8 @@ public class InteractiveSessionService {
      * broadcast tells subscribed clients to re-render the row as
      * {@code "(hidden by host)"}.
      */
-    public InteractiveSessionChatMessageDTO moderateChatMessage(String roomCode, String messageId, String principalName) {
+    public InteractiveSessionChatMessageResponse moderateChatMessage(String roomCode, String messageId,
+            String principalName) {
         InteractiveSession session = loadActiveSession(roomCode);
         validateHost(session, principalName);
 
@@ -1879,13 +1946,23 @@ public class InteractiveSessionService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Chat message not found");
         }
         if (!row.isModerated()) {
+            String hostUserId = resolveUserId(principalName);
             row.setModerated(true);
-            row.setModeratedByUserId(resolveUserId(principalName));
-            row.setModeratedAt(LocalDateTime.now());
+            row.setModeratedByUserId(hostUserId);
+            // Resolve the host's session-scoped playerId so the broadcast can
+            // attribute moderation without exposing the underlying userId.
+            // moderatedByUserId stays for audit but is @JsonIgnore on the model.
+            String hostPlayerId = session.getPlayers().stream()
+                    .filter(p -> hostUserId.equals(p.getUserId()))
+                    .findFirst()
+                    .map(InteractiveSessionPlayer::getPlayerId)
+                    .orElse(null);
+            row.setModeratedByPlayerId(hostPlayerId);
+            row.setModeratedAt(Instant.now());
             chatRepository.save(row);
         }
         // Broadcast the redacted form so non-host clients flip to the placeholder.
-        InteractiveSessionChatMessageDTO redacted = InteractiveSessionChatMessageDTO.redactedFor(row, false);
+        InteractiveSessionChatMessageResponse redacted = InteractiveSessionChatMessageResponse.redactedFor(row, false);
         messagingTemplate.convertAndSend(
                 "/topic/interactive-session/" + roomCode + "/chat",
                 redacted);
@@ -1897,7 +1974,8 @@ public class InteractiveSessionService {
      * callers see moderated rows as placeholders; the host caller sees the
      * original body so they can decide whether to keep it hidden.
      */
-    public List<InteractiveSessionChatMessageDTO> listChatHistory(String roomCode, int page, int size, String principalName) {
+    public List<InteractiveSessionChatMessageResponse> listChatHistory(String roomCode, int page, int size,
+            String principalName) {
         InteractiveSession session = getByRoomCode(roomCode);
         int safeSize = Math.max(1, Math.min(size, CHAT_PAGE_MAX_SIZE));
         int safePage = Math.max(0, page);
@@ -1916,7 +1994,7 @@ public class InteractiveSessionService {
 
         boolean hostView = isHost;
         return rows.getContent().stream()
-                .map(row -> InteractiveSessionChatMessageDTO.redactedFor(row, hostView))
+                .map(row -> InteractiveSessionChatMessageResponse.redactedFor(row, hostView))
                 .toList();
     }
 
@@ -1972,7 +2050,7 @@ public class InteractiveSessionService {
     private void broadcastTeamUpdate(InteractiveSession session) {
         List<TeamUpdateMessage.TeamMembership> memberships = session.getPlayers().stream()
                 .filter(p -> p.getTeamId() != null)
-                .map(p -> new TeamUpdateMessage.TeamMembership(p.getUserId(), p.getTeamId()))
+                .map(p -> new TeamUpdateMessage.TeamMembership(p.getPlayerId(), p.getTeamId()))
                 .toList();
         messagingTemplate.convertAndSend(
                 "/topic/interactive-session/" + session.getRoomCode() + "/teams",
@@ -1994,7 +2072,8 @@ public class InteractiveSessionService {
             session.getTeams().add(team);
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
-            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
+            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
             broadcastTeamUpdate(session);
             return session;
         }
@@ -2014,7 +2093,8 @@ public class InteractiveSessionService {
                 team.setColor(color.trim());
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
-            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
+            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
             broadcastTeamUpdate(session);
             return session;
         }
@@ -2049,21 +2129,22 @@ public class InteractiveSessionService {
             }
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
-            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
+            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
             broadcastTeamUpdate(session);
             return session;
         }
     }
 
-    /** Host moves a player into a different team. */
-    public InteractiveSession movePlayerToTeam(String roomCode, String userId, String teamId, User host) {
+    /** Host moves a player into a different team. {@code playerId} is the session-scoped public handle. */
+    public InteractiveSession movePlayerToTeam(String roomCode, String playerId, String teamId, User host) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = authorizationService.requireInteractiveSessionHost(roomCode, host);
             requireTeamMode(session);
             InteractiveSessionPlayer player = session.getPlayers().stream()
-                    .filter(p -> p.getUserId().equals(userId))
-                    .findFirst().orElseThrow(() ->
-                            new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not in this interactiveSession"));
+                    .filter(p -> p.getPlayerId().equals(playerId))
+                    .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                            "Player not in this interactiveSession"));
             Team target = findTeam(session, teamId);
             if (target == null)
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Team not found");
@@ -2079,19 +2160,20 @@ public class InteractiveSessionService {
                 recomputeTeamScore(session, previousTeamId);
             interactiveSessionRepository.save(session);
             interactiveSessionCache.put(session);
-            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby", new InteractiveSessionDTO(session));
+            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
+                    new InteractiveSessionResponse(session));
             broadcastTeamUpdate(session);
             return session;
         }
     }
 
     private static void requireTeamMode(InteractiveSession session) {
-        if (!session.getSettings().isTeamMode())
+        if (!session.getContent().getSettings().isTeamMode())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is not in team mode");
     }
 
     private static void requireLobby(InteractiveSession session) {
-        if (session.getStatus() != InteractiveSessionStatus.LOBBY)
+        if (session.getStatus() != SessionLifecycle.LOBBY)
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Teams can only be edited in the lobby");
     }
 
@@ -2099,14 +2181,17 @@ public class InteractiveSessionService {
         return value == null || value.isBlank() ? fallback : value.trim();
     }
 
-    /** Read aggregated reaction counts for the current round; empty when no reactions yet. */
+    /**
+     * Read aggregated reaction counts for the current round; empty when no
+     * reactions yet.
+     */
     public Map<String, Long> getReactionCountsForCurrentRound(String roomCode) {
         InteractiveSession session = loadActiveSession(roomCode);
         if (session.getCurrentRound() < 0
-                || session.getCurrentRound() >= session.getDeckSnapshot().size()) {
+                || session.getCurrentRound() >= session.getContent().getElements().size()) {
             return Map.of();
         }
-        DeckElement element = session.getDeckSnapshot().get(session.getCurrentRound());
+        DeckElement element = session.getContent().getElements().get(session.getCurrentRound());
         return interactiveSessionCache.getReactionCounts(roomCode, element.id());
     }
 }

@@ -5,8 +5,11 @@
  */
 import { Link } from "@tanstack/react-router";
 import { useCurrentUser } from "../../../hooks/useCurrentUser";
-import { useListDecksQuery, useListMyDecksQuery } from "../../../store/BrainFlexApi";
-import type { DeckDto } from "../../../store/BrainFlexApi";
+import {
+  useListDecksQuery,
+  useListMyDecksQuery,
+} from "../../../store/BrainFlexApi";
+import type { DeckResponse } from "../../../store/BrainFlexApi";
 import { SelectableTile } from "../../Common/SelectableTile/SelectableTile";
 import styles from "./ContentDeckPicker.module.css";
 
@@ -20,7 +23,7 @@ const DeckButton = ({
   selected,
   onSelect,
 }: {
-  deck: DeckDto;
+  deck: DeckResponse;
   selected: boolean;
   onSelect: (id: string) => void;
 }) => (
@@ -38,11 +41,18 @@ const DeckButton = ({
   />
 );
 
-const ContentDeckPicker = ({ selectedDeckId, onSelect }: ContentDeckPickerProps) => {
+const ContentDeckPicker = ({
+  selectedDeckId,
+  onSelect,
+}: ContentDeckPickerProps) => {
   const userState = useCurrentUser();
   const isRegistered = userState.state === "registered";
 
-  const { data: publicDecks = [], isLoading: loadingPublic, isError } = useListDecksQuery();
+  const {
+    data: publicDecks = [],
+    isLoading: loadingPublic,
+    isError,
+  } = useListDecksQuery();
   const { data: myDecks = [], isLoading: loadingMine } = useListMyDecksQuery(
     undefined,
     { skip: !isRegistered },
@@ -52,7 +62,8 @@ const ContentDeckPicker = ({ selectedDeckId, onSelect }: ContentDeckPickerProps)
   const systemDecks = publicDecks.filter((p) => p.isSystem);
 
   if (isLoading) return <p className={styles.message}>Loading decks…</p>;
-  if (isError) return <p className={styles.message}>Failed to load content decks.</p>;
+  if (isError)
+    return <p className={styles.message}>Failed to load content decks.</p>;
 
   return (
     <div>

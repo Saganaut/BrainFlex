@@ -16,11 +16,11 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
   useGetDeckQuery,
   useUpdateElementMutation,
-  type DeckDto,
+  type DeckResponse,
 } from "@/store/BrainFlexApi";
 import styles from "../EditSlidePanel.module.css";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -70,7 +70,9 @@ const CommonOptionsSection = () => {
   const [mediaCaption, setMediaCaption] = useState<string>(
     element?.chrome?.mediaCaption ?? "",
   );
-  const [altText, setAltText] = useState<string>(element?.chrome?.altText ?? "");
+  const [altText, setAltText] = useState<string>(
+    element?.chrome?.altText ?? "",
+  );
 
   const [syncedFromId, setSyncedFromId] = useState<string | undefined>(
     element?.id,
@@ -84,16 +86,17 @@ const CommonOptionsSection = () => {
 
   if (!element) return null;
 
-  const buildPatch = (chromeOverrides: Partial<NonNullable<DeckElement["chrome"]>>): DeckElement =>
-    ({
-      ...element,
-      chrome: {
-        ...element.chrome,
-        mediaCaption,
-        altText,
-        ...chromeOverrides,
-      },
-    }) as DeckElement;
+  const buildPatch = (
+    chromeOverrides: Partial<NonNullable<DeckElement["chrome"]>>,
+  ): DeckElement => ({
+    ...element,
+    chrome: {
+      ...element.chrome,
+      mediaCaption,
+      altText,
+      ...chromeOverrides,
+    },
+  });
 
   const elId = element.id ?? "";
 

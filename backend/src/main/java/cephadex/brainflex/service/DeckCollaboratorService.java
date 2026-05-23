@@ -17,7 +17,7 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -30,12 +30,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.DeckCollaboratorDTO;
+import cephadex.brainflex.dto.DeckCollaboratorResponse;
 import cephadex.brainflex.dto.InviteCollaboratorRequest;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckCollaborator;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -68,7 +68,7 @@ public class DeckCollaboratorService {
         return collaboratorRepository.findByDeckId(deckId);
     }
 
-    public List<DeckCollaboratorDTO> listForDeckHydrated(String deckId) {
+    public List<DeckCollaboratorResponse> listForDeckHydrated(String deckId) {
         List<DeckCollaborator> rows = collaboratorRepository.findByDeckId(deckId);
         return hydrate(rows);
     }
@@ -78,7 +78,8 @@ public class DeckCollaboratorService {
     }
 
     public Optional<DeckCollaborator> findRow(String deckId, String userId) {
-        if (userId == null) return Optional.empty();
+        if (userId == null)
+            return Optional.empty();
         return collaboratorRepository.findByDeckIdAndUserId(deckId, userId);
     }
 
@@ -97,7 +98,8 @@ public class DeckCollaboratorService {
     public List<String> editableDeckIdsFor(String userId) {
         List<DeckCollaborator> rows = findEditableByUser(userId);
         List<String> ids = new ArrayList<>(rows.size());
-        for (DeckCollaborator row : rows) ids.add(row.getDeckId());
+        for (DeckCollaborator row : rows)
+            ids.add(row.getDeckId());
         return ids;
     }
 
@@ -109,17 +111,19 @@ public class DeckCollaboratorService {
      * migration backfilled it), we leave it alone.
      */
     public DeckCollaborator addInitialOwner(Deck deck, User owner) {
-        if (deck == null || owner == null) return null;
+        if (deck == null || owner == null)
+            return null;
         Optional<DeckCollaborator> existing = collaboratorRepository
                 .findByDeckIdAndUserId(deck.getId(), owner.getId());
-        if (existing.isPresent()) return existing.get();
+        if (existing.isPresent())
+            return existing.get();
         DeckCollaborator row = new DeckCollaborator();
         row.setId(UUID.randomUUID().toString());
         row.setDeckId(deck.getId());
         row.setUserId(owner.getId());
         row.setRole(CollaboratorRole.OWNER);
         row.setInvitedByUserId(owner.getId());
-        LocalDateTime now = deck.getCreatedAt() == null ? LocalDateTime.now() : deck.getCreatedAt();
+        Instant now = deck.getCreatedAt() == null ? Instant.now() : deck.getCreatedAt();
         row.setInvitedAt(now);
         row.setAcceptedAt(now);
         try {
@@ -208,7 +212,9 @@ public class DeckCollaboratorService {
         return collaboratorRepository.save(row);
     }
 
-    /** Remove a collaborator row by (deckId, userId). Refuses to remove the owner. */
+    /**
+     * Remove a collaborator row by (deckId, userId). Refuses to remove the owner.
+     */
     public void remove(String deckId, String userId) {
         DeckCollaborator row = collaboratorRepository
                 .findByDeckIdAndUserId(deckId, userId)
@@ -258,7 +264,7 @@ public class DeckCollaboratorService {
         if (recipientRowOpt.isPresent()) {
             DeckCollaborator row = recipientRowOpt.get();
             row.setRole(CollaboratorRole.OWNER);
-            row.setAcceptedAt(row.getAcceptedAt() == null ? LocalDateTime.now() : row.getAcceptedAt());
+            row.setAcceptedAt(row.getAcceptedAt() == null ? Instant.now() : row.getAcceptedAt());
             collaboratorRepository.save(row);
         } else {
             insertRow(deckId, recipient.getId(), null, CollaboratorRole.OWNER, currentOwner, true);
@@ -279,11 +285,13 @@ public class DeckCollaboratorService {
      * login. Returns the number of rows promoted.
      */
     public int claimPendingInvitesFor(User user) {
-        if (user == null || user.getEmail() == null) return 0;
+        if (user == null || user.getEmail() == null)
+            return 0;
         List<DeckCollaborator> pending = collaboratorRepository.findByEmail(user.getEmail().toLowerCase());
         int promoted = 0;
         for (DeckCollaborator row : pending) {
-            if (row.getUserId() != null) continue;
+            if (row.getUserId() != null)
+                continue;
             // Skip if a row already exists for (deckId, userId) — let the user
             // keep whichever role is higher.
             Optional<DeckCollaborator> dup = collaboratorRepository
@@ -294,7 +302,7 @@ public class DeckCollaboratorService {
             }
             row.setUserId(user.getId());
             row.setEmail(null);
-            row.setAcceptedAt(LocalDateTime.now());
+            row.setAcceptedAt(Instant.now());
             try {
                 collaboratorRepository.save(row);
                 promoted++;
@@ -315,21 +323,24 @@ public class DeckCollaboratorService {
 
     // ---- Hydration ----
 
-    public List<DeckCollaboratorDTO> hydrate(Collection<DeckCollaborator> rows) {
-        if (rows == null || rows.isEmpty()) return List.of();
+    public List<DeckCollaboratorResponse> hydrate(Collection<DeckCollaborator> rows) {
+        if (rows == null || rows.isEmpty())
+            return List.of();
         List<String> userIds = new ArrayList<>();
         for (DeckCollaborator row : rows) {
-            if (row.getUserId() != null) userIds.add(row.getUserId());
+            if (row.getUserId() != null)
+                userIds.add(row.getUserId());
         }
         java.util.Map<String, User> users = new java.util.HashMap<>();
         if (!userIds.isEmpty()) {
-            for (User u : userRepository.findAllById(userIds)) users.put(u.getId(), u);
+            for (User u : userRepository.findAllById(userIds))
+                users.put(u.getId(), u);
         }
-        List<DeckCollaboratorDTO> out = new ArrayList<>(rows.size());
+        List<DeckCollaboratorResponse> out = new ArrayList<>(rows.size());
         for (DeckCollaborator row : rows) {
             User user = row.getUserId() == null ? null : users.get(row.getUserId());
             String picture = user == null ? null : userImageHydrator.pictureUrlOf(user);
-            out.add(DeckCollaboratorDTO.of(row, user, picture));
+            out.add(DeckCollaboratorResponse.of(row, user, picture));
         }
         return out;
     }
@@ -346,9 +357,9 @@ public class DeckCollaboratorService {
         row.setEmail(email);
         row.setRole(role);
         row.setInvitedByUserId(inviter == null ? null : inviter.getId());
-        row.setInvitedAt(LocalDateTime.now());
+        row.setInvitedAt(Instant.now());
         if (autoAccept) {
-            row.setAcceptedAt(LocalDateTime.now());
+            row.setAcceptedAt(Instant.now());
         }
         try {
             return collaboratorRepository.insert(row);
@@ -362,9 +373,11 @@ public class DeckCollaboratorService {
 
     private Optional<User> resolveUser(String raw) {
         Optional<User> byId = userRepository.findById(raw);
-        if (byId.isPresent()) return byId;
+        if (byId.isPresent())
+            return byId;
         Optional<User> byUserName = userRepository.findByUserName(raw);
-        if (byUserName.isPresent()) return byUserName;
+        if (byUserName.isPresent())
+            return byUserName;
         if (looksLikeEmail(raw)) {
             return userRepository.findByEmail(raw.toLowerCase());
         }

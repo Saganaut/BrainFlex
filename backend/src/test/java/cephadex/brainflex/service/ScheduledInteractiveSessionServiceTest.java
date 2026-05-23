@@ -6,7 +6,8 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,12 +39,12 @@ import cephadex.brainflex.dto.AddInviteRequest;
 import cephadex.brainflex.dto.CreateScheduledInteractiveSessionRequest;
 import cephadex.brainflex.dto.RedeemInviteResponse;
 import cephadex.brainflex.dto.UpdateScheduledInteractiveSessionRequest;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionInvite;
-import cephadex.brainflex.model.InteractiveSessionSettings;
-import cephadex.brainflex.model.ScheduledInteractiveSession;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionInvite;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
+import cephadex.brainflex.model.session.ScheduledInteractiveSession;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.model.enums.ScheduleStatus;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
@@ -81,8 +82,8 @@ class ScheduledInteractiveSessionServiceTest {
 
         deck = new Deck();
         deck.setId("deck1");
-        deck.setName("Lore of Middle Earth");
-        deck.setDefaultSettings(new InteractiveSessionSettings());
+        deck.getContent().setName("Lore of Middle Earth");
+        deck.getContent().setSettings(new InteractiveSessionSettings());
 
         lenient().when(scheduleRepository.save(any(ScheduledInteractiveSession.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -97,7 +98,7 @@ class ScheduledInteractiveSessionServiceTest {
         when(deckRepository.findById("deck1")).thenReturn(Optional.of(deck));
         CreateScheduledInteractiveSessionRequest request = new CreateScheduledInteractiveSessionRequest(
                 "deck1",
-                LocalDateTime.now().plusHours(2),
+                Instant.now().plus(Duration.ofHours(2)),
                 null,
                 null,
                 "Hope to see you there!",
@@ -129,11 +130,11 @@ class ScheduledInteractiveSessionServiceTest {
     void schedule_DefaultsSettingsFromDeck_WhenNullProvided() {
         InteractiveSessionSettings deckDefaults = new InteractiveSessionSettings();
         deckDefaults.setMaxPlayers(50);
-        deck.setDefaultSettings(deckDefaults);
+        deck.getContent().setSettings(deckDefaults);
         when(deckRepository.findById("deck1")).thenReturn(Optional.of(deck));
 
         ScheduledInteractiveSession saved = service.schedule(host, new CreateScheduledInteractiveSessionRequest(
-                "deck1", LocalDateTime.now().plusHours(1), null, null, null, List.of()));
+                "deck1", Instant.now().plus(Duration.ofHours(1)), null, null, null, List.of()));
 
         assertEquals(50, saved.getSettings().getMaxPlayers());
     }
@@ -144,7 +145,7 @@ class ScheduledInteractiveSessionServiceTest {
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
                 service.schedule(host, new CreateScheduledInteractiveSessionRequest(
-                        "missing", LocalDateTime.now().plusHours(1), null, null, null, List.of())));
+                        "missing", Instant.now().plus(Duration.ofHours(1)), null, null, null, List.of())));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
@@ -291,7 +292,7 @@ class ScheduledInteractiveSessionServiceTest {
         invite.setInviteToken("tok");
         invite.setInteractiveSessionId("live1");
         invite.setScheduledInteractiveSessionId("sched1");
-        invite.setExpiresAt(LocalDateTime.now().plusHours(1));
+        invite.setExpiresAt(Instant.now().plus(Duration.ofHours(1)));
         when(inviteRepository.findByInviteToken("tok")).thenReturn(Optional.of(invite));
 
         InteractiveSession live = new InteractiveSession();
@@ -318,7 +319,7 @@ class ScheduledInteractiveSessionServiceTest {
         InteractiveSessionInvite invite = new InteractiveSessionInvite();
         invite.setInviteToken("tok");
         invite.setScheduledInteractiveSessionId("sched1");
-        invite.setExpiresAt(LocalDateTime.now().plusHours(1));
+        invite.setExpiresAt(Instant.now().plus(Duration.ofHours(1)));
         when(inviteRepository.findByInviteToken("tok")).thenReturn(Optional.of(invite));
 
         ScheduledInteractiveSession schedule = buildSchedule(ScheduleStatus.SCHEDULED);
@@ -335,7 +336,7 @@ class ScheduledInteractiveSessionServiceTest {
     void redeem_410_WhenExpired() {
         InteractiveSessionInvite invite = new InteractiveSessionInvite();
         invite.setInviteToken("tok");
-        invite.setExpiresAt(LocalDateTime.now().minusHours(1));
+        invite.setExpiresAt(Instant.now().minus(Duration.ofHours(1)));
         when(inviteRepository.findByInviteToken("tok")).thenReturn(Optional.of(invite));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
@@ -404,7 +405,7 @@ class ScheduledInteractiveSessionServiceTest {
         ScheduledInteractiveSession schedule = buildSchedule(ScheduleStatus.SCHEDULED);
         when(scheduleRepository.findById("sched1")).thenReturn(Optional.of(schedule));
 
-        LocalDateTime newStart = LocalDateTime.now().plusDays(1);
+        Instant newStart = Instant.now().plus(Duration.ofDays(1));
         UpdateScheduledInteractiveSessionRequest update = new UpdateScheduledInteractiveSessionRequest(
                 newStart, null, null, "Reminder body!");
 
@@ -433,7 +434,7 @@ class ScheduledInteractiveSessionServiceTest {
         schedule.setHostUserId(host.getId());
         schedule.setDeckId(deck.getId());
         schedule.setStatus(status);
-        schedule.setScheduledStartAt(LocalDateTime.now().plusHours(1));
+        schedule.setScheduledStartAt(Instant.now().plus(Duration.ofHours(1)));
         schedule.setInvitedEmails(new ArrayList<>());
         return schedule;
     }

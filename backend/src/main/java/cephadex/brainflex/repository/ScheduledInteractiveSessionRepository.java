@@ -5,22 +5,22 @@
  */
 package cephadex.brainflex.repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.ScheduledInteractiveSession;
 import cephadex.brainflex.model.enums.ScheduleStatus;
+import cephadex.brainflex.model.session.ScheduledInteractiveSession;
 
 public interface ScheduledInteractiveSessionRepository
-        extends MongoRepository<ScheduledInteractiveSession, String> {
+                extends MongoRepository<ScheduledInteractiveSession, String> {
 
-    List<ScheduledInteractiveSession> findByHostUserIdOrderByScheduledStartAtAsc(String hostUserId);
+        List<ScheduledInteractiveSession> findByHostUserIdOrderByScheduledStartAtAsc(String hostUserId);
 
-    List<ScheduledInteractiveSession> findByStatusAndScheduledStartAtBefore(
-            ScheduleStatus status, LocalDateTime cutoff);
+        List<ScheduledInteractiveSession> findByStatusAndScheduledStartAtBefore(
+                        ScheduleStatus status, Instant cutoff);
 
-    Optional<ScheduledInteractiveSession> findByCreatedInteractiveSessionId(String interactiveSessionId);
+        Optional<ScheduledInteractiveSession> findByCreatedInteractiveSessionId(String interactiveSessionId);
 }

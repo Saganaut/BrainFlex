@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "tsgo -b --noEmit",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsgo -b && vite build",
     "lint": "eslint .",
     "check": "npm run typecheck && npm run lint",
     "lint:css": "stylelint \"src/**/*.css\"",

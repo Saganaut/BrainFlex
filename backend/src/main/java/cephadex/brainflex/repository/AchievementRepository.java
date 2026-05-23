@@ -13,7 +13,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.Achievement;
+import cephadex.brainflex.model.user.Achievement;
 import cephadex.brainflex.model.enums.AchievementTrigger;
 
 public interface AchievementRepository extends MongoRepository<Achievement, String> {

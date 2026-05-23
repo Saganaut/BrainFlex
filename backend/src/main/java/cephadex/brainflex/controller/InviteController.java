@@ -26,14 +26,14 @@ public class InviteController {
     private final UserService userService;
 
     public InviteController(ScheduledInteractiveSessionService scheduleService,
-                            UserService userService) {
+            UserService userService) {
         this.scheduleService = scheduleService;
         this.userService = userService;
     }
 
     @PostMapping("/{token}/redeem")
     public ResponseEntity<RedeemInviteResponse> redeemInvite(@PathVariable String token,
-                                                             Authentication authentication) {
+            Authentication authentication) {
         String userId = userService.resolveAnyAuthenticatedUser(authentication)
                 .map(u -> u.getId())
                 .orElse(null);

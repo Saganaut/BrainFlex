@@ -14,7 +14,6 @@ import {
 } from "../../../store/BrainFlexApi";
 import { useInteractiveSession } from "../../../hooks/useInteractiveSession";
 import { useInteractiveSessionWebSocket } from "../../../hooks/useInteractiveSessionWebSocket";
-import { useCurrentUser } from "../../../hooks/useCurrentUser";
 import { WsErrorBanner } from "../WsErrorBanner/WsErrorBanner";
 import { TeamPicker } from "../TeamPicker/TeamPicker";
 import { resolveInteractiveSessionBackground } from "../../../utils/deckImages";
@@ -35,7 +34,6 @@ interface LobbyProps {
 const Lobby = ({ roomCode }: LobbyProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const userState = useCurrentUser();
   const game = useInteractiveSession();
   const { sendStart, sendLeave, sendBoot } = useInteractiveSessionWebSocket(roomCode);
   const confirm = useConfirm();
@@ -52,15 +50,21 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     }
   }, [game.status, navigate, roomCode]);
 
-  const userId =
-    userState.state === "registered" || userState.state === "guest"
-      ? userState.user.id
-      : undefined;
-  const isHost = !!userId && session?.hostUserId === userId;
+  // viewerPlayerId is the session-scoped public handle of the caller; it
+  // arrives on REST fetches and is latched in the slice so STOMP /lobby
+  // rebroadcasts don't clear it. Used everywhere we used to compare userId.
+  const viewerPlayerId = useAppSelector(
+    (s) => s.interactiveSession.viewerPlayerId,
+  );
+  const isHost =
+    !!viewerPlayerId && session?.hostPlayerId === viewerPlayerId;
   const players = game.players;
   const myPlayer = useMemo(
-    () => (userId ? players.find((p) => p.userId === userId) : undefined),
-    [players, userId],
+    () =>
+      viewerPlayerId
+        ? players.find((p) => p.playerId === viewerPlayerId)
+        : undefined,
+    [players, viewerPlayerId],
   );
 
   // Chunk 13 — lobby avatar picker. Hosts don't pick a preset (their
@@ -93,12 +97,12 @@ const Lobby = ({ roomCode }: LobbyProps) => {
   // If the host boots us (or anything else removes us from the player list),
   // navigate home rather than stranding the user on an empty lobby.
   useEffect(() => {
-    if (!userId || players.length === 0) return;
-    const stillInLobby = players.some((p) => p.userId === userId);
+    if (!viewerPlayerId || players.length === 0) return;
+    const stillInLobby = players.some((p) => p.playerId === viewerPlayerId);
     if (!stillInLobby) {
       void navigate({ to: "/" });
     }
-  }, [userId, players, navigate]);
+  }, [viewerPlayerId, players, navigate]);
 
   const handleAvatarChange = (avatarKey: string) => {
     const preset = avatarPresets?.find((p) => p.key === avatarKey);
@@ -111,7 +115,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
     });
   };
 
-  const handleBoot = async (targetUserId: string) => {
+  const handleBoot = async (targetPlayerId: string) => {
     const ok = await confirm({
       title: "Remove player",
       message: "Remove this player from the lobby?",
@@ -119,7 +123,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
       variant: "danger",
     });
     if (!ok) return;
-    sendBoot(targetUserId);
+    sendBoot(targetPlayerId);
   };
 
   const backgroundUrl = resolveInteractiveSessionBackground(
@@ -185,7 +189,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
           roomCode={roomCode}
           teams={teams}
           players={players}
-          currentUserId={userId}
+          currentPlayerId={viewerPlayerId ?? undefined}
           isHost={isHost}
           autoBalanceTeams={autoBalanceTeams}
         />
@@ -197,10 +201,14 @@ const Lobby = ({ roomCode }: LobbyProps) => {
         </h2>
         <ul className={styles.playerList}>
           {players.map((p) => {
-            const playerId = p.userId;
-            const isPlayerHost = session?.hostUserId === playerId;
-            const isOffline =
-              !!playerId && game.offlineUserIds.includes(playerId);
+            const playerId = p.playerId;
+            const isPlayerHost = session?.hostPlayerId === playerId;
+            // NOTE: the per-player offline indicator is intentionally absent.
+            // Presence still broadcasts on the global /topic/presence stream
+            // keyed by userId, but session players are now identified by
+            // session-scoped playerId — so we have no safe local mapping.
+            // Restoring this affordance is tracked as a follow-up to the
+            // InteractiveSession DTO migration.
             // Chunk 13 — preset avatar (avatarKey) wins over the player's
             // real pictureUrl when present. avatarPresets only loads once a
             // non-host viewer is in the lobby; on hosts we still resolve via
@@ -210,11 +218,9 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                 ? avatarPresets.find((preset) => preset.key === p.avatarKey)
                     ?.imageUrl
                 : undefined;
-            const avatarSrc = presetUrl ?? p.pictureUrl;
+            const avatarSrc = presetUrl ?? p.user?.pictureUrl;
             return (
-              <li
-                key={playerId}
-                className={`${styles.player} ${isOffline ? styles.offline : ""}`}>
+              <li key={playerId} className={styles.player}>
                 {avatarSrc ? (
                   <img
                     src={resolveAvatarSrc(avatarSrc)}
@@ -223,15 +229,12 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                   />
                 ) : (
                   <div className={styles.avatarFallback}>
-                    {(p.userName?.[0] ?? "?").toUpperCase()}
+                    {(p.user?.name?.[0] ?? "?").toUpperCase()}
                   </div>
                 )}
-                <span className={styles.playerName}>{p.userName}</span>
-                {p.isGuest && <span className={styles.guestBadge}>guest</span>}
-                {isOffline && (
-                  <span className={styles.offlineBadge} title='Disconnected'>
-                    offline
-                  </span>
+                <span className={styles.playerName}>{p.user?.name}</span>
+                {p.user?.guest && (
+                  <span className={styles.guestBadge}>guest</span>
                 )}
                 {isPlayerHost && <span className={styles.hostBadge}>host</span>}
                 {isHost && !isPlayerHost && playerId && (
@@ -242,7 +245,7 @@ const Lobby = ({ roomCode }: LobbyProps) => {
                     onClick={() => {
                       void handleBoot(playerId);
                     }}
-                    aria-label={`Remove ${p.userName ?? "player"} from the lobby`}>
+                    aria-label={`Remove ${p.user?.name ?? "player"} from the lobby`}>
                     Boot
                   </Btn>
                 )}

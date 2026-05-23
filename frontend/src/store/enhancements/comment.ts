@@ -9,7 +9,7 @@
  * level page (as a parent counted by `replyCount`) and a reply page (as a
  * sibling reply) stays in sync.
  *
- * On fulfillment we splice the authoritative {@link DeckCommentDto} into
+ * On fulfillment we splice the authoritative {@link DeckCommentResponse} into
  * every matching cache so the counters reconcile to what the server
  * actually wrote; on reject we undo every optimistic patch.
  *
@@ -17,7 +17,7 @@
  */
 import {
   BrainFlex,
-  type DeckCommentDto,
+  type DeckCommentResponse,
   type ListCommentsApiArg,
   type ListRepliesApiArg,
 } from "../BrainFlexApi";
@@ -45,7 +45,10 @@ const optimisticToggleCommentUpvote = async (
     const cached = (
       api.getState() as {
         api?: {
-          queries?: Record<string, { data?: { items?: DeckCommentDto[] } }>;
+          queries?: Record<
+            string,
+            { data?: { items?: DeckCommentResponse[] } }
+          >;
         };
       }
     ).api?.queries?.[cacheKey]?.data;
@@ -58,7 +61,7 @@ const optimisticToggleCommentUpvote = async (
   }
 
   const patches: { undo: () => void }[] = [];
-  const flipRow = (row: DeckCommentDto, target: boolean) => {
+  const flipRow = (row: DeckCommentResponse, target: boolean) => {
     const current = row.upvotes ?? 0;
     const wasUpvoted = row.upvotedByMe ?? false;
     if (wasUpvoted === target) return;
@@ -106,7 +109,7 @@ const optimisticToggleCommentUpvote = async (
 
   try {
     const { data } = await api.queryFulfilled;
-    const authoritative = data as DeckCommentDto;
+    const authoritative = data as DeckCommentResponse;
     if (authoritative.id == null) return;
     for (const entry of Object.values(queries)) {
       if (!entry?.endpointName) continue;

@@ -1,5 +1,5 @@
 /**
- * Body for {@code PUT /api/interactive-sessions/{roomCode}/players/{userId}/team}.
+ * Body for {@code PUT /api/interactive-sessions/{roomCode}/players/{playerId}/team}.
  * The target team is required — there is no "leave team" operation in
  * team-mode interactiveSessions.
  */

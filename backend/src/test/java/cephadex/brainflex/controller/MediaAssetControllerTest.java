@@ -6,12 +6,6 @@
 // org-scope enforcement, and owner-only edit/delete.
 package cephadex.brainflex.controller;
 
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -19,6 +13,20 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -29,20 +37,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import cephadex.brainflex.model.MediaAsset;
-import cephadex.brainflex.model.StoredImageVariant;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.ImageSize;
-import cephadex.brainflex.model.element.ImageVariant;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.image.ImageVariant;
 import cephadex.brainflex.model.enums.MediaKind;
+import cephadex.brainflex.model.media.MediaAsset;
+import cephadex.brainflex.model.media.StoredImageVariant;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.MediaAssetRepository;
 import cephadex.brainflex.service.ImageProcessingService;
 import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
@@ -191,7 +192,10 @@ class MediaAssetControllerTest {
                 .param("kind", "IMAGE")
                 .param("name", "Hero shot")
                 .param("tags", "lotr, frodo")
-                .with(req -> { req.setMethod("POST"); return req; })
+                .with(req -> {
+                    req.setMethod("POST");
+                    return req;
+                })
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.kind").value("IMAGE"))
@@ -218,7 +222,10 @@ class MediaAssetControllerTest {
                 .file(file)
                 .param("kind", "AUDIO")
                 .param("name", "Theme song")
-                .with(req -> { req.setMethod("POST"); return req; })
+                .with(req -> {
+                    req.setMethod("POST");
+                    return req;
+                })
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.kind").value("AUDIO"))
@@ -245,7 +252,10 @@ class MediaAssetControllerTest {
                 .file(file)
                 .param("kind", "VIDEO_FILE")
                 .param("name", "Trailer")
-                .with(req -> { req.setMethod("POST"); return req; })
+                .with(req -> {
+                    req.setMethod("POST");
+                    return req;
+                })
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.kind").value("VIDEO_FILE"))
@@ -260,7 +270,10 @@ class MediaAssetControllerTest {
         mockMvc.perform(multipart("/api/media")
                 .file(file)
                 .param("kind", "VIDEO_EMBED")
-                .with(req -> { req.setMethod("POST"); return req; })
+                .with(req -> {
+                    req.setMethod("POST");
+                    return req;
+                })
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isBadRequest());
     }
@@ -322,7 +335,10 @@ class MediaAssetControllerTest {
                 .param("kind", "IMAGE")
                 .param("name", "x")
                 .param("organizationId", "orgB")
-                .with(req -> { req.setMethod("POST"); return req; })
+                .with(req -> {
+                    req.setMethod("POST");
+                    return req;
+                })
                 .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isForbidden());
 

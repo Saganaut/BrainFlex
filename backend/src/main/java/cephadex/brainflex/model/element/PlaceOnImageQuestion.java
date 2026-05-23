@@ -13,6 +13,7 @@ package cephadex.brainflex.model.element;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.PlaceScoring;
+import cephadex.brainflex.model.image.Image;
 
 public record PlaceOnImageQuestion(
         String id,

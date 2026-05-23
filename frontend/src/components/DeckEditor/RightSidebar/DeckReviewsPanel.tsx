@@ -11,7 +11,7 @@ import {
   useGetMyRatingQuery,
   useListRatingsQuery,
   useRateDeckMutation,
-  type DeckRatingDto,
+  type DeckRatingResponse,
 } from "@/store/BrainFlexApi";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { Pagination } from "@/components/Common/Pagination/Pagination";
@@ -186,9 +186,7 @@ const DeckReviewsPanel = () => {
               <ReviewListItem
                 key={rating.id}
                 rating={rating}
-                isMine={
-                  myRating?.id != null && rating.id === myRating.id
-                }
+                isMine={myRating?.id != null && rating.id === myRating.id}
               />
             ))}
           </ul>
@@ -210,25 +208,23 @@ const DeckReviewsPanel = () => {
 };
 
 interface ReviewListItemProps {
-  rating: DeckRatingDto;
+  rating: DeckRatingResponse;
   isMine?: boolean;
 }
 
 const ReviewListItem = ({ rating, isMine }: ReviewListItemProps) => (
   <li className={styles.reviewItem}>
     <div className={styles.reviewHeader}>
-      {rating.userPictureUrl != null && rating.userPictureUrl !== "" && (
+      {rating.user?.pictureUrl != null && rating.user.pictureUrl !== "" && (
         <img
-          src={resolveAvatarSrc(rating.userPictureUrl)}
+          src={resolveAvatarSrc(rating.user.pictureUrl)}
           alt=''
           className={styles.reviewAvatar}
         />
       )}
       <span className={styles.reviewAuthor}>
-        {rating.userName ?? "Anonymous"}
-        {isMine === true && (
-          <span className={styles.mineBadge}>You</span>
-        )}
+        {rating.user?.name ?? "Anonymous"}
+        {isMine === true && <span className={styles.mineBadge}>You</span>}
       </span>
       <StarRating value={rating.stars ?? 0} mode='display' size='sm' />
     </div>

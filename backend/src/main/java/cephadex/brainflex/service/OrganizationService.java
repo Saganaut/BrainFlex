@@ -28,11 +28,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.OrganizationDTO;
-import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.UpdateOrganizationRequest;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.model.org.Organization;
 
 @Service
 public class OrganizationService {
@@ -56,7 +56,7 @@ public class OrganizationService {
      * stored value so the settings UI can remove a previously-set field.
      * Throws 403 if the caller isn't the owner, 404 if the org doesn't exist.
      */
-    public Organization update(String orgId, User caller, OrganizationDTO.UpdateOrganizationRequest request) {
+    public Organization update(String orgId, User caller, UpdateOrganizationRequest request) {
         Organization org = requireOwnedBy(orgId, caller);
 
         if (request.name() != null) {
@@ -140,13 +140,16 @@ public class OrganizationService {
      * empty list.
      */
     public List<Organization> autoJoinByEmailDomain(User user) {
-        if (user == null || user.getEmail() == null) return Collections.emptyList();
+        if (user == null || user.getEmail() == null)
+            return Collections.emptyList();
         int at = user.getEmail().indexOf('@');
-        if (at < 0 || at == user.getEmail().length() - 1) return Collections.emptyList();
+        if (at < 0 || at == user.getEmail().length() - 1)
+            return Collections.emptyList();
         String domain = user.getEmail().substring(at + 1).toLowerCase(Locale.ROOT);
 
         List<Organization> matches = organizationRepository.findByEmailDomain(domain);
-        if (matches.isEmpty()) return Collections.emptyList();
+        if (matches.isEmpty())
+            return Collections.emptyList();
 
         List<Organization> joined = new ArrayList<>();
         boolean userChanged = false;
@@ -173,7 +176,8 @@ public class OrganizationService {
             ids = new ArrayList<>();
             user.setOrganizationIds(ids);
         }
-        if (ids.contains(org.getId())) return false;
+        if (ids.contains(org.getId()))
+            return false;
         ids.add(org.getId());
         org.setMemberCount(org.getMemberCount() + 1);
         return true;
@@ -199,12 +203,16 @@ public class OrganizationService {
     }
 
     private static String blankToNull(String s) {
-        if (s == null) return null;
+        if (s == null)
+            return null;
         String t = s.strip();
         return t.isEmpty() ? null : t;
     }
 
-    /** Test seam — exposes the canonical org lookup so the controller doesn't have to. */
+    /**
+     * Test seam — exposes the canonical org lookup so the controller doesn't have
+     * to.
+     */
     public Optional<Organization> findById(String orgId) {
         return organizationRepository.findById(orgId);
     }

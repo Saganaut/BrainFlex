@@ -18,13 +18,13 @@
  */
 import {
   BrainFlex,
-  type DeckDto,
+  type DeckResponse,
   type ExploreDecksApiArg,
   type ListMyFavoritesApiArg,
 } from "../BrainFlexApi";
 import type { CacheSyncApi } from "./types";
 
-const adjustDeckRow = (deck: DeckDto, desiredIsFavorited: boolean) => {
+const adjustDeckRow = (deck: DeckResponse, desiredIsFavorited: boolean) => {
   deck.isFavorited = desiredIsFavorited;
   const current = deck.favoriteCount ?? 0;
   const next = desiredIsFavorited ? current + 1 : current - 1;

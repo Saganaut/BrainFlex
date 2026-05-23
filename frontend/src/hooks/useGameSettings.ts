@@ -3,7 +3,7 @@
 // deck fetch, and the one-shot seeding cascade (deck.defaultSettings →
 // platform defaults) so the page itself can stay focused on JSX.
 import { useState } from "react";
-import { useGetDeckQuery, type DeckDto } from "../store/BrainFlexApi";
+import { useGetDeckQuery, type DeckResponse } from "../store/BrainFlexApi";
 
 // Renamed from `SessionMode` in chunk 24 to avoid colliding with the new
 // SessionFormat (GAME / PRESENTATION) concept. Same values, semantic name.
@@ -104,7 +104,7 @@ const PLATFORM_DEFAULTS: SettingsState = {
 // Pre-fill the visible form with the deck's defaultSettings + chunk-24
 // defaultSessionFormat. The backend cascades nulls through the same chain
 // at create time; this only matters for what the host sees in the form.
-const seedFromDeck = (deck: DeckDto): SettingsState => {
+const seedFromDeck = (deck: DeckResponse): SettingsState => {
   const d = deck.defaultSettings ?? {};
   return {
     format: deck.defaultSessionFormat ?? DEFAULT_FORMAT,
@@ -140,15 +140,13 @@ const seedFromDeck = (deck: DeckDto): SettingsState => {
 };
 
 interface UseGameSettingsResult {
-  deck: DeckDto | undefined;
+  deck: DeckResponse | undefined;
   isLoadingDeck: boolean;
   settings: SettingsState;
   setSettings: (next: SettingsState) => void;
 }
 
-const useGameSettings = (
-  deckId: string | undefined,
-): UseGameSettingsResult => {
+const useGameSettings = (deckId: string | undefined): UseGameSettingsResult => {
   const { data: deck, isLoading: isLoadingDeck } = useGetDeckQuery(
     { id: deckId ?? "" },
     { skip: !deckId },

@@ -22,8 +22,8 @@ import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.Tag;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.Tag;
 import cephadex.brainflex.repository.TagRepository;
 
 @Service
@@ -36,9 +36,11 @@ public class DeckTagHydrationService {
     }
 
     public void hydrate(Deck deck) {
-        if (deck == null) return;
+        if (deck == null)
+            return;
         Set<String> referenced = collect(List.of(deck));
-        if (referenced.isEmpty()) return;
+        if (referenced.isEmpty())
+            return;
         Map<String, String> displayNames = fetchDisplayNames(referenced);
         applyDisplayNames(deck, displayNames);
     }
@@ -48,9 +50,11 @@ public class DeckTagHydrationService {
      * every tag id touched by the supplied decks.
      */
     public void hydrate(Collection<Deck> decks) {
-        if (decks == null || decks.isEmpty()) return;
+        if (decks == null || decks.isEmpty())
+            return;
         Set<String> referenced = collect(decks);
-        if (referenced.isEmpty()) return;
+        if (referenced.isEmpty())
+            return;
         Map<String, String> displayNames = fetchDisplayNames(referenced);
         for (Deck deck : decks) {
             applyDisplayNames(deck, displayNames);
@@ -60,11 +64,14 @@ public class DeckTagHydrationService {
     private static Set<String> collect(Collection<Deck> decks) {
         Set<String> ids = new HashSet<>();
         for (Deck deck : decks) {
-            if (deck == null) continue;
-            List<String> tagIds = deck.getTagIds();
-            if (tagIds == null) continue;
+            if (deck == null)
+                continue;
+            Set<String> tagIds = deck.getTagIds();
+            if (tagIds == null)
+                continue;
             for (String id : tagIds) {
-                if (id != null && !id.isBlank()) ids.add(id);
+                if (id != null && !id.isBlank())
+                    ids.add(id);
             }
         }
         return ids;
@@ -84,13 +91,14 @@ public class DeckTagHydrationService {
      * free-form strings until the migration script runs.
      */
     private static void applyDisplayNames(Deck deck, Map<String, String> displayNames) {
-        List<String> tagIds = deck.getTagIds();
-        if (tagIds == null || tagIds.isEmpty()) return;
+        java.util.Set<String> tagIds = deck.getTagIds();
+        if (tagIds == null || tagIds.isEmpty())
+            return;
         List<String> snapshot = new ArrayList<>(tagIds.size());
         for (String id : tagIds) {
             String name = displayNames.get(id);
             snapshot.add(name != null ? name : id);
         }
-        deck.setTags(snapshot);
+        deck.setTags(new java.util.LinkedHashSet<>(snapshot));
     }
 }

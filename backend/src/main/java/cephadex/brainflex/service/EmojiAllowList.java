@@ -21,7 +21,8 @@ import java.util.Set;
 
 public final class EmojiAllowList {
 
-    private EmojiAllowList() {}
+    private EmojiAllowList() {
+    }
 
     /** Ordered list — clients display the first six as the default ReactionBar. */
     public static final List<String> DEFAULT_EMOJIS = List.of(
@@ -36,8 +37,8 @@ public final class EmojiAllowList {
             "👏", // 👏 clap
             "🤔", // 🤔 thinking
             "😡", // 😡 angry
-            "✅",      // ✅ check
-            "❌"       // ❌ cross
+            "✅", // ✅ check
+            "❌" // ❌ cross
     );
 
     private static final Set<String> ALLOWED = Set.copyOf(DEFAULT_EMOJIS);

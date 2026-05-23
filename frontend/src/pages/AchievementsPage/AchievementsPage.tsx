@@ -9,7 +9,7 @@
 // require expensive aggregation (streaks, perfect games) report 0, which we
 // render as a neutral "not started" bar.
 import {
-  type UserAchievementDto,
+  type UserAchievementResponse,
   useListMyAchievementsQuery,
 } from "@/store/BrainFlexApi";
 import styles from "./AchievementsPage.module.css";
@@ -62,7 +62,7 @@ const AchievementsPage = () => {
   );
 };
 
-const AchievementCard = ({ row }: { row: UserAchievementDto }) => {
+const AchievementCard = ({ row }: { row: UserAchievementResponse }) => {
   const threshold = row.threshold ?? 0;
   const progress = row.currentProgress ?? 0;
   const ratio = threshold > 0 ? Math.min(1, progress / threshold) : 0;
@@ -129,9 +129,9 @@ const CATEGORY_ORDER: Record<string, number> = {
 };
 
 const groupByCategory = (
-  items: UserAchievementDto[],
-): [string, UserAchievementDto[]][] => {
-  const byCategory = new Map<string, UserAchievementDto[]>();
+  items: UserAchievementResponse[],
+): [string, UserAchievementResponse[]][] => {
+  const byCategory = new Map<string, UserAchievementResponse[]>();
   for (const item of items) {
     const key = item.category ?? "other";
     const bucket = byCategory.get(key) ?? [];

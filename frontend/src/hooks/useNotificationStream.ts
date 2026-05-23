@@ -1,6 +1,6 @@
 /**
  * Manages the per-user STOMP subscription that pushes new
- * {@link NotificationDto} rows into the dropdown the instant the server
+ * {@link NotificationResponse} rows into the dropdown the instant the server
  * writes them.
  *
  * Lifecycle is scoped to a registered user: while the caller is signed in we
@@ -19,7 +19,7 @@ import SockJS from "sockjs-client";
 
 import { apiBaseUrl } from "../store/emptyApi";
 import { useAppDispatch } from "../store/hooks";
-import { BrainFlex, type NotificationDto } from "../store/BrainFlexApi";
+import { BrainFlex, type NotificationResponse } from "../store/BrainFlexApi";
 
 export function useNotificationStream(enabled: boolean) {
   const dispatch = useAppDispatch();
@@ -33,19 +33,18 @@ export function useNotificationStream(enabled: boolean) {
       reconnectDelay: 3000,
       onConnect: () => {
         client.subscribe("/user/queue/notifications", (msg) => {
-          const row = JSON.parse(msg.body) as NotificationDto;
+          const row = JSON.parse(msg.body) as NotificationResponse;
           // The list endpoint is paginated; the user might have hydrated
           // page 0 only. Patching every cached page keeps stale dropdowns
           // consistent with what's now on the server.
-          const queries = (
+          const queries =
             // RTK Query exposes the query cache through getState; we go
             // through the store's util to avoid coupling to its internal
             // shape more than necessary.
             BrainFlex.endpoints.listNotifications.select({
               page: 0,
               size: 20,
-            }) as unknown
-          );
+            }) as unknown;
           // Force-fetch a fresh first page so server-side ordering is
           // authoritative; the optimistic prepend below covers the eye-blink
           // gap before that fetch lands.

@@ -9,8 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.Reaction;
-
+import cephadex.brainflex.model.session.Reaction;
 public interface ReactionRepository extends MongoRepository<Reaction, String> {
 
     Page<Reaction> findAllByInteractiveSessionIdOrderBySentAtDesc(String interactiveSessionId, Pageable pageable);

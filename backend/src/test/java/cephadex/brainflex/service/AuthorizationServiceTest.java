@@ -22,12 +22,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckCollaborator;
-import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.Theme;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckCollaborator;
+import cephadex.brainflex.model.org.Organization;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.theme.Theme;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;

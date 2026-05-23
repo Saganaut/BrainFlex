@@ -17,7 +17,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import cephadex.brainflex.model.enums.NotificationKind;
+import cephadex.brainflex.model.enums.ThemeMode;
 import cephadex.brainflex.model.enums.UserRole;
+import cephadex.brainflex.model.media.GalleryImage;
+import cephadex.brainflex.model.org.Membership;
+import cephadex.brainflex.model.org.Organization;
+import cephadex.brainflex.model.org.OrganizationPlan;
+import cephadex.brainflex.model.session.AudienceSubmission;
+import cephadex.brainflex.model.session.BestAnswerVote;
+import cephadex.brainflex.model.theme.Theme;
+import cephadex.brainflex.model.user.NotificationPrefs;
+import cephadex.brainflex.model.user.PlayerStats;
+import cephadex.brainflex.model.user.User;
 
 class ModelDefaultsTest {
 
@@ -47,7 +58,7 @@ class ModelDefaultsTest {
         assertThat(stats.getGamesPlayed()).isZero();
         assertThat(stats.getHighScore()).isZero();
         assertThat(stats.getTotalPoints()).isZero();
-        assertThat(stats.getCurrentStreak()).isZero();
+        assertThat(stats.getDailyLoginStreak()).isZero();
         assertThat(stats.getLongestStreak()).isZero();
         assertThat(stats.getPerfectGames()).isZero();
         assertThat(stats.getTotalReactionsSent()).isZero();
@@ -84,7 +95,7 @@ class ModelDefaultsTest {
 
         assertThat(theme.getHuePrimary()).isEqualTo(260);
         assertThat(theme.getHueAccent()).isEqualTo(25);
-        assertThat(theme.getMode()).isEqualTo("system");
+        assertThat(theme.getMode()).isEqualTo(ThemeMode.SYSTEM);
         assertThat(theme.getLogoVariants()).isEmpty();
         assertThat(theme.getBackgroundVariants()).isEmpty();
         assertThat(theme.getTokenOverrides()).isEmpty();

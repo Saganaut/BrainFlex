@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.RegisterRequest;
 import cephadex.brainflex.dto.UpdateProfileRequest;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.email.EmailService;
 
@@ -70,7 +70,7 @@ class UserServiceTest {
         User result = userService.createGuest("guestuser");
 
         assertEquals("guestuser", result.getUserName());
-        assertEquals(true, result.getIsGuest());
+        assertEquals(true, result.isGuest());
     }
 
     @Test
@@ -107,7 +107,7 @@ class UserServiceTest {
         assertEquals("google123", result.getGoogleId());
         assertEquals("test@example.com", result.getEmail());
         assertEquals("testuser", result.getUserName());
-        assertEquals(false, result.getIsGuest());
+        assertEquals(false, result.isGuest());
         assertNotNull(result.getEmailVerifiedAt(),
                 "Google OAuth implies a verified email, so the timestamp should be set on register");
     }
@@ -117,7 +117,7 @@ class UserServiceTest {
         User closed = new User();
         closed.setId("u1");
         closed.setGoogleId("google123");
-        closed.setIsClosed(true);
+        closed.setClosed(true);
         closed.setEmailVerifiedAt(null);
 
         var profile = new OAuthProviderService.ProviderProfile(
@@ -136,11 +136,11 @@ class UserServiceTest {
 
     @Test
     void register_WhenReopeningClosedAccount_PreservesExistingEmailVerifiedAt() {
-        LocalDateTime original = LocalDateTime.of(2024, 1, 15, 10, 30);
+        Instant original = Instant.parse("2024-01-15T10:30:00Z");
         User closed = new User();
         closed.setId("u1");
         closed.setGoogleId("google123");
-        closed.setIsClosed(true);
+        closed.setClosed(true);
         closed.setEmailVerifiedAt(original);
 
         var profile = new OAuthProviderService.ProviderProfile(

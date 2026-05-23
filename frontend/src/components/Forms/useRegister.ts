@@ -7,7 +7,8 @@ import {
 } from "../../store/BrainFlexApi";
 
 export interface RegisterSearch {
-  googleId?: string;
+  provider?: string;
+  providerId?: string;
   email?: string;
   name?: string;
   picture?: string;

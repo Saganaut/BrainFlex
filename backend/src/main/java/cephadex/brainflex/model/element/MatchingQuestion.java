@@ -18,6 +18,7 @@ import java.util.List;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
 import cephadex.brainflex.model.enums.MatchingScoring;
+import cephadex.brainflex.model.element.parts.MatchingPair;
 
 public record MatchingQuestion(
         String id,

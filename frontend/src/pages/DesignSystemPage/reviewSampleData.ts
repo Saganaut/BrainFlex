@@ -1,32 +1,29 @@
 // Sample data for the design system's ReviewPanel demo.
 // Mirrors the shape returned by GET /api/interactive-sessions/{code}/review.
-import type { InteractiveSessionReviewDto } from "../../store/BrainFlexApi";
+import type { InteractiveSessionReviewResponse } from "../../store/BrainFlexApi";
 
-export const reviewSampleData: InteractiveSessionReviewDto = {
+export const reviewSampleData: InteractiveSessionReviewResponse = {
   interactiveSessionId: "demo-interactiveSession",
   roomCode: "DEMO00",
   endedAt: new Date().toISOString(),
   scoringEnabled: true,
   placements: [
     {
-      userId: "u1",
-      userName: "Aragorn",
+      user: { userId: "u1", name: "Aragorn" },
       finalScore: 750,
       placement: 1,
       correctAnswers: 4,
       totalQuestions: 5,
     },
     {
-      userId: "u2",
-      userName: "Legolas",
+      user: { userId: "u2", name: "Legolas" },
       finalScore: 500,
       placement: 2,
       correctAnswers: 3,
       totalQuestions: 5,
     },
     {
-      userId: "u3",
-      userName: "Gimli",
+      user: { userId: "u3", name: "Gimli" },
       finalScore: 350,
       placement: 3,
       correctAnswers: 2,
@@ -74,9 +71,27 @@ export const reviewSampleData: InteractiveSessionReviewDto = {
       },
       timedOutCount: 0,
       playerAnswers: [
-        { userId: "u1", userName: "Aragorn", payload: { kind: "McqAnswer", optionIds: ["opt-3"] }, wasCorrect: true, pointsAwarded: 150 },
-        { userId: "u2", userName: "Legolas", payload: { kind: "McqAnswer", optionIds: ["opt-3"] }, wasCorrect: true, pointsAwarded: 100 },
-        { userId: "u3", userName: "Gimli", payload: { kind: "McqAnswer", optionIds: ["opt-1"] }, wasCorrect: false, pointsAwarded: 0 },
+        {
+          playerId: "u1",
+          userName: "Aragorn",
+          payload: { kind: "McqAnswer", optionIds: ["opt-3"] },
+          wasCorrect: true,
+          pointsAwarded: 150,
+        },
+        {
+          playerId: "u2",
+          userName: "Legolas",
+          payload: { kind: "McqAnswer", optionIds: ["opt-3"] },
+          wasCorrect: true,
+          pointsAwarded: 100,
+        },
+        {
+          playerId: "u3",
+          userName: "Gimli",
+          payload: { kind: "McqAnswer", optionIds: ["opt-1"] },
+          wasCorrect: false,
+          pointsAwarded: 0,
+        },
       ],
     },
     {
@@ -99,9 +114,27 @@ export const reviewSampleData: InteractiveSessionReviewDto = {
       },
       timedOutCount: 0,
       playerAnswers: [
-        { userId: "u1", userName: "Aragorn", payload: { kind: "TextAnswer", text: "Paris" }, wasCorrect: true, pointsAwarded: 150 },
-        { userId: "u2", userName: "Legolas", payload: { kind: "TextAnswer", text: "paris" }, wasCorrect: true, pointsAwarded: 100 },
-        { userId: "u3", userName: "Gimli", payload: { kind: "TextAnswer", text: "Lyon" }, wasCorrect: false, pointsAwarded: 0 },
+        {
+          playerId: "u1",
+          userName: "Aragorn",
+          payload: { kind: "TextAnswer", text: "Paris" },
+          wasCorrect: true,
+          pointsAwarded: 150,
+        },
+        {
+          playerId: "u2",
+          userName: "Legolas",
+          payload: { kind: "TextAnswer", text: "paris" },
+          wasCorrect: true,
+          pointsAwarded: 100,
+        },
+        {
+          playerId: "u3",
+          userName: "Gimli",
+          payload: { kind: "TextAnswer", text: "Lyon" },
+          wasCorrect: false,
+          pointsAwarded: 0,
+        },
       ],
     },
   ],

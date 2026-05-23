@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.InteractiveSessionInvite;
+import cephadex.brainflex.model.session.InteractiveSessionInvite;
 
 public interface InteractiveSessionInviteRepository
         extends MongoRepository<InteractiveSessionInvite, String> {

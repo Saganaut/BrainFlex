@@ -20,11 +20,11 @@ package cephadex.brainflex.service;
 
 import org.springframework.stereotype.Component;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.InteractiveSession;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.enums.SessionFormat;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
+import cephadex.brainflex.model.session.InteractiveSession;
 
 @Component
 public class ShowResponsesResolver {
@@ -37,17 +37,17 @@ public class ShowResponsesResolver {
         if (elementValue != null && elementValue != ShowResponsesMode.INHERIT) {
             return elementValue;
         }
-        ShowResponsesMode deckValue = deck == null ? null : deck.getDefaultShowResponses();
+        ShowResponsesMode deckValue = deck == null ? null : deck.getContent().getShowResponses();
         if (deckValue != null && deckValue != ShowResponsesMode.INHERIT) {
             return deckValue;
         }
-        ShowResponsesMode sessionValue = (session == null || session.getSettings() == null)
+        ShowResponsesMode sessionValue = (session == null || session.getContent().getSettings() == null)
                 ? null
-                : session.getSettings().getShowResponses();
+                : session.getContent().getSettings().getShowResponses();
         if (sessionValue != null && sessionValue != ShowResponsesMode.INHERIT) {
             return sessionValue;
         }
-        SessionFormat format = session == null ? SessionFormat.GAME : session.getFormat();
+        SessionFormat format = session == null ? SessionFormat.GAME : session.getContent().getFormat();
         return defaultFor(format);
     }
 

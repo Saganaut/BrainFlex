@@ -18,13 +18,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
-import org.springframework.data.mongodb.config.EnableMongoAuditing;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 
 import cephadex.brainflex.model.enums.SessionFormat;
 
+// Mongo auditing is enabled once, on BrainflexApplication (see Auditable's
+// javadoc). Declaring @EnableMongoAuditing here too registered a second
+// `mongoAuditingHandler` bean, which fails context startup under Spring Boot's
+// default no-bean-override policy — so it intentionally lives only there.
 @Configuration
-@EnableMongoAuditing
 public class MongoConfig {
 
     @Bean

@@ -10,11 +10,11 @@ import { useCurrentUser } from "@/hooks/useCurrentUser";
 import {
   useGetDeckQuery,
   useUpdateElementMutation,
-  type DeckDto,
+  type DeckResponse,
 } from "@/store/BrainFlexApi";
 import styles from "../EditSlidePanel.module.css";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 

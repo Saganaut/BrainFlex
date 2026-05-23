@@ -18,7 +18,7 @@ import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import {
   useGetDeckQuery,
   useUpdateElementMutation,
-  type DeckDto,
+  type DeckResponse,
 } from "@/store/BrainFlexApi";
 import { useDebouncedCommit } from "@/hooks/useDebouncedCommit";
 import {
@@ -27,7 +27,7 @@ import {
 } from "@/components/Common/Input/RichTextInput/RichTextInput";
 import styles from "./SpeakerNotesDrawer.module.css";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
@@ -61,7 +61,9 @@ const SpeakerNotesDrawer = () => {
 
   const { schedule, flush } = useDebouncedCommit<DeckElement>(commit, 500);
 
-  const [notes, setNotes] = useState<string>(element?.chrome?.speakerNotes ?? "");
+  const [notes, setNotes] = useState<string>(
+    element?.chrome?.speakerNotes ?? "",
+  );
   const [syncedFromId, setSyncedFromId] = useState<string | undefined>(
     element?.id,
   );

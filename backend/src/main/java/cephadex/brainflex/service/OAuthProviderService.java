@@ -18,7 +18,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 
 @Service
@@ -37,11 +37,14 @@ public class OAuthProviderService {
     /**
      * Resolves the registered user behind an {@link OAuth2AuthenticationToken}.
      * Falls back to a cross-provider id scan for non-OAuth2 authentications so
+     * 
      * @WithMockUser-style tests (which build a UsernamePasswordAuthenticationToken
-     * with the principal name set to a provider id) keep working.
+     *                     with the principal name set to a provider id) keep
+     *                     working.
      */
     public Optional<User> findByOAuthAuthentication(Authentication authentication) {
-        if (authentication == null) return Optional.empty();
+        if (authentication == null)
+            return Optional.empty();
         if (authentication instanceof OAuth2AuthenticationToken oauth) {
             return findByProviderId(oauth.getAuthorizedClientRegistrationId(), oauth.getName());
         }
@@ -49,7 +52,8 @@ public class OAuthProviderService {
     }
 
     public Optional<User> findByProviderId(String provider, String providerId) {
-        if (provider == null || providerId == null) return Optional.empty();
+        if (provider == null || providerId == null)
+            return Optional.empty();
         return switch (provider) {
             case GOOGLE -> userRepository.findByGoogleId(providerId);
             case DISCORD -> userRepository.findByDiscordId(providerId);
@@ -66,11 +70,14 @@ public class OAuthProviderService {
      * across providers don't occur.
      */
     public Optional<User> findByAnyProviderId(String providerId) {
-        if (providerId == null) return Optional.empty();
+        if (providerId == null)
+            return Optional.empty();
         var byGoogle = userRepository.findByGoogleId(providerId);
-        if (byGoogle.isPresent()) return byGoogle;
+        if (byGoogle.isPresent())
+            return byGoogle;
         var byDiscord = userRepository.findByDiscordId(providerId);
-        if (byDiscord.isPresent()) return byDiscord;
+        if (byDiscord.isPresent())
+            return byDiscord;
         return userRepository.findByMicrosoftId(providerId);
     }
 
@@ -140,9 +147,12 @@ public class OAuthProviderService {
      * the broadcast paths skip per-user delivery on null).
      */
     public String principalNameFor(User user) {
-        if (Boolean.TRUE.equals(user.getIsGuest())) return "guest:" + user.getId();
-        if (user.getGoogleId() != null) return user.getGoogleId();
-        if (user.getDiscordId() != null) return user.getDiscordId();
+        if (user.isGuest())
+            return "guest:" + user.getId();
+        if (user.getGoogleId() != null)
+            return user.getGoogleId();
+        if (user.getDiscordId() != null)
+            return user.getDiscordId();
         return user.getMicrosoftId();
     }
 
@@ -151,7 +161,8 @@ public class OAuthProviderService {
             String providerId,
             String email,
             String name,
-            String picture) {}
+            String picture) {
+    }
 
     private static String str(OAuth2User user, String key) {
         Object v = user.getAttribute(key);
@@ -160,7 +171,8 @@ public class OAuthProviderService {
 
     private static String firstNonBlank(String... values) {
         for (String v : values) {
-            if (v != null && !v.isBlank()) return v;
+            if (v != null && !v.isBlank())
+                return v;
         }
         return null;
     }

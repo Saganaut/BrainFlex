@@ -13,8 +13,8 @@ import {
   useGetCollectionQuery,
   useReorderCollectionDecksMutation,
   useRemoveDeckFromCollectionMutation,
-  type DeckCollectionDto,
-  type DeckDto,
+  type DeckCollectionResponse,
+  type DeckResponse,
 } from "@/store/BrainFlexApi";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useAppDispatch } from "@/store/hooks";
@@ -32,7 +32,7 @@ const DeckTile = ({
   isOwner,
   onRemove,
 }: {
-  deck: DeckDto;
+  deck: DeckResponse;
   index: number;
   isOwner: boolean;
   onRemove: (deckId: string) => void;
@@ -91,7 +91,11 @@ const DeckTile = ({
   );
 };
 
-const CollectionHeader = ({ collection }: { collection: DeckCollectionDto }) => (
+const CollectionHeader = ({
+  collection,
+}: {
+  collection: DeckCollectionResponse;
+}) => (
   <header className={styles.header}>
     <h1 className={styles.title}>{collection.name}</h1>
     <span className={styles.subtitle}>
@@ -141,12 +145,14 @@ const CollectionDetailPage = () => {
 
   const handleDragEnd = (event: {
     operation: {
-      source: { id?: string | number; initialIndex?: number; index?: number };
+      source:
+        | { id?: string | number; initialIndex?: number; index?: number }
+        | null;
     };
   }) => {
     const { source } = event.operation;
     if (
-      source.initialIndex == null ||
+      source?.initialIndex == null ||
       source.index == null ||
       source.initialIndex === source.index
     )
@@ -154,17 +160,23 @@ const CollectionDetailPage = () => {
     const reordered = [...decks];
     const [moved] = reordered.splice(source.initialIndex, 1);
     reordered.splice(source.index, 0, moved);
-    const nextIds = reordered.map((d) => d.id).filter((id): id is string => !!id);
+    const nextIds = reordered
+      .map((d) => d.id)
+      .filter((id): id is string => !!id);
     if (nextIds.length !== decks.length) return;
 
     // Optimistic patch — the apiEnhancements onQueryStarted ALSO patches
     // getCollection, but we patch here first so the drop-frame animation
     // settles on the correct order before the mutation even fires.
     dispatch(
-      BrainFlex.util.updateQueryData("getCollection", { id: collectionId }, (draft) => {
-        draft.deckIds = nextIds;
-        draft.decks = reordered;
-      }),
+      BrainFlex.util.updateQueryData(
+        "getCollection",
+        { id: collectionId },
+        (draft) => {
+          draft.deckIds = nextIds;
+          draft.decks = reordered;
+        },
+      ),
     );
 
     void reorderCollectionDecks({
@@ -180,7 +192,8 @@ const CollectionDetailPage = () => {
   const handleRemove = async (deckId: string) => {
     const ok = await confirm({
       title: "Remove deck",
-      message: "Remove this deck from the collection? The deck itself isn't deleted.",
+      message:
+        "Remove this deck from the collection? The deck itself isn't deleted.",
       confirmLabel: "Remove",
       variant: "danger",
     });

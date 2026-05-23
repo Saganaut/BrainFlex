@@ -16,9 +16,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import cephadex.brainflex.model.PlayerAnswer;
-import cephadex.brainflex.model.RoundVote;
-
+import cephadex.brainflex.model.session.PlayerAnswer;
+import cephadex.brainflex.model.session.RoundVote;
 class PointsPerVoteStrategyTest {
 
     private final PointsPerVoteStrategy strategy = new PointsPerVoteStrategy();

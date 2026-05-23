@@ -18,7 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.EmailSuppression;
+import cephadex.brainflex.model.user.EmailSuppression;
 import cephadex.brainflex.repository.EmailSuppressionRepository;
 
 @Service

@@ -9,9 +9,9 @@ import type { AnswerPayload, DeckElement } from "./elements";
 
 /**
  * One anonymous submission shown to voters during VOTE phase.
- * `submissionId` is server-generated; we never broadcast the author's userId
- * on this channel. The mapping back to userId happens at REVEAL time inside
- * `BestAnswerOutcome.tallies`.
+ * `submissionId` is server-generated; we never broadcast the author's identity
+ * on this channel. The mapping back to the author happens at REVEAL time
+ * inside `BestAnswerOutcome.tallies`, keyed by session-scoped playerId.
  */
 export interface AnonymizedSubmission {
   submissionId: string;
@@ -30,14 +30,17 @@ export interface VotePhaseStartPayload {
 /** /topic/interactive-session/{code}/voted */
 export interface VoteProgressPayload {
   round: number;
-  votedUserIds: string[];
+  // Session-scoped playerIds of players who have already voted this round.
+  votedPlayerIds: string[];
   totalPlayers: number;
 }
 
 /** REVEAL: per-submission tally with the author de-anonymized. */
 export interface SubmissionTally {
   submissionId: string;
-  userId: string;
+  // Session-scoped public handle of the submission's author. Real userId is
+  // never broadcast on this channel.
+  playerId: string;
   userName: string;
   payload: AnswerPayload;
   voteCount: number;
@@ -45,11 +48,11 @@ export interface SubmissionTally {
 
 /**
  * Attached to RoundResultMessage when the round was a Best Answer round.
- * `winnerUserIds` can have multiple entries on a tie; each receives the bonus.
+ * `winnerPlayerIds` can have multiple entries on a tie; each receives the bonus.
  * `bonusAwarded` is already reflected in the corresponding playerResults entry.
  */
 export interface BestAnswerOutcome {
   tallies: SubmissionTally[];
-  winnerUserIds: string[];
+  winnerPlayerIds: string[];
   bonusAwarded: number;
 }

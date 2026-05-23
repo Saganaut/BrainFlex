@@ -13,8 +13,8 @@ package cephadex.brainflex.service.bestanswer;
 import java.util.List;
 import java.util.Map;
 
-import cephadex.brainflex.model.PlayerAnswer;
-import cephadex.brainflex.model.RoundVote;
+import cephadex.brainflex.model.session.PlayerAnswer;
+import cephadex.brainflex.model.session.RoundVote;
 import cephadex.brainflex.model.enums.BestAnswerScoring;
 
 public interface BestAnswerScoringStrategy {

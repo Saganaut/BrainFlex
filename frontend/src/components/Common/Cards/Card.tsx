@@ -19,7 +19,7 @@ const Card = ({
   header,
   body,
   footer,
-  variant = "default",
+  variant,
   size = "md",
   onClick,
   as: Component = "div",
@@ -43,7 +43,7 @@ const Card = ({
       {...interactiveProps}
       className={[
         styles.card,
-        variant !== "default" && styles[variant],
+        variant && styles[variant],
         styles[size],
         isClickable && styles.isClickable,
       ]

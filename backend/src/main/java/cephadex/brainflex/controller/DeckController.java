@@ -37,30 +37,30 @@ import org.springframework.web.server.ResponseStatusException;
 import cephadex.brainflex.config.AdminProperties;
 import cephadex.brainflex.dto.CreateCommentRequest;
 import cephadex.brainflex.dto.CreateDeckRequest;
-import cephadex.brainflex.dto.DeckCommentDTO;
-import cephadex.brainflex.dto.DeckDTO;
+import cephadex.brainflex.dto.DeckCollaboratorResponse;
+import cephadex.brainflex.dto.DeckCommentResponse;
 import cephadex.brainflex.dto.DeckExploreRequest;
 import cephadex.brainflex.dto.DeckFavoriteResponse;
-import cephadex.brainflex.dto.DeckRatingDTO;
+import cephadex.brainflex.dto.DeckRatingResponse;
 import cephadex.brainflex.dto.DeckRatingsPage;
+import cephadex.brainflex.dto.DeckResponse;
+import cephadex.brainflex.dto.InviteCollaboratorRequest;
 import cephadex.brainflex.dto.Page;
 import cephadex.brainflex.dto.RateDeckRequest;
-import cephadex.brainflex.dto.UpdateCommentRequest;
-import cephadex.brainflex.dto.UpdateDeckRequest;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckAnalytics;
-import cephadex.brainflex.model.DeckComment;
-import cephadex.brainflex.model.DeckRating;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.enums.Difficulty;
-import cephadex.brainflex.repository.DeckRepository;
-import cephadex.brainflex.repository.UserRepository;
-import cephadex.brainflex.dto.DeckCollaboratorDTO;
-import cephadex.brainflex.dto.InviteCollaboratorRequest;
 import cephadex.brainflex.dto.TransferOwnershipRequest;
 import cephadex.brainflex.dto.UpdateCollaboratorRoleRequest;
-import cephadex.brainflex.model.DeckCollaborator;
+import cephadex.brainflex.dto.UpdateCommentRequest;
+import cephadex.brainflex.dto.UpdateDeckRequest;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckAnalytics;
+import cephadex.brainflex.model.deck.DeckCollaborator;
+import cephadex.brainflex.model.deck.DeckComment;
+import cephadex.brainflex.model.deck.DeckRating;
+import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.enums.Difficulty;
+import cephadex.brainflex.model.user.User;
+import cephadex.brainflex.repository.DeckRepository;
+import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthorizationService;
 import cephadex.brainflex.service.DeckAnalyticsReportService;
 import cephadex.brainflex.service.DeckAnalyticsService;
@@ -130,11 +130,11 @@ public class DeckController {
 
     /** All public decks. Used by the create-interactiveSession template picker. */
     @GetMapping
-    public List<DeckDTO> listDecks(Authentication authentication) {
+    public List<DeckResponse> listDecks(Authentication authentication) {
         List<Deck> decks = deckService.listPublic();
         deckTagHydrationService.hydrate(decks);
         Set<String> favorites = resolveFavoritedDeckIds(authentication, decks);
-        return decks.stream().map(d -> new DeckDTO(d, favorites.contains(d.getId()))).toList();
+        return decks.stream().map(d -> new DeckResponse(d, favorites.contains(d.getId()))).toList();
     }
 
     /**
@@ -144,7 +144,7 @@ public class DeckController {
      * with the rest of the deck-read surface.
      */
     @GetMapping("/explore")
-    public Page<DeckDTO> exploreDecks(
+    public Page<DeckResponse> exploreDecks(
             @RequestParam(name = "tagId", required = false) String tagId,
             @RequestParam(name = "language", required = false) String language,
             @RequestParam(name = "difficulty", required = false) Difficulty difficulty,
@@ -159,8 +159,8 @@ public class DeckController {
         DeckService.ExplorePage result = deckService.explore(request);
         deckTagHydrationService.hydrate(result.items());
         Set<String> favorites = resolveFavoritedDeckIds(authentication, result.items());
-        List<DeckDTO> items = result.items().stream()
-                .map(d -> new DeckDTO(d, favorites.contains(d.getId())))
+        List<DeckResponse> items = result.items().stream()
+                .map(d -> new DeckResponse(d, favorites.contains(d.getId())))
                 .toList();
         boolean hasMore = (long) (page + 1) * size < result.totalElements();
         return new Page<>(items, page, size, result.totalElements(), hasMore);
@@ -178,10 +178,9 @@ public class DeckController {
      */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/mine")
-    public List<DeckDTO> listMyDecks(Authentication authentication) {
+    public List<DeckResponse> listMyDecks(Authentication authentication) {
         User caller = resolveUser(authentication);
-        java.util.Map<String, cephadex.brainflex.model.enums.CollaboratorRole> roleByDeckId =
-                new java.util.LinkedHashMap<>();
+        java.util.Map<String, cephadex.brainflex.model.enums.CollaboratorRole> roleByDeckId = new java.util.LinkedHashMap<>();
         for (DeckCollaborator row : deckCollaboratorService.findAllByUser(caller.getId())) {
             roleByDeckId.put(row.getDeckId(), row.getRole());
         }
@@ -207,7 +206,7 @@ public class DeckController {
         deckTagHydrationService.hydrate(decks);
         Set<String> favorites = deckFavoriteService.favoritedDeckIds(caller.getId(), idsOf(decks));
         return decks.stream()
-                .map(d -> new DeckDTO(
+                .map(d -> new DeckResponse(
                         d,
                         favorites.contains(d.getId()),
                         null,
@@ -216,7 +215,7 @@ public class DeckController {
     }
 
     @GetMapping("/{id}")
-    public DeckDTO getDeck(@PathVariable String id, Authentication authentication) {
+    public DeckResponse getDeck(@PathVariable String id, Authentication authentication) {
         Optional<User> caller = userService.resolveRegisteredUser(authentication);
         Deck deck = deckService.getViewable(caller, id);
         // Non-owner / non-editor traffic bumps viewCount so Explore's
@@ -243,12 +242,12 @@ public class DeckController {
                 .flatMap(u -> deckCollaboratorService.findRow(deck.getId(), u.getId()))
                 .map(DeckCollaborator::getRole)
                 .orElse(null);
-        return new DeckDTO(deck, isFavorited, myRating, myRole);
+        return new DeckResponse(deck, isFavorited, myRating, myRole);
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public ResponseEntity<DeckDTO> createDeck(
+    public ResponseEntity<DeckResponse> createDeck(
             @Valid @RequestBody CreateDeckRequest request,
             Authentication authentication) {
         User caller = resolveUser(authentication);
@@ -258,7 +257,7 @@ public class DeckController {
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}")
-    public DeckDTO updateDeck(
+    public DeckResponse updateDeck(
             @PathVariable String id,
             @Valid @RequestBody UpdateDeckRequest request,
             Authentication authentication) {
@@ -281,7 +280,7 @@ public class DeckController {
     /** Flip the deck to PUBLISHED (stamps publishedAt the first time). */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/publish")
-    public DeckDTO publishDeck(
+    public DeckResponse publishDeck(
             @PathVariable String id,
             Authentication authentication) {
         User caller = resolveUser(authentication);
@@ -291,7 +290,7 @@ public class DeckController {
     /** Flip the deck back to DRAFT. publishedAt is preserved as history. */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/unpublish")
-    public DeckDTO unpublishDeck(
+    public DeckResponse unpublishDeck(
             @PathVariable String id,
             Authentication authentication) {
         User caller = resolveUser(authentication);
@@ -301,7 +300,7 @@ public class DeckController {
     /** Move the deck to ARCHIVED — hidden from Explore + my-decks list. */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/archive")
-    public DeckDTO archiveDeck(
+    public DeckResponse archiveDeck(
             @PathVariable String id,
             Authentication authentication) {
         User caller = resolveUser(authentication);
@@ -371,7 +370,7 @@ public class DeckController {
      */
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/rating")
-    public DeckRatingDTO rateDeck(
+    public DeckRatingResponse rateDeck(
             @PathVariable String id,
             @Valid @RequestBody RateDeckRequest request,
             Authentication authentication) {
@@ -381,7 +380,7 @@ public class DeckController {
         // shouldn't be able to see.
         deckService.getViewable(Optional.of(caller), id);
         DeckRating row = deckRatingService.upsert(id, caller.getId(), request.stars(), request.review());
-        return DeckRatingDTO.of(row, caller.getUserName(), userImageHydrator.pictureUrlOf(caller));
+        return DeckRatingResponse.of(row, caller.getUserName(), userImageHydrator.pictureUrlOf(caller));
     }
 
     /**
@@ -401,13 +400,13 @@ public class DeckController {
     /** Caller's own rating for this deck, or 404 if they haven't rated it. */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}/rating/mine")
-    public DeckRatingDTO getMyRating(
+    public DeckRatingResponse getMyRating(
             @PathVariable String id,
             Authentication authentication) {
         User caller = resolveUser(authentication);
         DeckRating row = deckRatingService.findMine(id, caller.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No rating yet"));
-        return DeckRatingDTO.of(row, caller.getUserName(), userImageHydrator.pictureUrlOf(caller));
+        return DeckRatingResponse.of(row, caller.getUserName(), userImageHydrator.pictureUrlOf(caller));
     }
 
     /**
@@ -430,12 +429,12 @@ public class DeckController {
                 safePage, safeSize, Sort.by("createdAt").descending());
         org.springframework.data.domain.Page<DeckRating> rows = deckRatingService.listForDeck(id, pageRequest);
         Map<String, User> userById = lookupUsers(rows.getContent().stream().map(DeckRating::getUserId).toList());
-        List<DeckRatingDTO> items = new ArrayList<>(rows.getNumberOfElements());
+        List<DeckRatingResponse> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckRating row : rows.getContent()) {
             User author = userById.get(row.getUserId());
             String name = author == null ? null : author.getUserName();
             String picture = author == null ? null : userImageHydrator.pictureUrlOf(author);
-            items.add(DeckRatingDTO.of(row, name, picture));
+            items.add(DeckRatingResponse.of(row, name, picture));
         }
         boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
         int[] distribution = buildRatingDistribution(id);
@@ -448,7 +447,7 @@ public class DeckController {
 
     /** Paginated top-level comments for a deck, newest first. Public. */
     @GetMapping("/{id}/comments")
-    public Page<DeckCommentDTO> listComments(
+    public Page<DeckCommentResponse> listComments(
             @PathVariable String id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -461,10 +460,10 @@ public class DeckController {
                 safePage, safeSize, Sort.by("createdAt").descending());
         org.springframework.data.domain.Page<DeckComment> rows = deckCommentService.listTopLevel(id, pageRequest);
         String callerId = caller.map(User::getId).orElse(null);
-        List<DeckCommentDTO> items = new ArrayList<>(rows.getNumberOfElements());
+        List<DeckCommentResponse> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckComment row : rows.getContent()) {
             long replyCount = deckCommentService.countReplies(id, row.getId());
-            items.add(DeckCommentDTO.of(row, callerId, replyCount));
+            items.add(DeckCommentResponse.of(row, callerId, replyCount));
         }
         boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
         return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);
@@ -472,7 +471,7 @@ public class DeckController {
 
     /** Paginated replies to a single top-level comment, oldest first. Public. */
     @GetMapping("/{deckId}/comments/{commentId}/replies")
-    public Page<DeckCommentDTO> listReplies(
+    public Page<DeckCommentResponse> listReplies(
             @PathVariable String deckId,
             @PathVariable String commentId,
             @RequestParam(defaultValue = "0") int page,
@@ -484,11 +483,12 @@ public class DeckController {
         int safeSize = Math.max(1, Math.min(50, size));
         PageRequest pageRequest = PageRequest.of(
                 safePage, safeSize, Sort.by("createdAt").ascending());
-        org.springframework.data.domain.Page<DeckComment> rows = deckCommentService.listReplies(deckId, commentId, pageRequest);
+        org.springframework.data.domain.Page<DeckComment> rows = deckCommentService.listReplies(deckId, commentId,
+                pageRequest);
         String callerId = caller.map(User::getId).orElse(null);
-        List<DeckCommentDTO> items = new ArrayList<>(rows.getNumberOfElements());
+        List<DeckCommentResponse> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckComment row : rows.getContent()) {
-            items.add(DeckCommentDTO.of(row, callerId, 0L));
+            items.add(DeckCommentResponse.of(row, callerId, 0L));
         }
         boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
         return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);
@@ -496,7 +496,7 @@ public class DeckController {
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/comments")
-    public ResponseEntity<DeckCommentDTO> postComment(
+    public ResponseEntity<DeckCommentResponse> postComment(
             @PathVariable String id,
             @Valid @RequestBody CreateCommentRequest request,
             Authentication authentication) {
@@ -504,12 +504,12 @@ public class DeckController {
         deckService.getViewable(Optional.of(caller), id);
         DeckComment row = deckCommentService.create(id, caller, request.body(), request.parentCommentId());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(DeckCommentDTO.of(row, caller.getId(), 0L));
+                .body(DeckCommentResponse.of(row, caller.getId(), 0L));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{deckId}/comments/{commentId}")
-    public DeckCommentDTO editComment(
+    public DeckCommentResponse editComment(
             @PathVariable String deckId,
             @PathVariable String commentId,
             @Valid @RequestBody UpdateCommentRequest request,
@@ -519,12 +519,12 @@ public class DeckController {
         long replyCount = row.getParentCommentId() == null
                 ? deckCommentService.countReplies(deckId, row.getId())
                 : 0L;
-        return DeckCommentDTO.of(row, caller.getId(), replyCount);
+        return DeckCommentResponse.of(row, caller.getId(), replyCount);
     }
 
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{deckId}/comments/{commentId}")
-    public DeckCommentDTO deleteComment(
+    public DeckCommentResponse deleteComment(
             @PathVariable String deckId,
             @PathVariable String commentId,
             Authentication authentication) {
@@ -533,7 +533,7 @@ public class DeckController {
         long replyCount = row.getParentCommentId() == null
                 ? deckCommentService.countReplies(deckId, row.getId())
                 : 0L;
-        return DeckCommentDTO.of(row, caller.getId(), replyCount);
+        return DeckCommentResponse.of(row, caller.getId(), replyCount);
     }
 
     /**
@@ -543,7 +543,7 @@ public class DeckController {
      */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{deckId}/comments/{commentId}/upvote")
-    public DeckCommentDTO toggleCommentUpvote(
+    public DeckCommentResponse toggleCommentUpvote(
             @PathVariable String deckId,
             @PathVariable String commentId,
             Authentication authentication) {
@@ -553,7 +553,7 @@ public class DeckController {
         long replyCount = row.getParentCommentId() == null
                 ? deckCommentService.countReplies(deckId, row.getId())
                 : 0L;
-        return DeckCommentDTO.of(row, caller.getId(), replyCount);
+        return DeckCommentResponse.of(row, caller.getId(), replyCount);
     }
 
     // ---- Collaborators ----
@@ -566,7 +566,7 @@ public class DeckController {
      * outside users get a 401/403 from {@code getViewable}.
      */
     @GetMapping("/{id}/collaborators")
-    public List<DeckCollaboratorDTO> listCollaborators(
+    public List<DeckCollaboratorResponse> listCollaborators(
             @PathVariable String id,
             Authentication authentication) {
         Optional<User> caller = userService.resolveRegisteredUser(authentication);
@@ -581,7 +581,7 @@ public class DeckController {
      */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/collaborators")
-    public ResponseEntity<DeckCollaboratorDTO> inviteCollaborator(
+    public ResponseEntity<DeckCollaboratorResponse> inviteCollaborator(
             @PathVariable String id,
             @Valid @RequestBody InviteCollaboratorRequest request,
             Authentication authentication) {
@@ -592,10 +592,12 @@ public class DeckController {
                 .body(hydrateOne(row));
     }
 
-    /** Change an existing collaborator's role (owner only; cannot promote to OWNER). */
+    /**
+     * Change an existing collaborator's role (owner only; cannot promote to OWNER).
+     */
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/collaborators/{userId}")
-    public DeckCollaboratorDTO updateCollaboratorRole(
+    public DeckCollaboratorResponse updateCollaboratorRole(
             @PathVariable String id,
             @PathVariable String userId,
             @Valid @RequestBody UpdateCollaboratorRoleRequest request,
@@ -639,7 +641,7 @@ public class DeckController {
      */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/collaborators/transfer")
-    public List<DeckCollaboratorDTO> transferOwnership(
+    public List<DeckCollaboratorResponse> transferOwnership(
             @PathVariable String id,
             @Valid @RequestBody TransferOwnershipRequest request,
             Authentication authentication) {
@@ -649,8 +651,8 @@ public class DeckController {
         return deckCollaboratorService.listForDeckHydrated(id);
     }
 
-    private DeckCollaboratorDTO hydrateOne(DeckCollaborator row) {
-        List<DeckCollaboratorDTO> list = deckCollaboratorService.hydrate(List.of(row));
+    private DeckCollaboratorResponse hydrateOne(DeckCollaborator row) {
+        List<DeckCollaboratorResponse> list = deckCollaboratorService.hydrate(List.of(row));
         return list.isEmpty() ? null : list.get(0);
     }
 
@@ -662,7 +664,7 @@ public class DeckController {
      */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/elements")
-    public ResponseEntity<DeckDTO> addElement(
+    public ResponseEntity<DeckResponse> addElement(
             @PathVariable String id,
             @RequestBody DeckElement element,
             Authentication authentication) {
@@ -674,7 +676,7 @@ public class DeckController {
     /** Replace an element by id. */
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/elements/{elementId}")
-    public DeckDTO updateElement(
+    public DeckResponse updateElement(
             @PathVariable String id,
             @PathVariable String elementId,
             @RequestBody DeckElement element,
@@ -685,7 +687,7 @@ public class DeckController {
 
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{id}/elements/{elementId}")
-    public DeckDTO deleteElement(
+    public DeckResponse deleteElement(
             @PathVariable String id,
             @PathVariable String elementId,
             Authentication authentication) {
@@ -696,7 +698,7 @@ public class DeckController {
     /** Move an element to a new position within the deck. ?to=<index> */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/elements/{elementId}/move")
-    public DeckDTO moveElement(
+    public DeckResponse moveElement(
             @PathVariable String id,
             @PathVariable String elementId,
             @RequestParam("to") int to,
@@ -711,7 +713,7 @@ public class DeckController {
      */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/elements/{elementId}/options/{optionId}/move")
-    public DeckDTO moveMcqOption(
+    public DeckResponse moveMcqOption(
             @PathVariable String id,
             @PathVariable String elementId,
             @PathVariable String optionId,
@@ -735,7 +737,8 @@ public class DeckController {
         User caller = resolveUser(authentication);
         authorizationService.requireDeckEditable(id, caller);
         DeckAnalytics analytics = deckAnalyticsService.findByDeckId(id);
-        if (analytics != null) return analytics;
+        if (analytics != null)
+            return analytics;
         DeckAnalytics empty = new DeckAnalytics();
         empty.setDeckId(id);
         return empty;
@@ -776,7 +779,7 @@ public class DeckController {
      * internal images instead of nulls. Without this the editor would have to
      * carry old hydrated URLs forward in its cache.
      */
-    private DeckDTO hydrateAndWrap(Deck deck, User caller) {
+    private DeckResponse hydrateAndWrap(Deck deck, User caller) {
         deckImageHydrationService.hydrate(deck);
         deckTagHydrationService.hydrate(deck);
         boolean isFavorited = caller != null
@@ -789,7 +792,7 @@ public class DeckController {
                 ? null
                 : deckCollaboratorService.findRow(deck.getId(), caller.getId())
                         .map(DeckCollaborator::getRole).orElse(null);
-        return new DeckDTO(deck, isFavorited, myRating, myRole);
+        return new DeckResponse(deck, isFavorited, myRating, myRole);
     }
 
     private User resolveUser(Authentication authentication) {
@@ -802,7 +805,8 @@ public class DeckController {
      * in one query, or returns an empty set for unauthenticated callers.
      */
     private Set<String> resolveFavoritedDeckIds(Authentication authentication, List<Deck> decks) {
-        if (decks == null || decks.isEmpty()) return Set.of();
+        if (decks == null || decks.isEmpty())
+            return Set.of();
         return userService.resolveRegisteredUser(authentication)
                 .map(u -> deckFavoriteService.favoritedDeckIds(u.getId(), idsOf(decks)))
                 .orElse(Set.of());
@@ -810,7 +814,8 @@ public class DeckController {
 
     private static List<String> idsOf(List<Deck> decks) {
         List<String> ids = new ArrayList<>(decks.size());
-        for (Deck d : decks) ids.add(d.getId());
+        for (Deck d : decks)
+            ids.add(d.getId());
         return ids;
     }
 
@@ -823,9 +828,11 @@ public class DeckController {
     private Map<String, User> lookupUsers(List<String> userIds) {
         Set<String> unique = new HashSet<>(userIds);
         unique.removeIf(s -> s == null || s.isBlank());
-        if (unique.isEmpty()) return Map.of();
+        if (unique.isEmpty())
+            return Map.of();
         Map<String, User> byId = new HashMap<>(unique.size());
-        for (User u : userRepository.findAllById(unique)) byId.put(u.getId(), u);
+        for (User u : userRepository.findAllById(unique))
+            byId.put(u.getId(), u);
         return byId;
     }
 
@@ -842,7 +849,8 @@ public class DeckController {
                 deckId, org.springframework.data.domain.Pageable.unpaged());
         for (DeckRating r : all.getContent()) {
             int stars = r.getStars();
-            if (stars >= 1 && stars <= 5) buckets[stars - 1]++;
+            if (stars >= 1 && stars <= 5)
+                buckets[stars - 1]++;
         }
         return buckets;
     }

@@ -22,15 +22,17 @@
 package cephadex.brainflex.model.element;
 
 import java.util.List;
+import java.util.Set;
 
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.element.parts.McqOption;
 
 public record McqQuestion(
         String id,
         String prompt,
         List<McqOption> options,
-        List<String> correctOptionIds, // ids of every option that counts as correct
+        Set<String> correctOptionIds, // ids of every option that counts as correct
         // scoring (question-only — not chrome)
         int pointValue,
         Difficulty difficulty,

@@ -18,9 +18,9 @@
 // `relevanceFor(element)` below; the raw map keeps Slide's lobby flags true
 // so the chrome is reachable in principle.
 
-import type { DeckDto } from "@/store/BrainFlexApi";
+import type { DeckResponse } from "@/store/BrainFlexApi";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 export type ElementKind = DeckElement["kind"];
 
@@ -85,224 +85,225 @@ const BAR_AND_PIE: readonly ChartType[] = [
 
 const BAR_ONLY: readonly ChartType[] = ["BAR_HORIZONTAL", "BAR_VERTICAL"];
 
-export const EDIT_SLIDE_OPTION_RELEVANCE: Record<ElementKind, OptionRelevance> = {
-  // ---------------------------------------------------------------- Slide
-  // Non-interactive content. The lobby (slideKind=TITLE) is the only Slide
-  // that actually surfaces QR + join info — `relevanceFor` narrows that.
-  Slide: {
-    resultsDisplayType: false,
-    resultsCharts: [],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: false,
-    autoAdvance: true,
-    showQrCode: true,
-    showJoinInformation: true,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+export const EDIT_SLIDE_OPTION_RELEVANCE: Record<ElementKind, OptionRelevance> =
+  {
+    // ---------------------------------------------------------------- Slide
+    // Non-interactive content. The lobby (slideKind=TITLE) is the only Slide
+    // that actually surfaces QR + join info — `relevanceFor` narrows that.
+    Slide: {
+      resultsDisplayType: false,
+      resultsCharts: [],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: false,
+      autoAdvance: true,
+      showQrCode: true,
+      showJoinInformation: true,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- MCQ
-  // Counted picks: every chart type applies; percentage + multi-select +
-  // response gating all relevant.
-  McqQuestion: {
-    resultsDisplayType: true,
-    resultsCharts: [...ALL_CHARTS],
-    showResultsAsPercentage: true,
-    multipleSelectionsEnabled: true,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- MCQ
+    // Counted picks: every chart type applies; percentage + multi-select +
+    // response gating all relevant.
+    McqQuestion: {
+      resultsDisplayType: true,
+      resultsCharts: [...ALL_CHARTS],
+      showResultsAsPercentage: true,
+      multipleSelectionsEnabled: true,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Text
-  // Free-text answers — only a word cloud meaningfully visualizes the spread.
-  // Percentage doesn't apply (no buckets); multi-select isn't a thing.
-  TextQuestion: {
-    resultsDisplayType: true,
-    resultsCharts: ["WORD_CLOUD"],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Text
+    // Free-text answers — only a word cloud meaningfully visualizes the spread.
+    // Percentage doesn't apply (no buckets); multi-select isn't a thing.
+    TextQuestion: {
+      resultsDisplayType: true,
+      resultsCharts: ["WORD_CLOUD"],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Number
-  // Continuous answer space — bar charts work (binned), pie/word-cloud don't.
-  NumberQuestion: {
-    resultsDisplayType: true,
-    resultsCharts: [...BAR_ONLY],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Number
+    // Continuous answer space — bar charts work (binned), pie/word-cloud don't.
+    NumberQuestion: {
+      resultsDisplayType: true,
+      resultsCharts: [...BAR_ONLY],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Ranking
-  // The host UI shows an ordered list — bar/pie of "% who placed X first"
-  // makes sense; word cloud doesn't.
-  RankingQuestion: {
-    resultsDisplayType: true,
-    resultsCharts: [...BAR_AND_PIE],
-    showResultsAsPercentage: true,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Ranking
+    // The host UI shows an ordered list — bar/pie of "% who placed X first"
+    // makes sense; word cloud doesn't.
+    RankingQuestion: {
+      resultsDisplayType: true,
+      resultsCharts: [...BAR_AND_PIE],
+      showResultsAsPercentage: true,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Scales
-  // Likert-style — bar chart per statement is the natural viz. Pie + word
-  // cloud don't fit a multi-statement layout.
-  ScalesQuestion: {
-    resultsDisplayType: true,
-    resultsCharts: [...BAR_ONLY],
-    showResultsAsPercentage: true,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Scales
+    // Likert-style — bar chart per statement is the natural viz. Pie + word
+    // cloud don't fit a multi-statement layout.
+    ScalesQuestion: {
+      resultsDisplayType: true,
+      resultsCharts: [...BAR_ONLY],
+      showResultsAsPercentage: true,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Q&A
-  // Audience-driven open Q&A — submissions are curated/voted, no aggregate
-  // chart fits. `showResponses` still matters (private until host reveals).
-  QAndAQuestion: {
-    resultsDisplayType: false,
-    resultsCharts: [],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Q&A
+    // Audience-driven open Q&A — submissions are curated/voted, no aggregate
+    // chart fits. `showResponses` still matters (private until host reveals).
+    QAndAQuestion: {
+      resultsDisplayType: false,
+      resultsCharts: [],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Grid
-  // Cell-based selection — has its own grid heatmap viz; no chart picker.
-  // Multi-select toggles between single-pick and multi-cell answers.
-  GridQuestion: {
-    resultsDisplayType: false,
-    resultsCharts: [],
-    showResultsAsPercentage: true,
-    multipleSelectionsEnabled: true,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Grid
+    // Cell-based selection — has its own grid heatmap viz; no chart picker.
+    // Multi-select toggles between single-pick and multi-cell answers.
+    GridQuestion: {
+      resultsDisplayType: false,
+      resultsCharts: [],
+      showResultsAsPercentage: true,
+      multipleSelectionsEnabled: true,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- PlaceOnImage
-  // Spatial heatmap reveal — no chart picker. Single-pick by definition.
-  PlaceOnImageQuestion: {
-    resultsDisplayType: false,
-    resultsCharts: [],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- PlaceOnImage
+    // Spatial heatmap reveal — no chart picker. Single-pick by definition.
+    PlaceOnImageQuestion: {
+      resultsDisplayType: false,
+      resultsCharts: [],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- WordCloud
-  // Always renders as a word cloud — the chart picker is academic but kept
-  // available so the author can confirm the intended viz. No multi-select.
-  WordCloudQuestion: {
-    resultsDisplayType: true,
-    resultsCharts: ["WORD_CLOUD"],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- WordCloud
+    // Always renders as a word cloud — the chart picker is academic but kept
+    // available so the author can confirm the intended viz. No multi-select.
+    WordCloudQuestion: {
+      resultsDisplayType: true,
+      resultsCharts: ["WORD_CLOUD"],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Allocation
-  // Mentimeter "100 points" — distribution across buckets reads naturally as
-  // bar or pie. Percentage applies (allocations are share-of-total).
-  AllocationQuestion: {
-    resultsDisplayType: true,
-    resultsCharts: [...BAR_AND_PIE],
-    showResultsAsPercentage: true,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Allocation
+    // Mentimeter "100 points" — distribution across buckets reads naturally as
+    // bar or pie. Percentage applies (allocations are share-of-total).
+    AllocationQuestion: {
+      resultsDisplayType: true,
+      resultsCharts: [...BAR_AND_PIE],
+      showResultsAsPercentage: true,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Matching
-  // Reveal renders the correct pair list — no aggregate chart fits.
-  MatchingQuestion: {
-    resultsDisplayType: false,
-    resultsCharts: [],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
+    // ---------------------------------------------------------------- Matching
+    // Reveal renders the correct pair list — no aggregate chart fits.
+    MatchingQuestion: {
+      resultsDisplayType: false,
+      resultsCharts: [],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
 
-  // ---------------------------------------------------------------- Drawing
-  // Open canvas — reveals as a grid of submitted drawings; no chart picker.
-  DrawingQuestion: {
-    resultsDisplayType: false,
-    resultsCharts: [],
-    showResultsAsPercentage: false,
-    multipleSelectionsEnabled: false,
-    showResponses: true,
-    autoAdvance: true,
-    showQrCode: false,
-    showJoinInformation: false,
-    heading: true,
-    participantInformation: true,
-    titleLabel: true,
-  },
-};
+    // ---------------------------------------------------------------- Drawing
+    // Open canvas — reveals as a grid of submitted drawings; no chart picker.
+    DrawingQuestion: {
+      resultsDisplayType: false,
+      resultsCharts: [],
+      showResultsAsPercentage: false,
+      multipleSelectionsEnabled: false,
+      showResponses: true,
+      autoAdvance: true,
+      showQrCode: false,
+      showJoinInformation: false,
+      heading: true,
+      participantInformation: true,
+      titleLabel: true,
+    },
+  };
 
 /** Narrowed relevance for a concrete element. Layers slideKind on top of the
  * raw per-kind map: only the lobby Slide (slideKind=TITLE) actually surfaces

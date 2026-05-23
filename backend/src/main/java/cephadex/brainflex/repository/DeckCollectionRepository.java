@@ -12,8 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.DeckCollection;
-
+import cephadex.brainflex.model.deck.DeckCollection;
 public interface DeckCollectionRepository extends MongoRepository<DeckCollection, String> {
 
     Page<DeckCollection> findAllByOwnerUserId(String ownerUserId, Pageable pageable);

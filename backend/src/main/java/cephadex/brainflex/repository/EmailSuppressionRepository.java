@@ -11,8 +11,7 @@ import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.EmailSuppression;
-
+import cephadex.brainflex.model.user.EmailSuppression;
 public interface EmailSuppressionRepository extends MongoRepository<EmailSuppression, String> {
 
     Optional<EmailSuppression> findByEmailLower(String emailLower);

@@ -17,7 +17,7 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -26,10 +26,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import cephadex.brainflex.model.InteractiveSessionInvite;
-import cephadex.brainflex.model.ScheduledInteractiveSession;
-import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.ScheduleStatus;
+import cephadex.brainflex.model.session.InteractiveSessionInvite;
+import cephadex.brainflex.model.session.ScheduledInteractiveSession;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
 import cephadex.brainflex.repository.ScheduledInteractiveSessionRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -49,10 +49,10 @@ public class ScheduledInteractiveSessionScheduler {
     private final ApplicationEventPublisher events;
 
     public ScheduledInteractiveSessionScheduler(ScheduledInteractiveSessionRepository scheduleRepository,
-                                                InteractiveSessionInviteRepository inviteRepository,
-                                                UserRepository userRepository,
-                                                ScheduledInteractiveSessionService service,
-                                                ApplicationEventPublisher events) {
+            InteractiveSessionInviteRepository inviteRepository,
+            UserRepository userRepository,
+            ScheduledInteractiveSessionService service,
+            ApplicationEventPublisher events) {
         this.scheduleRepository = scheduleRepository;
         this.inviteRepository = inviteRepository;
         this.userRepository = userRepository;
@@ -67,22 +67,26 @@ public class ScheduledInteractiveSessionScheduler {
     }
 
     void sendStartingSoonReminders() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime soonCutoff = now.plus(REMINDER_LEAD);
+        Instant now = Instant.now();
+        Instant soonCutoff = now.plus(REMINDER_LEAD);
         List<ScheduledInteractiveSession> upcoming = scheduleRepository
                 .findByStatusAndScheduledStartAtBefore(ScheduleStatus.SCHEDULED, soonCutoff);
         for (ScheduledInteractiveSession schedule : upcoming) {
             // Skip rows already in the boot window (handled by bootDueSessions
             // below) and rows that have already been reminded for this run.
-            if (schedule.getScheduledStartAt() == null) continue;
-            if (schedule.getScheduledStartAt().isBefore(now)) continue;
-            if (schedule.getStartingSoonNotifiedAt() != null) continue;
+            if (schedule.getScheduledStartAt() == null)
+                continue;
+            if (schedule.getScheduledStartAt().isBefore(now))
+                continue;
+            if (schedule.getStartingSoonNotifiedAt() != null)
+                continue;
             try {
                 List<InteractiveSessionInvite> invites = inviteRepository
                         .findByScheduledInteractiveSessionId(schedule.getId());
                 for (InteractiveSessionInvite invite : invites) {
                     String userId = resolveInviteeUserId(invite);
-                    if (userId == null) continue;
+                    if (userId == null)
+                        continue;
                     events.publishEvent(new NotificationEvents.ScheduledInteractiveSessionBootingEvent(
                             schedule.getId(), userId));
                 }
@@ -95,10 +99,11 @@ public class ScheduledInteractiveSessionScheduler {
     }
 
     void bootDueSessions() {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         List<ScheduledInteractiveSession> due = scheduleRepository
                 .findByStatusAndScheduledStartAtBefore(ScheduleStatus.SCHEDULED, now);
-        if (due.isEmpty()) return;
+        if (due.isEmpty())
+            return;
 
         for (ScheduledInteractiveSession schedule : due) {
             try {
@@ -109,11 +114,15 @@ public class ScheduledInteractiveSessionScheduler {
         }
     }
 
-    /** Resolve a registered userId from an invite — prefer the redeemed id,
-     *  fall back to email match. Pending / unknown emails return null. */
+    /**
+     * Resolve a registered userId from an invite — prefer the redeemed id,
+     * fall back to email match. Pending / unknown emails return null.
+     */
     private String resolveInviteeUserId(InteractiveSessionInvite invite) {
-        if (invite.getResolvedUserId() != null) return invite.getResolvedUserId();
-        if (invite.getEmail() == null) return null;
+        if (invite.getResolvedUserId() != null)
+            return invite.getResolvedUserId();
+        if (invite.getEmail() == null)
+            return null;
         return userRepository.findByEmail(invite.getEmail())
                 .map(User::getId)
                 .orElse(null);

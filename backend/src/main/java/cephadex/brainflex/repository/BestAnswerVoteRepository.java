@@ -8,8 +8,7 @@ import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.BestAnswerVote;
-
+import cephadex.brainflex.model.session.BestAnswerVote;
 public interface BestAnswerVoteRepository extends MongoRepository<BestAnswerVote, String> {
 
     List<BestAnswerVote> findByInteractiveSessionIdAndElementId(String interactiveSessionId, String elementId);

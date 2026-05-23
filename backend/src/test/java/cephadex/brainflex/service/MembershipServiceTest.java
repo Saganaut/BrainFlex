@@ -14,13 +14,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 
-import cephadex.brainflex.model.Membership;
-import cephadex.brainflex.model.User;
-
+import cephadex.brainflex.model.org.Membership;
+import cephadex.brainflex.model.user.User;
 class MembershipServiceTest {
 
     private final MembershipService service = new MembershipService();
@@ -67,7 +66,7 @@ class MembershipServiceTest {
         // gate must treat that as zero so the user isn't gated after the
         // window rolled over.
         User u = userWithLimit(5, 99);
-        u.getMembership().setMonthlyCountPeriodStart(LocalDateTime.now().minusMonths(2));
+        u.getMembership().setMonthlyCountPeriodStart(Instant.parse("2020-01-01T00:00:00Z"));
         assertTrue(service.canStartInteractiveSession(u));
     }
 
@@ -75,16 +74,16 @@ class MembershipServiceTest {
     void monthlyCountFor_StaleStart_ReturnsZero() {
         Membership m = new Membership();
         m.setMonthlyInteractiveSessionCount(42);
-        m.setMonthlyCountPeriodStart(LocalDateTime.of(2020, 1, 1, 0, 0));
-        assertEquals(0, service.monthlyCountFor(m, LocalDateTime.of(2026, 5, 21, 12, 0)));
+        m.setMonthlyCountPeriodStart(Instant.parse("2020-01-01T00:00:00Z"));
+        assertEquals(0, service.monthlyCountFor(m, Instant.parse("2026-05-21T12:00:00Z")));
     }
 
     @Test
     void monthlyCountFor_SameMonth_ReturnsStoredCount() {
         Membership m = new Membership();
         m.setMonthlyInteractiveSessionCount(7);
-        m.setMonthlyCountPeriodStart(LocalDateTime.of(2026, 5, 1, 0, 0));
-        assertEquals(7, service.monthlyCountFor(m, LocalDateTime.of(2026, 5, 21, 12, 0)));
+        m.setMonthlyCountPeriodStart(Instant.parse("2026-05-01T00:00:00Z"));
+        assertEquals(7, service.monthlyCountFor(m, Instant.parse("2026-05-21T12:00:00Z")));
     }
 
     private static User userWithLimit(int limit, int currentCount) {
@@ -92,7 +91,7 @@ class MembershipServiceTest {
         Membership m = new Membership();
         m.setMonthlyInteractiveSessionLimit(limit);
         m.setMonthlyInteractiveSessionCount(currentCount);
-        m.setMonthlyCountPeriodStart(LocalDateTime.now());
+        m.setMonthlyCountPeriodStart(Instant.now());
         u.setMembership(m);
         return u;
     }

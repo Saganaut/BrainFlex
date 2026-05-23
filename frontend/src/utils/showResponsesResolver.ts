@@ -12,8 +12,8 @@
 // Keep the two in sync — the per-format default below mirrors the spec in
 // `z-docs/to-do/24-session-format-and-runtime-cascades/README.md`.
 import type {
-  DeckDto,
-  InteractiveSessionDto,
+  DeckResponse,
+  InteractiveSessionResponse,
   InteractiveSessionSettings,
 } from "@/store/BrainFlexApi";
 
@@ -23,9 +23,14 @@ export type SessionFormat = "GAME" | "PRESENTATION";
 // Only Slide carries a per-element `showResponses` override (chunk 24 + 25);
 // other kinds inherit at INHERIT and the resolver falls through to deck /
 // session / format defaults.
-type ElementWithShowResponses = { showResponses?: ShowResponsesMode };
+interface ElementWithShowResponses {
+  showResponses?: ShowResponsesMode;
+}
 
-const FORMAT_DEFAULT: Record<SessionFormat, "INSTANT" | "ON_CLICK" | "PRIVATE"> = {
+const FORMAT_DEFAULT: Record<
+  SessionFormat,
+  "INSTANT" | "ON_CLICK" | "PRIVATE"
+> = {
   GAME: "INSTANT",
   PRESENTATION: "ON_CLICK",
 };
@@ -65,8 +70,8 @@ export const resolveShowResponses = ({
  * carry `defaultShowResponses` independently).
  */
 export const resolveShowResponsesFor = (
-  session: InteractiveSessionDto | undefined,
-  deck: Pick<DeckDto, "defaultShowResponses"> | undefined,
+  session: InteractiveSessionResponse | undefined,
+  deck: Pick<DeckResponse, "defaultShowResponses"> | undefined,
   element: ElementWithShowResponses | undefined,
 ): "INSTANT" | "ON_CLICK" | "PRIVATE" => {
   const settings: InteractiveSessionSettings | undefined = session?.settings;

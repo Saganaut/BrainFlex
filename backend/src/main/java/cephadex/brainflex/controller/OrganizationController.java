@@ -18,9 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.OrganizationDTO;
-import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.CreateOrganizationRequest;
+import cephadex.brainflex.dto.JoinByCodeRequest;
+import cephadex.brainflex.dto.JoinOrganizationRequest;
+import cephadex.brainflex.dto.OrganizationResponse;
+import cephadex.brainflex.dto.UpdateOrganizationRequest;
+import cephadex.brainflex.model.org.Organization;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.OrganizationService;
@@ -48,18 +52,19 @@ public class OrganizationController {
     /** Returns every organization the caller belongs to (possibly empty). */
     @GetMapping("/mine")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<OrganizationDTO.OrganizationResponse>> listMyOrgs(Authentication authentication) {
+    public ResponseEntity<List<OrganizationResponse>> listMyOrgs(Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         User user = userOpt.get();
         List<String> ids = user.getOrganizationIds();
-        if (ids == null || ids.isEmpty()) return ResponseEntity.ok(List.of());
+        if (ids == null || ids.isEmpty())
+            return ResponseEntity.ok(List.of());
 
-        List<OrganizationDTO.OrganizationResponse> response =
-                organizationRepository.findAllById(ids).stream()
-                        .map(OrganizationDTO.OrganizationResponse::new)
-                        .toList();
+        List<OrganizationResponse> response = organizationRepository.findAllById(ids).stream()
+                .map(OrganizationResponse::new)
+                .toList();
         return ResponseEntity.ok(response);
     }
 
@@ -69,11 +74,12 @@ public class OrganizationController {
      */
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OrganizationDTO.OrganizationResponse> createOrg(
-            @RequestBody OrganizationDTO.CreateOrganizationRequest request,
+    public ResponseEntity<OrganizationResponse> createOrg(
+            @RequestBody CreateOrganizationRequest request,
             Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (request.name() == null || request.name().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization name is required");
@@ -90,7 +96,7 @@ public class OrganizationController {
         userRepository.save(user);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new OrganizationDTO.OrganizationResponse(saved));
+                .body(new OrganizationResponse(saved));
     }
 
     /**
@@ -101,14 +107,14 @@ public class OrganizationController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OrganizationDTO.OrganizationResponse> updateOrg(
+    public ResponseEntity<OrganizationResponse> updateOrg(
             @PathVariable String id,
-            @Valid @RequestBody OrganizationDTO.UpdateOrganizationRequest request,
+            @Valid @RequestBody UpdateOrganizationRequest request,
             Authentication authentication) {
         User caller = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
         Organization updated = organizationService.update(id, caller, request);
-        return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(updated));
+        return ResponseEntity.ok(new OrganizationResponse(updated));
     }
 
     /**
@@ -118,13 +124,13 @@ public class OrganizationController {
      */
     @PostMapping("/{id}/invite-code/rotate")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OrganizationDTO.OrganizationResponse> rotateInviteCode(
+    public ResponseEntity<OrganizationResponse> rotateInviteCode(
             @PathVariable String id,
             Authentication authentication) {
         User caller = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
         Organization rotated = organizationService.rotateInviteCode(id, caller);
-        return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(rotated));
+        return ResponseEntity.ok(new OrganizationResponse(rotated));
     }
 
     /**
@@ -133,11 +139,12 @@ public class OrganizationController {
      */
     @PostMapping("/join")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OrganizationDTO.OrganizationResponse> joinOrg(
-            @RequestBody OrganizationDTO.JoinOrganizationRequest request,
+    public ResponseEntity<OrganizationResponse> joinOrg(
+            @RequestBody JoinOrganizationRequest request,
             Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (request.organizationId() == null || request.organizationId().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Organization ID is required");
@@ -154,7 +161,7 @@ public class OrganizationController {
             organizationRepository.save(org);
         }
 
-        return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(org));
+        return ResponseEntity.ok(new OrganizationResponse(org));
     }
 
     /**
@@ -164,15 +171,15 @@ public class OrganizationController {
      */
     @PostMapping("/join-by-code")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OrganizationDTO.OrganizationResponse> joinByCode(
-            @RequestBody OrganizationDTO.JoinByCodeRequest request,
+    public ResponseEntity<OrganizationResponse> joinByCode(
+            @RequestBody JoinByCodeRequest request,
             Authentication authentication) {
         User caller = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Registered account required"));
         Organization joined = organizationService.joinByCode(
                 request == null ? null : request.inviteCode(),
                 caller);
-        return ResponseEntity.ok(new OrganizationDTO.OrganizationResponse(joined));
+        return ResponseEntity.ok(new OrganizationResponse(joined));
     }
 
     /** Removes the caller from a specific organization they belong to. */
@@ -180,7 +187,8 @@ public class OrganizationController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> leaveOrg(@PathVariable String id, Authentication authentication) {
         Optional<User> userOpt = userService.resolveRegisteredUser(authentication);
-        if (userOpt.isEmpty()) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (userOpt.isEmpty())
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         User user = userOpt.get();
         List<String> ids = user.getOrganizationIds();
@@ -209,7 +217,8 @@ public class OrganizationController {
             ids = new ArrayList<>();
             user.setOrganizationIds(ids);
         }
-        if (ids.contains(orgId)) return false;
+        if (ids.contains(orgId))
+            return false;
         ids.add(orgId);
         return true;
     }

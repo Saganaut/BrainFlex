@@ -1,5 +1,5 @@
 /**
- * Spring Data repository for {@link cephadex.brainflex.model.GameHistoryEntry} rows.
+ * Spring Data repository for {@link cephadex.brainflex.model.session.GameHistoryEntry} rows.
  *
  * The {@code (userId, interactiveSessionId)} compound unique index doubles as
  * the de-dup guarantee: a second insert for the same pair throws
@@ -14,8 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.GameHistoryEntry;
-
+import cephadex.brainflex.model.session.GameHistoryEntry;
 public interface GameHistoryRepository extends MongoRepository<GameHistoryEntry, String> {
 
     Page<GameHistoryEntry> findAllByUserId(String userId, Pageable pageable);

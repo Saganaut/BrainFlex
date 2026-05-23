@@ -12,8 +12,8 @@ package cephadex.brainflex.service;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
-import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.GridAnswer;
 import cephadex.brainflex.model.answer.MatchingAnswer;
@@ -28,7 +28,6 @@ import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.GridQuestion;
-import cephadex.brainflex.model.element.MatchingPair;
 import cephadex.brainflex.model.element.MatchingQuestion;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
@@ -39,6 +38,7 @@ import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.TextQuestion;
 import cephadex.brainflex.model.element.WordCloudQuestion;
+import cephadex.brainflex.model.element.parts.MatchingPair;
 import cephadex.brainflex.model.enums.MatchingScoring;
 import cephadex.brainflex.model.enums.PlaceScoring;
 import cephadex.brainflex.model.enums.RankingScoring;
@@ -85,7 +85,8 @@ public final class ElementScorer {
         if (submitted == null || submitted.isEmpty())
             return Result.ZERO;
         // Reject malformed payloads: single-select MCQs can't accept multi picks,
-        // and multi-select MCQs honour the per-question maxSelections cap (0 = unlimited).
+        // and multi-select MCQs honour the per-question maxSelections cap (0 =
+        // unlimited).
         if (!q.allowMultipleSelect() && submitted.size() > 1)
             return Result.ZERO;
         if (q.allowMultipleSelect() && q.maxSelections() > 0 && submitted.size() > q.maxSelections())
@@ -99,11 +100,11 @@ public final class ElementScorer {
      * counts. Empty correct set = unscored. Caller has already rejected
      * malformed submissions (multi-pick on a single-select question, over-cap).
      */
-    private static Result scoreOptionPicks(List<String> submitted, List<String> correctIds, int points) {
+    private static Result scoreOptionPicks(List<String> submitted, Set<String> correctIds, int points) {
         if (correctIds == null || correctIds.isEmpty())
             return Result.ZERO;
         if (correctIds.size() == 1) {
-            boolean correct = submitted.contains(correctIds.get(0));
+            boolean correct = submitted.contains(correctIds.iterator().next());
             return new Result(correct, correct ? points : 0);
         }
         boolean correct = submitted.size() == correctIds.size()
@@ -163,13 +164,15 @@ public final class ElementScorer {
             return n;
         int[] prev = new int[m + 1];
         int[] curr = new int[m + 1];
-        for (int j = 0; j <= m; j++) prev[j] = j;
+        for (int j = 0; j <= m; j++)
+            prev[j] = j;
         for (int i = 1; i <= n; i++) {
             curr[0] = i;
             int rowMin = curr[0];
             int from = Math.max(1, i - cap);
             int to = Math.min(m, i + cap);
-            if (from > 1) curr[from - 1] = cap + 1;
+            if (from > 1)
+                curr[from - 1] = cap + 1;
             for (int j = from; j <= to; j++) {
                 int cost = left.charAt(i - 1) == right.charAt(j - 1) ? 0 : 1;
                 int del = prev[j] + 1;
@@ -177,9 +180,11 @@ public final class ElementScorer {
                 int sub = prev[j - 1] + cost;
                 int best = Math.min(del, Math.min(ins, sub));
                 curr[j] = best;
-                if (best < rowMin) rowMin = best;
+                if (best < rowMin)
+                    rowMin = best;
             }
-            if (to < m) curr[to + 1] = cap + 1;
+            if (to < m)
+                curr[to + 1] = cap + 1;
             if (rowMin > cap)
                 return cap + 1;
             int[] tmp = prev;

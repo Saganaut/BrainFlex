@@ -1,5 +1,5 @@
 /**
- * Discriminator for {@link cephadex.brainflex.model.Notification}.
+ * Discriminator for {@link cephadex.brainflex.model.user.Notification}.
  *
  * The kind tells the renderer which icon, copy template, and click-target shape
  * to use, and lets the user mute notifications selectively when the
@@ -26,7 +26,7 @@ public enum NotificationKind {
     COLLAB_INVITE,
     /** A collaborator accepted an invite on a deck this user owns. */
     COLLAB_ACCEPTED,
-    /** A new {@link cephadex.brainflex.model.UserAchievement} was awarded to this user. */
+    /** A new {@link cephadex.brainflex.model.user.UserAchievement} was awarded to this user. */
     ACHIEVEMENT,
     /** Reserved — an org-membership invite was sent to this user. */
     ORG_INVITE,

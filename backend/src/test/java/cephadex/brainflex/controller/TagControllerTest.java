@@ -10,7 +10,7 @@
  */
 package cephadex.brainflex.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,9 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import cephadex.brainflex.config.AdminProperties;
-import cephadex.brainflex.dto.TagDTO;
-import cephadex.brainflex.model.Tag;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.CreateTagRequest;
+import cephadex.brainflex.model.deck.Tag;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.TagService;
 import cephadex.brainflex.service.UserService;
 
@@ -125,13 +125,13 @@ class TagControllerTest {
     @Test
     void createTag_WhenAdmin_Returns201() throws Exception {
         when(adminProperties.isAdmin(callerUser)).thenReturn(true);
-        when(tagService.create(any(TagDTO.CreateTagRequest.class), any()))
+        when(tagService.create(any(CreateTagRequest.class), any()))
                 .thenAnswer(inv -> {
-                    TagDTO.CreateTagRequest req = inv.getArgument(0);
+                    CreateTagRequest req = inv.getArgument(0);
                     return curatedTag(req.id() != null ? req.id() : "history", req.displayName());
                 });
 
-        TagDTO.CreateTagRequest body = new TagDTO.CreateTagRequest(
+        CreateTagRequest body = new CreateTagRequest(
                 "history", "History", null, null, null, true);
 
         mockMvc.perform(post("/api/tags")
@@ -144,9 +144,9 @@ class TagControllerTest {
     @Test
     void createTag_WhenNotAdmin_ForcesCuratedFalseAndReturns201() throws Exception {
         when(adminProperties.isAdmin(callerUser)).thenReturn(false);
-        when(tagService.create(any(TagDTO.CreateTagRequest.class), any()))
+        when(tagService.create(any(CreateTagRequest.class), any()))
                 .thenAnswer(inv -> {
-                    TagDTO.CreateTagRequest req = inv.getArgument(0);
+                    CreateTagRequest req = inv.getArgument(0);
                     // The controller must pass curated=false even though the
                     // request body asked for true.
                     assertThat(req.curated()).isEqualTo(false);
@@ -154,12 +154,12 @@ class TagControllerTest {
                     tag.setId(req.id() != null ? req.id() : "frontend-tips");
                     tag.setDisplayName(req.displayName());
                     tag.setCurated(false);
-                    tag.setCreatedAt(LocalDateTime.now());
-                    tag.setUpdatedAt(LocalDateTime.now());
+                    tag.setCreatedAt(Instant.now());
+                    tag.setUpdatedAt(Instant.now());
                     return tag;
                 });
 
-        TagDTO.CreateTagRequest body = new TagDTO.CreateTagRequest(
+        CreateTagRequest body = new CreateTagRequest(
                 null, "Frontend Tips", null, null, null, true);
 
         mockMvc.perform(post("/api/tags")
@@ -191,8 +191,8 @@ class TagControllerTest {
         tag.setId(id);
         tag.setDisplayName(name);
         tag.setCurated(true);
-        tag.setCreatedAt(LocalDateTime.now());
-        tag.setUpdatedAt(LocalDateTime.now());
+        tag.setCreatedAt(Instant.now());
+        tag.setUpdatedAt(Instant.now());
         return tag;
     }
 }

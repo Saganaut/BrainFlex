@@ -1,12 +1,19 @@
 import { useSession } from "@/pages/SessionPage/useSession";
 import styles from "./SessionRoundTracker.module.css";
+import { SessionRoundThumbnail } from "./SessionRoundThumbnail";
 const SessionRoundTracker = () => {
-  const { interactiveSession, currentDeck } = useSession();
-  console.log("current deck", currentDeck);
+  const { interactiveSession } = useSession();
+  console.log("interactiveSession", interactiveSession);
   return (
     <div className={styles.sessionRoundTracker}>
-      {currentDeck.elements?.map((element) => {
-        return <div key={element.id}>{element.id}</div>;
+      {interactiveSession.deckSnapshot?.map((element, index) => {
+        return (
+          <SessionRoundThumbnail
+            isActive={index === interactiveSession.currentRound}
+            key={element.id}
+            element={element}
+          />
+        );
       })}
     </div>
   );

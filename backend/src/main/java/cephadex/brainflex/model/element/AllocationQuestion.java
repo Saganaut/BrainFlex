@@ -17,6 +17,7 @@ import java.util.List;
 
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.element.parts.McqOption;
 
 public record AllocationQuestion(
         String id,

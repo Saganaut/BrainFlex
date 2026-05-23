@@ -19,12 +19,15 @@ const JoinWithCode = () => {
   const [code, setCode] = useState("");
   const [joinGame, { isLoading, error }] = useJoinByRoomCodeMutation();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     const trimmed = code.trim().toUpperCase();
     if (trimmed.length !== ROOM_CODE_LENGTH) return;
     try {
-      await joinGame({ roomCode: trimmed }).unwrap();
+      await joinGame({
+        roomCode: trimmed,
+        joinInteractiveSessionRequest: {},
+      }).unwrap();
       await navigate({
         to: "/games/$roomCode/lobby",
         params: { roomCode: trimmed },

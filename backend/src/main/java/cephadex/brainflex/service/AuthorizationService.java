@@ -19,29 +19,29 @@
  */
 package cephadex.brainflex.service;
 
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
-import java.util.Optional;
-
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckCollaborator;
-import cephadex.brainflex.model.GalleryImage;
-import cephadex.brainflex.model.MediaAsset;
-import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.Theme;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;
+import cephadex.brainflex.model.media.GalleryImage;
+import cephadex.brainflex.model.media.MediaAsset;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.theme.Theme;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GalleryImageRepository;
+import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.MediaAssetRepository;
 import cephadex.brainflex.repository.OrganizationRepository;
-import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.ThemeRepository;
+import cephadex.brainflex.model.org.Organization;
+import cephadex.brainflex.model.user.User;
 
 @Service
 public class AuthorizationService {
@@ -83,7 +83,8 @@ public class AuthorizationService {
         if (deck.isSystem()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "System decks are not editable");
         }
-        if (canEdit(deck, caller)) return deck;
+        if (canEdit(deck, caller))
+            return deck;
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have edit access to this deck");
     }
 
@@ -94,7 +95,8 @@ public class AuthorizationService {
         if (deck.isSystem()) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "System decks have no owner");
         }
-        if (isOwner(deck, caller)) return deck;
+        if (isOwner(deck, caller))
+            return deck;
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the deck owner can do that");
     }
 
@@ -104,17 +106,20 @@ public class AuthorizationService {
      * require a collaborator row OR the legacy creator pointer.
      */
     public boolean canViewDeck(Deck deck, User caller) {
-        if (deck == null) return false;
+        if (deck == null)
+            return false;
         var visibility = deck.getVisibility();
         if (visibility == cephadex.brainflex.model.enums.DeckVisibility.PUBLIC
                 || visibility == cephadex.brainflex.model.enums.DeckVisibility.UNLISTED) {
             return true;
         }
-        if (caller == null) return false;
+        if (caller == null)
+            return false;
         if (visibility == cephadex.brainflex.model.enums.DeckVisibility.ORG) {
             String orgId = deck.getOrganizationId();
             var memberships = caller.getOrganizationIds();
-            if (orgId != null && memberships != null && memberships.contains(orgId)) return true;
+            if (orgId != null && memberships != null && memberships.contains(orgId))
+                return true;
         }
         return hasAnyRole(deck, caller)
                 || (caller.getId() != null && caller.getId().equals(deck.getCreatorUserId()));
@@ -131,7 +136,8 @@ public class AuthorizationService {
     }
 
     private boolean canEdit(Deck deck, User caller) {
-        if (caller == null || caller.getId() == null) return false;
+        if (caller == null || caller.getId() == null)
+            return false;
         Optional<DeckCollaborator> row = deckCollaboratorRepository
                 .findByDeckIdAndUserId(deck.getId(), caller.getId());
         if (row.isPresent()) {
@@ -148,10 +154,12 @@ public class AuthorizationService {
     }
 
     private boolean isOwner(Deck deck, User caller) {
-        if (caller == null || caller.getId() == null) return false;
+        if (caller == null || caller.getId() == null)
+            return false;
         Optional<DeckCollaborator> row = deckCollaboratorRepository
                 .findByDeckIdAndUserId(deck.getId(), caller.getId());
-        if (row.isPresent()) return row.get().getRole() == CollaboratorRole.OWNER;
+        if (row.isPresent())
+            return row.get().getRole() == CollaboratorRole.OWNER;
         if (deckCollaboratorRepository.findByDeckId(deck.getId()).isEmpty()) {
             return caller.getId().equals(deck.getCreatorUserId());
         }
@@ -159,7 +167,8 @@ public class AuthorizationService {
     }
 
     private boolean hasAnyRole(Deck deck, User caller) {
-        if (caller == null || caller.getId() == null) return false;
+        if (caller == null || caller.getId() == null)
+            return false;
         return deckCollaboratorRepository
                 .findByDeckIdAndUserId(deck.getId(), caller.getId())
                 .isPresent();
@@ -204,11 +213,13 @@ public class AuthorizationService {
     public GalleryImage requireGalleryImageVisible(String imageId, User caller) {
         GalleryImage image = galleryImageRepository.findById(imageId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gallery image not found"));
-        if (caller.getId().equals(image.getOwnerId())) return image;
+        if (caller.getId().equals(image.getOwnerId()))
+            return image;
         String orgId = image.getOrganizationId();
         if (orgId != null && !orgId.isBlank()) {
             List<String> memberships = caller.getOrganizationIds();
-            if (memberships != null && memberships.contains(orgId)) return image;
+            if (memberships != null && memberships.contains(orgId))
+                return image;
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this gallery image");
     }
@@ -225,11 +236,13 @@ public class AuthorizationService {
     public MediaAsset requireMediaAssetVisible(String assetId, User caller) {
         MediaAsset asset = mediaAssetRepository.findById(assetId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media asset not found"));
-        if (caller.getId().equals(asset.getOwnerId())) return asset;
+        if (caller.getId().equals(asset.getOwnerId()))
+            return asset;
         String orgId = asset.getOrganizationId();
         if (orgId != null && !orgId.isBlank()) {
             List<String> memberships = caller.getOrganizationIds();
-            if (memberships != null && memberships.contains(orgId)) return asset;
+            if (memberships != null && memberships.contains(orgId))
+                return asset;
         }
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this media asset");
     }

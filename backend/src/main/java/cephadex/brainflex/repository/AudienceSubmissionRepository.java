@@ -7,8 +7,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.AudienceSubmission;
-
+import cephadex.brainflex.model.session.AudienceSubmission;
 public interface AudienceSubmissionRepository extends MongoRepository<AudienceSubmission, String> {
 
     List<AudienceSubmission> findByInteractiveSessionIdAndElementId(String interactiveSessionId, String elementId);

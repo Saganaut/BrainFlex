@@ -27,7 +27,7 @@ import {
   useMoveMcqOptionMutation,
   useUpdateElementMutation,
   type AllocationQuestion,
-  type DeckDto,
+  type DeckResponse,
   type DrawingQuestion,
   type GridQuestion,
   type MatchingPair,
@@ -56,7 +56,7 @@ import {
   type SlideBlockUnion,
 } from "@/store/slideBlockTypes";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 /** Shared option-count bounds for MCQ-shaped questions. Enforced inside
  *  the hooks so out-of-bounds calls are silent no-ops rather than corrupt
@@ -120,9 +120,9 @@ const useElementEditor = <T extends DeckElement>(
         ...(element.chrome ?? {}),
         ...(existingChrome ?? {}),
         lastEditedByUserId: currentUserId,
-        version: ((existingChrome?.version ?? element.chrome?.version) ?? 0) + 1,
+        version: (existingChrome?.version ?? element.chrome?.version ?? 0) + 1,
       },
-    } as T;
+    };
     void updateElement({
       id: deckId,
       elementId: element.id,
@@ -599,8 +599,10 @@ const MAX_SCALE_STATEMENTS = 10;
  *  `schedule` / `commit` / `flush` API still applies for top-level fields
  *  (prompt, scoring, scaleMin, ...); the collection-only ops add bounds-
  *  aware add/remove/update for the nested items. */
-interface CollectionElementEditorApi<T extends DeckElement, Item>
-  extends FlatElementEditorApi<T> {
+interface CollectionElementEditorApi<
+  T extends DeckElement,
+  Item,
+> extends FlatElementEditorApi<T> {
   /** Latest items array, read straight from the deck cache. */
   items: Item[];
   /** False at the max-items bound — bind to your add button's disabled. */
@@ -763,10 +765,7 @@ const useMatchingEditor = (
 
 /** Per-pair editor for Matching. Same shape as `useMcqOptionEditor` — `pair`,
  *  `parent`, scoped schedule/commit/remove, index, canRemove. */
-const useMatchingPairEditor = (
-  pairId: string | undefined,
-  delay = 500,
-) => {
+const useMatchingPairEditor = (pairId: string | undefined, delay = 500) => {
   const editor = useMatchingEditor(delay);
   const index = pairId ? editor.items.findIndex((p) => p.id === pairId) : -1;
   const pair = index >= 0 ? editor.items[index] : undefined;
@@ -852,10 +851,7 @@ const useRankingEditor = (
 };
 
 /** Per-item editor for Ranking. */
-const useRankingItemEditor = (
-  itemId: string | undefined,
-  delay = 500,
-) => {
+const useRankingItemEditor = (itemId: string | undefined, delay = 500) => {
   const editor = useRankingEditor(delay);
   const index = itemId ? editor.items.findIndex((i) => i.id === itemId) : -1;
   const item = index >= 0 ? editor.items[index] : undefined;

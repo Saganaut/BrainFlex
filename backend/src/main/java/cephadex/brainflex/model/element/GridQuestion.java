@@ -11,6 +11,7 @@ import java.util.Set;
 
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.element.parts.GridCellsConfig;
 
 public record GridQuestion(
         String id,

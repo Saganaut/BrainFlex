@@ -31,8 +31,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
-import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.UserRole;
+import cephadex.brainflex.model.user.User;
 
 @Configuration
 @ConditionalOnProperty(name = "migrate.user-roles", havingValue = "true")

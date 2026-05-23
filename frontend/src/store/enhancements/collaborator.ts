@@ -11,10 +11,7 @@
  *
  * Imported for its side effect via the `../apiEnhancements` barrel.
  */
-import {
-  BrainFlex,
-  type DeckCollaboratorDto,
-} from "../BrainFlexApi";
+import { BrainFlex, type DeckCollaboratorResponse } from "../BrainFlexApi";
 import type { WithApiQueries } from "./types";
 
 interface CollaboratorSyncApi {
@@ -45,14 +42,16 @@ const upsertCollaboratorRow = async (
 ) => {
   try {
     const { data } = await api.queryFulfilled;
-    const next = data as DeckCollaboratorDto;
+    const next = data as DeckCollaboratorResponse;
     api.dispatch(
       BrainFlex.util.updateQueryData(
         "listCollaborators",
         { id: deckId },
         (draft) => {
           const idx = draft.findIndex(
-            (r) => r.userId === next.userId && next.userId != null,
+            (r) =>
+              r.user?.userId === next.user?.userId &&
+              next.user?.userId != null,
           );
           if (idx >= 0) draft[idx] = next;
           else draft.push(next);

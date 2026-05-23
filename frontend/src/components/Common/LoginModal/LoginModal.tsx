@@ -87,7 +87,7 @@ const LoginModal = ({ message, returnUrl, guestId }: LoginModalProps) => {
     loginUrl.searchParams.set("provider", provider);
     loginUrl.searchParams.set("returnUrl", returnUrl ?? window.location.href);
     if (guestId) loginUrl.searchParams.set("guestId", guestId);
-    window.location.href = loginUrl.toString();
+    window.location.assign(loginUrl.toString());
   };
 
   return (
@@ -101,7 +101,9 @@ const LoginModal = ({ message, returnUrl, guestId }: LoginModalProps) => {
             key={id}
             type='button'
             className={styles.providerBtn}
-            onClick={() => handleLogin(id)}>
+            onClick={() => {
+              handleLogin(id);
+            }}>
             <span className={styles.providerIcon} aria-hidden='true'>
               <Glyph />
             </span>

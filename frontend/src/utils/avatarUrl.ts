@@ -13,18 +13,19 @@ import {
 
 const BUILTIN_PREFIX = "builtin:";
 
-const optionByValue: Map<string, AvatarOption> = new Map(
+const optionByValue = new Map<string, AvatarOption>(
   AVATAR_OPTIONS.map((o) => [o.value, o]),
 );
 
-export const isBuiltinAvatar = (src: string | null | undefined): boolean =>
-  typeof src === "string" && src.startsWith(BUILTIN_PREFIX);
+export const isBuiltinAvatar = (
+  src: string | null | undefined,
+): src is string => typeof src === "string" && src.startsWith(BUILTIN_PREFIX);
 
 export const builtinAvatarValue = (
   src: string | null | undefined,
 ): string | null => {
   if (!isBuiltinAvatar(src)) return null;
-  return (src as string).slice(BUILTIN_PREFIX.length);
+  return src.slice(BUILTIN_PREFIX.length);
 };
 
 export const builtinAvatarUrl = (value: string): string =>
@@ -34,7 +35,7 @@ export const resolveAvatarSrc = <T extends string | null | undefined>(
   src: T,
 ): T => {
   if (!isBuiltinAvatar(src)) return src;
-  const value = (src as string).slice(BUILTIN_PREFIX.length);
+  const value = src.slice(BUILTIN_PREFIX.length);
   const option = optionByValue.get(value);
   return (option ? option.src : src) as T;
 };

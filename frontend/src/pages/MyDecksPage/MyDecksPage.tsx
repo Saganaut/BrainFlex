@@ -9,7 +9,7 @@ import {
   useCreateDeckMutation,
   useAddElementMutation,
 } from "../../store/BrainFlexApi";
-import type { DeckDto, Slide } from "../../store/BrainFlexApi";
+import type { DeckResponse, Slide } from "../../store/BrainFlexApi";
 import { useAppDispatch } from "../../store/hooks";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import { DeckActionButton } from "@/components/Common/Buttons/DeckActionButton/DeckActionButton";
@@ -60,7 +60,7 @@ const buildOptimisticDeck = (
   id: string,
   name: string,
   firstSlide: Slide,
-): DeckDto => ({
+): DeckResponse => ({
   id,
   name,
   description: "",
@@ -77,7 +77,7 @@ const DeckCardWithMenu = ({
   editable,
   onDelete,
 }: {
-  deck: DeckDto;
+  deck: DeckResponse;
   editable: boolean;
   onDelete?: (id: string) => void;
 }) => {
@@ -223,11 +223,7 @@ const MyDecksPage = () => {
     (d) => (d.publishStatus ?? "DRAFT") !== "DRAFT",
   );
   const visibleDecks =
-    tab === "drafts"
-      ? draftDecks
-      : tab === "shared"
-        ? sharedDecks
-        : liveDecks;
+    tab === "drafts" ? draftDecks : tab === "shared" ? sharedDecks : liveDecks;
 
   return (
     <div className={styles.page}>
@@ -237,73 +233,71 @@ const MyDecksPage = () => {
       </div>
 
       <section className={styles.section}>
-          <div className={styles.tabs} role='tablist' aria-label='Your decks'>
-            <button
-              type='button'
-              role='tab'
-              aria-selected={tab === "live"}
-              className={[styles.tab, tab === "live" ? styles.tabActive : ""]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => {
-                setTab("live");
-              }}>
-              Live
-              <span className={styles.tabCount}>{liveDecks.length}</span>
-            </button>
-            <button
-              type='button'
-              role='tab'
-              aria-selected={tab === "drafts"}
-              className={[styles.tab, tab === "drafts" ? styles.tabActive : ""]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => {
-                setTab("drafts");
-              }}>
-              Drafts
-              <span className={styles.tabCount}>{draftDecks.length}</span>
-            </button>
-            <button
-              type='button'
-              role='tab'
-              aria-selected={tab === "shared"}
-              className={[styles.tab, tab === "shared" ? styles.tabActive : ""]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => {
-                setTab("shared");
-              }}>
-              Shared with me
-              <span className={styles.tabCount}>{sharedDecks.length}</span>
-            </button>
+        <div className={styles.tabs} role='tablist' aria-label='Your decks'>
+          <button
+            type='button'
+            role='tab'
+            aria-selected={tab === "live"}
+            className={[styles.tab, tab === "live" ? styles.tabActive : ""]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={() => {
+              setTab("live");
+            }}>
+            Live
+            <span className={styles.tabCount}>{liveDecks.length}</span>
+          </button>
+          <button
+            type='button'
+            role='tab'
+            aria-selected={tab === "drafts"}
+            className={[styles.tab, tab === "drafts" ? styles.tabActive : ""]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={() => {
+              setTab("drafts");
+            }}>
+            Drafts
+            <span className={styles.tabCount}>{draftDecks.length}</span>
+          </button>
+          <button
+            type='button'
+            role='tab'
+            aria-selected={tab === "shared"}
+            className={[styles.tab, tab === "shared" ? styles.tabActive : ""]
+              .filter(Boolean)
+              .join(" ")}
+            onClick={() => {
+              setTab("shared");
+            }}>
+            Shared with me
+            <span className={styles.tabCount}>{sharedDecks.length}</span>
+          </button>
+        </div>
+        {loadingMine ? (
+          <p className={styles.empty}>Loading…</p>
+        ) : visibleDecks.length === 0 ? (
+          <p className={styles.empty}>
+            {tab === "drafts"
+              ? "No drafts. Decks default to draft until you publish them."
+              : tab === "shared"
+                ? "Nothing shared with you yet. Owners can invite you from the Share button in their deck editor."
+                : "No published decks yet. Hit Publish in the editor when you're ready."}
+          </p>
+        ) : (
+          <div className={styles.grid}>
+            {visibleDecks.map((deck) => (
+              <DeckCardWithMenu
+                key={deck.id}
+                deck={deck}
+                editable={tab !== "shared" || deck.myRole === "EDITOR"}
+                onDelete={(id) => {
+                  void handleDelete(id);
+                }}
+              />
+            ))}
           </div>
-          {loadingMine ? (
-            <p className={styles.empty}>Loading…</p>
-          ) : visibleDecks.length === 0 ? (
-            <p className={styles.empty}>
-              {tab === "drafts"
-                ? "No drafts. Decks default to draft until you publish them."
-                : tab === "shared"
-                  ? "Nothing shared with you yet. Owners can invite you from the Share button in their deck editor."
-                  : "No published decks yet. Hit Publish in the editor when you're ready."}
-            </p>
-          ) : (
-            <div className={styles.grid}>
-              {visibleDecks.map((deck) => (
-                <DeckCardWithMenu
-                  key={deck.id}
-                  deck={deck}
-                  editable={
-                    tab !== "shared" || deck.myRole === "EDITOR"
-                  }
-                  onDelete={(id) => {
-                    void handleDelete(id);
-                  }}
-                />
-              ))}
-            </div>
-          )}
+        )}
       </section>
 
       <section className={styles.section}>

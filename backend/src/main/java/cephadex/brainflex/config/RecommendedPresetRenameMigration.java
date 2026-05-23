@@ -5,7 +5,7 @@
  * The Java rename happened earlier but the Mongo key was left untouched via the
  * {@code @Field("recommendedPreset")} / {@code @JsonProperty("defaultSessionFormat")}
  * / {@code @JsonAlias({"recommendedPreset"})} back-compat annotations on
- * {@link cephadex.brainflex.model.Deck}. This migration moves the persisted key
+ * {@link cephadex.brainflex.model.deck.Deck}. This migration moves the persisted key
  * forward so the annotations can be dropped.
  *
  * Works directly on raw documents via {@link MongoTemplate#getCollection} — once

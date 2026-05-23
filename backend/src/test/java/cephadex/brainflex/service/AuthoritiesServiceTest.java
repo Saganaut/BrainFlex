@@ -23,9 +23,9 @@ import static org.mockito.Mockito.lenient;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.GrantedAuthority;
 
-import cephadex.brainflex.model.Membership;
-import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.org.Membership;
+import cephadex.brainflex.model.org.Organization;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.model.enums.MembershipStatus;
 import cephadex.brainflex.model.enums.MembershipTier;
 import cephadex.brainflex.model.enums.UserRole;
@@ -43,10 +43,10 @@ class AuthoritiesServiceTest {
     private static User registered(MembershipTier tier, MembershipStatus status) {
         User user = new User();
         user.setId("user-1");
-        user.setIsGuest(false);
+        user.setGuest(false);
         Membership membership = new Membership();
-        membership.setTier(tier);
-        membership.setStatus(status);
+        membership.getBilling().setTier(tier);
+        membership.getBilling().setStatus(status);
         user.setMembership(membership);
         return user;
     }
@@ -59,7 +59,7 @@ class AuthoritiesServiceTest {
     void guestUser_GetsOnlyGuestRole() {
         User guest = new User();
         guest.setId("guest-1");
-        guest.setIsGuest(true);
+        guest.setGuest(true);
 
         Set<String> result = roles(authoritiesService.authoritiesFor(guest));
 
@@ -79,7 +79,7 @@ class AuthoritiesServiceTest {
     void nullMembership_DefaultsToFree() {
         User user = new User();
         user.setId("user-1");
-        user.setIsGuest(false);
+        user.setGuest(false);
         user.setMembership(null);
 
         Set<String> result = roles(authoritiesService.authoritiesFor(user));
@@ -292,7 +292,7 @@ class AuthoritiesServiceTest {
     void guestUser_RolesFieldIgnored() {
         User guest = new User();
         guest.setId("guest-1");
-        guest.setIsGuest(true);
+        guest.setGuest(true);
         // A guest doc with a stray ADMIN role shouldn't elevate them — the
         // guest short-circuit must win.
         guest.setRoles(EnumSet.of(UserRole.USER, UserRole.ADMIN));

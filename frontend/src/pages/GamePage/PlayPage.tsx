@@ -27,7 +27,7 @@ import {
   answerSubmittedLocally,
   voteSubmittedLocally,
 } from "../../store/interactiveSessionSlice";
-import { useAppDispatch } from "../../store/hooks";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import type { AnswerPayload } from "../../types/elements";
 import { resolveShowResponsesFor } from "../../utils/showResponsesResolver";
 import styles from "./Game.module.css";
@@ -64,13 +64,19 @@ const PlayPage = () => {
     userState.state === "registered" || userState.state === "guest"
       ? userState.user.id
       : undefined;
+  // viewerPlayerId is the session-scoped public handle of the caller; latched
+  // in the slice from REST responses so STOMP rebroadcasts don't clear it.
+  const viewerPlayerId = useAppSelector(
+    (s) => s.interactiveSession.viewerPlayerId,
+  );
 
-  const isHost = !!userId && session?.hostUserId === userId;
+  const isHost =
+    !!viewerPlayerId && session?.hostPlayerId === viewerPlayerId;
   // Chunk 13 — local player's current streak, surfaced as a hero banner
   // above the QuestionCard when ≥ 2 (matches the Kahoot threshold for the
   // first streak callout). Backend resets on wrong answer; this just reads.
-  const myStreak = userId
-    ? (game.players.find((p) => p.userId === userId)?.currentStreak ?? 0)
+  const myStreak = viewerPlayerId
+    ? (game.players.find((p) => p.playerId === viewerPlayerId)?.currentStreak ?? 0)
     : 0;
 
   // Chunk 13 — host autoAdvance progress ring. The server schedules
@@ -143,15 +149,15 @@ const PlayPage = () => {
 
   // Self-boot detection — if the host removes us from the player list, go home.
   useEffect(() => {
-    if (!userId || game.players.length === 0) return;
+    if (!viewerPlayerId || game.players.length === 0) return;
     if (game.status === "FINISHED" || game.status === "CANCELLED") return;
-    const stillInGame = game.players.some((p) => p.userId === userId);
+    const stillInGame = game.players.some((p) => p.playerId === viewerPlayerId);
     if (!stillInGame) {
       void navigate({ to: "/" });
     }
-  }, [userId, game.players, game.status, navigate]);
+  }, [viewerPlayerId, game.players, game.status, navigate]);
 
-  const handleBoot = async (targetUserId: string) => {
+  const handleBoot = async (targetPlayerId: string) => {
     const ok = await confirm({
       title: "Remove player",
       message: "Remove this player from the interactiveSession?",
@@ -159,7 +165,7 @@ const PlayPage = () => {
       variant: "danger",
     });
     if (!ok) return;
-    sendBoot(targetUserId);
+    sendBoot(targetPlayerId);
   };
 
   const handleEndInteractiveSession = async () => {
@@ -254,16 +260,16 @@ const PlayPage = () => {
           <TeamLeaderboard
             teams={teams}
             players={game.players}
-            currentUserId={userId}
+            currentPlayerId={viewerPlayerId ?? undefined}
             hideScores={hideScoresDuringPlay}
           />
         )}
         {!isPresentation && (
           <ScoreBoard
             players={game.players}
-            currentUserId={userId}
+            currentPlayerId={viewerPlayerId ?? undefined}
             hideScores={hideScoresDuringPlay}
-            offlineUserIds={game.offlineUserIds}
+            offlinePlayerIds={[]}
             isHost={isHost}
             onBootPlayer={(id) => {
               void handleBoot(id);
@@ -352,23 +358,23 @@ const PlayPage = () => {
           <TeamLeaderboard
             teams={teams}
             players={game.players}
-            currentUserId={userId}
+            currentPlayerId={viewerPlayerId ?? undefined}
             hideScores={hideScoresDuringPlay}
           />
         )}
         {!isPresentation && (
           <ScoreBoard
             players={game.players}
-            currentUserId={userId}
+            currentPlayerId={viewerPlayerId ?? undefined}
             hideScores={hideScoresDuringPlay}
-            answeredUserIds={
+            answeredPlayerIds={
               isSlide
                 ? undefined
                 : isVotePhase
                   ? game.votedThisRound
                   : game.answeredThisRound
             }
-            offlineUserIds={game.offlineUserIds}
+            offlinePlayerIds={[]}
             isHost={isHost}
             onBootPlayer={(id) => {
               void handleBoot(id);
@@ -377,6 +383,10 @@ const PlayPage = () => {
           />
         )}
         {chatEnabled && (
+          // ChatPanel still keys on the real userId — chat messages travel
+          // on InteractiveSessionChatMessageResponse, not the session DTO, and
+          // that surface hasn't been migrated to playerIds yet. Tracked as a
+          // follow-up to the InteractiveSession DTO refactor.
           <ChatPanel
             roomCode={roomCode}
             isHost={isHost}
@@ -446,7 +456,7 @@ const PlayPage = () => {
       {game.roundResult && !isPresentation && (
         <RoundResult
           result={game.roundResult}
-          currentUserId={userId}
+          currentPlayerId={viewerPlayerId ?? undefined}
           isHost={isHost}
           isTurnBased={isTurnBased}
           onNextRound={sendNextRound}

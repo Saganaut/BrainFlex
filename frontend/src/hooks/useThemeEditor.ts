@@ -14,6 +14,7 @@ import {
   type UpdateThemeRequest,
 } from "../store/BrainFlexApi";
 import { extractErrorMessage } from "../utils/utils";
+import { apiToUiMode, uiToApiMode } from "../utils/themeMode";
 
 // Sentinel scope value used in the dropdown for "no org / personal theme".
 // The backend stores an empty string for personal, so we map it back on save.
@@ -64,9 +65,7 @@ const useThemeEditor = ({
   const [name, setName] = useState(existing?.name ?? "");
   const [huePrimary, setHuePrimary] = useState(existing?.huePrimary ?? 260);
   const [hueAccent, setHueAccent] = useState(existing?.hueAccent ?? 25);
-  const [mode, setMode] = useState<Mode>(
-    (existing?.mode as Mode | undefined) ?? "system",
-  );
+  const [mode, setMode] = useState<Mode>(() => apiToUiMode(existing?.mode));
 
   const [scopeId, setScopeId] = useState<string>(() => {
     const existingOrg = existing?.organizationId;
@@ -132,7 +131,7 @@ const useThemeEditor = ({
           name: name.trim(),
           huePrimary,
           hueAccent,
-          mode,
+          mode: uiToApiMode(mode),
           organizationId: orgId,
         };
         saved = await updateTheme({
@@ -144,7 +143,7 @@ const useThemeEditor = ({
           name: name.trim(),
           huePrimary,
           hueAccent,
-          mode,
+          mode: uiToApiMode(mode),
           organizationId: orgId,
         };
         saved = await createTheme({ createThemeRequest: req }).unwrap();

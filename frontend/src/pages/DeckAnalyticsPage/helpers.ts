@@ -15,12 +15,12 @@
  */
 import type {
   DeckAnalytics,
-  DeckDto,
+  DeckResponse,
   ElementStats,
 } from "@/store/BrainFlexApi";
 import type { DistributionRow } from "@/components/Common/Analytics";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 type ElementKind = DeckElement["kind"];
 
 interface ElementRow {
@@ -76,7 +76,7 @@ const isNoDistribution = (kind: ElementKind | undefined) =>
  * deleted, …). The orphan tail keeps CSV exports honest.
  */
 const buildOrderedElements = (
-  deck: DeckDto | undefined,
+  deck: DeckResponse | undefined,
   analytics: DeckAnalytics | undefined,
 ): ElementRow[] => {
   const perElement = analytics?.perElement ?? {};

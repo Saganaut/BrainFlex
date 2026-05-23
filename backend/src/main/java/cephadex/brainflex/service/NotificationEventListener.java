@@ -28,11 +28,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import cephadex.brainflex.model.Achievement;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckComment;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckComment;
 import cephadex.brainflex.model.enums.NotificationKind;
+import cephadex.brainflex.model.user.Achievement;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.AchievementRepository;
 import cephadex.brainflex.repository.DeckCommentRepository;
 import cephadex.brainflex.repository.DeckRepository;
@@ -70,11 +70,12 @@ public class NotificationEventListener {
     public void onDeckFavorited(NotificationEvents.DeckFavoritedEvent event) {
         try {
             Deck deck = deckRepository.findById(event.deckId()).orElse(null);
-            if (deck == null || deck.getCreatorUserId() == null) return;
+            if (deck == null || deck.getCreatorUserId() == null)
+                return;
             User actor = findUser(event.actorUserId());
             Map<String, String> meta = newMeta();
             meta.put("deckId", deck.getId());
-            String title = actorName(actor) + " favorited \"" + deck.getName() + "\"";
+            String title = actorName(actor) + " favorited \"" + deck.getContent().getName() + "\"";
             notificationService.send(
                     deck.getCreatorUserId(),
                     NotificationKind.DECK_FAVORITED,
@@ -93,9 +94,11 @@ public class NotificationEventListener {
     public void onDeckCommentCreated(NotificationEvents.DeckCommentCreatedEvent event) {
         try {
             Deck deck = deckRepository.findById(event.deckId()).orElse(null);
-            if (deck == null) return;
+            if (deck == null)
+                return;
             DeckComment comment = commentRepository.findById(event.commentId()).orElse(null);
-            if (comment == null) return;
+            if (comment == null)
+                return;
             User actor = findUser(event.actorUserId());
 
             Map<String, String> meta = newMeta();
@@ -106,8 +109,9 @@ public class NotificationEventListener {
             // deck owner.
             if (event.parentCommentId() != null) {
                 DeckComment parent = commentRepository.findById(event.parentCommentId()).orElse(null);
-                if (parent == null || parent.getAuthor() == null || parent.getAuthor().userId() == null) return;
-                String title = actorName(actor) + " replied to your comment on \"" + deck.getName() + "\"";
+                if (parent == null || parent.getAuthor() == null || parent.getAuthor().userId() == null)
+                    return;
+                String title = actorName(actor) + " replied to your comment on \"" + deck.getContent().getName() + "\"";
                 notificationService.send(
                         parent.getAuthor().userId(),
                         NotificationKind.DECK_COMMENT_REPLY,
@@ -117,8 +121,9 @@ public class NotificationEventListener {
                         meta,
                         actor);
             } else {
-                if (deck.getCreatorUserId() == null) return;
-                String title = actorName(actor) + " commented on \"" + deck.getName() + "\"";
+                if (deck.getCreatorUserId() == null)
+                    return;
+                String title = actorName(actor) + " commented on \"" + deck.getContent().getName() + "\"";
                 notificationService.send(
                         deck.getCreatorUserId(),
                         NotificationKind.DECK_COMMENT,
@@ -138,12 +143,13 @@ public class NotificationEventListener {
     public void onDeckRatingCreated(NotificationEvents.DeckRatingCreatedEvent event) {
         try {
             Deck deck = deckRepository.findById(event.deckId()).orElse(null);
-            if (deck == null || deck.getCreatorUserId() == null) return;
+            if (deck == null || deck.getCreatorUserId() == null)
+                return;
             User actor = findUser(event.actorUserId());
             Map<String, String> meta = newMeta();
             meta.put("deckId", deck.getId());
             meta.put("stars", Integer.toString(event.stars()));
-            String title = actorName(actor) + " rated \"" + deck.getName() + "\" "
+            String title = actorName(actor) + " rated \"" + deck.getContent().getName() + "\" "
                     + event.stars() + " star" + (event.stars() == 1 ? "" : "s");
             notificationService.send(
                     deck.getCreatorUserId(),
@@ -163,11 +169,12 @@ public class NotificationEventListener {
     public void onDeckCollaboratorInvited(NotificationEvents.DeckCollaboratorInvitedEvent event) {
         try {
             Deck deck = deckRepository.findById(event.deckId()).orElse(null);
-            if (deck == null || event.invitedUserId() == null) return;
+            if (deck == null || event.invitedUserId() == null)
+                return;
             User actor = findUser(event.actorUserId());
             Map<String, String> meta = newMeta();
             meta.put("deckId", deck.getId());
-            String title = actorName(actor) + " invited you to collaborate on \"" + deck.getName() + "\"";
+            String title = actorName(actor) + " invited you to collaborate on \"" + deck.getContent().getName() + "\"";
             notificationService.send(
                     event.invitedUserId(),
                     NotificationKind.COLLAB_INVITE,
@@ -186,11 +193,12 @@ public class NotificationEventListener {
     public void onDeckCollaboratorAccepted(NotificationEvents.DeckCollaboratorAcceptedEvent event) {
         try {
             Deck deck = deckRepository.findById(event.deckId()).orElse(null);
-            if (deck == null || event.deckOwnerUserId() == null) return;
+            if (deck == null || event.deckOwnerUserId() == null)
+                return;
             User actor = findUser(event.acceptedUserId());
             Map<String, String> meta = newMeta();
             meta.put("deckId", deck.getId());
-            String title = actorName(actor) + " accepted your invite to \"" + deck.getName() + "\"";
+            String title = actorName(actor) + " accepted your invite to \"" + deck.getContent().getName() + "\"";
             notificationService.send(
                     event.deckOwnerUserId(),
                     NotificationKind.COLLAB_ACCEPTED,
@@ -208,11 +216,13 @@ public class NotificationEventListener {
     @EventListener
     public void onInteractiveSessionInviteSent(NotificationEvents.InteractiveSessionInviteSentEvent event) {
         try {
-            if (event.invitedUserId() == null) return;
+            if (event.invitedUserId() == null)
+                return;
             User actor = findUser(event.actorUserId());
             Map<String, String> meta = newMeta();
             meta.put("scheduledInteractiveSessionId", event.scheduledInteractiveSessionId());
-            if (event.inviteId() != null) meta.put("inviteId", event.inviteId());
+            if (event.inviteId() != null)
+                meta.put("inviteId", event.inviteId());
             String title = actorName(actor) + " invited you to a live session";
             notificationService.send(
                     event.invitedUserId(),
@@ -232,7 +242,8 @@ public class NotificationEventListener {
     public void onScheduledInteractiveSessionBooting(
             NotificationEvents.ScheduledInteractiveSessionBootingEvent event) {
         try {
-            if (event.invitedUserId() == null) return;
+            if (event.invitedUserId() == null)
+                return;
             Map<String, String> meta = newMeta();
             meta.put("scheduledInteractiveSessionId", event.scheduledInteractiveSessionId());
             notificationService.sendSystem(
@@ -251,7 +262,8 @@ public class NotificationEventListener {
     public void onAchievementEarned(NotificationEvents.AchievementEarnedEvent event) {
         try {
             Achievement achievement = achievementRepository.findById(event.achievementId()).orElse(null);
-            if (achievement == null) return;
+            if (achievement == null)
+                return;
             Map<String, String> meta = newMeta();
             meta.put("achievementId", achievement.getId());
             notificationService.send(
@@ -270,21 +282,27 @@ public class NotificationEventListener {
     // ---- Helpers ----
 
     private User findUser(String userId) {
-        if (userId == null) return null;
+        if (userId == null)
+            return null;
         return userRepository.findById(userId).orElse(null);
     }
 
     private static String actorName(User actor) {
-        if (actor == null) return "Someone";
-        if (actor.getName() != null && !actor.getName().isBlank()) return actor.getName();
-        if (actor.getUserName() != null && !actor.getUserName().isBlank()) return actor.getUserName();
+        if (actor == null)
+            return "Someone";
+        if (actor.getName() != null && !actor.getName().isBlank())
+            return actor.getName();
+        if (actor.getUserName() != null && !actor.getUserName().isBlank())
+            return actor.getUserName();
         return "Someone";
     }
 
     private static String excerpt(String body) {
-        if (body == null) return null;
+        if (body == null)
+            return null;
         String trimmed = body.strip();
-        if (trimmed.length() <= BODY_EXCERPT_CHARS) return trimmed;
+        if (trimmed.length() <= BODY_EXCERPT_CHARS)
+            return trimmed;
         return trimmed.substring(0, BODY_EXCERPT_CHARS - 1).stripTrailing() + "…";
     }
 

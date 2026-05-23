@@ -14,7 +14,7 @@ import {
   useListMyScheduledSessionsQuery,
   useCancelScheduledSessionMutation,
   useGetInteractiveSessionQuery,
-  type ScheduledInteractiveSessionDto,
+  type ScheduledInteractiveSessionResponse,
 } from "@/store/BrainFlexApi";
 import styles from "./ScheduledSessionsPage.module.css";
 
@@ -25,7 +25,7 @@ const STATUS_VARIANT = {
   CANCELLED: "warning",
 } as const;
 
-type Status = NonNullable<ScheduledInteractiveSessionDto["status"]>;
+type Status = NonNullable<ScheduledInteractiveSessionResponse["status"]>;
 
 const STATUS_LABEL: Record<Status, string> = {
   SCHEDULED: "Scheduled",
@@ -51,7 +51,7 @@ const formatWhen = (iso: string | undefined) => {
 };
 
 interface RowProps {
-  session: ScheduledInteractiveSessionDto;
+  session: ScheduledInteractiveSessionResponse;
   onCancel: (id: string) => void;
 }
 
@@ -68,17 +68,21 @@ const ScheduledRow = ({ session, onCancel }: RowProps) => {
   return (
     <li className={styles.row}>
       <div className={styles.rowMain}>
-        <span className={styles.rowDeck}>{session.deckName ?? "Untitled deck"}</span>
+        <span className={styles.rowDeck}>
+          {session.deckName ?? "Untitled deck"}
+        </span>
         <span className={styles.rowMeta}>
           {formatWhen(session.scheduledStartAt)} ·{" "}
-          {(session.invitedEmails?.length ?? 0)} invitee
+          {session.invitedEmails?.length ?? 0} invitee
           {(session.invitedEmails?.length ?? 0) === 1 ? "" : "s"}
         </span>
       </div>
       <Badge variant={STATUS_VARIANT[status]} label={STATUS_LABEL[status]} />
       <div className={styles.rowActions}>
         {isLive && live?.roomCode && (
-          <Link to='/games/$roomCode/lobby' params={{ roomCode: live.roomCode }}>
+          <Link
+            to='/games/$roomCode/lobby'
+            params={{ roomCode: live.roomCode }}>
             <Btn size='sm' shape='pill' variant='brand'>
               Open lobby
             </Btn>
@@ -105,12 +109,14 @@ const ScheduledSessionsPage = () => {
   const confirm = useConfirm();
   const navigate = useNavigate();
 
-  const upcoming = sessions?.filter((s) =>
-    ACTIVE_STATUSES.includes(s.status ?? "SCHEDULED"),
-  ) ?? [];
-  const past = sessions?.filter((s) =>
-    !ACTIVE_STATUSES.includes(s.status ?? "SCHEDULED"),
-  ) ?? [];
+  const upcoming =
+    sessions?.filter((s) =>
+      ACTIVE_STATUSES.includes(s.status ?? "SCHEDULED"),
+    ) ?? [];
+  const past =
+    sessions?.filter(
+      (s) => !ACTIVE_STATUSES.includes(s.status ?? "SCHEDULED"),
+    ) ?? [];
 
   const handleCancel = async (id: string) => {
     const ok = await confirm({
@@ -120,7 +126,9 @@ const ScheduledSessionsPage = () => {
       variant: "danger",
     });
     if (!ok) return;
-    await cancel({ id }).unwrap().catch(() => null);
+    await cancel({ id })
+      .unwrap()
+      .catch(() => null);
   };
 
   return (
@@ -132,7 +140,13 @@ const ScheduledSessionsPage = () => {
           onClick={() => {
             void navigate({ to: "/decks" });
           }}
-          style={{ background: "none", border: 0, color: "inherit", cursor: "pointer", textDecoration: "underline" }}>
+          style={{
+            background: "none",
+            border: 0,
+            color: "inherit",
+            cursor: "pointer",
+            textDecoration: "underline",
+          }}>
           Pick a deck
         </button>{" "}
         to schedule a new session.

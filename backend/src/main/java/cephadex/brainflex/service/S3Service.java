@@ -10,9 +10,9 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import cephadex.brainflex.config.S3Properties;
-import cephadex.brainflex.model.StoredImageVariant;
-import cephadex.brainflex.model.element.ImageSize;
-import cephadex.brainflex.model.element.ImageVariant;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.image.ImageVariant;
+import cephadex.brainflex.model.media.StoredImageVariant;
 import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -152,7 +152,8 @@ public class S3Service {
         // the producer built the map.
         for (ImageSize size : ImageSize.values()) {
             ProcessedVariant v = variants.get(size);
-            if (v == null) continue;
+            if (v == null)
+                continue;
             String key = variantKey(prefix, entityId, size);
             s3Client.putObject(
                     PutObjectRequest.builder()
@@ -167,10 +168,12 @@ public class S3Service {
     }
 
     private Map<ImageSize, ImageVariant> refreshAll(String prefix, String entityId, List<StoredImageVariant> stored) {
-        if (stored == null || stored.isEmpty()) return Map.of();
+        if (stored == null || stored.isEmpty())
+            return Map.of();
         Map<ImageSize, ImageVariant> out = new EnumMap<>(ImageSize.class);
         for (StoredImageVariant v : stored) {
-            if (v == null || v.size() == null) continue;
+            if (v == null || v.size() == null)
+                continue;
             String url = generatePresignedUrl(variantKey(prefix, entityId, v.size()));
             out.put(v.size(), new ImageVariant(url, v.width(), v.height()));
         }
@@ -178,9 +181,11 @@ public class S3Service {
     }
 
     private void deleteAll(String prefix, String entityId, List<StoredImageVariant> stored) {
-        if (stored == null) return;
+        if (stored == null)
+            return;
         for (StoredImageVariant v : stored) {
-            if (v == null || v.size() == null) continue;
+            if (v == null || v.size() == null)
+                continue;
             deleteObject(variantKey(prefix, entityId, v.size()));
         }
     }
@@ -205,6 +210,7 @@ public class S3Service {
                                 .bucket(props.bucket())
                                 .key(key)
                                 .build())
-                        .build()).url().toString();
+                        .build())
+                .url().toString();
     }
 }

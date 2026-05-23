@@ -10,6 +10,7 @@ import {
 } from "../store/BrainFlexApi";
 import type { ThemeResponse } from "../store/BrainFlexApi";
 import { useTheme } from "./useTheme";
+import { apiToUiMode } from "../utils/themeMode";
 import { useCurrentUser } from "./useCurrentUser";
 import { useCurrentUserOrgs } from "./useCurrentUserOrgs";
 import { useModal } from "../context/useModal";
@@ -80,8 +81,9 @@ export function useThemePicker(): UseThemePickerResult {
     if (!theme.id) return;
     setHuePrimary(theme.huePrimary ?? 260);
     setHueAccent(theme.hueAccent ?? 25);
-    if (theme.mode === "light" || theme.mode === "dark") {
-      applyMode(theme.mode);
+    const uiMode = apiToUiMode(theme.mode);
+    if (uiMode === "light" || uiMode === "dark") {
+      applyMode(uiMode);
     }
     await updateProfile({
       updateProfileRequest: { activeThemeId: theme.id },

@@ -24,7 +24,7 @@ import {
   useListChatQuery,
   useSendChatMutation,
   useModerateChatMutation,
-  type InteractiveSessionChatMessageDto,
+  type InteractiveSessionChatMessageResponse,
 } from "../../../store/BrainFlexApi";
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
 import { chatHistoryLoaded } from "../../../store/interactiveSessionSlice";
@@ -122,10 +122,10 @@ const ChatPanel = ({
             )}
             {messages.map((m) => (
               <ChatRow
-                key={m.id ?? `${m.authorUserId}-${m.sentAt}`}
+                key={m.id ?? `${m.author?.userId}-${m.sentAt}`}
                 message={m}
                 isHost={isHost}
-                isOwn={!!currentUserId && m.authorUserId === currentUserId}
+                isOwn={!!currentUserId && m.author?.userId === currentUserId}
                 onHide={() => {
                   handleHide(m.id);
                 }}
@@ -163,7 +163,7 @@ const ChatPanel = ({
 };
 
 interface ChatRowProps {
-  message: InteractiveSessionChatMessageDto;
+  message: InteractiveSessionChatMessageResponse;
   isHost: boolean;
   isOwn: boolean;
   onHide: () => void;
@@ -180,9 +180,9 @@ const ChatRow = ({ message, isHost, isOwn, onHide }: ChatRowProps) => {
     <li
       className={`${styles.row} ${fromHost ? styles.rowHost : ""} ${isOwn ? styles.rowOwn : ""} ${isModerated ? styles.rowModerated : ""}`}>
       <span className={styles.author}>
-        {message.authorName ?? "anon"}
+        {message.author?.name ?? "anon"}
         {fromHost && <span className={styles.hostTag}>host</span>}
-        {!fromHost && message.guest && (
+        {!fromHost && message.author?.guest && (
           <span className={styles.guestTag}>guest</span>
         )}
       </span>

@@ -25,34 +25,35 @@ public record RoundResultMessage(
         // an extra session lookup. Frozen for the duration of the session.
         SessionFormat format,
         DeckElement element,                // un-redacted; carries answer key
-        List<PlayerRoundResult> playerResults,
+        // Per-player outcomes. Shared shape with InteractiveSessionReviewResponse —
+        // see PlayerRoundResponse for the field semantics. Empty for slide rounds.
+        List<PlayerRoundResponse> playerResults,
         BestAnswerOutcome bestAnswer) {
-
-    public record PlayerRoundResult(
-            String userId,
-            String userName,
-            AnswerPayload payload,          // what the player submitted (null = timeout via sentinel)
-            boolean wasCorrect,
-            int pointsAwarded,
-            int totalScore) {
-    }
 
     /**
      * REVEAL data for Best Answer rounds. `tallies` lists each submission with
-     * its de-anonymized author + vote count; `winnerUserIds` is the set of
+     * its de-anonymized author + vote count; `winnerPlayerIds` is the set of
      * players who received the most votes (multiple on a tie). Each winner
      * receives `bonusAwarded` points, which is also already reflected in the
      * corresponding `playerResults[i].pointsAwarded` and `totalScore`.
+     *
+     * `winnerPlayerIds` carries session-scoped {@code playerId}s, never the
+     * underlying userId — see {@link cephadex.brainflex.model.session.InteractiveSessionPlayer#playerId}.
      */
     public record BestAnswerOutcome(
             List<SubmissionTally> tallies,
-            List<String> winnerUserIds,
+            List<String> winnerPlayerIds,
             int bonusAwarded) {
     }
 
+    /**
+     * One row per submission for the REVEAL phase of a Best Answer round.
+     * `playerId` is the session-scoped public handle (never userId) — see
+     * {@link cephadex.brainflex.model.session.InteractiveSessionPlayer#playerId}.
+     */
     public record SubmissionTally(
             String submissionId,
-            String userId,
+            String playerId,
             String userName,
             AnswerPayload payload,
             int voteCount) {

@@ -22,7 +22,11 @@ const PlayerInfo = () => {
   if (userState.state === "visitor") return <div> No user </div>;
 
   const { user } = userState;
-  const statsArray = Object.entries(user.stats ?? {});
+  // PlayerStats now mixes numeric counters with maps (presentedByKind /
+  // correctByKind) and timestamps; the simple StatRow only renders numbers.
+  const statsArray = Object.entries(user.stats ?? {}).filter(
+    (entry): entry is [string, number] => typeof entry[1] === "number",
+  );
   console.log("user", user);
   //TODO: Either save profile images to server or cache google images
   return (

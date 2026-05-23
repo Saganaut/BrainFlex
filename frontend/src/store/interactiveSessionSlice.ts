@@ -11,8 +11,8 @@
  */
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type {
-  InteractiveSessionDto,
-  InteractiveSessionChatMessageDto,
+  InteractiveSessionResponse,
+  InteractiveSessionChatMessageResponse,
   PlayerPlacement,
   InteractiveSessionPlayerDto,
   Team,
@@ -33,7 +33,9 @@ export interface RoundStartPayload {
 }
 
 export interface PlayerRoundResult {
-  userId: string;
+  // Session-scoped public handle (InteractiveSessionPlayer.playerId on the
+  // backend). The underlying account userId never crosses the wire.
+  playerId: string;
   userName: string;
   payload?: AnswerPayload | null;
   wasCorrect: boolean;
@@ -43,7 +45,7 @@ export interface PlayerRoundResult {
 
 export interface RoundResultPayload {
   round: number;
-  element: DeckElement;       // un-redacted; reveals correct answer
+  element: DeckElement; // un-redacted; reveals correct answer
   playerResults: PlayerRoundResult[];
   // Populated when the round was a Best Answer round (SUBMIT → VOTE → REVEAL).
   // Carries the de-anonymized vote tallies + winner ids + bonus awarded.
@@ -86,7 +88,8 @@ export interface WsErrorPayload {
 
 export interface AnswerProgressPayload {
   round: number;
-  answeredUserIds: string[];
+  // Session-scoped playerIds of players who have submitted this round.
+  answeredPlayerIds: string[];
   totalPlayers: number;
 }
 
@@ -128,7 +131,9 @@ export interface ReactionPayload {
 
 export interface TeamUpdatePayload {
   teams: Team[];
-  memberships: { userId: string; teamId: string }[];
+  // Each membership is keyed by the session-scoped playerId, matching the
+  // identity used everywhere else in the lobby/round broadcasts.
+  memberships: { playerId: string; teamId: string }[];
 }
 
 /** Max in-flight live reactions kept in the slice. Older bursts drop off. */
@@ -138,7 +143,12 @@ const CHAT_HISTORY_WINDOW = 200;
 
 interface InteractiveSessionState {
   roomCode: string | null;
-  status: InteractiveSessionDto["status"] | null;
+  status: InteractiveSessionResponse["status"] | null;
+  // Session-scoped playerId of the caller themselves. Latched on the first
+  // setSession that carries a non-null viewerPlayerId (REST fetches set it;
+  // STOMP rebroadcasts don't). Used wherever we'd previously compared against
+  // the current user's userId — host detection, "is this row me", etc.
+  viewerPlayerId: string | null;
   players: InteractiveSessionPlayerDto[];
   currentElement: DeckElement | null;
   round: number;
@@ -149,7 +159,13 @@ interface InteractiveSessionState {
   finalPlacements: PlayerPlacement[];
   roundStartedAt: string | null;
   wsError: WsErrorPayload | null;
+  // Session-scoped playerIds of players who have answered the current round.
   answeredThisRound: string[];
+  // Userids who have gone offline. Sourced from the global /topic/presence
+  // stream which is NOT session-scoped — so this list cannot be cross-referenced
+  // against `players[].playerId` until presence broadcasts grow per-session
+  // playerId resolution. The lobby/scoreboard offline indicators silently
+  // no-op as a result; tracked as a follow-up to this DTO migration.
   offlineUserIds: string[];
 
   // ---- Best Answer phase ----
@@ -160,10 +176,11 @@ interface InteractiveSessionState {
   phase: "SUBMIT" | "VOTE";
   voteSubmissions: AnonymizedSubmission[];
   votePhaseStartedAt: string | null;
-  votePhaseSeconds: number;     // 0 = unlimited
+  votePhaseSeconds: number; // 0 = unlimited
   // The local player's voted-for submissionId during VOTE phase; null until they vote.
   myVote: string | null;
-  // userIds who have already voted this round (for the "n of m voted" indicator).
+  // Session-scoped playerIds who have already voted this round (drives the
+  // "n of m voted" indicator).
   votedThisRound: string[];
 
   // Live word -> count map for the active Word Cloud round. Empty {} between
@@ -176,14 +193,14 @@ interface InteractiveSessionState {
   // useListChatQuery; STOMP /chat broadcasts append (or patch in place when
   // the message is already present and the server is rebroadcasting a
   // moderation flip).
-  chat: InteractiveSessionChatMessageDto[];
+  chat: InteractiveSessionChatMessageResponse[];
   // Rolling window of recent reaction bursts. ReactionRain reads this and
   // animates each new entry; the window is trimmed so a long game doesn't
   // pile up megabytes of payloads in the store.
   liveReactions: LiveReaction[];
 
   // ---- Teams (chunk 12) ----
-  // Mirrors InteractiveSessionDto.teams; TeamUpdateMessage broadcasts patch
+  // Mirrors InteractiveSessionResponse.teams; TeamUpdateMessage broadcasts patch
   // both this and the per-player teamId in place so the lobby + scoreboard
   // re-render without refetching the whole session.
   teams: Team[];
@@ -213,6 +230,7 @@ interface InteractiveSessionState {
 const initialState: InteractiveSessionState = {
   roomCode: null,
   status: null,
+  viewerPlayerId: null,
   players: [],
   currentElement: null,
   round: 0,
@@ -246,10 +264,17 @@ export const interactiveSessionSlice = createSlice({
   name: "interactiveSession",
   initialState,
   reducers: {
-    setSession(state, action: PayloadAction<InteractiveSessionDto>) {
+    setSession(state, action: PayloadAction<InteractiveSessionResponse>) {
       const s = action.payload;
       state.roomCode = s.roomCode ?? null;
       state.status = s.status ?? null;
+      // Latch viewerPlayerId on the first non-null value. REST responses
+      // populate it via InteractiveSessionResponse.forViewer; STOMP /lobby
+      // rebroadcasts always send null (no per-viewer context) so we must
+      // preserve the previously-seen identity across those.
+      if (s.viewerPlayerId) {
+        state.viewerPlayerId = s.viewerPlayerId;
+      }
       state.players = s.players ?? [];
       state.totalRounds = s.settings?.totalRounds ?? 0;
       state.round = s.currentRound ?? 0;
@@ -310,7 +335,7 @@ export const interactiveSessionSlice = createSlice({
 
     voteProgressReceived(state, action: PayloadAction<VoteProgressPayload>) {
       if (action.payload.round !== state.round) return;
-      state.votedThisRound = action.payload.votedUserIds;
+      state.votedThisRound = action.payload.votedPlayerIds;
     },
 
     /** Local-only: record what the player submitted so we can disable inputs etc. */
@@ -318,9 +343,12 @@ export const interactiveSessionSlice = createSlice({
       state.myAnswer = action.payload;
     },
 
-    answerProgressReceived(state, action: PayloadAction<AnswerProgressPayload>) {
+    answerProgressReceived(
+      state,
+      action: PayloadAction<AnswerProgressPayload>,
+    ) {
       if (action.payload.round !== state.round) return;
-      state.answeredThisRound = action.payload.answeredUserIds;
+      state.answeredThisRound = action.payload.answeredPlayerIds;
     },
 
     wordCloudUpdated(state, action: PayloadAction<WordCloudUpdatePayload>) {
@@ -340,7 +368,9 @@ export const interactiveSessionSlice = createSlice({
     presenceUpdated(state, action: PayloadAction<PresencePayload>) {
       const { userId, online } = action.payload;
       if (online) {
-        state.offlineUserIds = state.offlineUserIds.filter((id) => id !== userId);
+        state.offlineUserIds = state.offlineUserIds.filter(
+          (id) => id !== userId,
+        );
       } else if (!state.offlineUserIds.includes(userId)) {
         state.offlineUserIds.push(userId);
       }
@@ -349,7 +379,7 @@ export const interactiveSessionSlice = createSlice({
     roundResultReceived(state, action: PayloadAction<RoundResultPayload>) {
       state.roundResult = action.payload;
       for (const pr of action.payload.playerResults) {
-        const player = state.players.find((p) => p.userId === pr.userId);
+        const player = state.players.find((p) => p.playerId === pr.playerId);
         if (player) player.score = pr.totalScore;
       }
       // Best Answer round just revealed → drop the VOTE-phase scaffolding so
@@ -423,7 +453,7 @@ export const interactiveSessionSlice = createSlice({
      */
     chatHistoryLoaded(
       state,
-      action: PayloadAction<InteractiveSessionChatMessageDto[]>,
+      action: PayloadAction<InteractiveSessionChatMessageResponse[]>,
     ) {
       const sorted = [...action.payload].sort((a, b) => {
         const ta = a.sentAt ? new Date(a.sentAt).getTime() : 0;
@@ -442,7 +472,7 @@ export const interactiveSessionSlice = createSlice({
      */
     chatMessageReceived(
       state,
-      action: PayloadAction<InteractiveSessionChatMessageDto>,
+      action: PayloadAction<InteractiveSessionChatMessageResponse>,
     ) {
       const msg = action.payload;
       if (!msg.id) {
@@ -493,12 +523,12 @@ export const interactiveSessionSlice = createSlice({
      */
     teamUpdateReceived(state, action: PayloadAction<TeamUpdatePayload>) {
       state.teams = action.payload.teams;
-      const byUserId = new Map(
-        action.payload.memberships.map((m) => [m.userId, m.teamId]),
+      const byPlayerId = new Map(
+        action.payload.memberships.map((m) => [m.playerId, m.teamId]),
       );
       for (const player of state.players) {
-        if (player.userId && byUserId.has(player.userId)) {
-          player.teamId = byUserId.get(player.userId) ?? undefined;
+        if (player.playerId && byPlayerId.has(player.playerId)) {
+          player.teamId = byPlayerId.get(player.playerId) ?? undefined;
         }
       }
     },

@@ -1,5 +1,5 @@
 /**
- * Spring-scheduled crons that zero out the {@link cephadex.brainflex.model.PlayerStats}
+ * Spring-scheduled crons that zero out the {@link cephadex.brainflex.model.user.PlayerStats}
  * rolling counters at the start of each ISO week / calendar month.
  *
  * Two independent jobs:
@@ -18,8 +18,9 @@
  */
 package cephadex.brainflex.service;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoField;
 import java.time.temporal.IsoFields;
@@ -33,7 +34,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.User;
 
 @Component
 public class PlayerStatsResetScheduler {
@@ -46,21 +47,30 @@ public class PlayerStatsResetScheduler {
         this.mongoTemplate = mongoTemplate;
     }
 
-    /** Monday 00:00 UTC — zero {@code stats.weeklyPoints} for any user not yet reset this week. */
+    /**
+     * Monday 00:00 UTC — zero {@code stats.weeklyPoints} for any user not yet reset
+     * this week.
+     */
     @Scheduled(cron = "0 0 0 ? * MON", zone = "UTC")
     public void resetWeeklyPoints() {
-        runWeeklyReset(LocalDateTime.now(ZoneOffset.UTC));
+        runWeeklyReset(Instant.now(Clock.systemUTC()));
     }
 
-    /** First of each month 00:00 UTC — zero {@code stats.monthlyPoints} for any user not yet reset this month. */
+    /**
+     * First of each month 00:00 UTC — zero {@code stats.monthlyPoints} for any user
+     * not yet reset this month.
+     */
     @Scheduled(cron = "0 0 0 1 * *", zone = "UTC")
     public void resetMonthlyPoints() {
-        runMonthlyReset(LocalDateTime.now(ZoneOffset.UTC));
+        runMonthlyReset(Instant.now(Clock.systemUTC()));
     }
 
-    /** Package-private hook so the unit test can drive both windows with a controlled clock. */
-    long runWeeklyReset(LocalDateTime now) {
-        LocalDateTime windowStart = startOfIsoWeek(now);
+    /**
+     * Package-private hook so the unit test can drive both windows with a
+     * controlled clock.
+     */
+    long runWeeklyReset(Instant now) {
+        Instant windowStart = startOfIsoWeek(now);
         Query q = new Query(new Criteria().orOperator(
                 Criteria.where("stats.weeklyPointsResetAt").exists(false),
                 Criteria.where("stats.weeklyPointsResetAt").is(null),
@@ -75,9 +85,12 @@ public class PlayerStatsResetScheduler {
         return modified;
     }
 
-    /** Package-private hook so the unit test can drive both windows with a controlled clock. */
-    long runMonthlyReset(LocalDateTime now) {
-        LocalDateTime windowStart = startOfMonth(now);
+    /**
+     * Package-private hook so the unit test can drive both windows with a
+     * controlled clock.
+     */
+    long runMonthlyReset(Instant now) {
+        Instant windowStart = startOfMonth(now);
         Query q = new Query(new Criteria().orOperator(
                 Criteria.where("stats.monthlyPointsResetAt").exists(false),
                 Criteria.where("stats.monthlyPointsResetAt").is(null),
@@ -92,14 +105,13 @@ public class PlayerStatsResetScheduler {
         return modified;
     }
 
-    private static LocalDateTime startOfIsoWeek(LocalDateTime now) {
-        LocalDate date = now.toLocalDate()
-                .with(IsoFields.WEEK_OF_WEEK_BASED_YEAR, now.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR))
+    private static Instant startOfIsoWeek(Instant now) {
+        LocalDate date = now.atZone(ZoneOffset.UTC).toLocalDate()
                 .with(ChronoField.DAY_OF_WEEK, 1);
-        return date.atStartOfDay();
+        return date.atStartOfDay(ZoneOffset.UTC).toInstant();
     }
 
-    private static LocalDateTime startOfMonth(LocalDateTime now) {
-        return now.toLocalDate().withDayOfMonth(1).atStartOfDay();
+    private static Instant startOfMonth(Instant now) {
+        return now.atZone(ZoneOffset.UTC).toLocalDate().withDayOfMonth(1).atStartOfDay(ZoneOffset.UTC).toInstant();
     }
 }

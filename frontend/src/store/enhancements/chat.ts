@@ -21,7 +21,7 @@
  */
 import {
   BrainFlex,
-  type InteractiveSessionChatMessageDto,
+  type InteractiveSessionChatMessageResponse,
   type ListChatApiArg,
 } from "../BrainFlexApi";
 import type { WithApiQueries } from "./types";
@@ -29,7 +29,7 @@ import type { WithApiQueries } from "./types";
 interface ChatSendApi {
   dispatch: (action: unknown) => unknown;
   getState: () => WithApiQueries;
-  queryFulfilled: Promise<{ data: InteractiveSessionChatMessageDto }>;
+  queryFulfilled: Promise<{ data: InteractiveSessionChatMessageResponse }>;
 }
 
 const optimisticSendChat = async (
@@ -37,7 +37,7 @@ const optimisticSendChat = async (
   api: ChatSendApi,
 ) => {
   const tempId = `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const optimistic: InteractiveSessionChatMessageDto = {
+  const optimistic: InteractiveSessionChatMessageResponse = {
     id: tempId,
     body: arg.chatSendRequest.body,
     sentAt: new Date().toISOString(),

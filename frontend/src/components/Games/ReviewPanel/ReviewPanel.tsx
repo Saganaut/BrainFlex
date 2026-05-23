@@ -13,9 +13,9 @@
  */
 import { useState } from "react";
 import type {
-  PlayerRoundDetail,
+  PlayerRoundResponse,
   RoundReview,
-  InteractiveSessionReviewDto,
+  InteractiveSessionReviewResponse,
 } from "../../../store/BrainFlexApi";
 import type { AnswerPayload, DeckElement } from "../../../types/elements";
 import {
@@ -31,7 +31,7 @@ import { Tabs, type TabsItem } from "@/components/Common/Tabs/Tabs";
 import styles from "./ReviewPanel.module.css";
 
 export interface ReviewPanelProps {
-  review: InteractiveSessionReviewDto;
+  review: InteractiveSessionReviewResponse;
 }
 
 const roundTabId = (i: number) => `round-${String(i)}`;
@@ -164,7 +164,7 @@ const RoundContent = ({
           <tbody>
             {(round.playerAnswers ?? []).map((pa) => (
               <tr
-                key={pa.userId}
+                key={pa.playerId}
                 className={pa.wasCorrect ? styles.rowCorrect : styles.rowWrong}>
                 <td>{pa.userName}</td>
                 <td>{renderSubmission(element, pa.payload)}</td>
@@ -192,7 +192,7 @@ const bodyFor = (e: DeckElement): string | undefined => {
 };
 
 const renderAggregate = (round: RoundReview, element: DeckElement) => {
-  const answers: PlayerRoundDetail[] = round.playerAnswers ?? [];
+  const answers: PlayerRoundResponse[] = round.playerAnswers ?? [];
   switch (element.kind) {
     case "McqQuestion": {
       const options = element.options ?? [];

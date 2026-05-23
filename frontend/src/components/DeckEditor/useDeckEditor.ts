@@ -6,14 +6,14 @@ import {
   useGetDeckQuery,
   useMoveElementMutation,
   useUpdateDeckMutation,
-  type DeckDto,
+  type DeckResponse,
 } from "@/store/BrainFlexApi";
 import { useAppDispatch } from "@/store/hooks";
 import type { DragEndEvent } from "@dnd-kit/dom";
 import { isSortable } from "@dnd-kit/dom/sortable";
 import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
 
-export type DeckElement = NonNullable<DeckDto["elements"]>[number];
+export type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 type AddElementBody = Parameters<
   ReturnType<typeof useAddElementMutation>[0]
 >[0]["body"];
@@ -47,12 +47,14 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
   // Chunk 25 — shared chrome lives in a single nested object on every element.
   // Build a fresh chrome with the universal defaults; per-kind overrides land
   // alongside it on the element body.
-  const chromeDefaults = (overrides: Partial<{
-    title: string;
-    scored: boolean;
-    survey: boolean;
-    displaySeconds: number;
-  }> = {}) => ({
+  const chromeDefaults = (
+    overrides: Partial<{
+      title: string;
+      scored: boolean;
+      survey: boolean;
+      displaySeconds: number;
+    }> = {},
+  ) => ({
     title: "",
     scored: true,
     survey: false,
@@ -91,7 +93,11 @@ const buildNewElement = (kind: ElementKind, id: string): AddElementBody => {
         showJoinInformation: true,
         showQrCode: false,
         showResponses: "INSTANT",
-        chrome: chromeDefaults({ title: "New slide", scored: false, survey: false }),
+        chrome: chromeDefaults({
+          title: "New slide",
+          scored: false,
+          survey: false,
+        }),
       };
     case "McqQuestion":
       return {

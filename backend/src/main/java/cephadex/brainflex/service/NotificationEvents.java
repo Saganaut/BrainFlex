@@ -1,7 +1,7 @@
 /**
  * Spring {@link org.springframework.context.ApplicationEvent} record types
  * that {@link NotificationEventListener} translates into per-recipient
- * {@link cephadex.brainflex.model.Notification} rows.
+ * {@link cephadex.brainflex.model.user.Notification} rows.
  *
  * The events are deliberately thin — just the ids needed to look up display
  * fields on the listener side — so a future replacement (e.g. an outbox table)

@@ -29,16 +29,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.AchievementDTO;
-import cephadex.brainflex.dto.UserAchievementDTO;
+import cephadex.brainflex.dto.AchievementResponse;
+import cephadex.brainflex.dto.UserAchievementResponse;
 import cephadex.brainflex.dto.UserAchievementsPage;
-import cephadex.brainflex.model.Achievement;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.PlayerStats;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserAchievement;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.enums.AchievementTrigger;
 import cephadex.brainflex.model.enums.PublishStatus;
+import cephadex.brainflex.model.user.Achievement;
+import cephadex.brainflex.model.user.PlayerStats;
+import cephadex.brainflex.model.user.User;
+import cephadex.brainflex.model.user.UserAchievement;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GameHistoryRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -73,15 +73,15 @@ public class AchievementController {
      * haven't earned; for anonymous viewers everything hidden is masked.
      */
     @GetMapping("/achievements")
-    public List<AchievementDTO> listCatalog(Authentication authentication) {
+    public List<AchievementResponse> listCatalog(Authentication authentication) {
         List<Achievement> catalog = achievementService.listCatalog();
         Set<String> earnedIds = userService.resolveRegisteredUser(authentication)
                 .map(user -> earnedAchievementIds(user.getId()))
                 .orElse(Set.of());
         return catalog.stream()
                 .map(a -> (a.isHidden() && !earnedIds.contains(a.getId()))
-                        ? AchievementDTO.masked(a)
-                        : AchievementDTO.revealed(a))
+                        ? AchievementResponse.masked(a)
+                        : AchievementResponse.revealed(a))
                 .toList();
     }
 
@@ -115,26 +115,29 @@ public class AchievementController {
         List<Achievement> catalog = achievementService.listCatalog();
         List<UserAchievement> earnedRows = achievementService.listEarnedByUser(target.getId());
         Map<String, UserAchievement> earnedById = new HashMap<>();
-        for (UserAchievement row : earnedRows) earnedById.put(row.getAchievementId(), row);
+        for (UserAchievement row : earnedRows)
+            earnedById.put(row.getAchievementId(), row);
 
         // Pre-compute progress only for triggers the catalog actually uses.
         // Avoids 20 redundant Mongo round-trips on a catalog with 4 unique triggers.
         Set<AchievementTrigger> activeTriggers = new HashSet<>();
-        for (Achievement a : catalog) activeTriggers.add(a.getTrigger());
-        Map<AchievementTrigger, Integer> progressByTrigger =
-                computeProgressByTrigger(target, activeTriggers);
+        for (Achievement a : catalog)
+            activeTriggers.add(a.getTrigger());
+        Map<AchievementTrigger, Integer> progressByTrigger = computeProgressByTrigger(target, activeTriggers);
 
-        List<UserAchievementDTO> items = new ArrayList<>(catalog.size());
+        List<UserAchievementResponse> items = new ArrayList<>(catalog.size());
         int earnedCount = 0;
         for (Achievement a : catalog) {
             boolean earned = earnedById.containsKey(a.getId());
-            if (earned) earnedCount++;
-            if (publicView && (!earned || a.isHidden())) continue;
+            if (earned)
+                earnedCount++;
+            if (publicView && (!earned || a.isHidden()))
+                continue;
 
             UserAchievement row = earnedById.get(a.getId());
             boolean mask = a.isHidden() && !earned;
             int progress = progressByTrigger.getOrDefault(a.getTrigger(), 0);
-            items.add(new UserAchievementDTO(
+            items.add(new UserAchievementResponse(
                     a.getId(),
                     mask ? "???" : a.getName(),
                     mask ? "Hidden achievement — keep playing to reveal." : a.getDescription(),
@@ -174,7 +177,8 @@ public class AchievementController {
     private Map<AchievementTrigger, Integer> computeProgressByTrigger(
             User user, Set<AchievementTrigger> wanted) {
         Map<AchievementTrigger, Integer> result = new HashMap<>();
-        if (wanted.isEmpty()) return result;
+        if (wanted.isEmpty())
+            return result;
         String userId = user.getId();
         PlayerStats stats = user.getStats() == null ? new PlayerStats() : user.getStats();
 
@@ -210,7 +214,8 @@ public class AchievementController {
         if (wanted.contains(AchievementTrigger.FAVORITES_RECEIVED)) {
             int max = 0;
             for (Deck deck : deckRepository.findByCreatorUserId(userId)) {
-                if (deck.getFavoriteCount() > max) max = deck.getFavoriteCount();
+                if (deck.getFavoriteCount() > max)
+                    max = deck.getFavoriteCount();
             }
             result.put(AchievementTrigger.FAVORITES_RECEIVED, max);
         }

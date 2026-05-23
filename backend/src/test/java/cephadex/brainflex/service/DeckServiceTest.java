@@ -9,7 +9,7 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,8 +31,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.model.enums.PublishStatus;
 import cephadex.brainflex.repository.DeckRepository;
 
@@ -78,7 +78,7 @@ class DeckServiceTest {
     @Test
     void publish_WhenAlreadyPublished_IsNoOp() {
         deck.setPublishStatus(PublishStatus.PUBLISHED);
-        LocalDateTime original = LocalDateTime.of(2024, 1, 1, 0, 0);
+        Instant original = Instant.parse("2024-01-01T00:00:00Z");
         deck.setPublishedAt(original);
         when(authorizationService.requireDeckEditable("deck-1", owner)).thenReturn(deck);
 
@@ -92,7 +92,7 @@ class DeckServiceTest {
     @Test
     void publish_FromArchived_PreservesOriginalPublishedAt() {
         deck.setPublishStatus(PublishStatus.ARCHIVED);
-        LocalDateTime original = LocalDateTime.of(2024, 3, 1, 0, 0);
+        Instant original = Instant.parse("2024-03-01T00:00:00Z");
         deck.setPublishedAt(original);
         when(authorizationService.requireDeckEditable("deck-1", owner)).thenReturn(deck);
         when(deckRepository.save(any(Deck.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -106,7 +106,7 @@ class DeckServiceTest {
     @Test
     void unpublish_FromPublished_FlipsToDraft() {
         deck.setPublishStatus(PublishStatus.PUBLISHED);
-        deck.setPublishedAt(LocalDateTime.of(2024, 1, 1, 0, 0));
+        deck.setPublishedAt(Instant.parse("2024-01-01T00:00:00Z"));
         when(authorizationService.requireDeckEditable("deck-1", owner)).thenReturn(deck);
         when(deckRepository.save(any(Deck.class))).thenAnswer(inv -> inv.getArgument(0));
 

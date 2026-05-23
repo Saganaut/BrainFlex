@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cephadex.brainflex.model.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSession;
 
 @Service
 public class InteractiveSessionCacheService {
@@ -36,7 +36,8 @@ public class InteractiveSessionCacheService {
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
 
-    public InteractiveSessionCacheService(StringRedisTemplate redis, @Qualifier("redisObjectMapper") ObjectMapper objectMapper) {
+    public InteractiveSessionCacheService(StringRedisTemplate redis,
+            @Qualifier("redisObjectMapper") ObjectMapper objectMapper) {
         this.redis = redis;
         this.objectMapper = objectMapper;
     }
@@ -51,11 +52,14 @@ public class InteractiveSessionCacheService {
         }
     }
 
-    /** Return the cached session, or empty if not cached or Redis is unavailable. */
+    /**
+     * Return the cached session, or empty if not cached or Redis is unavailable.
+     */
     public Optional<InteractiveSession> get(String roomCode) {
         try {
             String json = redis.opsForValue().get(KEY_PREFIX + roomCode);
-            if (json == null) return Optional.empty();
+            if (json == null)
+                return Optional.empty();
             return Optional.of(objectMapper.readValue(json, InteractiveSession.class));
         } catch (Exception e) {
             log.warn("Redis read failed for room {}: {}", roomCode, e.getMessage());
@@ -79,7 +83,10 @@ public class InteractiveSessionCacheService {
     // reads the durable Reaction collection. Falls open on Redis errors —
     // counts simply don't increment, the reaction still broadcasts.
 
-    /** Atomically increment the per-emoji count for a round, returning the new value. */
+    /**
+     * Atomically increment the per-emoji count for a round, returning the new
+     * value.
+     */
     public long incrementReactionCount(String roomCode, String elementId, String emoji) {
         try {
             String key = REACTION_PREFIX + roomCode + ":" + elementId;
@@ -93,13 +100,17 @@ public class InteractiveSessionCacheService {
         }
     }
 
-    /** Read all (emoji -> count) pairs collected for a round. Empty when Redis is unreachable. */
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    /**
+     * Read all (emoji -> count) pairs collected for a round. Empty when Redis is
+     * unreachable.
+     */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public Map<String, Long> getReactionCounts(String roomCode, String elementId) {
         try {
             String key = REACTION_PREFIX + roomCode + ":" + elementId;
             Map entries = redis.opsForHash().entries(key);
-            if (entries == null || entries.isEmpty()) return Collections.emptyMap();
+            if (entries == null || entries.isEmpty())
+                return Collections.emptyMap();
             Map<String, Long> out = new HashMap<>(entries.size());
             for (Object entry : entries.entrySet()) {
                 Map.Entry<?, ?> e = (Map.Entry<?, ?>) entry;

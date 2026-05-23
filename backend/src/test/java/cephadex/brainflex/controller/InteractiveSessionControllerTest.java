@@ -5,15 +5,22 @@
  */
 package cephadex.brainflex.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -22,26 +29,20 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
-import cephadex.brainflex.model.InteractiveSessionResult;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionSettings;
-import cephadex.brainflex.model.PlayerPlacement;
-import cephadex.brainflex.model.InteractiveSessionPlayer;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.model.enums.AnswerSubmissionMode;
-import cephadex.brainflex.model.enums.InteractiveSessionStatus;
+import cephadex.brainflex.model.enums.SessionLifecycle;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionPlayer;
+import cephadex.brainflex.model.session.InteractiveSessionResult;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
+import cephadex.brainflex.model.session.PlayerPlacement;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.InteractiveSessionService;
 
@@ -72,7 +73,7 @@ class InteractiveSessionControllerTest {
                 registeredUser.setId("user1");
                 registeredUser.setGoogleId("user"); // matches @WithMockUser principal name
                 registeredUser.setUserName("testhost");
-                registeredUser.setIsGuest(false);
+                registeredUser.setGuest(false);
 
                 InteractiveSessionSettings settings = new InteractiveSessionSettings();
                 settings.setTotalRounds(10);
@@ -87,8 +88,8 @@ class InteractiveSessionControllerTest {
                 lobbySession.setRoomCode("ABCD12");
                 lobbySession.setInviteToken("token-uuid");
                 lobbySession.setHostUserId("user1");
-                lobbySession.setSettings(settings);
-                lobbySession.setStatus(InteractiveSessionStatus.LOBBY);
+                lobbySession.getContent().setSettings(settings);
+                lobbySession.setStatus(SessionLifecycle.LOBBY);
                 lobbySession.setPlayers(new ArrayList<>(List.of(hostPlayer)));
         }
 
@@ -100,7 +101,9 @@ class InteractiveSessionControllerTest {
                 when(gameService.createInteractiveSession(any(User.class), any(CreateInteractiveSessionRequest.class)))
                                 .thenReturn(lobbySession);
 
-                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null,
+                                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                                null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/interactive-sessions")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -113,7 +116,9 @@ class InteractiveSessionControllerTest {
         void createGame_AsUnauthenticated_ReturnsForbidden() throws Exception {
                 when(userRepository.findByGoogleId(anyString())).thenReturn(Optional.empty());
 
-                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+                CreateInteractiveSessionRequest request = new CreateInteractiveSessionRequest("deck1", null, null, null,
+                                null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+                                null, null, null, null, null, null, null, null);
                 mockMvc.perform(post("/api/interactive-sessions")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request)))
@@ -131,7 +136,10 @@ class InteractiveSessionControllerTest {
                                 })
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(
-                                                new CreateInteractiveSessionRequest("deck1", null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null))))
+                                                new CreateInteractiveSessionRequest("deck1", null, null, null, null,
+                                                                null, null, null, null, null, null, null, null, null,
+                                                                null, null, null, null, null, null, null, null, null,
+                                                                null, null, null))))
                                 .andExpect(status().isForbidden());
         }
 
@@ -164,7 +172,8 @@ class InteractiveSessionControllerTest {
         @Test
         void joinByRoomCode_AsRegisteredUser_ReturnsSession() throws Exception {
                 when(userRepository.findByGoogleId("user")).thenReturn(Optional.of(registeredUser));
-                when(gameService.joinInteractiveSession("ABCD12", registeredUser, null, null, null)).thenReturn(lobbySession);
+                when(gameService.joinInteractiveSession("ABCD12", registeredUser, null, null, null))
+                                .thenReturn(lobbySession);
 
                 mockMvc.perform(post("/api/interactive-sessions/ABCD12/join"))
                                 .andExpect(status().isOk())

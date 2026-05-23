@@ -4,4 +4,29 @@
   height: 100%;
   margin: var(--space-1);
   border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+
+  .sessionRoundThumbnail {
+    .isActive {
+      background-color: var(--action-active);
+    }
+
+    .submit {
+      background-color: var(--action-active);
+    }
+
+    .vote {
+      background-color: var(--action-active);
+    }
+
+    .reveal {
+      background-color: var(--action-active);
+    }
+
+    .inactive {
+      background-color: var(--action-active);
+    }
+  }
 }

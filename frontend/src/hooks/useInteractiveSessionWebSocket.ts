@@ -38,8 +38,8 @@ import {
   type ResponsesRevealedPayload,
 } from "../store/interactiveSessionSlice";
 import type {
-  InteractiveSessionDto,
-  InteractiveSessionChatMessageDto,
+  InteractiveSessionResponse,
+  InteractiveSessionChatMessageResponse,
 } from "../store/BrainFlexApi";
 import type { AnswerPayload } from "../types/elements";
 import type {
@@ -62,7 +62,9 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
         client.subscribe(
           `/topic/interactive-session/${roomCode}/lobby`,
           (msg) => {
-            dispatch(setSession(JSON.parse(msg.body) as InteractiveSessionDto));
+            dispatch(
+              setSession(JSON.parse(msg.body) as InteractiveSessionResponse),
+            );
           },
         );
         client.subscribe(
@@ -135,7 +137,7 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
           (msg) => {
             dispatch(
               chatMessageReceived(
-                JSON.parse(msg.body) as InteractiveSessionChatMessageDto,
+                JSON.parse(msg.body) as InteractiveSessionChatMessageResponse,
               ),
             );
           },
@@ -171,7 +173,9 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
           `/topic/interactive-session/${roomCode}/responsesRevealed`,
           (msg) => {
             dispatch(
-              responsesRevealed(JSON.parse(msg.body) as ResponsesRevealedPayload),
+              responsesRevealed(
+                JSON.parse(msg.body) as ResponsesRevealedPayload,
+              ),
             );
           },
         );
@@ -243,8 +247,10 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
     }, [roomCode, send]),
 
     sendBoot: useCallback(
-      (userId: string) => {
-        send(`/app/interactive-session/${roomCode}/boot`, { userId });
+      // `playerId` is the session-scoped public handle (no raw userId on the
+      // wire — see InteractiveSessionPlayer.playerId on the backend).
+      (playerId: string) => {
+        send(`/app/interactive-session/${roomCode}/boot`, { playerId });
       },
       [roomCode, send],
     ),

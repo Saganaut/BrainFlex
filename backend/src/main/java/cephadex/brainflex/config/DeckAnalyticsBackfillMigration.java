@@ -1,6 +1,6 @@
 /**
  * One-shot backfill that wipes {@code deck_analytics} and replays every
- * finished {@link cephadex.brainflex.model.InteractiveSession} through
+ * finished {@link cephadex.brainflex.model.session.InteractiveSession} through
  * {@link cephadex.brainflex.service.DeckAnalyticsService#recordSessionFinish}
  * in chronological order, producing a deterministic per-deck rollup.
  *
@@ -30,8 +30,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.enums.InteractiveSessionStatus;
+import cephadex.brainflex.model.enums.SessionLifecycle;
+import cephadex.brainflex.model.session.InteractiveSession;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.service.DeckAnalyticsService;
 
@@ -62,7 +62,8 @@ public class DeckAnalyticsBackfillMigration {
 
                 for (InteractiveSession session : sessions) {
                     visited++;
-                    if (session.getStatus() != InteractiveSessionStatus.FINISHED) continue;
+                    if (session.getStatus() != SessionLifecycle.FINISHED)
+                        continue;
                     if (session.getDeckId() == null) {
                         skippedNoDeck++;
                         continue;

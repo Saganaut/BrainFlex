@@ -9,7 +9,7 @@
  */
 package cephadex.brainflex.dto;
 
-import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.image.Image;
 import cephadex.brainflex.model.enums.DeckVisibility;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

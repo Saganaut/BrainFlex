@@ -5,14 +5,14 @@
  *
  * Lives outside the DTOs because the DTOs are bare records and shouldn't
  * carry a service dependency. Every caller that hands a {@link User} to a
- * UserDTO constructor first resolves the picture through this hydrator.
+ * UserResponse constructor first resolves the picture through this hydrator.
  */
 package cephadex.brainflex.service;
 
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.Image;
+import cephadex.brainflex.model.image.Image;
+import cephadex.brainflex.model.user.User;
 
 @Service
 public class UserImageHydrator {
@@ -23,10 +23,14 @@ public class UserImageHydrator {
         this.s3Service = s3Service;
     }
 
-    /** Resolves the user's avatar to an Image at every {@link cephadex.brainflex.model.element.ImageSize}
-     *  tier that exists for them. Read-only — does not mutate the user. */
+    /**
+     * Resolves the user's avatar to an Image at every
+     * {@link cephadex.brainflex.model.image.ImageSize}
+     * tier that exists for them. Read-only — does not mutate the user.
+     */
     public Image pictureImageOf(User user) {
-        if (user == null) return Image.empty();
+        if (user == null)
+            return Image.empty();
         if (user.getPictureVariants() != null && !user.getPictureVariants().isEmpty()) {
             return new Image(false, null, null,
                     s3Service.refreshAvatar(user.getId(), user.getPictureVariants()));
@@ -38,15 +42,17 @@ public class UserImageHydrator {
         return Image.empty();
     }
 
-    /** Largest URL we can produce for the user at this moment. Used by call
-     *  sites that store a single avatar URL inline (comments, interactiveSession
-     *  players, ratings, …). For uploaded avatars this is a fresh presigned
-     *  URL to the xl rendition; for OAuth users it's the externally-hosted
-     *  Google URL. Null when neither source exists. */
+    /**
+     * Largest URL we can produce for the user at this moment. Used by call
+     * sites that store a single avatar URL inline (comments, interactiveSession
+     * players, ratings, …). For uploaded avatars this is a fresh presigned
+     * URL to the xl rendition; for OAuth users it's the externally-hosted
+     * Google URL. Null when neither source exists.
+     */
     public String pictureUrlOf(User user) {
         Image picture = pictureImageOf(user);
-        if (picture == null) return null;
+        if (picture == null)
+            return null;
         return picture.largestUrl();
     }
 }
-

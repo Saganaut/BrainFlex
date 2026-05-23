@@ -2,7 +2,7 @@
  * Cache-sync rules for the deck-collection surface.
  *
  * Every mutation that touches a single collection (metadata edit, deck add /
- * remove) returns the authoritative {@link DeckCollectionDto} summary —
+ * remove) returns the authoritative {@link DeckCollectionResponse} summary —
  * splice it into the detail-view cache so /collections/$collectionId
  * re-renders instantly, and patch the same id in any my-collections list
  * pages the user is browsing.
@@ -14,13 +14,13 @@
  *
  * Imported for its side effect via the `../apiEnhancements` barrel.
  */
-import { BrainFlex, type DeckCollectionDto } from "../BrainFlexApi";
+import { BrainFlex, type DeckCollectionResponse } from "../BrainFlexApi";
 import type { WithApiQueries } from "./types";
 
 interface CollectionSyncApi {
   dispatch: (action: unknown) => unknown;
   getState: () => WithApiQueries;
-  queryFulfilled: Promise<{ data: DeckCollectionDto }>;
+  queryFulfilled: Promise<{ data: DeckCollectionResponse }>;
 }
 
 const syncCollectionCaches = async (
@@ -65,14 +65,14 @@ const syncCollectionCaches = async (
 
 /**
  * Optimistic deck-reorder inside a collection: rewrites
- * {@link DeckCollectionDto#deckIds} (and the embedded {@code decks} array)
+ * {@link DeckCollectionResponse#deckIds} (and the embedded {@code decks} array)
  * immediately so the drag-released list doesn't snap back while the round-
  * trip is in flight. On reject, undo the patch.
  */
 interface ReorderApi {
   dispatch: (action: unknown) => unknown;
   getState: () => WithApiQueries;
-  queryFulfilled: Promise<{ data: DeckCollectionDto }>;
+  queryFulfilled: Promise<{ data: DeckCollectionResponse }>;
 }
 
 const optimisticReorderCollectionDecks = async (

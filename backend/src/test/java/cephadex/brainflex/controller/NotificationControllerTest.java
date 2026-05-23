@@ -7,16 +7,22 @@
  */
 package cephadex.brainflex.controller;
 
-import java.time.LocalDateTime;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -28,17 +34,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import cephadex.brainflex.dto.NotificationDTO;
-import cephadex.brainflex.model.Notification;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.NotificationResponse;
 import cephadex.brainflex.model.enums.NotificationKind;
+import cephadex.brainflex.model.user.Notification;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.NotificationService;
 import cephadex.brainflex.service.UserService;
 
@@ -48,19 +48,23 @@ import cephadex.brainflex.service.UserService;
 @WithMockUser
 class NotificationControllerTest {
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @MockitoBean private NotificationService notificationService;
-    @MockitoBean private UserService userService;
+    @MockitoBean
+    private NotificationService notificationService;
+    @MockitoBean
+    private UserService userService;
 
     private User caller;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         caller = new User();
         caller.setId("user-1");
         caller.setUserName("kevin");
-        caller.setIsGuest(false);
+        caller.setGuest(false);
         when(userService.resolveRegisteredUser(any())).thenReturn(Optional.of(caller));
     }
 
@@ -95,7 +99,7 @@ class NotificationControllerTest {
 
     @Test
     void markRead_FlipsRow() throws Exception {
-        NotificationDTO dto = NotificationDTO.from(sampleRow("n-1", "user-1"));
+        NotificationResponse dto = NotificationResponse.from(sampleRow("n-1", "user-1"));
         when(notificationService.markRead("n-1", "user-1")).thenReturn(dto);
 
         mockMvc.perform(put("/api/notifications/n-1/read").with(csrf()))
@@ -129,7 +133,6 @@ class NotificationControllerTest {
         n.setTitle("Someone commented on \"X\"");
         n.setLink("/decks/deck-1");
         n.setRead(false);
-        n.setCreatedAt(LocalDateTime.of(2026, 5, 20, 10, 0));
         return n;
     }
 }

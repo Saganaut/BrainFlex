@@ -20,7 +20,9 @@ import { DrawingPreview } from "../DrawingReveal/DrawingReveal";
 
 interface RoundResultProps {
   result: RoundResultPayload;
-  currentUserId?: string;
+  // Session-scoped playerId of the viewer; used to highlight their own row
+  // and surface their personal pts callout.
+  currentPlayerId?: string;
   isHost: boolean;
   isTurnBased: boolean;
   onNextRound: () => void;
@@ -28,12 +30,12 @@ interface RoundResultProps {
 
 const RoundResult = ({
   result,
-  currentUserId,
+  currentPlayerId,
   isHost,
   isTurnBased,
   onNextRound,
 }: RoundResultProps) => {
-  const myResult = result.playerResults.find((r) => r.userId === currentUserId);
+  const myResult = result.playerResults.find((r) => r.playerId === currentPlayerId);
   const sorted = [...result.playerResults].sort(
     (a, b) => b.totalScore - a.totalScore,
   );
@@ -81,8 +83,8 @@ const RoundResult = ({
             const text = renderPlayerSubmission(r.payload);
             return (
               <li
-                key={r.userId}
-                className={`${styles.resultRow} ${r.userId === currentUserId ? styles.me : ""}`}>
+                key={r.playerId}
+                className={`${styles.resultRow} ${r.playerId === currentPlayerId ? styles.me : ""}`}>
                 <span className={styles.playerName}>
                   {r.userName}
                   {text && (
@@ -123,13 +125,13 @@ interface BestAnswerRevealProps {
 
 const BestAnswerReveal = ({ outcome, element }: BestAnswerRevealProps) => {
   const ranked = [...outcome.tallies].sort((a, b) => b.voteCount - a.voteCount);
-  const winnerSet = new Set(outcome.winnerUserIds);
+  const winnerSet = new Set(outcome.winnerPlayerIds);
 
   return (
     <div className={styles.bestAnswer}>
       <div className={styles.bestAnswerHeader}>
         <span className={styles.bestAnswerLabel}>Best Answer</span>
-        {outcome.winnerUserIds.length > 0 ? (
+        {outcome.winnerPlayerIds.length > 0 ? (
           <span className={styles.bestAnswerBonus}>
             +{outcome.bonusAwarded} bonus
           </span>
@@ -139,7 +141,7 @@ const BestAnswerReveal = ({ outcome, element }: BestAnswerRevealProps) => {
       </div>
       <ol className={styles.tallyList}>
         {ranked.map((t) => {
-          const isWinner = winnerSet.has(t.userId);
+          const isWinner = winnerSet.has(t.playerId);
           const drawing =
             element.kind === "DrawingQuestion" &&
             t.payload.kind === "DrawingAnswer"

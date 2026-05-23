@@ -9,9 +9,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.InteractiveSessionChatMessage;
+import cephadex.brainflex.model.session.InteractiveSessionChatMessage;
 
-public interface InteractiveSessionChatMessageRepository extends MongoRepository<InteractiveSessionChatMessage, String> {
+public interface InteractiveSessionChatMessageRepository
+        extends MongoRepository<InteractiveSessionChatMessage, String> {
 
     Page<InteractiveSessionChatMessage> findAllByInteractiveSessionIdOrderBySentAtDesc(
             String interactiveSessionId, Pageable pageable);

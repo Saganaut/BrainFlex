@@ -43,7 +43,7 @@ export const validateImageFile = (
   tierName: ImageTierName,
 ): string | null => {
   const tier = IMAGE_TIERS[tierName];
-  if (!tier.acceptedMimes.includes(file.type)) {
+  if (!(tier.acceptedMimes as readonly string[]).includes(file.type)) {
     return `Invalid file type. Please upload a ${tier.acceptedLabel}.`;
   }
   if (file.size > tier.maxBytes) {

@@ -31,10 +31,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 
-import cephadex.brainflex.model.Achievement;
-import cephadex.brainflex.model.PlayerStats;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserAchievement;
+import cephadex.brainflex.model.user.Achievement;
+import cephadex.brainflex.model.user.PlayerStats;
+import cephadex.brainflex.model.user.User;
+import cephadex.brainflex.model.user.UserAchievement;
 import cephadex.brainflex.model.enums.AchievementTrigger;
 import cephadex.brainflex.repository.AchievementRepository;
 import cephadex.brainflex.repository.UserAchievementRepository;
@@ -133,7 +133,7 @@ class AchievementServiceTest {
     void evaluate_GuestUser_IsSkipped() {
         User guest = new User();
         guest.setId("g-1");
-        guest.setIsGuest(true);
+        guest.setGuest(true);
         when(userRepository.findById("g-1")).thenReturn(Optional.of(guest));
 
         List<Achievement> earned = achievementService.evaluate(
@@ -221,7 +221,7 @@ class AchievementServiceTest {
     private static User registeredUser(String id, int totalPoints) {
         User u = new User();
         u.setId(id);
-        u.setIsGuest(false);
+        u.setGuest(false);
         PlayerStats stats = new PlayerStats();
         stats.setTotalPoints(totalPoints);
         u.setStats(stats);

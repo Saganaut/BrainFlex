@@ -10,7 +10,7 @@ package cephadex.brainflex.dto;
 import java.util.List;
 
 public record DeckRatingsPage(
-        List<DeckRatingDTO> items,
+        List<DeckRatingResponse> items,
         int page,
         int size,
         long totalElements,

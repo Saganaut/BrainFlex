@@ -6,7 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.User;
 
 public interface UserRepository extends MongoRepository<User, String> {
 

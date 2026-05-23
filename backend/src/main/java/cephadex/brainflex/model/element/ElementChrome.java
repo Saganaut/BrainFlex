@@ -25,90 +25,90 @@
  */
 package cephadex.brainflex.model.element;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.ResponseMode;
+import cephadex.brainflex.model.image.Image;
 
 public record ElementChrome(
-        // identity
-        String publicKey,
-        String privateKey,
-        // heading
-        String title,
-        String titleLabel,           // pre-heading label (chunk 21) — e.g. "Question 3 of 9"
-        Map<String, Object> styledTitle,
-        // response config
-        boolean scored,
-        boolean survey,
-        Integer multipleSelections,
-        ResponseMode responseMode,
-        // display
-        int displaySeconds,
-        String speakerNotes,
-        // media
-        Image background,
-        Image image,
-        String videoUrl,
-        String audioUrl,
-        String videoAssetId,
-        String audioAssetId,
-        MediaPosition mediaPosition,
-        // best-answer modifier
-        boolean bestAnswerMode,
-        String bestAnswerTitle,
-        int bestAnswerPoints,
-        BestAnswerScoring bestAnswerScoring,
-        // audit + metadata
-        String createdByUserId,
-        String lastEditedByUserId,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        List<String> tagIds,
-        String mediaCaption,
-        String altText,
-        boolean reactionsEnabled,
-        Integer version
-) {
+                // identity
+                String publicKey,
+                String privateKey,
+                // heading
+                String title,
+                String titleLabel, // pre-heading label (chunk 21) — e.g. "Question 3 of 9"
+                Map<String, Object> styledTitle,
+                // response config
+                boolean scored,
+                boolean survey,
+                Integer multipleSelections,
+                ResponseMode responseMode,
+                // display
+                int displaySeconds,
+                String speakerNotes,
+                // media
+                Image background,
+                Image image,
+                String videoUrl,
+                String audioUrl,
+                String videoAssetId,
+                String audioAssetId,
+                MediaPosition mediaPosition,
+                // best-answer modifier
+                boolean bestAnswerMode,
+                String bestAnswerTitle,
+                int bestAnswerPoints,
+                BestAnswerScoring bestAnswerScoring,
+                // audit + metadata
+                String createdByUserId,
+                String lastEditedByUserId,
+                Instant createdAt,
+                Instant updatedAt,
+                List<String> tagIds,
+                String mediaCaption,
+                String altText,
+                boolean reactionsEnabled,
+                Integer version) {
 
-    /**
-     * Returns a chrome with the audit-block fields replaced. Used by
-     * {@link cephadex.brainflex.service.DeckElementCloner#withMetadata} so
-     * provenance stamping doesn't need to know any kind-specific shape.
-     */
-    public ElementChrome withMetadata(
-            String createdByUserId, String lastEditedByUserId,
-            LocalDateTime createdAt, LocalDateTime updatedAt,
-            List<String> tagIds, String mediaCaption, String altText,
-            boolean reactionsEnabled, Integer version) {
-        return new ElementChrome(
-                publicKey, privateKey, title, titleLabel, styledTitle,
-                scored, survey, multipleSelections, responseMode,
-                displaySeconds, speakerNotes,
-                background, image, videoUrl, audioUrl,
-                videoAssetId, audioAssetId, mediaPosition,
-                bestAnswerMode, bestAnswerTitle, bestAnswerPoints, bestAnswerScoring,
-                createdByUserId, lastEditedByUserId, createdAt, updatedAt,
-                tagIds, mediaCaption, altText, reactionsEnabled, version);
-    }
+        /**
+         * Returns a chrome with the audit-block fields replaced. Used by
+         * {@link cephadex.brainflex.service.DeckElementCloner#withMetadata} so
+         * provenance stamping doesn't need to know any kind-specific shape.
+         */
+        public ElementChrome withMetadata(
+                        String createdByUserId, String lastEditedByUserId,
+                        Instant createdAt, Instant updatedAt,
+                        List<String> tagIds, String mediaCaption, String altText,
+                        boolean reactionsEnabled, Integer version) {
+                return new ElementChrome(
+                                publicKey, privateKey, title, titleLabel, styledTitle,
+                                scored, survey, multipleSelections, responseMode,
+                                displaySeconds, speakerNotes,
+                                background, image, videoUrl, audioUrl,
+                                videoAssetId, audioAssetId, mediaPosition,
+                                bestAnswerMode, bestAnswerTitle, bestAnswerPoints, bestAnswerScoring,
+                                createdByUserId, lastEditedByUserId, createdAt, updatedAt,
+                                tagIds, mediaCaption, altText, reactionsEnabled, version);
+        }
 
-    /**
-     * Returns a chrome with {@code background} and {@code image} replaced.
-     * Used by {@link cephadex.brainflex.service.DeckImageMapper} when
-     * rehydrating Image references at read time.
-     */
-    public ElementChrome withImages(Image background, Image image) {
-        return new ElementChrome(
-                publicKey, privateKey, title, titleLabel, styledTitle,
-                scored, survey, multipleSelections, responseMode,
-                displaySeconds, speakerNotes,
-                background, image, videoUrl, audioUrl,
-                videoAssetId, audioAssetId, mediaPosition,
-                bestAnswerMode, bestAnswerTitle, bestAnswerPoints, bestAnswerScoring,
-                createdByUserId, lastEditedByUserId, createdAt, updatedAt,
-                tagIds, mediaCaption, altText, reactionsEnabled, version);
-    }
+        /**
+         * Returns a chrome with {@code background} and {@code image} replaced.
+         * Used by {@link cephadex.brainflex.service.DeckImageMapper} when
+         * rehydrating Image references at read time.
+         */
+        public ElementChrome withImages(Image background, Image image) {
+                return new ElementChrome(
+                                publicKey, privateKey, title, titleLabel, styledTitle,
+                                scored, survey, multipleSelections, responseMode,
+                                displaySeconds, speakerNotes,
+                                background, image, videoUrl, audioUrl,
+                                videoAssetId, audioAssetId, mediaPosition,
+                                bestAnswerMode, bestAnswerTitle, bestAnswerPoints, bestAnswerScoring,
+                                createdByUserId, lastEditedByUserId, createdAt, updatedAt,
+                                tagIds, mediaCaption, altText, reactionsEnabled, version);
+        }
 }

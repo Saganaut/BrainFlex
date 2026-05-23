@@ -15,20 +15,21 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.DeckDTO;
+import cephadex.brainflex.dto.DeckResponse;
 import cephadex.brainflex.dto.Page;
 import cephadex.brainflex.dto.UpdateProfileRequest;
-import cephadex.brainflex.dto.UserDTO;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckFavorite;
-import cephadex.brainflex.model.NotificationPrefs;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.UserResponse;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckFavorite;
+import cephadex.brainflex.model.user.NotificationPrefs;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.DeckFavoriteService;
@@ -36,7 +37,6 @@ import cephadex.brainflex.service.DeckImageHydrationService;
 import cephadex.brainflex.service.DeckTagHydrationService;
 import cephadex.brainflex.service.UserImageHydrator;
 import cephadex.brainflex.service.UserService;
-import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping("/api/users")
@@ -72,14 +72,14 @@ public class UserController {
          * Returns a paginated list of users sorted by total points.
          */
         @GetMapping("/leaderboard")
-        public List<UserDTO.GuestUser> getLeaderboard(
+        public List<UserResponse.GuestUser> getLeaderboard(
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size) {
                 PageRequest pageRequest = PageRequest.of(page, size, Sort.by("stats.totalPoints").descending());
                 org.springframework.data.domain.Page<User> userPage = userRepository.findAll(pageRequest);
 
                 return userPage.getContent().stream()
-                                .map(user -> new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user)))
+                                .map(user -> new UserResponse.GuestUser(user, userImageHydrator.pictureImageOf(user)))
                                 .toList();
         }
 
@@ -93,21 +93,23 @@ public class UserController {
          * Returns a a user info
          */
         @GetMapping("/{id}")
-        public ResponseEntity<UserDTO.RegisteredUser> getUserProfile(@PathVariable String id) {
+        public ResponseEntity<UserResponse.RegisteredUser> getUserProfile(@PathVariable String id) {
                 return userRepository.findById(id)
-                                .map(user -> ResponseEntity.ok(new UserDTO.RegisteredUser(user, userImageHydrator.pictureImageOf(user))))
+                                .map(user -> ResponseEntity.ok(new UserResponse.RegisteredUser(user,
+                                                userImageHydrator.pictureImageOf(user))))
                                 .orElse(ResponseEntity.notFound().build());
         }
 
         @PatchMapping("/me")
-        public ResponseEntity<UserDTO.RegisteredUser> updateProfile(
+        public ResponseEntity<UserResponse.RegisteredUser> updateProfile(
                         @RequestBody UpdateProfileRequest request,
                         Authentication authentication) {
                 return userService.resolveRegisteredUser(authentication)
                                 .map(user -> {
                                         User updated = userService.updateProfile(user, request);
                                         return ResponseEntity.ok(
-                                                        new UserDTO.RegisteredUser(updated, userImageHydrator.pictureImageOf(updated)));
+                                                        new UserResponse.RegisteredUser(updated,
+                                                                        userImageHydrator.pictureImageOf(updated)));
                                 })
                                 .orElse(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
         }
@@ -127,9 +129,7 @@ public class UserController {
                 NotificationPrefs prefs = caller.getNotificationPrefs();
                 if (prefs == null) {
                         prefs = NotificationPrefs.withDefaults();
-                        if (caller.getNewsletter() != null) {
-                                prefs.setMarketingEmail(caller.getNewsletter());
-                        }
+                        prefs.setMarketingEmail(caller.isNewsletter());
                 }
                 return ResponseEntity.ok(prefs);
         }
@@ -170,7 +170,7 @@ public class UserController {
 
         /**
          * Paginated favorites list for the authenticated caller, ordered
-         * by {@code favoritedAt DESC}. Returns full {@link DeckDTO}s so the
+         * by {@code favoritedAt DESC}. Returns full {@link DeckResponse}s so the
          * grid can render cards without a second lookup; deleted source
          * decks are dropped from the page (with the total reflecting the
          * raw join-row count — close enough until chunk 18 introduces a
@@ -178,7 +178,7 @@ public class UserController {
          */
         @PreAuthorize("hasRole('USER')")
         @GetMapping("/me/favorites")
-        public Page<DeckDTO> listMyFavorites(
+        public Page<DeckResponse> listMyFavorites(
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "20") int size,
                         Authentication authentication) {
@@ -189,25 +189,30 @@ public class UserController {
                 int safeSize = Math.max(1, Math.min(50, size));
                 PageRequest pageRequest = PageRequest.of(
                                 safePage, safeSize, Sort.by("favoritedAt").descending());
-                org.springframework.data.domain.Page<DeckFavorite> rows = deckFavoriteService.listForUser(caller.getId(), pageRequest);
+                org.springframework.data.domain.Page<DeckFavorite> rows = deckFavoriteService
+                                .listForUser(caller.getId(), pageRequest);
 
                 List<String> deckIds = new ArrayList<>(rows.getNumberOfElements());
-                for (DeckFavorite row : rows.getContent()) deckIds.add(row.getDeckId());
+                for (DeckFavorite row : rows.getContent())
+                        deckIds.add(row.getDeckId());
 
                 Map<String, Deck> byId = new HashMap<>();
-                for (Deck deck : deckRepository.findAllById(deckIds)) byId.put(deck.getId(), deck);
+                for (Deck deck : deckRepository.findAllById(deckIds))
+                        byId.put(deck.getId(), deck);
 
                 List<Deck> ordered = new ArrayList<>(deckIds.size());
                 for (String deckId : deckIds) {
                         Deck deck = byId.get(deckId);
-                        if (deck != null) ordered.add(deck);
+                        if (deck != null)
+                                ordered.add(deck);
                 }
 
-                for (Deck deck : ordered) deckImageHydrationService.hydrate(deck);
+                for (Deck deck : ordered)
+                        deckImageHydrationService.hydrate(deck);
                 deckTagHydrationService.hydrate(ordered);
 
-                List<DeckDTO> items = ordered.stream()
-                                .map(d -> new DeckDTO(d, true))
+                List<DeckResponse> items = ordered.stream()
+                                .map(d -> new DeckResponse(d, true))
                                 .toList();
                 boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
                 return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);

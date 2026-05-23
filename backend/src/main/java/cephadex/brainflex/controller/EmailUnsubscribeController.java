@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import cephadex.brainflex.model.EmailSuppression;
+import cephadex.brainflex.model.user.EmailSuppression;
 import cephadex.brainflex.service.email.EmailSuppressionService;
 import cephadex.brainflex.service.email.UnsubscribeTokenService;
 import cephadex.brainflex.service.email.UnsubscribeTokenService.Decoded;
@@ -35,7 +35,7 @@ public class EmailUnsubscribeController {
     private final UnsubscribeTokenService tokens;
 
     public EmailUnsubscribeController(EmailSuppressionService suppression,
-                                      UnsubscribeTokenService tokens) {
+            UnsubscribeTokenService tokens) {
         this.suppression = suppression;
         this.tokens = tokens;
     }
@@ -61,5 +61,6 @@ public class EmailUnsubscribeController {
         return ResponseEntity.ok(new UnsubscribeResponse(d.email(), d.category().name()));
     }
 
-    public record UnsubscribeResponse(String email, String category) {}
+    public record UnsubscribeResponse(String email, String category) {
+    }
 }

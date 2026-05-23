@@ -6,18 +6,18 @@
  */
 package cephadex.brainflex.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
-import cephadex.brainflex.model.InteractiveSessionSettings;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateScheduledInteractiveSessionRequest(
         @NotBlank String deckId,
-        @NotNull @Future LocalDateTime scheduledStartAt,
-        LocalDateTime scheduledEndAt,
+        @NotNull @Future Instant scheduledStartAt,
+        Instant scheduledEndAt,
         InteractiveSessionSettings settings,
         String reminderEmailTemplate,
         List<String> invitedEmails) {

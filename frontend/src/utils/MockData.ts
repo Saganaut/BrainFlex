@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * LOTR-themed mock data for every core response DTO the backend sends to the
  * frontend. Use these for storybook stories, isolated component dev, unit
@@ -15,23 +16,23 @@
  */
 import type {
   AllocationQuestion,
-  DeckCollectionDto,
-  DeckCommentDto,
-  DeckDto,
+  DeckCollectionResponse,
+  DeckCommentResponse,
+  DeckResponse,
   DrawingQuestion,
   ElementChrome,
   GalleryImageResponse,
   GridQuestion,
   GuestUser,
   Image,
-  InteractiveSessionDto,
+  InteractiveSessionResponse,
   InteractiveSessionPlayerDto,
   InteractiveSessionSettings,
   MatchingQuestion,
   McqOption,
   McqQuestion,
   MediaAssetResponse,
-  NotificationDto,
+  NotificationResponse,
   NumberQuestion,
   OrganizationResponse,
   PlaceOnImageQuestion,
@@ -40,7 +41,7 @@ import type {
   RankingQuestion,
   RegisteredUser,
   ScalesQuestion,
-  ScheduledInteractiveSessionDto,
+  ScheduledInteractiveSessionResponse,
   Slide,
   TagResponse,
   Team,
@@ -60,8 +61,16 @@ const placeholderImage = (seed: string, w = 800, h = 600): Image => ({
   externalUrl: `https://picsum.photos/seed/${seed}/${w}/${h}`,
   blank: false,
   variants: {
-    original: { url: `https://picsum.photos/seed/${seed}/${w}/${h}`, width: w, height: h },
-    thumb: { url: `https://picsum.photos/seed/${seed}/240/180`, width: 240, height: 180 },
+    original: {
+      url: `https://picsum.photos/seed/${seed}/${w}/${h}`,
+      width: w,
+      height: h,
+    },
+    thumb: {
+      url: `https://picsum.photos/seed/${seed}/240/180`,
+      width: 240,
+      height: 180,
+    },
   },
 });
 
@@ -79,14 +88,14 @@ export const mockFrodoStats: PlayerStats = {
   gamesPlayed: 42,
   highScore: 9870,
   totalPoints: 215430,
-  currentStreak: 7,
+  dailyLoginStreak: 7,
 };
 
 export const mockGandalfStats: PlayerStats = {
   gamesPlayed: 318,
   highScore: 14200,
   totalPoints: 2_103_500,
-  currentStreak: 21,
+  dailyLoginStreak: 21,
 };
 
 // ─── Users (RegisteredUser + GuestUser) ─────────────────────────────────────
@@ -97,16 +106,18 @@ export const mockFrodoUser: RegisteredUser = {
   name: "Frodo Baggins",
   userName: "RingBearer99",
   isGuest: false,
-  googleId: "google_frodo_001",
+  externalIdentity: { provider: "google", id: "google_frodo_001" },
   pictureUrl: "https://picsum.photos/seed/frodo/200/200",
   picture: placeholderImage("frodo", 200, 200),
   stats: mockFrodoStats,
   membership: {
-    tier: "INDIVIDUAL",
-    status: "ACTIVE",
-    startedAt: FELLOWSHIP_FORMED_AT,
-    currentPeriodEnd: "2026-12-25T00:00:00Z",
-    cancelAtPeriodEnd: false,
+    billing: {
+      tier: "INDIVIDUAL",
+      status: "ACTIVE",
+      startedAt: FELLOWSHIP_FORMED_AT,
+      currentPeriodEnd: "2026-12-25T00:00:00Z",
+      cancelAtPeriodEnd: false,
+    },
     monthlyInteractiveSessionCount: 12,
     monthlyCountPeriodStart: "2026-05-01T00:00:00Z",
   },
@@ -125,16 +136,18 @@ export const mockGandalfUser: RegisteredUser = {
   name: "Gandalf the Grey",
   userName: "Mithrandir",
   isGuest: false,
-  googleId: "google_gandalf_001",
+  externalIdentity: { provider: "google", id: "google_gandalf_001" },
   pictureUrl: "https://picsum.photos/seed/gandalf/200/200",
   picture: placeholderImage("gandalf", 200, 200),
   stats: mockGandalfStats,
   membership: {
-    tier: "ORG_BUSINESS",
-    status: "ACTIVE",
-    startedAt: "1019-01-01T00:00:00Z",
-    currentPeriodEnd: "9999-12-31T00:00:00Z",
-    cancelAtPeriodEnd: false,
+    billing: {
+      tier: "ORG_BUSINESS",
+      status: "ACTIVE",
+      startedAt: "1019-01-01T00:00:00Z",
+      currentPeriodEnd: "9999-12-31T00:00:00Z",
+      cancelAtPeriodEnd: false,
+    },
     sourceOrganizationId: "org_white_council",
     monthlyInteractiveSessionCount: 73,
     monthlyCountPeriodStart: "2026-05-01T00:00:00Z",
@@ -156,8 +169,15 @@ export const mockAragornUser: RegisteredUser = {
   isGuest: false,
   pictureUrl: "https://picsum.photos/seed/aragorn/200/200",
   picture: placeholderImage("aragorn", 200, 200),
-  stats: { gamesPlayed: 87, highScore: 11500, totalPoints: 542000, currentStreak: 3 },
-  membership: { tier: "INDIVIDUAL", status: "ACTIVE", cancelAtPeriodEnd: false },
+  stats: {
+    gamesPlayed: 87,
+    highScore: 11500,
+    totalPoints: 542000,
+    dailyLoginStreak: 3,
+  },
+  membership: {
+    billing: { tier: "INDIVIDUAL", status: "ACTIVE", cancelAtPeriodEnd: false },
+  },
   newsletter: true,
   organizationIds: ["org_fellowship"],
   activeThemeId: "theme_plains_of_rohan",
@@ -175,8 +195,15 @@ export const mockSamUser: RegisteredUser = {
   isGuest: false,
   pictureUrl: "https://picsum.photos/seed/sam/200/200",
   picture: placeholderImage("sam", 200, 200),
-  stats: { gamesPlayed: 41, highScore: 9100, totalPoints: 203000, currentStreak: 6 },
-  membership: { tier: "FREE", status: "ACTIVE", cancelAtPeriodEnd: false },
+  stats: {
+    gamesPlayed: 41,
+    highScore: 9100,
+    totalPoints: 203000,
+    dailyLoginStreak: 6,
+  },
+  membership: {
+    billing: { tier: "FREE", status: "ACTIVE", cancelAtPeriodEnd: false },
+  },
   newsletter: true,
   organizationIds: ["org_fellowship"],
   activeThemeId: "theme_shire_morning",
@@ -191,7 +218,12 @@ export const mockLegolasGuest: GuestUser = {
   isGuest: true,
   pictureUrl: "https://picsum.photos/seed/legolas/200/200",
   picture: placeholderImage("legolas", 200, 200),
-  stats: { gamesPlayed: 4, highScore: 6200, totalPoints: 18400, currentStreak: 2 },
+  stats: {
+    gamesPlayed: 4,
+    highScore: 6200,
+    totalPoints: 18400,
+    dailyLoginStreak: 2,
+  },
 };
 
 export const mockGimliGuest: GuestUser = {
@@ -200,7 +232,12 @@ export const mockGimliGuest: GuestUser = {
   isGuest: true,
   pictureUrl: "https://picsum.photos/seed/gimli/200/200",
   picture: placeholderImage("gimli", 200, 200),
-  stats: { gamesPlayed: 5, highScore: 5800, totalPoints: 17200, currentStreak: 1 },
+  stats: {
+    gamesPlayed: 5,
+    highScore: 5800,
+    totalPoints: 17200,
+    dailyLoginStreak: 1,
+  },
 };
 
 export const mockUsers: RegisteredUser[] = [
@@ -215,10 +252,34 @@ export const mockGuestUsers: GuestUser[] = [mockLegolasGuest, mockGimliGuest];
 // `GET /api/leaderboard` returns `GuestUser[]` (the structural subset shared
 // by guests + registered players for podium display).
 export const mockLeaderboard: GuestUser[] = [
-  { id: mockGandalfUser.id, userName: mockGandalfUser.userName, isGuest: false, pictureUrl: mockGandalfUser.pictureUrl, stats: mockGandalfStats },
-  { id: mockAragornUser.id, userName: mockAragornUser.userName, isGuest: false, pictureUrl: mockAragornUser.pictureUrl, stats: mockAragornUser.stats },
-  { id: mockFrodoUser.id,   userName: mockFrodoUser.userName,   isGuest: false, pictureUrl: mockFrodoUser.pictureUrl,   stats: mockFrodoStats },
-  { id: mockSamUser.id,     userName: mockSamUser.userName,     isGuest: false, pictureUrl: mockSamUser.pictureUrl,     stats: mockSamUser.stats },
+  {
+    id: mockGandalfUser.id,
+    userName: mockGandalfUser.userName,
+    isGuest: false,
+    pictureUrl: mockGandalfUser.pictureUrl,
+    stats: mockGandalfStats,
+  },
+  {
+    id: mockAragornUser.id,
+    userName: mockAragornUser.userName,
+    isGuest: false,
+    pictureUrl: mockAragornUser.pictureUrl,
+    stats: mockAragornUser.stats,
+  },
+  {
+    id: mockFrodoUser.id,
+    userName: mockFrodoUser.userName,
+    isGuest: false,
+    pictureUrl: mockFrodoUser.pictureUrl,
+    stats: mockFrodoStats,
+  },
+  {
+    id: mockSamUser.id,
+    userName: mockSamUser.userName,
+    isGuest: false,
+    pictureUrl: mockSamUser.pictureUrl,
+    stats: mockSamUser.stats,
+  },
   mockLegolasGuest,
   mockGimliGuest,
 ];
@@ -232,7 +293,7 @@ export const mockElvenTwilightTheme: ThemeResponse = {
   organizationId: "org_fellowship",
   huePrimary: 230,
   hueAccent: 100,
-  mode: "dark",
+  mode: "DARK",
   background: placeholderImage("rivendell-bg", 1920, 1080),
   logo: placeholderImage("evenstar-logo", 256, 256),
   createdAt: FELLOWSHIP_FORMED_AT,
@@ -245,7 +306,7 @@ export const mockWizardsCounselTheme: ThemeResponse = {
   organizationId: "org_white_council",
   huePrimary: 270,
   hueAccent: 50,
-  mode: "light",
+  mode: "LIGHT",
   background: placeholderImage("isengard-bg", 1920, 1080),
   logo: placeholderImage("staff-logo", 256, 256),
   createdAt: "1019-01-01T00:00:00Z",
@@ -257,7 +318,7 @@ export const mockShireMorningTheme: ThemeResponse = {
   ownerId: mockSamUser.id,
   huePrimary: 95,
   hueAccent: 30,
-  mode: "light",
+  mode: "LIGHT",
   background: placeholderImage("shire-bg", 1920, 1080),
   logo: placeholderImage("green-dragon-logo", 256, 256),
   createdAt: FELLOWSHIP_FORMED_AT,
@@ -269,7 +330,7 @@ export const mockPlainsOfRohanTheme: ThemeResponse = {
   ownerId: mockAragornUser.id,
   huePrimary: 35,
   hueAccent: 145,
-  mode: "light",
+  mode: "LIGHT",
   background: placeholderImage("rohan-bg", 1920, 1080),
   logo: placeholderImage("white-horse-logo", 256, 256),
   createdAt: FELLOWSHIP_FORMED_AT,
@@ -371,7 +432,10 @@ export const mockWhiteCouncilOrg: OrganizationResponse = {
   createdAt: "1019-01-01T00:00:00Z",
 };
 
-export const mockOrganizations: OrganizationResponse[] = [mockFellowshipOrg, mockWhiteCouncilOrg];
+export const mockOrganizations: OrganizationResponse[] = [
+  mockFellowshipOrg,
+  mockWhiteCouncilOrg,
+];
 
 // ─── Media + gallery ────────────────────────────────────────────────────────
 
@@ -382,8 +446,16 @@ export const mockMintGandalfMedia: MediaAssetResponse = {
   ownerId: mockFrodoUser.id,
   organizationId: mockFellowshipOrg.id,
   variants: {
-    original: { url: "https://picsum.photos/seed/bag-end/1600/900", width: 1600, height: 900 },
-    thumb: { url: "https://picsum.photos/seed/bag-end/320/180", width: 320, height: 180 },
+    original: {
+      url: "https://picsum.photos/seed/bag-end/1600/900",
+      width: 1600,
+      height: 900,
+    },
+    thumb: {
+      url: "https://picsum.photos/seed/bag-end/320/180",
+      width: 320,
+      height: 180,
+    },
   },
   url: "https://picsum.photos/seed/bag-end/1600/900",
   sizeBytes: 482_310,
@@ -413,7 +485,10 @@ export const mockBalrogClipMedia: MediaAssetResponse = {
   createdAt: RECENT,
 };
 
-export const mockMediaAssets: MediaAssetResponse[] = [mockMintGandalfMedia, mockBalrogClipMedia];
+export const mockMediaAssets: MediaAssetResponse[] = [
+  mockMintGandalfMedia,
+  mockBalrogClipMedia,
+];
 
 export const mockGalleryImage: GalleryImageResponse = {
   id: "gallery_evenstar",
@@ -422,8 +497,16 @@ export const mockGalleryImage: GalleryImageResponse = {
   organizationId: mockFellowshipOrg.id,
   tags: ["arwen", "evenstar", "jewel"],
   variants: {
-    original: { url: "https://picsum.photos/seed/evenstar/1200/1200", width: 1200, height: 1200 },
-    thumb: { url: "https://picsum.photos/seed/evenstar/240/240", width: 240, height: 240 },
+    original: {
+      url: "https://picsum.photos/seed/evenstar/1200/1200",
+      width: 1200,
+      height: 1200,
+    },
+    thumb: {
+      url: "https://picsum.photos/seed/evenstar/240/240",
+      width: 240,
+      height: 240,
+    },
   },
   createdAt: FELLOWSHIP_FORMED_AT,
 };
@@ -436,8 +519,16 @@ export const mockGalleryImages: GalleryImageResponse[] = [
     ownerId: mockAragornUser.id,
     tags: ["sword", "narsil", "reforged"],
     variants: {
-      original: { url: "https://picsum.photos/seed/anduril/1600/900", width: 1600, height: 900 },
-      thumb: { url: "https://picsum.photos/seed/anduril/240/135", width: 240, height: 135 },
+      original: {
+        url: "https://picsum.photos/seed/anduril/1600/900",
+        width: 1600,
+        height: 900,
+      },
+      thumb: {
+        url: "https://picsum.photos/seed/anduril/240/135",
+        width: 240,
+        height: 135,
+      },
     },
     createdAt: FELLOWSHIP_FORMED_AT,
   },
@@ -500,11 +591,14 @@ export const mockMcqQuestion: McqQuestion = {
   correctOptionIds: ["opt_frodo"],
   pointValue: 100,
   difficulty: "EASY",
-  explanation: "Frodo bore the Ring the whole journey — Sam carried it briefly in Cirith Ungol.",
+  explanation:
+    "Frodo bore the Ring the whole journey — Sam carried it briefly in Cirith Ungol.",
   shuffleOptions: true,
   allowMultipleSelect: false,
   maxSelections: 1,
-  chrome: chromeFor("mcq_ring_bearer", "The Ring Bearer", { displaySeconds: 20 }),
+  chrome: chromeFor("mcq_ring_bearer", "The Ring Bearer", {
+    displaySeconds: 20,
+  }),
 };
 
 export const mockNumberQuestion: NumberQuestion = {
@@ -521,13 +615,16 @@ export const mockNumberQuestion: NumberQuestion = {
   minValue: 0,
   maxValue: 99,
   allowNegative: false,
-  chrome: chromeFor("num_fellowship_count", "Nine Walkers", { displaySeconds: 15 }),
+  chrome: chromeFor("num_fellowship_count", "Nine Walkers", {
+    displaySeconds: 15,
+  }),
 };
 
 export const mockTextQuestion: TextQuestion = {
   kind: "TextQuestion",
   id: "el_text_anduril",
-  prompt: "What is the name of Aragorn's sword, reforged from the shards of Narsil?",
+  prompt:
+    "What is the name of Aragorn's sword, reforged from the shards of Narsil?",
   correctAnswer: "Andúril",
   acceptedVariants: ["Anduril", "Flame of the West"],
   caseSensitive: false,
@@ -537,7 +634,9 @@ export const mockTextQuestion: TextQuestion = {
   trimWhitespace: true,
   fuzzyMatch: true,
   fuzzyDistance: 2,
-  chrome: chromeFor("text_anduril", "Reforged in Rivendell", { displaySeconds: 25 }),
+  chrome: chromeFor("text_anduril", "Reforged in Rivendell", {
+    displaySeconds: 25,
+  }),
 };
 
 export const mockGridQuestion: GridQuestion = {
@@ -547,14 +646,24 @@ export const mockGridQuestion: GridQuestion = {
   rows: 2,
   cols: 3,
   cells: {
-    labels: ["Bag End", "Bree", "Doors of Durin", "Helm's Deep", "Minas Tirith", "Mount Doom"],
+    labels: [
+      "Bag End",
+      "Bree",
+      "Doors of Durin",
+      "Helm's Deep",
+      "Minas Tirith",
+      "Mount Doom",
+    ],
     backingImage: placeholderImage("moria-grid", 900, 600),
   },
   correctCellIndexes: [2],
   multipleCorrect: false,
   pointValue: 175,
   difficulty: "MEDIUM",
-  chrome: chromeFor("grid_moria", "Mines of Moria", { displaySeconds: 20, mediaPosition: "TOP" }),
+  chrome: chromeFor("grid_moria", "Mines of Moria", {
+    displaySeconds: 20,
+    mediaPosition: "TOP",
+  }),
 };
 
 export const mockMatchingQuestion: MatchingQuestion = {
@@ -588,8 +697,11 @@ export const mockAllocationQuestion: AllocationQuestion = {
   enforceExactTotal: true,
   pointValue: 100,
   difficulty: "MEDIUM",
-  chrome: chromeFor("alloc_lembas", "Ration the Lembas",
-    { scored: false, survey: true, displaySeconds: 45 }),
+  chrome: chromeFor("alloc_lembas", "Ration the Lembas", {
+    scored: false,
+    survey: true,
+    displaySeconds: 45,
+  }),
 };
 
 export const mockDrawingQuestion: DrawingQuestion = {
@@ -604,9 +716,13 @@ export const mockDrawingQuestion: DrawingQuestion = {
   palette: ["#1c1c1c", "#b22222", "#d4a017", "#2e8b57"],
   pointValue: 0,
   difficulty: "HARD",
-  chrome: chromeFor("draw_map_of_mordor", "Sketch Mordor",
-    { scored: false, survey: true, displaySeconds: 90, mediaPosition: "BACKGROUND",
-      bestAnswerScoring: "FLAT_WINNER" }),
+  chrome: chromeFor("draw_map_of_mordor", "Sketch Mordor", {
+    scored: false,
+    survey: true,
+    displaySeconds: 90,
+    mediaPosition: "BACKGROUND",
+    bestAnswerScoring: "FLAT_WINNER",
+  }),
 };
 
 export const mockPlaceOnImageQuestion: PlaceOnImageQuestion = {
@@ -620,8 +736,10 @@ export const mockPlaceOnImageQuestion: PlaceOnImageQuestion = {
   scoring: "LINEAR",
   pointValue: 200,
   difficulty: "MEDIUM",
-  chrome: chromeFor("place_minas_tirith", "Find Minas Tirith",
-    { displaySeconds: 25, mediaPosition: "TOP" }),
+  chrome: chromeFor("place_minas_tirith", "Find Minas Tirith", {
+    displaySeconds: 25,
+    mediaPosition: "TOP",
+  }),
 };
 
 export const mockQAndAQuestion: QAndAQuestion = {
@@ -635,8 +753,11 @@ export const mockQAndAQuestion: QAndAQuestion = {
   difficulty: "EASY",
   anonymousSubmissions: false,
   minVotesToShow: 1,
-  chrome: chromeFor("qanda_hobbit_hot_takes", "Hobbit Hot Takes",
-    { scored: false, survey: true, displaySeconds: 45 }),
+  chrome: chromeFor("qanda_hobbit_hot_takes", "Hobbit Hot Takes", {
+    scored: false,
+    survey: true,
+    displaySeconds: 45,
+  }),
 };
 
 export const mockRankingQuestion: RankingQuestion = {
@@ -654,7 +775,9 @@ export const mockRankingQuestion: RankingQuestion = {
   pointValue: 200,
   difficulty: "MEDIUM",
   shuffleItemsForPresentation: true,
-  chrome: chromeFor("rank_ages", "Ages of Middle-earth", { displaySeconds: 40 }),
+  chrome: chromeFor("rank_ages", "Ages of Middle-earth", {
+    displaySeconds: 40,
+  }),
 };
 
 export const mockScalesQuestion: ScalesQuestion = {
@@ -676,8 +799,11 @@ export const mockScalesQuestion: ScalesQuestion = {
   correctRatings: [],
   pointValue: 0,
   difficulty: "EASY",
-  chrome: chromeFor("scales_meals", "Hobbit Mealtimes",
-    { scored: false, survey: true, displaySeconds: 30 }),
+  chrome: chromeFor("scales_meals", "Hobbit Mealtimes", {
+    scored: false,
+    survey: true,
+    displaySeconds: 30,
+  }),
 };
 
 export const mockWordCloudQuestion: WordCloudQuestion = {
@@ -691,8 +817,11 @@ export const mockWordCloudQuestion: WordCloudQuestion = {
   bannedWords: ["fool"],
   pointValue: 0,
   difficulty: "EASY",
-  chrome: chromeFor("word_one_word_gandalf", "Gandalf in a word",
-    { scored: false, survey: true, displaySeconds: 30 }),
+  chrome: chromeFor("word_one_word_gandalf", "Gandalf in a word", {
+    scored: false,
+    survey: true,
+    displaySeconds: 30,
+  }),
 };
 
 export const mockTitleSlide: Slide = {
@@ -706,9 +835,13 @@ export const mockTitleSlide: Slide = {
   showQrCode: true,
   showResponses: "INHERIT",
   autoAdvanceSeconds: 0,
-  chrome: chromeFor("slide_title", "Fellowship Trivia",
-    { scored: false, survey: false, displaySeconds: 0, mediaPosition: "BACKGROUND",
-      background: placeholderImage("title-rivendell", 1920, 1080) }),
+  chrome: chromeFor("slide_title", "Fellowship Trivia", {
+    scored: false,
+    survey: false,
+    displaySeconds: 0,
+    mediaPosition: "BACKGROUND",
+    background: placeholderImage("title-rivendell", 1920, 1080),
+  }),
 };
 
 export const mockEndSlide: Slide = {
@@ -718,9 +851,13 @@ export const mockEndSlide: Slide = {
   body: "Even the smallest person can change the course of the future.",
   blocks: [],
   chrome: {
-    ...chromeFor("slide_end", "Well done, traveller.",
-      { scored: false, survey: false, displaySeconds: 0, mediaPosition: "BACKGROUND",
-        background: placeholderImage("end-shire", 1920, 1080) }),
+    ...chromeFor("slide_end", "Well done, traveller.", {
+      scored: false,
+      survey: false,
+      displaySeconds: 0,
+      mediaPosition: "BACKGROUND",
+      background: placeholderImage("end-shire", 1920, 1080),
+    }),
     responseMode: "NOT_ACCEPTING_RESPONSES",
   },
 };
@@ -782,10 +919,11 @@ export const mockTeamSessionSettings: InteractiveSessionSettings = {
 
 // ─── Decks ──────────────────────────────────────────────────────────────────
 
-export const mockFellowshipTriviaDeck: DeckDto = {
+export const mockFellowshipTriviaDeck: DeckResponse = {
   id: "deck_fellowship_trivia",
   name: "Fellowship Trivia",
-  description: "A grab-bag of trivia about the nine walkers, from Bag End to Mount Doom.",
+  description:
+    "A grab-bag of trivia about the nine walkers, from Bag End to Mount Doom.",
   creatorUserId: mockFrodoUser.id,
   organizationId: mockFellowshipOrg.id,
   tags: ["lotr", "trivia", "fellowship"],
@@ -828,7 +966,7 @@ export const mockFellowshipTriviaDeck: DeckDto = {
   updatedAt: RECENT,
 };
 
-export const mockSecondBreakfastDeck: DeckDto = {
+export const mockSecondBreakfastDeck: DeckResponse = {
   id: "deck_second_breakfast",
   name: "Second Breakfast",
   description: "A Pulse-style poll deck — no scoring, just hobbit hot takes.",
@@ -843,16 +981,29 @@ export const mockSecondBreakfastDeck: DeckDto = {
   defaultShowResponses: "INSTANT",
   cover: placeholderImage("second-breakfast-cover", 1200, 800),
   themeId: mockShireMorningTheme.id,
-  defaultSettings: { ...mockSessionSettings, scoringEnabled: false, totalRounds: 4 },
+  defaultSettings: {
+    ...mockSessionSettings,
+    scoringEnabled: false,
+    totalRounds: 4,
+  },
   estimatedDurationMinutes: 4,
   elementCount: 4,
   elements: [
-    { ...mockTitleSlide, id: "el_slide_sb_title", body: "All polls. No wrong answers.",
-      chrome: { ...mockTitleSlide.chrome!, title: "Second Breakfast" } },
+    {
+      ...mockTitleSlide,
+      id: "el_slide_sb_title",
+      body: "All polls. No wrong answers.",
+
+      chrome: { ...mockTitleSlide.chrome!, title: "Second Breakfast" },
+    },
     mockScalesQuestion,
     mockQAndAQuestion,
-    { ...mockEndSlide, id: "el_slide_sb_end", body: "PO-TA-TOES.",
-      chrome: { ...mockEndSlide.chrome!, title: "Mind your taters." } },
+    {
+      ...mockEndSlide,
+      id: "el_slide_sb_end",
+      body: "PO-TA-TOES.",
+      chrome: { ...mockEndSlide.chrome!, title: "Mind your taters." },
+    },
   ],
   publishStatus: "PUBLISHED",
   publishedAt: FELLOWSHIP_FORMED_AT,
@@ -873,10 +1024,11 @@ export const mockSecondBreakfastDeck: DeckDto = {
   updatedAt: RECENT,
 };
 
-export const mockAncientLoreDeck: DeckDto = {
+export const mockAncientLoreDeck: DeckResponse = {
   id: "deck_ancient_lore",
   name: "Ancient Lore",
-  description: "For wizards, lore-masters, and anyone who reads the appendices.",
+  description:
+    "For wizards, lore-masters, and anyone who reads the appendices.",
   creatorUserId: mockGandalfUser.id,
   organizationId: mockWhiteCouncilOrg.id,
   tags: ["lotr", "lore", "advanced"],
@@ -892,13 +1044,31 @@ export const mockAncientLoreDeck: DeckDto = {
   estimatedDurationMinutes: 8,
   elementCount: 4,
   elements: [
-    { ...mockMcqQuestion, id: "el_mcq_nenya", prompt: "Which ring of power was held by Galadriel?",
-      options: [opt("nenya_narya", "Narya"), opt("nenya_nenya", "Nenya"), opt("nenya_vilya", "Vilya"), opt("nenya_one", "The One Ring")],
-      correctOptionIds: ["nenya_nenya"], difficulty: "HARD", pointValue: 200,
-      chrome: { ...mockMcqQuestion.chrome!, title: "Galadriel's Ring" } },
-    { ...mockTextQuestion, id: "el_text_celebrimbor", prompt: "Who forged the Rings of Power?",
-      correctAnswer: "Celebrimbor", acceptedVariants: [], difficulty: "HARD", pointValue: 250,
-      chrome: { ...mockTextQuestion.chrome!, title: "Smith of Eregion" } },
+    {
+      ...mockMcqQuestion,
+      id: "el_mcq_nenya",
+      prompt: "Which ring of power was held by Galadriel?",
+      options: [
+        opt("nenya_narya", "Narya"),
+        opt("nenya_nenya", "Nenya"),
+        opt("nenya_vilya", "Vilya"),
+        opt("nenya_one", "The One Ring"),
+      ],
+      correctOptionIds: ["nenya_nenya"],
+      difficulty: "HARD",
+      pointValue: 200,
+      chrome: { ...mockMcqQuestion.chrome!, title: "Galadriel's Ring" },
+    },
+    {
+      ...mockTextQuestion,
+      id: "el_text_celebrimbor",
+      prompt: "Who forged the Rings of Power?",
+      correctAnswer: "Celebrimbor",
+      acceptedVariants: [],
+      difficulty: "HARD",
+      pointValue: 250,
+      chrome: { ...mockTextQuestion.chrome!, title: "Smith of Eregion" },
+    },
     mockRankingQuestion,
     mockEndSlide,
   ],
@@ -921,7 +1091,7 @@ export const mockAncientLoreDeck: DeckDto = {
   updatedAt: RECENT,
 };
 
-export const mockDecks: DeckDto[] = [
+export const mockDecks: DeckResponse[] = [
   mockFellowshipTriviaDeck,
   mockSecondBreakfastDeck,
   mockAncientLoreDeck,
@@ -929,7 +1099,7 @@ export const mockDecks: DeckDto[] = [
 
 // ─── DeckCollection ─────────────────────────────────────────────────────────
 
-export const mockMiddleEarthCollection: DeckCollectionDto = {
+export const mockMiddleEarthCollection: DeckCollectionResponse = {
   id: "collection_middle_earth",
   ownerUserId: mockGandalfUser.id,
   organizationId: mockWhiteCouncilOrg.id,
@@ -947,12 +1117,14 @@ export const mockMiddleEarthCollection: DeckCollectionDto = {
 
 // ─── Comments ───────────────────────────────────────────────────────────────
 
-export const mockDeckComment: DeckCommentDto = {
+export const mockDeckComment: DeckCommentResponse = {
   id: "comment_one",
   deckId: mockFellowshipTriviaDeck.id,
-  authorUserId: mockSamUser.id,
-  authorName: mockSamUser.name,
-  authorPictureUrl: mockSamUser.pictureUrl,
+  author: {
+    userId: mockSamUser.id,
+    name: mockSamUser.name,
+    pictureUrl: mockSamUser.pictureUrl,
+  },
   body: "Brilliant deck, Mr. Frodo. The taters slide hits home.",
   upvotes: 7,
   upvotedByMe: true,
@@ -963,12 +1135,14 @@ export const mockDeckComment: DeckCommentDto = {
   updatedAt: RECENT,
 };
 
-export const mockDeckCommentReply: DeckCommentDto = {
+export const mockDeckCommentReply: DeckCommentResponse = {
   id: "comment_two",
   deckId: mockFellowshipTriviaDeck.id,
-  authorUserId: mockFrodoUser.id,
-  authorName: mockFrodoUser.name,
-  authorPictureUrl: mockFrodoUser.pictureUrl,
+  author: {
+    userId: mockFrodoUser.id,
+    name: mockFrodoUser.name,
+    pictureUrl: mockFrodoUser.pictureUrl,
+  },
   parentCommentId: "comment_one",
   body: "Thanks, Sam. Couldn't have made it without you.",
   upvotes: 12,
@@ -980,16 +1154,30 @@ export const mockDeckCommentReply: DeckCommentDto = {
   updatedAt: RECENT,
 };
 
-export const mockDeckComments: DeckCommentDto[] = [mockDeckComment, mockDeckCommentReply];
+export const mockDeckComments: DeckCommentResponse[] = [
+  mockDeckComment,
+  mockDeckCommentReply,
+];
 
 // ─── Interactive sessions ───────────────────────────────────────────────────
 
+// Stable session-scoped playerIds for mock data. In production these are UUIDs
+// minted on first join; mocks alias them to a "player-<role>" form so tests and
+// design-system fixtures stay readable.
+const mockFrodoPlayerId = "player-frodo";
+const mockSamPlayerId = "player-sam";
+const mockLegolasPlayerId = "player-legolas";
+const mockGimliPlayerId = "player-gimli";
+const mockAragornPlayerId = "player-aragorn";
+
 export const mockFellowshipPlayers: InteractiveSessionPlayerDto[] = [
   {
-    userId: mockFrodoUser.id,
-    userName: mockFrodoUser.userName,
-    pictureUrl: mockFrodoUser.pictureUrl,
-    isGuest: false,
+    playerId: mockFrodoPlayerId,
+    user: {
+      name: mockFrodoUser.userName,
+      pictureUrl: mockFrodoUser.pictureUrl,
+      guest: false,
+    },
     score: 1450,
     avatarKey: "frodo",
     colorTag: "var(--color-blue-500)",
@@ -1003,10 +1191,12 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerDto[] = [
     lastSeenAt: NOW,
   },
   {
-    userId: mockSamUser.id,
-    userName: mockSamUser.userName,
-    pictureUrl: mockSamUser.pictureUrl,
-    isGuest: false,
+    playerId: mockSamPlayerId,
+    user: {
+      name: mockSamUser.userName,
+      pictureUrl: mockSamUser.pictureUrl,
+      guest: false,
+    },
     score: 1320,
     avatarKey: "sam",
     colorTag: "var(--color-green-500)",
@@ -1020,10 +1210,12 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerDto[] = [
     lastSeenAt: NOW,
   },
   {
-    userId: mockLegolasGuest.id,
-    userName: mockLegolasGuest.userName,
-    pictureUrl: mockLegolasGuest.pictureUrl,
-    isGuest: true,
+    playerId: mockLegolasPlayerId,
+    user: {
+      name: mockLegolasGuest.userName,
+      pictureUrl: mockLegolasGuest.pictureUrl,
+      guest: true,
+    },
     score: 1200,
     avatarKey: "legolas",
     colorTag: "var(--color-yellow-500)",
@@ -1037,10 +1229,12 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerDto[] = [
     lastSeenAt: NOW,
   },
   {
-    userId: mockGimliGuest.id,
-    userName: mockGimliGuest.userName,
-    pictureUrl: mockGimliGuest.pictureUrl,
-    isGuest: true,
+    playerId: mockGimliPlayerId,
+    user: {
+      name: mockGimliGuest.userName,
+      pictureUrl: mockGimliGuest.pictureUrl,
+      guest: true,
+    },
     score: 980,
     avatarKey: "gimli",
     colorTag: "var(--color-red-500)",
@@ -1056,18 +1250,32 @@ export const mockFellowshipPlayers: InteractiveSessionPlayerDto[] = [
 ];
 
 export const mockTeams: Team[] = [
-  { id: "team_west", name: "Free Peoples of the West", color: "var(--color-blue-500)", captainUserId: mockAragornUser.id, score: 2770, memberCount: 2 },
-  { id: "team_east", name: "Allies of Erebor", color: "var(--color-red-500)", captainUserId: mockGimliGuest.id, score: 2180, memberCount: 2 },
+  {
+    id: "team_west",
+    name: "Free Peoples of the West",
+    color: "var(--color-blue-500)",
+    captainPlayerId: mockFrodoPlayerId,
+    score: 2770,
+    memberCount: 2,
+  },
+  {
+    id: "team_east",
+    name: "Allies of Erebor",
+    color: "var(--color-red-500)",
+    captainPlayerId: mockGimliPlayerId,
+    score: 2180,
+    memberCount: 2,
+  },
 ];
 
-export const mockFellowshipSession: InteractiveSessionDto = {
+export const mockFellowshipSession: InteractiveSessionResponse = {
   id: "session_fellowship_lobby",
   roomCode: "MORDOR",
   inviteToken: "invite_fellowship_001",
   status: "IN_PROGRESS",
   phase: "SUBMIT",
   format: "GAME",
-  hostUserId: mockFrodoUser.id,
+  hostPlayerId: mockFrodoPlayerId,
   hostName: mockFrodoUser.name,
   hostAvatarUrl: mockFrodoUser.pictureUrl,
   deckId: mockFellowshipTriviaDeck.id,
@@ -1088,11 +1296,12 @@ export const mockFellowshipSession: InteractiveSessionDto = {
   currentRound: 2,
   revealedElementIds: [mockTitleSlide.id!, mockMcqQuestion.id!],
   elementResponseModeOverrides: {},
+  viewerPlayerId: mockFrodoPlayerId,
   createdAt: RECENT,
   startedAt: RECENT,
 };
 
-export const mockTeamSession: InteractiveSessionDto = {
+export const mockTeamSession: InteractiveSessionResponse = {
   ...mockFellowshipSession,
   id: "session_helms_deep_team",
   roomCode: "HELMSD",
@@ -1100,9 +1309,10 @@ export const mockTeamSession: InteractiveSessionDto = {
   status: "LOBBY",
   phase: undefined,
   format: "GAME",
-  hostUserId: mockAragornUser.id,
+  hostPlayerId: mockAragornPlayerId,
   hostName: mockAragornUser.name,
   hostAvatarUrl: mockAragornUser.pictureUrl,
+  viewerPlayerId: mockAragornPlayerId,
   settings: {
     ...mockTeamSessionSettings,
     deckCoverImageUrl: mockFellowshipTriviaDeck.cover?.externalUrl,
@@ -1116,14 +1326,14 @@ export const mockTeamSession: InteractiveSessionDto = {
   revealedElementIds: [],
 };
 
-export const mockInteractiveSessions: InteractiveSessionDto[] = [
+export const mockInteractiveSessions: InteractiveSessionResponse[] = [
   mockFellowshipSession,
   mockTeamSession,
 ];
 
 // ─── Scheduled sessions ─────────────────────────────────────────────────────
 
-export const mockScheduledSession: ScheduledInteractiveSessionDto = {
+export const mockScheduledSession: ScheduledInteractiveSessionResponse = {
   id: "scheduled_council_of_elrond",
   hostUserId: mockGandalfUser.id,
   hostName: mockGandalfUser.name,
@@ -1132,7 +1342,8 @@ export const mockScheduledSession: ScheduledInteractiveSessionDto = {
   settings: mockSessionSettings,
   scheduledStartAt: "2026-06-01T18:00:00Z",
   scheduledEndAt: "2026-06-01T19:00:00Z",
-  reminderEmailTemplate: "The Council of Elrond convenes at sundown. Bring your wits.",
+  reminderEmailTemplate:
+    "The Council of Elrond convenes at sundown. Bring your wits.",
   invitedEmails: [
     "frodo@baggins.shire",
     "strider@dunedain.eriador",
@@ -1145,7 +1356,7 @@ export const mockScheduledSession: ScheduledInteractiveSessionDto = {
   updatedAt: RECENT,
 };
 
-export const mockScheduledSessions: ScheduledInteractiveSessionDto[] = [
+export const mockScheduledSessions: ScheduledInteractiveSessionResponse[] = [
   mockScheduledSession,
   {
     ...mockScheduledSession,
@@ -1163,7 +1374,7 @@ export const mockScheduledSessions: ScheduledInteractiveSessionDto[] = [
 
 // ─── Notifications ──────────────────────────────────────────────────────────
 
-export const mockInviteNotification: NotificationDto = {
+export const mockInviteNotification: NotificationResponse = {
   id: "notif_invite_council",
   userId: mockFrodoUser.id,
   kind: "INTERACTIVE_SESSION_INVITE",
@@ -1172,14 +1383,16 @@ export const mockInviteNotification: NotificationDto = {
   link: `/scheduled/${mockScheduledSession.id}`,
   iconUrl: mockGandalfUser.pictureUrl,
   meta: { scheduledSessionId: mockScheduledSession.id! },
-  actorUserId: mockGandalfUser.id,
-  actorName: mockGandalfUser.name,
-  actorPictureUrl: mockGandalfUser.pictureUrl,
+  actor: {
+    userId: mockGandalfUser.id,
+    name: mockGandalfUser.name,
+    pictureUrl: mockGandalfUser.pictureUrl,
+  },
   read: false,
   createdAt: RECENT,
 };
 
-export const mockCommentNotification: NotificationDto = {
+export const mockCommentNotification: NotificationResponse = {
   id: "notif_comment_reply",
   userId: mockFrodoUser.id,
   kind: "DECK_COMMENT_REPLY",
@@ -1187,16 +1400,21 @@ export const mockCommentNotification: NotificationDto = {
   body: "Brilliant deck, Mr. Frodo. The taters slide hits home.",
   link: `/decks/${mockFellowshipTriviaDeck.id}`,
   iconUrl: mockSamUser.pictureUrl,
-  meta: { deckId: mockFellowshipTriviaDeck.id!, commentId: mockDeckComment.id! },
-  actorUserId: mockSamUser.id,
-  actorName: mockSamUser.name,
-  actorPictureUrl: mockSamUser.pictureUrl,
+  meta: {
+    deckId: mockFellowshipTriviaDeck.id!,
+    commentId: mockDeckComment.id!,
+  },
+  actor: {
+    userId: mockSamUser.id,
+    name: mockSamUser.name,
+    pictureUrl: mockSamUser.pictureUrl,
+  },
   read: true,
   createdAt: RECENT,
   readAt: RECENT,
 };
 
-export const mockAchievementNotification: NotificationDto = {
+export const mockAchievementNotification: NotificationResponse = {
   id: "notif_achievement_streak",
   userId: mockSamUser.id,
   kind: "ACHIEVEMENT",
@@ -1206,7 +1424,7 @@ export const mockAchievementNotification: NotificationDto = {
   createdAt: RECENT,
 };
 
-export const mockNotifications: NotificationDto[] = [
+export const mockNotifications: NotificationResponse[] = [
   mockInviteNotification,
   mockCommentNotification,
   mockAchievementNotification,
@@ -1227,7 +1445,7 @@ export const mockData = {
   galleryImages: mockGalleryImages,
   elements: mockAllElements,
   decks: mockDecks,
-  collections: [mockMiddleEarthCollection] as DeckCollectionDto[],
+  collections: [mockMiddleEarthCollection] as DeckCollectionResponse[],
   comments: mockDeckComments,
   sessions: mockInteractiveSessions,
   scheduledSessions: mockScheduledSessions,

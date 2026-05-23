@@ -5,9 +5,8 @@
  */
 package cephadex.brainflex.dto;
 
-import java.time.LocalDateTime;
-
-import cephadex.brainflex.model.UserSnapshot;
+import java.time.Instant;
+import cephadex.brainflex.model.shared.UserSnapshot;
 
 public record ReactionBroadcastMessage(
         String id,
@@ -15,5 +14,5 @@ public record ReactionBroadcastMessage(
         UserSnapshot user,
         String emoji,
         long offsetMs,
-        LocalDateTime sentAt) {
+        Instant sentAt) {
 }

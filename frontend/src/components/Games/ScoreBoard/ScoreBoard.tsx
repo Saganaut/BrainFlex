@@ -3,8 +3,12 @@
  * Rendered during active play so all participants can track standings.
  * The local player's row is highlighted for quick self-identification.
  *
+ * Identity is session-scoped: every player is identified by the
+ * {@link InteractiveSessionPlayerDto.playerId} session-scoped handle — never
+ * the underlying account userId.
+ *
  * Optional dashboard extensions:
- *  - `answeredUserIds`: shows ✓ next to players who've submitted for the current round.
+ *  - `answeredPlayerIds`: shows ✓ next to players who've submitted for the current round.
  *  - `isHost` + `onBootPlayer`: shows a Boot button on other players' rows when the
  *    viewer is the host.
  */
@@ -17,18 +21,23 @@ import type {
 
 export interface ScoreBoardProps {
   players: InteractiveSessionPlayerDto[];
-  currentUserId?: string;
+  // Session-scoped playerId of the viewer, used to highlight their row.
+  currentPlayerId?: string;
   // When true the host configured scores to stay hidden during play — render the
   // player list with no rank ordering and no point values.
   hideScores?: boolean;
-  // userIds that have already submitted an answer for the current round.
-  answeredUserIds?: string[];
-  // userIds whose WebSocket session has dropped — rendered with a dimmed style.
-  offlineUserIds?: string[];
+  // Session-scoped playerIds that have already submitted for the current round.
+  answeredPlayerIds?: string[];
+  // Session-scoped playerIds whose WebSocket session has dropped.
+  // NOTE: global /topic/presence still broadcasts userIds; until that surface
+  // migrates per-session, callers pass an empty list and the offline indicator
+  // silently no-ops. Tracked as a follow-up to the InteractiveSession DTO
+  // refactor.
+  offlinePlayerIds?: string[];
   // Whether the viewer is the host (controls whether boot buttons render).
   isHost?: boolean;
-  // Called when the host clicks Boot on another player's row.
-  onBootPlayer?: (userId: string) => void;
+  // Called when the host clicks Boot — receives the target's session-scoped playerId.
+  onBootPlayer?: (playerId: string) => void;
   // Team-mode chunk 12: when populated, each player row renders a small
   // team color dot + name chip under their score. Falsy/empty disables the
   // affordance entirely so individual mode is unaffected.
@@ -37,10 +46,10 @@ export interface ScoreBoardProps {
 
 const ScoreBoard = ({
   players,
-  currentUserId,
+  currentPlayerId,
   hideScores,
-  answeredUserIds,
-  offlineUserIds,
+  answeredPlayerIds,
+  offlinePlayerIds,
   isHost,
   onBootPlayer,
   teams,
@@ -49,29 +58,32 @@ const ScoreBoard = ({
     ? players
     : [...players].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
 
-  const answeredSet = new Set(answeredUserIds ?? []);
-  const offlineSet = new Set(offlineUserIds ?? []);
-  const showAnswered = !!answeredUserIds;
+  const answeredSet = new Set(answeredPlayerIds ?? []);
+  const offlineSet = new Set(offlinePlayerIds ?? []);
+  const showAnswered = !!answeredPlayerIds;
   const teamById = new Map((teams ?? []).map((t) => [t.id ?? "", t]));
   const teamModeActive = teamById.size > 0;
 
   return (
-    <section className={styles.board} aria-label={hideScores ? "Players" : "Scores"}>
+    <section
+      className={styles.board}
+      aria-label={hideScores ? "Players" : "Scores"}>
       <h3 className={styles.title}>{hideScores ? "Players" : "Scores"}</h3>
       <ol className={styles.list}>
         {sorted.map((p, i) => {
-          const playerId = p.userId;
-          const isSelf = playerId === currentUserId;
+          const playerId = p.playerId;
+          const isSelf = !!playerId && playerId === currentPlayerId;
           const answered = !!playerId && answeredSet.has(playerId);
           const isOffline = !!playerId && offlineSet.has(playerId);
-          const team = teamModeActive && p.teamId ? teamById.get(p.teamId) : null;
+          const team =
+            teamModeActive && p.teamId ? teamById.get(p.teamId) : null;
           return (
             <li
               key={playerId}
               className={`${styles.row} ${isSelf ? styles.me : ""} ${isOffline ? styles.offline : ""}`}>
               {!hideScores && <span className={styles.rank}>{i + 1}</span>}
               <span className={styles.name}>
-                {p.userName}
+                {p.user?.name}
                 {team && (
                   <span
                     className={styles.teamChip}
@@ -86,7 +98,7 @@ const ScoreBoard = ({
                   </span>
                 )}
               </span>
-              {p.isGuest && <span className={styles.guest}>guest</span>}
+              {p.user?.guest && <span className={styles.guest}>guest</span>}
               {/* Chunk 13 — Kahoot-style streak chip. Visible at 2x+; the
                   backend resets on a wrong answer, so a fresh round keeps
                   the chip until the player either misses or finishes. */}
@@ -122,7 +134,7 @@ const ScoreBoard = ({
                   onClick={() => {
                     onBootPlayer(playerId);
                   }}
-                  aria-label={`Remove ${p.userName ?? "player"} from the interactiveSession`}>
+                  aria-label={`Remove ${p.user?.name ?? "player"} from the interactiveSession`}>
                   Boot
                 </Btn>
               )}

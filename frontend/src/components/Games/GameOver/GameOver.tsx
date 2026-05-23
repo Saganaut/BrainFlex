@@ -28,12 +28,12 @@ const PLACE_LABELS = ["1st", "2nd", "3rd"];
  */
 const PlacementChips = ({ p }: { p: PlayerPlacement }) => {
   const accuracyPct =
-    typeof p.accuracy === "number" && p.totalQuestions
-      ? Math.round(p.accuracy * 100)
+    typeof p.endStats?.accuracy === "number" && p.totalQuestions
+      ? Math.round(p.endStats.accuracy * 100)
       : null;
-  const longestStreak = p.longestStreak ?? 0;
+  const longestStreak = p.endStats?.longestStreak ?? 0;
   const speedBonusTotal = p.speedBonusTotal ?? 0;
-  const reactionsSent = p.reactionsSent ?? 0;
+  const reactionsSent = p.endStats?.reactionsSent ?? 0;
   if (
     accuracyPct === null &&
     longestStreak === 0 &&
@@ -93,10 +93,10 @@ const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
       <div className={styles.podium}>
         {top3.map((p, i) => (
           <div
-            key={p.userId}
-            className={`${styles.place} ${styles[`place${i + 1}`]} ${p.userId === currentUserId ? styles.me : ""}`}>
+            key={p.user?.userId}
+            className={`${styles.place} ${styles[`place${i + 1}`]} ${p.user?.userId === currentUserId ? styles.me : ""}`}>
             <span className={styles.placeLabel}>{PLACE_LABELS[i]}</span>
-            <span className={styles.placeName}>{p.userName}</span>
+            <span className={styles.placeName}>{p.user?.name}</span>
             <span className={styles.placeScore}>{p.finalScore ?? 0} pts</span>
             <PlacementChips p={p} />
           </div>
@@ -107,11 +107,13 @@ const GameOver = ({ placements, currentUserId, teams }: GameOverProps) => {
         <ol className={styles.restList} start={4}>
           {rest.map((p) => (
             <li
-              key={p.userId}
-              className={`${styles.restRow} ${p.userId === currentUserId ? styles.me : ""}`}>
+              key={p.user?.userId}
+              className={`${styles.restRow} ${p.user?.userId === currentUserId ? styles.me : ""}`}>
               <div className={styles.restRowMain}>
-                <span className={styles.restName}>{p.userName}</span>
-                {p.guest && <span className={styles.guestBadge}>guest</span>}
+                <span className={styles.restName}>{p.user?.name}</span>
+                {p.user?.guest && (
+                  <span className={styles.guestBadge}>guest</span>
+                )}
                 <span className={styles.restScore}>{p.finalScore ?? 0} pts</span>
               </div>
               <PlacementChips p={p} />

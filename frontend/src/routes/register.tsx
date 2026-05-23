@@ -7,8 +7,10 @@ import { RegisterPage } from "../pages/RegisterPage/RegisterPage";
 export const Route = createFileRoute("/register")({
   validateSearch: (search: Record<string, unknown>): RegisterSearch => {
     return {
-      googleId:
-        typeof search.googleId === "string" ? search.googleId : undefined,
+      provider:
+        typeof search.provider === "string" ? search.provider : undefined,
+      providerId:
+        typeof search.providerId === "string" ? search.providerId : undefined,
       email: typeof search.email === "string" ? search.email : undefined,
       name: typeof search.name === "string" ? search.name : undefined,
       picture: typeof search.picture === "string" ? search.picture : undefined,
@@ -17,7 +19,7 @@ export const Route = createFileRoute("/register")({
     };
   },
   // beforeLoad: ({ search }) => {
-  //   if (!search.googleId) {
+  //   if (!search.providerId) {
   //     window.location.href = `${API_BASE}/api/auth/login`;
   //   }
   // },

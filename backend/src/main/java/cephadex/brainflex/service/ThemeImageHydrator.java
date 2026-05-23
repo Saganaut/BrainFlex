@@ -10,10 +10,10 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.Theme;
-import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.element.ImageSize;
-import cephadex.brainflex.model.element.ImageVariant;
+import cephadex.brainflex.model.image.Image;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.image.ImageVariant;
+import cephadex.brainflex.model.theme.Theme;
 
 @Service
 public class ThemeImageHydrator {
@@ -25,16 +25,21 @@ public class ThemeImageHydrator {
     }
 
     public Image logoImageOf(Theme theme) {
-        if (theme == null) return Image.empty();
-        if (theme.getLogoVariants() == null || theme.getLogoVariants().isEmpty()) return Image.empty();
+        if (theme == null)
+            return Image.empty();
+        if (theme.getLogoVariants() == null || theme.getLogoVariants().isEmpty())
+            return Image.empty();
         Map<ImageSize, ImageVariant> fresh = s3Service.refreshThemeLogo(theme.getId(), theme.getLogoVariants());
         return new Image(false, null, null, fresh);
     }
 
     public Image backgroundImageOf(Theme theme) {
-        if (theme == null) return Image.empty();
-        if (theme.getBackgroundVariants() == null || theme.getBackgroundVariants().isEmpty()) return Image.empty();
-        Map<ImageSize, ImageVariant> fresh = s3Service.refreshThemeBackground(theme.getId(), theme.getBackgroundVariants());
+        if (theme == null)
+            return Image.empty();
+        if (theme.getBackgroundVariants() == null || theme.getBackgroundVariants().isEmpty())
+            return Image.empty();
+        Map<ImageSize, ImageVariant> fresh = s3Service.refreshThemeBackground(theme.getId(),
+                theme.getBackgroundVariants());
         return new Image(false, null, null, fresh);
     }
 }

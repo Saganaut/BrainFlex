@@ -32,8 +32,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckFavorite;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckFavorite;
 import cephadex.brainflex.model.enums.AchievementTrigger;
 import cephadex.brainflex.repository.DeckFavoriteRepository;
 
@@ -104,7 +104,8 @@ public class DeckFavoriteService {
 
     /** True if {@code userId} has favorited {@code deckId}. */
     public boolean isFavorited(String userId, String deckId) {
-        if (userId == null || deckId == null) return false;
+        if (userId == null || deckId == null)
+            return false;
         return favoriteRepository.findByUserIdAndDeckId(userId, deckId).isPresent();
     }
 
@@ -114,10 +115,12 @@ public class DeckFavoriteService {
      * for caller-aware {@code isFavorited} hydration.
      */
     public Set<String> favoritedDeckIds(String userId, Collection<String> deckIds) {
-        if (userId == null || deckIds == null || deckIds.isEmpty()) return Set.of();
+        if (userId == null || deckIds == null || deckIds.isEmpty())
+            return Set.of();
         List<DeckFavorite> hits = favoriteRepository.findAllByUserIdAndDeckIdIn(userId, deckIds);
         Set<String> result = new HashSet<>(hits.size());
-        for (DeckFavorite hit : hits) result.add(hit.getDeckId());
+        for (DeckFavorite hit : hits)
+            result.add(hit.getDeckId());
         return result;
     }
 
@@ -150,7 +153,8 @@ public class DeckFavoriteService {
                 new Update().inc("favoriteCount", delta),
                 org.springframework.data.mongodb.core.FindAndModifyOptions.options().returnNew(true),
                 Deck.class);
-        if (after == null) return 0;
+        if (after == null)
+            return 0;
         // Clamp at zero: if a counter ever drifts negative (e.g. a manual
         // delete bypassed the service) we don't want to surface that.
         int favoriteCount = Math.max(0, after.getFavoriteCount());

@@ -95,22 +95,22 @@ const DashboardTab = () => {
             <Leaderboard />
             <ScoreBoard
               players={playersData.players}
-              currentUserId={playersData.currentUserId}
+              currentPlayerId={playersData.currentPlayerId}
             />
             <ScoreBoard
               players={playersData.players}
-              currentUserId={playersData.currentUserId}
-              answeredUserIds={playersData.players
+              currentPlayerId={playersData.currentPlayerId}
+              answeredPlayerIds={playersData.players
                 .slice(0, Math.ceil(playersData.players.length / 2))
-                .map((p) => p.userId ?? "")
+                .map((p) => p.playerId ?? "")
                 .filter(Boolean)}
-              offlineUserIds={playersData.players
+              offlinePlayerIds={playersData.players
                 .slice(-1)
-                .map((p) => p.userId ?? "")
+                .map((p) => p.playerId ?? "")
                 .filter(Boolean)}
               isHost
-              onBootPlayer={(uid) => {
-                console.log("boot demo:", uid);
+              onBootPlayer={(pid) => {
+                console.log("boot demo:", pid);
               }}
             />
 

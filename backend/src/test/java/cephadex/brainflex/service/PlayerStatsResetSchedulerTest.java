@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -30,8 +30,7 @@ import org.springframework.data.mongodb.core.query.Update;
 
 import com.mongodb.client.result.UpdateResult;
 
-import cephadex.brainflex.model.User;
-
+import cephadex.brainflex.model.user.User;
 class PlayerStatsResetSchedulerTest {
 
     @Test
@@ -43,7 +42,7 @@ class PlayerStatsResetSchedulerTest {
                 .thenReturn(result);
 
         PlayerStatsResetScheduler scheduler = new PlayerStatsResetScheduler(mongoTemplate);
-        LocalDateTime now = LocalDateTime.of(2026, 5, 21, 0, 0);
+        Instant now = Instant.parse("2026-05-21T00:00:00Z");
         scheduler.runWeeklyReset(now);
 
         ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
@@ -64,7 +63,7 @@ class PlayerStatsResetSchedulerTest {
                 .thenReturn(result);
 
         PlayerStatsResetScheduler scheduler = new PlayerStatsResetScheduler(mongoTemplate);
-        LocalDateTime now = LocalDateTime.of(2026, 6, 1, 0, 0);
+        Instant now = Instant.parse("2026-06-01T00:00:00Z");
         scheduler.runMonthlyReset(now);
 
         verify(mongoTemplate).updateMulti(any(Query.class), any(Update.class), eq(User.class));

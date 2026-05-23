@@ -1,5 +1,5 @@
 /**
- * Authoritative role flags carried on {@link cephadex.brainflex.model.User#getRoles()}.
+ * Authoritative role flags carried on {@link cephadex.brainflex.model.user.User#getRoles()}.
  *
  * Distinct from the tier / org authorities derived in {@code AuthoritiesService}:
  * those are billing-state-driven and recomputed on every login, while these are

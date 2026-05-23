@@ -16,7 +16,7 @@ import { getRouteApi } from "@tanstack/react-router";
 import {
   useGetDeckQuery,
   useUpdateDeckMutation,
-  type DeckDto,
+  type DeckResponse,
   type Image,
   type ThemeResponse,
 } from "@/store/BrainFlexApi";
@@ -32,8 +32,8 @@ import styles from "./ThemePanel.module.css";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
 
-type SessionFormat = NonNullable<DeckDto["defaultSessionFormat"]>;
-type ShowResponsesMode = NonNullable<DeckDto["defaultShowResponses"]>;
+type SessionFormat = NonNullable<DeckResponse["defaultSessionFormat"]>;
+type ShowResponsesMode = NonNullable<DeckResponse["defaultShowResponses"]>;
 
 const FORMAT_OPTIONS: { value: SessionFormat; label: string }[] = [
   { value: "GAME", label: "Game" },
@@ -50,7 +50,7 @@ const SHOW_RESPONSES_OPTIONS: { value: ShowResponsesMode; label: string }[] = [
 const PRESET_PREFIX = "preset:";
 const THEME_PREFIX = "theme:";
 
-type DeckElement = NonNullable<DeckDto["elements"]>[number];
+type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 // useElementEditor requires a type predicate to narrow the union. Since the
 // section applies to every kind, this is a tautology that just satisfies the
@@ -140,7 +140,10 @@ const PerSlideStyle = () => {
   };
 
   const handleClearBackground = () => {
-    commit({ ...element, chrome: { ...element.chrome, background: emptyImage() } });
+    commit({
+      ...element,
+      chrome: { ...element.chrome, background: emptyImage() },
+    });
   };
 
   const elId = element.id ?? "";

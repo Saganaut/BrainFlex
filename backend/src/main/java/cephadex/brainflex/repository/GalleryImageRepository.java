@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.GalleryImage;
+import cephadex.brainflex.model.media.GalleryImage;
 
 public interface GalleryImageRepository extends MongoRepository<GalleryImage, String> {
 

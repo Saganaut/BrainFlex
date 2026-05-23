@@ -12,8 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.DeckComment;
-
+import cephadex.brainflex.model.deck.DeckComment;
 public interface DeckCommentRepository extends MongoRepository<DeckComment, String> {
 
     Page<DeckComment> findAllByDeckIdAndParentCommentIdIsNull(String deckId, Pageable pageable);

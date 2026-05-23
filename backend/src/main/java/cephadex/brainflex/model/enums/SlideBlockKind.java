@@ -1,5 +1,5 @@
 /**
- * Discriminator for the {@link cephadex.brainflex.model.element.SlideBlock}
+ * Discriminator for the {@link cephadex.brainflex.model.element.block.SlideBlock}
  * sealed family. The same value is serialized as the Jackson `kind` property
  * so REST callers can read/write blocks without inspecting Java types.
  */

@@ -1,5 +1,5 @@
 /**
- * The events that can award an {@link cephadex.brainflex.model.Achievement}.
+ * The events that can award an {@link cephadex.brainflex.model.user.Achievement}.
  *
  * Each value defines what {@code currentValue} represents when
  * {@code AchievementService.evaluate(userId, trigger, currentValue, ...)} is

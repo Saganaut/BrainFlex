@@ -19,22 +19,22 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.ChatSendRequest;
 import cephadex.brainflex.dto.CreateInteractiveSessionRequest;
+import cephadex.brainflex.dto.InteractiveSessionChatMessageResponse;
+import cephadex.brainflex.dto.InteractiveSessionResponse;
+import cephadex.brainflex.dto.InteractiveSessionResultResponse;
+import cephadex.brainflex.dto.InteractiveSessionReviewResponse;
 import cephadex.brainflex.dto.JoinInteractiveSessionRequest;
 import cephadex.brainflex.dto.ReactionSendRequest;
-import cephadex.brainflex.dto.InteractiveSessionChatMessageDTO;
-import cephadex.brainflex.dto.InteractiveSessionDTO;
-import cephadex.brainflex.dto.InteractiveSessionReviewDTO;
 import cephadex.brainflex.dto.TeamCrudRequest;
 import cephadex.brainflex.dto.TeamMoveRequest;
 import cephadex.brainflex.dto.UpdatePlayerAvatarRequest;
-import cephadex.brainflex.model.Reaction;
-import cephadex.brainflex.model.InteractiveSessionResult;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.Reaction;
 import cephadex.brainflex.service.InteractiveSessionService;
 import cephadex.brainflex.service.MembershipService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
+import cephadex.brainflex.model.user.User;
 
 @RestController
 @RequestMapping("/api/interactive-sessions")
@@ -54,7 +54,7 @@ public class InteractiveSessionController {
     /** Create a new game session. Registered users only. */
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public ResponseEntity<InteractiveSessionDTO> createInteractiveSession(
+    public ResponseEntity<InteractiveSessionResponse> createInteractiveSession(
             @Valid @RequestBody CreateInteractiveSessionRequest request,
             Authentication authentication) {
 
@@ -71,13 +71,16 @@ public class InteractiveSessionController {
         }
 
         InteractiveSession session = gameService.createInteractiveSession(host, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new InteractiveSessionDTO(session));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(InteractiveSessionResponse.forViewer(session, host.getId()));
     }
 
     /** Get session info by room code. Public — used to render the lobby. */
     @GetMapping("/{roomCode}")
-    public ResponseEntity<InteractiveSessionDTO> getInteractiveSession(@PathVariable String roomCode) {
-        return ResponseEntity.ok(new InteractiveSessionDTO(gameService.getByRoomCode(roomCode)));
+    public ResponseEntity<InteractiveSessionResponse> getInteractiveSession(@PathVariable String roomCode,
+            Authentication authentication) {
+        InteractiveSession session = gameService.getByRoomCode(roomCode);
+        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, resolveViewerUserId(authentication)));
     }
 
     /**
@@ -87,7 +90,7 @@ public class InteractiveSessionController {
      */
     @PreAuthorize("hasAnyRole('GUEST', 'USER')")
     @PostMapping("/{roomCode}/join")
-    public ResponseEntity<InteractiveSessionDTO> joinByRoomCode(
+    public ResponseEntity<InteractiveSessionResponse> joinByRoomCode(
             @PathVariable String roomCode,
             @RequestBody(required = false) JoinInteractiveSessionRequest body,
             Authentication authentication) {
@@ -100,7 +103,7 @@ public class InteractiveSessionController {
         String avatarKey = body == null ? null : body.avatarKey();
         String colorTag = body == null ? null : body.colorTag();
         InteractiveSession session = gameService.joinInteractiveSession(roomCode, player, teamId, avatarKey, colorTag);
-        return ResponseEntity.ok(new InteractiveSessionDTO(session));
+        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, player.getId()));
     }
 
     /**
@@ -109,8 +112,10 @@ public class InteractiveSessionController {
      * and redirect the user to the lobby page.
      */
     @GetMapping("/join/{inviteToken}")
-    public ResponseEntity<InteractiveSessionDTO> getByInviteToken(@PathVariable String inviteToken) {
-        return ResponseEntity.ok(new InteractiveSessionDTO(gameService.getByInviteToken(inviteToken)));
+    public ResponseEntity<InteractiveSessionResponse> getByInviteToken(@PathVariable String inviteToken,
+            Authentication authentication) {
+        InteractiveSession session = gameService.getByInviteToken(inviteToken);
+        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, resolveViewerUserId(authentication)));
     }
 
     /** Cancel a session. Host only. */
@@ -130,15 +135,19 @@ public class InteractiveSessionController {
 
     /** Get final results for a completed session. Public. */
     @GetMapping("/{roomCode}/results")
-    public ResponseEntity<InteractiveSessionResult> getResults(@PathVariable String roomCode) {
+    public ResponseEntity<InteractiveSessionResultResponse> getResults(@PathVariable String roomCode) {
         return gameService.getResults(roomCode)
+                .map(InteractiveSessionResultResponse::of)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    /** Full post-interactiveSession review with per-round distributions. Public; only valid once FINISHED. */
+    /**
+     * Full post-interactiveSession review with per-round distributions. Public;
+     * only valid once FINISHED.
+     */
     @GetMapping("/{roomCode}/review")
-    public InteractiveSessionReviewDTO getReview(@PathVariable String roomCode) {
+    public InteractiveSessionReviewResponse getReview(@PathVariable String roomCode) {
         return gameService.buildReview(roomCode);
     }
 
@@ -162,18 +171,21 @@ public class InteractiveSessionController {
     /** REST fallback for sending a chat message. STOMP is the preferred path. */
     @PreAuthorize("hasAnyRole('GUEST', 'USER')")
     @PostMapping("/{roomCode}/chat")
-    public ResponseEntity<InteractiveSessionChatMessageDTO> sendChat(
+    public ResponseEntity<InteractiveSessionChatMessageResponse> sendChat(
             @PathVariable String roomCode,
             @Valid @RequestBody ChatSendRequest request,
             Authentication authentication) {
         String principalName = requirePrincipalName(authentication);
-        InteractiveSessionChatMessageDTO message = gameService.acceptChat(roomCode, request, principalName);
+        InteractiveSessionChatMessageResponse message = gameService.acceptChat(roomCode, request, principalName);
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
-    /** Paginated chat history. Late joiners load this on mount; the host sees moderated bodies. */
+    /**
+     * Paginated chat history. Late joiners load this on mount; the host sees
+     * moderated bodies.
+     */
     @GetMapping("/{roomCode}/chat")
-    public ResponseEntity<List<InteractiveSessionChatMessageDTO>> listChat(
+    public ResponseEntity<List<InteractiveSessionChatMessageResponse>> listChat(
             @PathVariable String roomCode,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
@@ -185,7 +197,7 @@ public class InteractiveSessionController {
     /** Host hides a chat message. Idempotent. */
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{roomCode}/chat/{messageId}/moderate")
-    public ResponseEntity<InteractiveSessionChatMessageDTO> moderateChat(
+    public ResponseEntity<InteractiveSessionChatMessageResponse> moderateChat(
             @PathVariable String roomCode,
             @PathVariable String messageId,
             Authentication authentication) {
@@ -195,32 +207,34 @@ public class InteractiveSessionController {
 
     // ---- Teams (chunk 12) ----
     // Host-only CRUD plus a "move player" endpoint. Live updates are pushed
-    // on /topic/interactive-session/{roomCode}/teams; these endpoints exist so the host
+    // on /topic/interactive-session/{roomCode}/teams; these endpoints exist so the
+    // host
     // editor can drive them directly without a STOMP send.
 
     /** Host creates a custom team. Only valid in LOBBY. */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{roomCode}/teams")
-    public ResponseEntity<InteractiveSessionDTO> createTeam(
+    public ResponseEntity<InteractiveSessionResponse> createTeam(
             @PathVariable String roomCode,
             @Valid @RequestBody TeamCrudRequest body,
             Authentication authentication) {
         User host = requireUser(authentication);
         InteractiveSession session = gameService.createTeam(roomCode, body.name(), body.color(), host);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new InteractiveSessionDTO(session));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(InteractiveSessionResponse.forViewer(session, host.getId()));
     }
 
     /** Host renames or recolors a team. */
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{roomCode}/teams/{teamId}")
-    public ResponseEntity<InteractiveSessionDTO> updateTeam(
+    public ResponseEntity<InteractiveSessionResponse> updateTeam(
             @PathVariable String roomCode,
             @PathVariable String teamId,
             @Valid @RequestBody TeamCrudRequest body,
             Authentication authentication) {
         User host = requireUser(authentication);
         InteractiveSession session = gameService.updateTeam(roomCode, teamId, body.name(), body.color(), host);
-        return ResponseEntity.ok(new InteractiveSessionDTO(session));
+        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, host.getId()));
     }
 
     /**
@@ -229,26 +243,30 @@ public class InteractiveSessionController {
      */
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{roomCode}/teams/{teamId}")
-    public ResponseEntity<InteractiveSessionDTO> deleteTeam(
+    public ResponseEntity<InteractiveSessionResponse> deleteTeam(
             @PathVariable String roomCode,
             @PathVariable String teamId,
             Authentication authentication) {
         User host = requireUser(authentication);
         InteractiveSession session = gameService.deleteTeam(roomCode, teamId, host);
-        return ResponseEntity.ok(new InteractiveSessionDTO(session));
+        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, host.getId()));
     }
 
-    /** Host moves a player into a specific team. */
+    /**
+     * Host moves a player into a specific team. The path variable carries the
+     * session-scoped {@code playerId} of the target — the host learned it from
+     * the public InteractiveSessionResponse, which never exposes raw userIds.
+     */
     @PreAuthorize("hasRole('USER')")
-    @PutMapping("/{roomCode}/players/{userId}/team")
-    public ResponseEntity<InteractiveSessionDTO> movePlayerToTeam(
+    @PutMapping("/{roomCode}/players/{playerId}/team")
+    public ResponseEntity<InteractiveSessionResponse> movePlayerToTeam(
             @PathVariable String roomCode,
-            @PathVariable String userId,
+            @PathVariable String playerId,
             @Valid @RequestBody TeamMoveRequest body,
             Authentication authentication) {
         User host = requireUser(authentication);
-        InteractiveSession session = gameService.movePlayerToTeam(roomCode, userId, body.teamId(), host);
-        return ResponseEntity.ok(new InteractiveSessionDTO(session));
+        InteractiveSession session = gameService.movePlayerToTeam(roomCode, playerId, body.teamId(), host);
+        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, host.getId()));
     }
 
     /**
@@ -258,7 +276,7 @@ public class InteractiveSessionController {
      */
     @PreAuthorize("hasAnyRole('GUEST', 'USER')")
     @PutMapping("/{roomCode}/me/avatar")
-    public ResponseEntity<InteractiveSessionDTO> updateMyAvatar(
+    public ResponseEntity<InteractiveSessionResponse> updateMyAvatar(
             @PathVariable String roomCode,
             @RequestBody UpdatePlayerAvatarRequest body,
             Authentication authentication) {
@@ -268,13 +286,25 @@ public class InteractiveSessionController {
         InteractiveSession session = gameService.updatePlayerAvatar(roomCode, player.getId(),
                 body == null ? null : body.avatarKey(),
                 body == null ? null : body.colorTag());
-        return ResponseEntity.ok(new InteractiveSessionDTO(session));
+        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, player.getId()));
     }
 
     private User requireUser(Authentication authentication) {
         return userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                         "Authentication required"));
+    }
+
+    /**
+     * Resolve the caller's userId for {@link InteractiveSessionResponse#forViewer}.
+     * Returns {@code null} for anonymous requests (public lobby view) so
+     * {@code viewerPlayerId} comes back as {@code null} rather than leaking
+     * spurious identity.
+     */
+    private String resolveViewerUserId(Authentication authentication) {
+        return userService.resolveAnyAuthenticatedUser(authentication)
+                .map(User::getId)
+                .orElse(null);
     }
 
     private static String requirePrincipalName(Authentication authentication) {

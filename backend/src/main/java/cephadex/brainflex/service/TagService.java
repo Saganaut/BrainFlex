@@ -26,9 +26,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.TagDTO;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.Tag;
+import cephadex.brainflex.dto.CreateTagRequest;
+import cephadex.brainflex.dto.UpdateTagRequest;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.Tag;
 import cephadex.brainflex.repository.TagRepository;
 
 @Service
@@ -62,7 +63,8 @@ public class TagService {
     }
 
     public List<Tag> search(String text) {
-        if (text == null || text.isBlank()) return List.of();
+        if (text == null || text.isBlank())
+            return List.of();
         return tagRepository.searchByText(Pattern.quote(text.trim()));
     }
 
@@ -77,7 +79,7 @@ public class TagService {
 
     // ---- Write ----
 
-    public Tag create(TagDTO.CreateTagRequest request) {
+    public Tag create(CreateTagRequest request) {
         return create(request, null);
     }
 
@@ -87,7 +89,7 @@ public class TagService {
      * for system seeds; admin-created tags are stamped too so we can later
      * surface "tags I created" on an admin dashboard.
      */
-    public Tag create(TagDTO.CreateTagRequest request, String createdByUserId) {
+    public Tag create(CreateTagRequest request, String createdByUserId) {
         String slug = (request.id() != null && !request.id().isBlank())
                 ? request.id().trim()
                 : slugify(request.displayName());
@@ -113,7 +115,7 @@ public class TagService {
         return tagRepository.save(tag);
     }
 
-    public Tag update(String id, TagDTO.UpdateTagRequest request) {
+    public Tag update(String id, UpdateTagRequest request) {
         Tag tag = get(id);
         if (request.displayName() != null && !request.displayName().isBlank()) {
             tag.setDisplayName(request.displayName().trim());
@@ -163,13 +165,17 @@ public class TagService {
      * Throws 400 on the first missing id. Empty / null lists are allowed.
      */
     public void requireAllExist(List<String> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) return;
+        if (tagIds == null || tagIds.isEmpty())
+            return;
         List<String> distinct = tagIds.stream().filter(s -> s != null && !s.isBlank()).distinct().toList();
-        if (distinct.isEmpty()) return;
+        if (distinct.isEmpty())
+            return;
         List<Tag> found = tagRepository.findAllById(distinct);
-        if (found.size() == distinct.size()) return;
+        if (found.size() == distinct.size())
+            return;
         Map<String, Boolean> byId = new HashMap<>();
-        for (Tag t : found) byId.put(t.getId(), true);
+        for (Tag t : found)
+            byId.put(t.getId(), true);
         for (String id : distinct) {
             if (!byId.containsKey(id)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown tag id: " + id);
@@ -186,10 +192,12 @@ public class TagService {
     public int recomputeDeckCounts(List<Deck> allDecks) {
         Map<String, Integer> counts = new HashMap<>();
         for (Deck deck : allDecks) {
-            List<String> ids = deck.getTagIds();
-            if (ids == null) continue;
+            java.util.Set<String> ids = deck.getTagIds();
+            if (ids == null)
+                continue;
             for (String id : ids) {
-                if (id == null || id.isBlank()) continue;
+                if (id == null || id.isBlank())
+                    continue;
                 counts.merge(id, 1, Integer::sum);
             }
         }
@@ -207,7 +215,8 @@ public class TagService {
 
     /** Lowercase, hyphen-separated slug used as the Tag id. */
     public static String slugify(String text) {
-        if (text == null) return "";
+        if (text == null)
+            return "";
         String lowered = text.toLowerCase();
         String collapsed = lowered.replaceAll("[^a-z0-9]+", "-");
         String trimmed = collapsed.replaceAll("(^-)|(-$)", "");
@@ -226,7 +235,8 @@ public class TagService {
 
     /** Returns null for null / blank, otherwise the trimmed value. */
     private static String blankToNull(String value) {
-        if (value == null) return null;
+        if (value == null)
+            return null;
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
     }
@@ -234,9 +244,11 @@ public class TagService {
     /** Find-or-create used by the one-shot legacy migration. */
     public Tag findOrCreateFromLegacyTag(String legacyTag) {
         String slug = slugify(legacyTag);
-        if (slug.isEmpty()) return null;
+        if (slug.isEmpty())
+            return null;
         Optional<Tag> existing = tagRepository.findById(slug);
-        if (existing.isPresent()) return existing.get();
+        if (existing.isPresent())
+            return existing.get();
         Tag tag = new Tag();
         tag.setId(slug);
         tag.setDisplayName(legacyTag.trim());

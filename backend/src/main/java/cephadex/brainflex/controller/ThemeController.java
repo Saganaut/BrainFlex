@@ -22,11 +22,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.ThemeDTO;
-import cephadex.brainflex.model.StoredImageVariant;
-import cephadex.brainflex.model.Theme;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.ImageSize;
+import cephadex.brainflex.dto.CreateThemeRequest;
+import cephadex.brainflex.dto.ThemeResponse;
+import cephadex.brainflex.dto.UpdateThemeRequest;
+import cephadex.brainflex.model.enums.ThemeMode;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.media.StoredImageVariant;
+import cephadex.brainflex.model.theme.Theme;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.ThemeRepository;
 import cephadex.brainflex.service.AuthorizationService;
 import cephadex.brainflex.service.ImageProcessingService;
@@ -61,20 +64,21 @@ public class ThemeController {
     /** Returns all themes owned by the caller plus any shared with their orgs. */
     @GetMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<ThemeDTO.ThemeResponse>> listThemes(Authentication authentication) {
+    public ResponseEntity<List<ThemeResponse>> listThemes(Authentication authentication) {
         return userService.resolveRegisteredUser(authentication)
                 .map(user -> {
                     List<Theme> themes = new ArrayList<>(themeRepository.findByOwnerId(user.getId()));
                     List<String> orgIds = user.getOrganizationIds();
                     if (orgIds != null && !orgIds.isEmpty()) {
                         for (String orgId : orgIds) {
-                            if (orgId == null || orgId.isBlank()) continue;
+                            if (orgId == null || orgId.isBlank())
+                                continue;
                             themeRepository.findByOrganizationId(orgId).stream()
                                     .filter(t -> !t.getOwnerId().equals(user.getId()))
                                     .forEach(themes::add);
                         }
                     }
-                    List<ThemeDTO.ThemeResponse> response = themes.stream()
+                    List<ThemeResponse> response = themes.stream()
                             .map(this::buildResponse)
                             .toList();
                     return ResponseEntity.ok(response);
@@ -84,8 +88,8 @@ public class ThemeController {
 
     @PostMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ThemeDTO.ThemeResponse> createTheme(
-            @RequestBody ThemeDTO.CreateThemeRequest request,
+    public ResponseEntity<ThemeResponse> createTheme(
+            @RequestBody CreateThemeRequest request,
             Authentication authentication) {
         return userService.resolveRegisteredUser(authentication)
                 .map(user -> {
@@ -94,7 +98,7 @@ public class ThemeController {
                     theme.setOwnerId(user.getId());
                     theme.setHuePrimary(clampHue(request.huePrimary()));
                     theme.setHueAccent(clampHue(request.hueAccent()));
-                    theme.setMode(validateMode(request.mode()));
+                    theme.setMode(request.mode() != null ? request.mode() : ThemeMode.SYSTEM);
                     theme.setOrganizationId(resolveOrgScope(user, request.organizationId()));
                     Theme saved = themeRepository.save(theme);
                     return ResponseEntity.status(HttpStatus.CREATED)
@@ -105,9 +109,9 @@ public class ThemeController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ThemeDTO.ThemeResponse> updateTheme(
+    public ResponseEntity<ThemeResponse> updateTheme(
             @PathVariable String id,
-            @RequestBody ThemeDTO.UpdateThemeRequest request,
+            @RequestBody UpdateThemeRequest request,
             Authentication authentication) {
         User user = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
@@ -123,7 +127,7 @@ public class ThemeController {
             theme.setHueAccent(clampHue(request.hueAccent()));
         }
         if (request.mode() != null) {
-            theme.setMode(validateMode(request.mode()));
+            theme.setMode(request.mode());
         }
         // Passing empty string clears org sharing; null leaves it unchanged.
         // Sharing to an org the caller does not belong to is rejected.
@@ -156,7 +160,7 @@ public class ThemeController {
     // resolveRegisteredUser + authorizationService.requireThemeEditable pair
     // performs both authn and ownership authorization here.
     @PostMapping(value = "/{id}/background", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ThemeDTO.ThemeResponse> uploadBackground(
+    public ResponseEntity<ThemeResponse> uploadBackground(
             @PathVariable String id,
             @RequestParam("image") MultipartFile file,
             Authentication authentication) throws IOException {
@@ -171,7 +175,7 @@ public class ThemeController {
     }
 
     @PostMapping(value = "/{id}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ThemeDTO.ThemeResponse> uploadLogo(
+    public ResponseEntity<ThemeResponse> uploadLogo(
             @PathVariable String id,
             @RequestParam("image") MultipartFile file,
             Authentication authentication) throws IOException {
@@ -187,8 +191,8 @@ public class ThemeController {
 
     // ── helpers ────────────────────────────────────────────────────────────────
 
-    private ThemeDTO.ThemeResponse buildResponse(Theme theme) {
-        return new ThemeDTO.ThemeResponse(
+    private ThemeResponse buildResponse(Theme theme) {
+        return new ThemeResponse(
                 theme,
                 themeImageHydrator.backgroundImageOf(theme),
                 themeImageHydrator.logoImageOf(theme));
@@ -198,20 +202,13 @@ public class ThemeController {
         return Math.max(0, Math.min(360, hue));
     }
 
-    private static String validateMode(String mode) {
-        if (mode == null) return "system";
-        return switch (mode) {
-            case "light", "dark", "system" -> mode;
-            default -> "system";
-        };
-    }
-
     /**
      * Normalises a client-supplied org scope: blank/null → personal (null
      * stored); otherwise reject unless the caller is a member of that org.
      */
     private static String resolveOrgScope(User caller, String orgId) {
-        if (orgId == null || orgId.isBlank()) return null;
+        if (orgId == null || orgId.isBlank())
+            return null;
         List<String> memberships = caller.getOrganizationIds();
         if (memberships == null || !memberships.contains(orgId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,

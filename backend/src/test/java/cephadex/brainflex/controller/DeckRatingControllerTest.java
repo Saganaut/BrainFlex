@@ -8,6 +8,18 @@
  */
 package cephadex.brainflex.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -15,10 +27,6 @@ import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -30,21 +38,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import cephadex.brainflex.config.AdminProperties;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckComment;
-import cephadex.brainflex.model.DeckRating;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.shared.UserSnapshot;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckComment;
+import cephadex.brainflex.model.deck.DeckRating;
 import cephadex.brainflex.model.enums.DeckVisibility;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.DeckCommentService;
@@ -61,18 +62,29 @@ import cephadex.brainflex.service.UserService;
 @WithMockUser
 class DeckRatingControllerTest {
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @MockitoBean private DeckService deckService;
-    @MockitoBean private UserService userService;
-    @MockitoBean private DeckImageHydrationService deckImageHydrationService;
-    @MockitoBean private DeckTagHydrationService deckTagHydrationService;
-    @MockitoBean private DeckFavoriteService deckFavoriteService;
-    @MockitoBean private DeckRatingService deckRatingService;
-    @MockitoBean private DeckCommentService deckCommentService;
-    @MockitoBean private DeckRepository deckRepository;
-    @MockitoBean private UserRepository userRepository;
-    @MockitoBean private AdminProperties adminProperties;
+    @MockitoBean
+    private DeckService deckService;
+    @MockitoBean
+    private UserService userService;
+    @MockitoBean
+    private DeckImageHydrationService deckImageHydrationService;
+    @MockitoBean
+    private DeckTagHydrationService deckTagHydrationService;
+    @MockitoBean
+    private DeckFavoriteService deckFavoriteService;
+    @MockitoBean
+    private DeckRatingService deckRatingService;
+    @MockitoBean
+    private DeckCommentService deckCommentService;
+    @MockitoBean
+    private DeckRepository deckRepository;
+    @MockitoBean
+    private UserRepository userRepository;
+    @MockitoBean
+    private AdminProperties adminProperties;
 
     private User caller;
     private Deck deck;
@@ -87,7 +99,7 @@ class DeckRatingControllerTest {
 
         deck = new Deck();
         deck.setId("deck-1");
-        deck.setName("My Deck");
+        deck.getContent().setName("My Deck");
         deck.setVisibility(DeckVisibility.PUBLIC);
         deck.setCreatorUserId("other-user");
         deck.setAverageRating(4.2);
@@ -106,9 +118,9 @@ class DeckRatingControllerTest {
         when(deckRatingService.upsert("deck-1", "user-1", 5, "great")).thenReturn(row);
 
         mockMvc.perform(put("/api/decks/deck-1/rating")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"stars\":5,\"review\":\"great\"}"))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"stars\":5,\"review\":\"great\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.stars").value(5))
                 .andExpect(jsonPath("$.review").value("great"))
@@ -120,9 +132,9 @@ class DeckRatingControllerTest {
     @Test
     void rateDeck_ValidatesStars() throws Exception {
         mockMvc.perform(put("/api/decks/deck-1/rating")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"stars\":7}"))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"stars\":7}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -195,9 +207,9 @@ class DeckRatingControllerTest {
                 .thenReturn(row);
 
         mockMvc.perform(post("/api/decks/deck-1/comments")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"body\":\"first\"}"))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"body\":\"first\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.body").value("first"))
                 .andExpect(jsonPath("$.upvotes").value(0));

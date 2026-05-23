@@ -36,12 +36,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.Membership;
-import cephadex.brainflex.model.User;
 import cephadex.brainflex.model.enums.MembershipStatus;
 import cephadex.brainflex.model.enums.MembershipTier;
+import cephadex.brainflex.model.user.BillingState;
 import cephadex.brainflex.model.enums.UserRole;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.OrganizationRepository;
+import cephadex.brainflex.model.org.Membership;
 
 @Service
 public class AuthoritiesService {
@@ -69,7 +70,7 @@ public class AuthoritiesService {
     public Set<GrantedAuthority> authoritiesFor(User user) {
         Set<GrantedAuthority> auths = new HashSet<>();
 
-        if (Boolean.TRUE.equals(user.getIsGuest())) {
+        if (user.isGuest()) {
             auths.add(new SimpleGrantedAuthority(ROLE_GUEST));
             return auths;
         }
@@ -80,7 +81,8 @@ public class AuthoritiesService {
         var orgIds = user.getOrganizationIds();
         if (orgIds != null) {
             for (String orgId : orgIds) {
-                if (orgId == null || orgId.isBlank()) continue;
+                if (orgId == null || orgId.isBlank())
+                    continue;
                 auths.add(new SimpleGrantedAuthority(ROLE_ORG_MEMBER));
                 organizationRepository.findById(orgId).ifPresent(org -> {
                     if (user.getId() != null && user.getId().equals(org.getOwnerId())) {
@@ -110,11 +112,14 @@ public class AuthoritiesService {
     // can't keep premium features lit. ACTIVE and TRIALING are the only
     // statuses that grant the tier's role.
     private static String tierRole(Membership membership) {
-        if (membership == null) return ROLE_USER_FREE;
-        MembershipTier tier = membership.getTier() != null ? membership.getTier() : MembershipTier.FREE;
-        MembershipStatus status = membership.getStatus() != null ? membership.getStatus() : MembershipStatus.NONE;
+        if (membership == null)
+            return ROLE_USER_FREE;
+        BillingState billing = membership.getBilling();
+        MembershipTier tier = (billing != null && billing.getTier() != null) ? billing.getTier() : MembershipTier.FREE;
+        MembershipStatus status = (billing != null && billing.getStatus() != null) ? billing.getStatus() : MembershipStatus.NONE;
         boolean paid = status == MembershipStatus.ACTIVE || status == MembershipStatus.TRIALING;
-        if (!paid) return ROLE_USER_FREE;
+        if (!paid)
+            return ROLE_USER_FREE;
         return switch (tier) {
             case FREE -> ROLE_USER_FREE;
             case INDIVIDUAL, ORG_SEAT -> ROLE_USER_BASIC;

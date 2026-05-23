@@ -1,4 +1,7 @@
-import type { DeckDto, InteractiveSessionDto } from "@/store/BrainFlexApi";
+import type {
+  DeckResponse,
+  InteractiveSessionResponse,
+} from "@/store/BrainFlexApi";
 import { getRouteApi } from "@tanstack/react-router";
 import {
   mockFellowshipSession,
@@ -9,8 +12,8 @@ const routeApi = getRouteApi("/sessions/$sessionId/");
 
 interface useSessionResponse {
   sessionId: string;
-  interactiveSession: InteractiveSessionDto;
-  currentDeck: DeckDto;
+  interactiveSession: InteractiveSessionResponse;
+  currentDeck: DeckResponse;
 }
 
 const useSession = (): useSessionResponse => {

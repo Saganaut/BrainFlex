@@ -31,12 +31,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.GalleryImageDTO;
-import cephadex.brainflex.model.GalleryImage;
-import cephadex.brainflex.model.StoredImageVariant;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.ImageSize;
-import cephadex.brainflex.model.element.ImageVariant;
+import cephadex.brainflex.dto.GalleryImageResponse;
+import cephadex.brainflex.dto.UpdateGalleryImageRequest;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.image.ImageVariant;
+import cephadex.brainflex.model.media.GalleryImage;
+import cephadex.brainflex.model.media.StoredImageVariant;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.GalleryImageRepository;
 import cephadex.brainflex.service.AuthorizationService;
 import cephadex.brainflex.service.ImageProcessingService;
@@ -71,26 +72,29 @@ public class GalleryController {
         this.authorizationService = authorizationService;
     }
 
-    /** Returns the caller's own gallery images plus every image shared with
-     *  any of their organizations. Presigned URLs are refreshed on each read
-     *  because the persisted variants record only the size metadata. */
+    /**
+     * Returns the caller's own gallery images plus every image shared with
+     * any of their organizations. Presigned URLs are refreshed on each read
+     * because the persisted variants record only the size metadata.
+     */
     @GetMapping
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<GalleryImageDTO.GalleryImageResponse>> listImages(Authentication authentication) {
+    public ResponseEntity<List<GalleryImageResponse>> listImages(Authentication authentication) {
         return userService.resolveRegisteredUser(authentication)
                 .map(user -> {
                     List<GalleryImage> images = new ArrayList<>(galleryImageRepository.findByOwnerId(user.getId()));
                     List<String> orgIds = user.getOrganizationIds();
                     if (orgIds != null && !orgIds.isEmpty()) {
                         for (String orgId : orgIds) {
-                            if (orgId == null || orgId.isBlank()) continue;
+                            if (orgId == null || orgId.isBlank())
+                                continue;
                             galleryImageRepository.findByOrganizationId(orgId).stream()
                                     .filter(i -> !i.getOwnerId().equals(user.getId()))
                                     .forEach(images::add);
                         }
                     }
-                    List<GalleryImageDTO.GalleryImageResponse> response = images.stream()
-                            .map(image -> new GalleryImageDTO.GalleryImageResponse(image, refresh(image)))
+                    List<GalleryImageResponse> response = images.stream()
+                            .map(image -> new GalleryImageResponse(image, refresh(image)))
                             .toList();
                     return ResponseEntity.ok(response);
                 })
@@ -102,7 +106,7 @@ public class GalleryController {
     // resolveRegisteredUser call upgrades anyRequest().authenticated() to a
     // registered-user check.
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<GalleryImageDTO.GalleryImageResponse> uploadImage(
+    public ResponseEntity<GalleryImageResponse> uploadImage(
             @RequestParam("image") MultipartFile file,
             @RequestParam(value = "name", required = false) String name,
             @RequestParam(value = "tags", required = false) String tagsCsv,
@@ -126,14 +130,14 @@ public class GalleryController {
         GalleryImage saved = galleryImageRepository.save(image);
         Map<ImageSize, ImageVariant> fresh = s3Service.refreshGalleryImage(saved.getId(), saved.getVariants());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new GalleryImageDTO.GalleryImageResponse(saved, fresh));
+                .body(new GalleryImageResponse(saved, fresh));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<GalleryImageDTO.GalleryImageResponse> updateImage(
+    public ResponseEntity<GalleryImageResponse> updateImage(
             @PathVariable String id,
-            @RequestBody GalleryImageDTO.UpdateGalleryImageRequest request,
+            @RequestBody UpdateGalleryImageRequest request,
             Authentication authentication) {
         User user = userService.resolveRegisteredUser(authentication)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
@@ -150,7 +154,7 @@ public class GalleryController {
             image.setOrganizationId(resolveOrgScope(user, request.organizationId()));
         }
         GalleryImage saved = galleryImageRepository.save(image);
-        return ResponseEntity.ok(new GalleryImageDTO.GalleryImageResponse(saved, refresh(saved)));
+        return ResponseEntity.ok(new GalleryImageResponse(saved, refresh(saved)));
     }
 
     @DeleteMapping("/{id}")
@@ -171,13 +175,15 @@ public class GalleryController {
     // ── helpers ────────────────────────────────────────────────────────────────
 
     private Map<ImageSize, ImageVariant> refresh(GalleryImage image) {
-        if (image.getVariants() == null || image.getVariants().isEmpty()) return Collections.emptyMap();
+        if (image.getVariants() == null || image.getVariants().isEmpty())
+            return Collections.emptyMap();
         return s3Service.refreshGalleryImage(image.getId(), image.getVariants());
     }
 
     private static String sanitizeName(String supplied, String fallback) {
         String candidate = supplied == null || supplied.isBlank() ? fallback : supplied;
-        if (candidate == null || candidate.isBlank()) candidate = "Untitled";
+        if (candidate == null || candidate.isBlank())
+            candidate = "Untitled";
         if (candidate.length() > MAX_NAME_LENGTH) {
             candidate = candidate.substring(0, MAX_NAME_LENGTH);
         }
@@ -185,7 +191,8 @@ public class GalleryController {
     }
 
     private static List<String> parseTags(String csv) {
-        if (csv == null || csv.isBlank()) return new ArrayList<>();
+        if (csv == null || csv.isBlank())
+            return new ArrayList<>();
         return Arrays.stream(csv.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -193,7 +200,8 @@ public class GalleryController {
     }
 
     private static List<String> sanitizeTags(List<String> raw) {
-        if (raw == null) return new ArrayList<>();
+        if (raw == null)
+            return new ArrayList<>();
         return raw.stream()
                 .filter(t -> t != null && !t.isBlank())
                 .map(String::trim)
@@ -205,7 +213,8 @@ public class GalleryController {
 
     /** Same normalisation rule as ThemeController.resolveOrgScope. */
     private static String resolveOrgScope(User caller, String orgId) {
-        if (orgId == null || orgId.isBlank()) return null;
+        if (orgId == null || orgId.isBlank())
+            return null;
         List<String> memberships = caller.getOrganizationIds();
         if (memberships == null || !memberships.contains(orgId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,

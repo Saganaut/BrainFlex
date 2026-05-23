@@ -26,14 +26,15 @@ import java.util.List;
 import java.util.Random;
 
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
-import cephadex.brainflex.model.element.RankingItem;
 import cephadex.brainflex.model.element.RankingQuestion;
+import cephadex.brainflex.model.element.parts.McqOption;
+import cephadex.brainflex.model.element.parts.RankingItem;
 
 public final class ElementShuffler {
 
-    private ElementShuffler() {}
+    private ElementShuffler() {
+    }
 
     /**
      * Returns the element to send to {@code playerId} for this round. When the
@@ -44,10 +45,9 @@ public final class ElementShuffler {
     public static DeckElement shuffleForPlayer(DeckElement element, String roomCode, String playerId) {
         return switch (element) {
             case McqQuestion q when q.shuffleOptions() && q.options() != null && q.options().size() > 1 ->
-                    withShuffledOptions(q, permute(q.options(), seedFor(roomCode, q.id(), playerId)));
-            case RankingQuestion q
-                    when q.shuffleItemsForPresentation() && q.items() != null && q.items().size() > 1 ->
-                    withShuffledItems(q, permute(q.items(), seedFor(roomCode, q.id(), playerId)));
+                withShuffledOptions(q, permute(q.options(), seedFor(roomCode, q.id(), playerId)));
+            case RankingQuestion q when q.shuffleItemsForPresentation() && q.items() != null && q.items().size() > 1 ->
+                withShuffledItems(q, permute(q.items(), seedFor(roomCode, q.id(), playerId)));
             default -> element;
         };
     }
@@ -61,7 +61,7 @@ public final class ElementShuffler {
         return switch (element) {
             case McqQuestion q -> q.shuffleOptions() && q.options() != null && q.options().size() > 1;
             case RankingQuestion q ->
-                    q.shuffleItemsForPresentation() && q.items() != null && q.items().size() > 1;
+                q.shuffleItemsForPresentation() && q.items() != null && q.items().size() > 1;
             default -> false;
         };
     }

@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import cephadex.brainflex.dto.RegisterRequest;
-import cephadex.brainflex.dto.UserDTO;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.UserResponse;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthoritiesService;
 import cephadex.brainflex.service.DeckCollaboratorService;
@@ -70,7 +70,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserDTO> getCurrentUser(Authentication authentication) {
+    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated() &&
                 !"anonymousUser".equals(authentication.getName())) {
 
@@ -82,12 +82,14 @@ public class AuthController {
             if (isGuest) {
                 String id = authentication.getName().substring(6);
                 return userRepository.findById(id)
-                        .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user))))
-                        .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
+                        .map(user -> ResponseEntity.ok((UserResponse) new UserResponse.GuestUser(user,
+                                userImageHydrator.pictureImageOf(user))))
+                        .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserResponse>build());
             } else if (isRegistered) {
                 return oAuthProviderService.findByOAuthAuthentication(authentication)
-                        .map(user -> ResponseEntity.ok((UserDTO) new UserDTO.RegisteredUser(user, userImageHydrator.pictureImageOf(user))))
-                        .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserDTO>build());
+                        .map(user -> ResponseEntity.ok((UserResponse) new UserResponse.RegisteredUser(user,
+                                userImageHydrator.pictureImageOf(user))))
+                        .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).<UserResponse>build());
             }
         }
 
@@ -98,12 +100,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserDTO.RegisteredUser> register(
+    public ResponseEntity<UserResponse.RegisteredUser> register(
             @Valid @RequestBody RegisterRequest request,
             Authentication authentication) {
 
         if (!(authentication instanceof OAuth2AuthenticationToken token) || !token.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).<UserDTO.RegisteredUser>build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).<UserResponse.RegisteredUser>build();
         }
 
         User registered = userService.register(token, request);
@@ -112,7 +114,7 @@ public class AuthController {
         // resolve to her userId now.
         deckCollaboratorService.claimPendingInvitesFor(registered);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UserDTO.RegisteredUser(registered, userImageHydrator.pictureImageOf(registered)));
+                .body(new UserResponse.RegisteredUser(registered, userImageHydrator.pictureImageOf(registered)));
     }
 
     @GetMapping("/login")
@@ -133,8 +135,8 @@ public class AuthController {
     }
 
     @PostMapping("/guest")
-    public ResponseEntity<UserDTO.GuestUser> guestLogin(
-            @RequestBody UserDTO.GuestLoginRequest request,
+    public ResponseEntity<UserResponse.GuestUser> guestLogin(
+            @RequestBody UserResponse.GuestLoginRequest request,
             Authentication authentication,
             HttpServletRequest httpRequest,
             HttpServletResponse httpResponse) {
@@ -151,6 +153,6 @@ public class AuthController {
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, httpRequest, httpResponse);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new UserDTO.GuestUser(user, userImageHydrator.pictureImageOf(user)));
+                .body(new UserResponse.GuestUser(user, userImageHydrator.pictureImageOf(user)));
     }
 }

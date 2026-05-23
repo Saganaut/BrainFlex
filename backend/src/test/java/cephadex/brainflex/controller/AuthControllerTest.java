@@ -22,9 +22,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cephadex.brainflex.dto.RegisterRequest;
-import cephadex.brainflex.dto.UserDTO;
-import cephadex.brainflex.model.PlayerStats;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.UserResponse;
+import cephadex.brainflex.model.user.PlayerStats;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.UserService;
 
@@ -59,7 +59,7 @@ class AuthControllerTest {
         user.setEmail("test@example.com");
         user.setName("Test User");
         user.setUserName("testuser");
-        user.setIsGuest(false);
+        user.setGuest(false);
         user.setGoogleId("google123");
         user.setStats(new PlayerStats());
 
@@ -76,12 +76,12 @@ class AuthControllerTest {
         User user = new User();
         user.setId("1");
         user.setUserName("guestuser");
-        user.setIsGuest(true);
+        user.setGuest(true);
         user.setStats(new PlayerStats());
 
         when(userService.createGuest("guestuser")).thenReturn(user);
 
-        UserDTO.GuestLoginRequest request = new UserDTO.GuestLoginRequest("guestuser");
+        UserResponse.GuestLoginRequest request = new UserResponse.GuestLoginRequest("guestuser");
 
         mockMvc.perform(post("/api/auth/guest")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -99,7 +99,7 @@ class AuthControllerTest {
         user.setEmail("test@example.com");
         user.setName("Test User");
         user.setUserName("testuser");
-        user.setIsGuest(false);
+        user.setGuest(false);
 
         RegisterRequest request = new RegisterRequest("testuser", true);
 

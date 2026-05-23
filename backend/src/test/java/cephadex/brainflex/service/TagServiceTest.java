@@ -7,6 +7,7 @@ package cephadex.brainflex.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -25,9 +26,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.TagDTO;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.Tag;
+import cephadex.brainflex.dto.CreateTagRequest;
+import cephadex.brainflex.dto.UpdateTagRequest;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.Tag;
 import cephadex.brainflex.repository.TagRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -69,7 +71,7 @@ class TagServiceTest {
         when(tagRepository.existsById("history-ww2")).thenReturn(false);
         when(tagRepository.save(any(Tag.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Tag created = tagService.create(new TagDTO.CreateTagRequest(
+        Tag created = tagService.create(new CreateTagRequest(
                 null, "History WW2", null, null, null, true));
 
         assertEquals("history-ww2", created.getId());
@@ -82,7 +84,7 @@ class TagServiceTest {
         when(tagRepository.existsById("custom-id")).thenReturn(false);
         when(tagRepository.save(any(Tag.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Tag created = tagService.create(new TagDTO.CreateTagRequest(
+        Tag created = tagService.create(new CreateTagRequest(
                 "custom-id", "Anything", null, null, null, false));
 
         assertEquals("custom-id", created.getId());
@@ -93,7 +95,7 @@ class TagServiceTest {
         when(tagRepository.existsById("math")).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> tagService.create(new TagDTO.CreateTagRequest(
+                () -> tagService.create(new CreateTagRequest(
                         "math", "Math", null, null, null, true)));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
@@ -102,7 +104,7 @@ class TagServiceTest {
     @Test
     void create_WhenSlugInvalid_ThrowsBadRequest() {
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> tagService.create(new TagDTO.CreateTagRequest(
+                () -> tagService.create(new CreateTagRequest(
                         "Bad ID!", "Whatever", null, null, null, false)));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -114,7 +116,7 @@ class TagServiceTest {
         when(tagRepository.existsById("history")).thenReturn(false);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> tagService.create(new TagDTO.CreateTagRequest(
+                () -> tagService.create(new CreateTagRequest(
                         null, "History WW2", "history", null, null, false)));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -127,7 +129,7 @@ class TagServiceTest {
         when(tagRepository.findById("math")).thenReturn(Optional.of(math));
         when(tagRepository.save(any(Tag.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Tag updated = tagService.update("math", new TagDTO.UpdateTagRequest(
+        Tag updated = tagService.update("math", new UpdateTagRequest(
                 "Mathematics", null, "Numbers and shapes", null, false));
 
         assertEquals("Mathematics", updated.getDisplayName());
@@ -140,7 +142,7 @@ class TagServiceTest {
         when(tagRepository.findById("math")).thenReturn(Optional.of(math));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> tagService.update("math", new TagDTO.UpdateTagRequest(
+                () -> tagService.update("math", new UpdateTagRequest(
                         null, "math", null, null, null)));
 
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
@@ -152,7 +154,7 @@ class TagServiceTest {
         when(tagRepository.findById("math")).thenReturn(Optional.of(math));
         when(tagRepository.save(any(Tag.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Tag updated = tagService.update("math", new TagDTO.UpdateTagRequest(
+        Tag updated = tagService.update("math", new UpdateTagRequest(
                 null, "", null, null, null));
 
         assertNull(updated.getParentTagId());
@@ -238,9 +240,9 @@ class TagServiceTest {
         when(tagRepository.findAll()).thenReturn(List.of(a, b, c));
         when(tagRepository.save(any(Tag.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Deck d1 = new Deck(); d1.setTagIds(List.of("a", "b"));
-        Deck d2 = new Deck(); d2.setTagIds(List.of("a"));
-        Deck d3 = new Deck(); d3.setTagIds(List.of("b"));
+        Deck d1 = new Deck(); d1.setTagIds(Set.of("a", "b"));
+        Deck d2 = new Deck(); d2.setTagIds(Set.of("a"));
+        Deck d3 = new Deck(); d3.setTagIds(Set.of("b"));
 
         int changed = tagService.recomputeDeckCounts(List.of(d1, d2, d3));
 

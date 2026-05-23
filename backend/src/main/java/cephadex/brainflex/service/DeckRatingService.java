@@ -47,8 +47,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckRating;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckRating;
 import cephadex.brainflex.repository.DeckRatingRepository;
 
 @Service
@@ -116,17 +116,20 @@ public class DeckRatingService {
      */
     public boolean delete(String deckId, String userId) {
         Optional<DeckRating> existing = ratingRepository.findByDeckIdAndUserId(deckId, userId);
-        if (existing.isEmpty()) return false;
+        if (existing.isEmpty())
+            return false;
         int oldStars = existing.get().getStars();
         long removed = ratingRepository.deleteByDeckIdAndUserId(deckId, userId);
-        if (removed == 0) return false;
+        if (removed == 0)
+            return false;
         applyDelta(deckId, -oldStars, -1);
         return true;
     }
 
     /** Caller's own rating, or empty. */
     public Optional<DeckRating> findMine(String deckId, String userId) {
-        if (userId == null || deckId == null) return Optional.empty();
+        if (userId == null || deckId == null)
+            return Optional.empty();
         return ratingRepository.findByDeckIdAndUserId(deckId, userId);
     }
 
@@ -144,7 +147,8 @@ public class DeckRatingService {
         List<DeckRating> all = ratingRepository.findAllByDeckId(deckId, Pageable.unpaged()).getContent();
         int count = all.size();
         long sum = 0;
-        for (DeckRating r : all) sum += r.getStars();
+        for (DeckRating r : all)
+            sum += r.getStars();
         double average = count == 0 ? 0.0 : roundOneDecimal(sum / (double) count);
         mongoTemplate.updateFirst(
                 new Query(Criteria.where("_id").is(deckId)),
@@ -155,7 +159,8 @@ public class DeckRatingService {
         return new RatingSnapshot(average, count);
     }
 
-    public record RatingSnapshot(double averageRating, int ratingCount) {}
+    public record RatingSnapshot(double averageRating, int ratingCount) {
+    }
 
     private void applyDelta(String deckId, int starsDelta, int countDelta) {
         // We need the *current* averageRating and ratingCount under the
@@ -163,7 +168,8 @@ public class DeckRatingService {
         // findAndModify gives us those atomically — first apply ratingCount
         // and ratingSum reconstruction, then derive avg in a second update.
         Deck before = mongoTemplate.findById(deckId, Deck.class);
-        if (before == null) return;
+        if (before == null)
+            return;
         int oldCount = Math.max(0, before.getRatingCount());
         double oldAverage = before.getAverageRating();
         long oldSum = Math.round(oldAverage * oldCount);
@@ -190,9 +196,11 @@ public class DeckRatingService {
     }
 
     private static String normalizeReview(String review) {
-        if (review == null) return null;
+        if (review == null)
+            return null;
         String trimmed = review.trim();
-        if (trimmed.isEmpty()) return null;
+        if (trimmed.isEmpty())
+            return null;
         if (trimmed.length() > MAX_REVIEW_CHARS) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST, "review must be at most " + MAX_REVIEW_CHARS + " characters");

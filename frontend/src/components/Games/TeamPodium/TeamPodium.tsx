@@ -68,7 +68,8 @@ const TeamPodium = ({
       <div className={styles.podium}>
         {top3.map((s, i) => {
           const containsMe =
-            !!currentUserId && s.members.some((m) => m.userId === currentUserId);
+            !!currentUserId &&
+            s.members.some((m) => m.user?.userId === currentUserId);
           return (
             <div
               key={s.team.id}
@@ -86,7 +87,7 @@ const TeamPodium = ({
               <span className={styles.placeScore}>{s.totalScore} pts</span>
               {s.mvp && (
                 <span className={styles.mvp}>
-                  MVP: {s.mvp.userName}
+                  MVP: {s.mvp.user?.name}
                   {s.mvp.finalScore != null && ` · ${s.mvp.finalScore}`}
                 </span>
               )}

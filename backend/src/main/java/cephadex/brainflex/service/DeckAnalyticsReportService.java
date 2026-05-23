@@ -1,5 +1,5 @@
 /**
- * CSV export builder for {@link cephadex.brainflex.model.DeckAnalytics}.
+ * CSV export builder for {@link cephadex.brainflex.model.deck.DeckAnalytics}.
  *
  * Renders the rollup into a two-section CSV — a deck-level KPI row followed by
  * a per-element table — that opens cleanly in Excel/Sheets and round-trips the
@@ -14,6 +14,7 @@
  */
 package cephadex.brainflex.service;
 
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,17 +24,21 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckAnalytics;
-import cephadex.brainflex.model.ElementStats;
-import cephadex.brainflex.model.FormatRollup;
+import cephadex.brainflex.model.session.ElementStats;
+import cephadex.brainflex.model.session.FormatRollup;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckAnalytics;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.enums.SessionFormat;
 
 @Service
 public class DeckAnalyticsReportService {
 
-    private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    // Audit timestamps are Instants; bind the zone-less ISO date-time formatter
+    // to UTC so it can render an Instant (which has no Year/local fields of its
+    // own) as e.g. "2026-05-19T10:00:00" without a trailing offset.
+    private static final DateTimeFormatter ISO =
+            DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(ZoneOffset.UTC);
     private static final String[] DECK_HEADERS = {
             "Deck ID", "Deck Name", "Total Sessions", "Total Participants",
             "Average Score", "Average Accuracy", "Average Duration (ms)",
@@ -70,7 +75,7 @@ public class DeckAnalyticsReportService {
         writeRow(sb, DECK_HEADERS);
         writeRow(sb,
                 nullSafe(deck.getId()),
-                nullSafe(deck.getName()),
+                nullSafe(deck.getContent().getName()),
                 Integer.toString(analytics.getTotalPlays()),
                 Integer.toString(analytics.getTotalPlayers()),
                 formatDouble(analytics.getAverageScore()),
@@ -95,7 +100,8 @@ public class DeckAnalyticsReportService {
 
         Map<String, DeckElement> liveById = indexElementsById(deck);
         Map<String, ElementStats> perElement = analytics.getPerElement() == null
-                ? Map.of() : analytics.getPerElement();
+                ? Map.of()
+                : analytics.getPerElement();
         for (Map.Entry<String, ElementStats> entry : perElement.entrySet()) {
             String elementId = entry.getKey();
             ElementStats stats = entry.getValue();
@@ -123,11 +129,12 @@ public class DeckAnalyticsReportService {
      * matches what shipping tools (Sheets / Excel) expect to round-trip.
      */
     public String suggestedFilename(Deck deck) {
-        String base = deck.getName() == null ? "deck" : deck.getName();
+        String base = deck.getContent().getName() == null ? "deck" : deck.getContent().getName();
         String slug = base.toLowerCase()
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("^-+|-+$", "");
-        if (slug.isEmpty()) slug = "deck";
+        if (slug.isEmpty())
+            slug = "deck";
         return slug + "-analytics.csv";
     }
 
@@ -154,10 +161,12 @@ public class DeckAnalyticsReportService {
     }
 
     private static Map<String, DeckElement> indexElementsById(Deck deck) {
-        if (deck.getElements() == null) return Map.of();
-        Map<String, DeckElement> out = new HashMap<>(deck.getElements().size());
-        for (DeckElement e : deck.getElements()) {
-            if (e == null || e.id() == null) continue;
+        if (deck.getContent().getElements() == null)
+            return Map.of();
+        Map<String, DeckElement> out = new HashMap<>(deck.getContent().getElements().size());
+        for (DeckElement e : deck.getContent().getElements()) {
+            if (e == null || e.id() == null)
+                continue;
             out.put(e.id(), e);
         }
         return out;
@@ -165,7 +174,8 @@ public class DeckAnalyticsReportService {
 
     private String serializeDistribution(ElementStats stats) {
         Map<String, Integer> dist = stats.getDistribution();
-        if (dist == null || dist.isEmpty()) return "";
+        if (dist == null || dist.isEmpty())
+            return "";
         try {
             return objectMapper.writeValueAsString(dist);
         } catch (JsonProcessingException e) {
@@ -177,7 +187,8 @@ public class DeckAnalyticsReportService {
     }
 
     private static String formatAccuracy(ElementStats stats) {
-        if (stats.getAnsweredCount() <= 0) return "";
+        if (stats.getAnsweredCount() <= 0)
+            return "";
         return String.format("%.4f", (double) stats.getCorrectCount() / stats.getAnsweredCount());
     }
 
@@ -191,7 +202,8 @@ public class DeckAnalyticsReportService {
 
     private static void writeRow(StringBuilder sb, String... cells) {
         for (int i = 0; i < cells.length; i++) {
-            if (i > 0) sb.append(',');
+            if (i > 0)
+                sb.append(',');
             sb.append(escape(cells[i]));
         }
         sb.append('\n');
@@ -202,7 +214,8 @@ public class DeckAnalyticsReportService {
      * or LF; escape inner double-quotes by doubling them.
      */
     private static String escape(String cell) {
-        if (cell == null || cell.isEmpty()) return "";
+        if (cell == null || cell.isEmpty())
+            return "";
         boolean mustQuote = false;
         for (int i = 0; i < cell.length(); i++) {
             char c = cell.charAt(i);
@@ -211,12 +224,14 @@ public class DeckAnalyticsReportService {
                 break;
             }
         }
-        if (!mustQuote) return cell;
+        if (!mustQuote)
+            return cell;
         StringBuilder quoted = new StringBuilder(cell.length() + 4);
         quoted.append('"');
         for (int i = 0; i < cell.length(); i++) {
             char c = cell.charAt(i);
-            if (c == '"') quoted.append('"');
+            if (c == '"')
+                quoted.append('"');
             quoted.append(c);
         }
         quoted.append('"');

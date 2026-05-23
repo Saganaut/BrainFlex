@@ -6,7 +6,7 @@
 // button) stay in their pages without forking the visual shell.
 import type { MouseEvent, ReactNode } from "react";
 import { PlayIcon, StarIcon } from "@heroicons/react/24/outline";
-import type { DeckDto } from "@/store/BrainFlexApi";
+import type { DeckResponse } from "@/store/BrainFlexApi";
 import { Badge } from "@/components/Common/Badge";
 import { FavoriteHeart } from "@/components/Common/FavoriteHeart/FavoriteHeart";
 import { Tag } from "@/components/Common/Tag/Tag";
@@ -45,7 +45,7 @@ const formatRating = (rating: number, count: number): string => {
 type DeckCardVariant = "full" | "discovery" | "compact";
 
 interface DeckCardProps {
-  deck: DeckDto;
+  deck: DeckResponse;
   variant?: DeckCardVariant;
   actions?: ReactNode;
   onClick?: () => void;
@@ -54,7 +54,7 @@ interface DeckCardProps {
   showFavoriteHeart?: boolean;
 }
 
-const StatusRow = ({ deck }: { deck: DeckDto }) => {
+const StatusRow = ({ deck }: { deck: DeckResponse }) => {
   if (deck.isSystem) {
     return <Badge size='sm' variant='brand' label='System' />;
   }
@@ -78,7 +78,7 @@ const StatusRow = ({ deck }: { deck: DeckDto }) => {
   );
 };
 
-const DiscoveryRow = ({ deck }: { deck: DeckDto }) => {
+const DiscoveryRow = ({ deck }: { deck: DeckResponse }) => {
   const plays = deck.playCount ?? 0;
   const rating = deck.averageRating ?? 0;
   const ratingCount = deck.ratingCount ?? 0;
@@ -105,7 +105,7 @@ const DiscoveryRow = ({ deck }: { deck: DeckDto }) => {
   );
 };
 
-const CompactMeta = ({ deck }: { deck: DeckDto }) => (
+const CompactMeta = ({ deck }: { deck: DeckResponse }) => (
   <span className={styles.meta}>
     {deck.elementCount ?? 0} elements
     {deck.tags && deck.tags.length > 0 ? ` · ${deck.tags[0]}` : ""}
@@ -123,10 +123,7 @@ const DeckCard = ({
 }: DeckCardProps) => {
   const classes = [styles.card, className].filter(Boolean).join(" ");
   return (
-    <div
-      className={classes}
-      onClick={onClick}
-      onContextMenu={onContextMenu}>
+    <div className={classes} onClick={onClick} onContextMenu={onContextMenu}>
       <div className={styles.coverWrap}>
         <img
           src={resolveDeckCover(deck.cover, deck.id)}

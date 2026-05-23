@@ -16,9 +16,10 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -28,10 +29,10 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cephadex.brainflex.model.enums.BestAnswerScoring;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckAnalytics;
-import cephadex.brainflex.model.ElementStats;
-import cephadex.brainflex.model.FormatRollup;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckAnalytics;
+import cephadex.brainflex.model.session.ElementStats;
+import cephadex.brainflex.model.session.FormatRollup;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.McqQuestion;
 
@@ -74,7 +75,7 @@ class DeckAnalyticsReportServiceTest {
     @Test
     void buildCsv_OneMcqWithDistribution_RoundTripsAsJsonInQuotedCell() {
         Deck deck = deck("deck-1", "Geography 101");
-        deck.setElements(List.of(mcq("mcq-1", "What is the capital of France?")));
+        deck.getContent().setElements(List.of(mcq("mcq-1", "What is the capital of France?")));
 
         ElementStats stats = new ElementStats();
         stats.setPresentedCount(3);
@@ -94,8 +95,8 @@ class DeckAnalyticsReportServiceTest {
         analytics.setAverageScore(78.5);
         analytics.setAverageAccuracy(0.70);
         analytics.setAverageDurationMs(420_000L);
-        analytics.setLastPlayedAt(LocalDateTime.of(2026, 5, 19, 10, 0));
-        analytics.setUpdatedAt(LocalDateTime.of(2026, 5, 19, 10, 5));
+        analytics.setLastPlayedAt(Instant.parse("2026-05-19T10:00:00Z"));
+        analytics.setUpdatedAt(Instant.parse("2026-05-19T10:05:00Z"));
         analytics.getPerElement().put("mcq-1", stats);
 
         String csv = service.buildCsv(deck, analytics);
@@ -126,7 +127,7 @@ class DeckAnalyticsReportServiceTest {
     void buildCsv_DeletedElement_StillEmitsRowWithBlankTitle() {
         Deck deck = deck("deck-1", "Anything");
         // No elements on the live deck — simulate one having been deleted.
-        deck.setElements(List.of());
+        deck.getContent().setElements(List.of());
 
         ElementStats stats = new ElementStats();
         stats.setPresentedCount(1);
@@ -150,7 +151,7 @@ class DeckAnalyticsReportServiceTest {
     void buildCsv_EscapesCommasAndQuotesAndNewlines() {
         Deck deck = deck("deck-1", "Big, \"Quoted\" Deck");
         DeckElement evil = mcq("e-1", "Multi-line\nTitle, with \"quotes\"");
-        deck.setElements(List.of(evil));
+        deck.getContent().setElements(List.of(evil));
 
         ElementStats stats = new ElementStats();
         stats.setPresentedCount(1);
@@ -171,7 +172,7 @@ class DeckAnalyticsReportServiceTest {
     @Test
     void buildCsv_AnsweredZero_LeavesAccuracyBlank() {
         Deck deck = deck("d-1", "D");
-        deck.setElements(List.of(mcq("e-1", "Title")));
+        deck.getContent().setElements(List.of(mcq("e-1", "Title")));
         ElementStats stats = new ElementStats();
         stats.setPresentedCount(1);
         stats.setAnsweredCount(0);
@@ -202,7 +203,7 @@ class DeckAnalyticsReportServiceTest {
         game.setAverageScore(85.5);
         game.setAverageAccuracy(0.75);
         game.setAverageDurationMs(540_000L);
-        game.setLastRunAt(LocalDateTime.of(2026, 5, 19, 14, 0));
+        game.setLastRunAt(Instant.parse("2026-05-19T14:00:00Z"));
 
         FormatRollup pres = new FormatRollup();
         pres.setSessionCount(2);
@@ -210,7 +211,7 @@ class DeckAnalyticsReportServiceTest {
         pres.setAverageScore(0.0);     // PRESENTATION leaves this at 0 by design
         pres.setAverageAccuracy(0.60);
         pres.setAverageDurationMs(300_000L);
-        pres.setLastRunAt(LocalDateTime.of(2026, 5, 20, 9, 30));
+        pres.setLastRunAt(Instant.parse("2026-05-20T09:30:00Z"));
 
         DeckAnalytics analytics = new DeckAnalytics();
         analytics.setDeckId("deck-1");
@@ -261,13 +262,13 @@ class DeckAnalyticsReportServiceTest {
     private static Deck deck(String id, String name) {
         Deck d = new Deck();
         d.setId(id);
-        d.setName(name);
+        d.getContent().setName(name);
         return d;
     }
 
     private static DeckElement mcq(String id, String title) {
         return new McqQuestion(
-                id, null, List.of(), List.of(),
+                id, null, List.of(), Set.of(),
                 10, null, null,
                 false, false, 0,
                 TestElementChromes.scored(id, title));

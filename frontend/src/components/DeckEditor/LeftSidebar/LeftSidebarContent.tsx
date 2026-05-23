@@ -18,11 +18,11 @@ import { useDeckEditor } from "../useDeckEditor";
 import { NewElementPicker } from "../NewElementPicker";
 import { useModal } from "@/context/useModal";
 import type { ElementKind } from "@/components/Common/Slides/SlideTypeGraphics/slideTypeGraphics";
-import type { DeckDto } from "@/store/BrainFlexApi";
+import type { DeckResponse } from "@/store/BrainFlexApi";
 import { LeftSidebar } from "@/components/Layout/LeftSidebar";
 import { useFullScreen } from "@/context/useFullScreen";
 
-export type DeckElement = NonNullable<DeckDto["elements"]>[number];
+export type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 
 /** Friendly label for the thumbnail — slides have titles, questions have prompts. */
 const elementDisplayName = (element: DeckElement): string => {

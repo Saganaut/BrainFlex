@@ -27,10 +27,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.GameHistoryDTO;
+import cephadex.brainflex.dto.GameHistoryResponse;
 import cephadex.brainflex.dto.Page;
-import cephadex.brainflex.model.GameHistoryEntry;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.session.GameHistoryEntry;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.GameHistoryService;
 import cephadex.brainflex.service.UserService;
@@ -57,7 +57,7 @@ public class GameHistoryController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/users/me/history")
-    public Page<GameHistoryDTO> listMyHistory(
+    public Page<GameHistoryResponse> listMyHistory(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
@@ -68,13 +68,13 @@ public class GameHistoryController {
     }
 
     @GetMapping("/users/{userId}/history")
-    public Page<GameHistoryDTO> listUserHistory(
+    public Page<GameHistoryResponse> listUserHistory(
             @PathVariable String userId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         User target = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        if (Boolean.TRUE.equals(target.getIsGuest()) || Boolean.TRUE.equals(target.getIsClosed())) {
+        if (target.isGuest() || target.isClosed()) {
             // Don't leak the existence of ephemeral / closed accounts on the
             // public profile route — return the same 404 a non-existent id
             // would.
@@ -85,7 +85,7 @@ public class GameHistoryController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/decks/{deckId}/history/mine")
-    public Page<GameHistoryDTO> listMyHistoryForDeck(
+    public Page<GameHistoryResponse> listMyHistoryForDeck(
             @PathVariable String deckId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -103,9 +103,9 @@ public class GameHistoryController {
         return PageRequest.of(safePage, safeSize, Sort.by("playedAt").descending());
     }
 
-    private Page<GameHistoryDTO> toPage(org.springframework.data.domain.Page<GameHistoryEntry> page) {
-        List<GameHistoryDTO> items = page.getContent().stream()
-                .map(GameHistoryDTO::from)
+    private Page<GameHistoryResponse> toPage(org.springframework.data.domain.Page<GameHistoryEntry> page) {
+        List<GameHistoryResponse> items = page.getContent().stream()
+                .map(GameHistoryResponse::from)
                 .toList();
         boolean hasMore = (long) (page.getNumber() + 1) * page.getSize() < page.getTotalElements();
         return new Page<>(items, page.getNumber(), page.getSize(), page.getTotalElements(), hasMore);

@@ -20,54 +20,61 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.DrawingQuestion;
 import cephadex.brainflex.model.element.ElementChrome;
-import cephadex.brainflex.model.element.GridCellsConfig;
 import cephadex.brainflex.model.element.GridQuestion;
-import cephadex.brainflex.model.element.Image;
-import cephadex.brainflex.model.element.ImageBlock;
-import cephadex.brainflex.model.element.MatchingPair;
+import cephadex.brainflex.model.image.Image;
+import cephadex.brainflex.model.element.block.ImageBlock;
 import cephadex.brainflex.model.element.MatchingQuestion;
-import cephadex.brainflex.model.element.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.PlaceOnImageQuestion;
 import cephadex.brainflex.model.element.QAndAQuestion;
-import cephadex.brainflex.model.element.RankingItem;
 import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
-import cephadex.brainflex.model.element.SlideBlock;
 import cephadex.brainflex.model.element.TextQuestion;
 import cephadex.brainflex.model.element.WordCloudQuestion;
+import cephadex.brainflex.model.element.block.SlideBlock;
+import cephadex.brainflex.model.element.parts.GridCellsConfig;
+import cephadex.brainflex.model.element.parts.MatchingPair;
+import cephadex.brainflex.model.element.parts.McqOption;
+import cephadex.brainflex.model.element.parts.RankingItem;
 
 public final class DeckImageMapper {
 
-    private DeckImageMapper() {}
+    private DeckImageMapper() {
+    }
 
-    /** Replace every Image on `deck` (cover, background, every element's image
-     *  slots) with `op.apply(image)`. Mutates `deck` in place because callers
-     *  (hydration, the controller layer) work against the Deck the repository
-     *  returned and want the transformation to land on that instance. */
+    /**
+     * Replace every Image on `deck` (cover, background, every element's image
+     * slots) with `op.apply(image)`. Mutates `deck` in place because callers
+     * (hydration, the controller layer) work against the Deck the repository
+     * returned and want the transformation to land on that instance.
+     */
     public static void map(Deck deck, UnaryOperator<Image> op) {
-        if (deck == null) return;
-        deck.setCover(applyNullable(deck.getCover(), op));
-        deck.setBackground(applyNullable(deck.getBackground(), op));
-        List<DeckElement> elements = deck.getElements();
-        if (elements == null) return;
+        if (deck == null)
+            return;
+        deck.getContent().setCover(applyNullable(deck.getContent().getCover(), op));
+        deck.getContent().setBackground(applyNullable(deck.getContent().getBackground(), op));
+        List<DeckElement> elements = deck.getContent().getElements();
+        if (elements == null)
+            return;
         List<DeckElement> mapped = new ArrayList<>(elements.size());
         for (DeckElement element : elements) {
             mapped.add(mapElement(element, op));
         }
-        deck.setElements(mapped);
+        deck.getContent().setElements(mapped);
     }
 
-    /** Replace every Image on `element` (including nested McqOption.image,
-     *  RankingItem.image, GridCellsConfig.backingImage, PlaceOnImage.targetImage,
-     *  plus shared chrome image + background) with `op.apply(image)`. */
+    /**
+     * Replace every Image on `element` (including nested McqOption.image,
+     * RankingItem.image, GridCellsConfig.backingImage, PlaceOnImage.targetImage,
+     * plus shared chrome image + background) with `op.apply(image)`.
+     */
     public static DeckElement mapElement(DeckElement element, UnaryOperator<Image> op) {
         ElementChrome chrome = element.chrome().withImages(
                 applyNullable(element.chrome().background(), op),
@@ -146,11 +153,13 @@ public final class DeckImageMapper {
 
     /** Visit every Image on `deck` without mutating anything. Nulls skipped. */
     public static void forEach(Deck deck, Consumer<Image> visitor) {
-        if (deck == null) return;
-        visitNullable(deck.getCover(), visitor);
-        visitNullable(deck.getBackground(), visitor);
-        List<DeckElement> elements = deck.getElements();
-        if (elements == null) return;
+        if (deck == null)
+            return;
+        visitNullable(deck.getContent().getCover(), visitor);
+        visitNullable(deck.getContent().getBackground(), visitor);
+        List<DeckElement> elements = deck.getContent().getElements();
+        if (elements == null)
+            return;
         for (DeckElement element : elements) {
             forEachOnElement(element, visitor);
         }
@@ -164,27 +173,32 @@ public final class DeckImageMapper {
             case Slide s -> {
                 if (s.blocks() != null) {
                     for (SlideBlock block : s.blocks()) {
-                        if (block instanceof ImageBlock ib) visitNullable(ib.image(), visitor);
+                        if (block instanceof ImageBlock ib)
+                            visitNullable(ib.image(), visitor);
                     }
                 }
             }
             case McqQuestion q -> {
                 if (q.options() != null) {
-                    for (McqOption opt : q.options()) visitNullable(opt.image(), visitor);
+                    for (McqOption opt : q.options())
+                        visitNullable(opt.image(), visitor);
                 }
             }
             case RankingQuestion q -> {
                 if (q.items() != null) {
-                    for (RankingItem item : q.items()) visitNullable(item.image(), visitor);
+                    for (RankingItem item : q.items())
+                        visitNullable(item.image(), visitor);
                 }
             }
             case GridQuestion q -> {
-                if (q.cells() != null) visitNullable(q.cells().backingImage(), visitor);
+                if (q.cells() != null)
+                    visitNullable(q.cells().backingImage(), visitor);
             }
             case PlaceOnImageQuestion q -> visitNullable(q.targetImage(), visitor);
             case AllocationQuestion q -> {
                 if (q.options() != null) {
-                    for (McqOption opt : q.options()) visitNullable(opt.image(), visitor);
+                    for (McqOption opt : q.options())
+                        visitNullable(opt.image(), visitor);
                 }
             }
             case MatchingQuestion q -> {
@@ -196,30 +210,34 @@ public final class DeckImageMapper {
                 }
             }
             case DrawingQuestion q -> visitNullable(q.backingImage(), visitor);
-            default -> { /* nothing extra */ }
+            default -> {
+                /* nothing extra */ }
         }
     }
 
     private static List<McqOption> mapOptions(List<McqOption> options, UnaryOperator<Image> op) {
-        if (options == null) return null;
+        if (options == null)
+            return null;
         List<McqOption> mapped = new ArrayList<>(options.size());
         for (McqOption opt : options) {
-            mapped.add(opt.withImage(applyNullable(opt.image(), op)));
+            mapped.add(opt.withImage("image", applyNullable(opt.image(), op)));
         }
         return mapped;
     }
 
     private static List<RankingItem> mapItems(List<RankingItem> items, UnaryOperator<Image> op) {
-        if (items == null) return null;
+        if (items == null)
+            return null;
         List<RankingItem> mapped = new ArrayList<>(items.size());
         for (RankingItem item : items) {
-            mapped.add(item.withImage(applyNullable(item.image(), op)));
+            mapped.add(item.withImage("image", applyNullable(item.image(), op)));
         }
         return mapped;
     }
 
     private static List<MatchingPair> mapPairs(List<MatchingPair> pairs, UnaryOperator<Image> op) {
-        if (pairs == null) return null;
+        if (pairs == null)
+            return null;
         List<MatchingPair> mapped = new ArrayList<>(pairs.size());
         for (MatchingPair pair : pairs) {
             mapped.add(new MatchingPair(
@@ -231,18 +249,22 @@ public final class DeckImageMapper {
     }
 
     private static GridCellsConfig mapCells(GridCellsConfig cells, UnaryOperator<Image> op) {
-        if (cells == null) return null;
-        return cells.withBackingImage(applyNullable(cells.backingImage(), op));
+        if (cells == null)
+            return null;
+        return cells.withImage("backingImage", applyNullable(cells.backingImage(), op));
     }
 
-    /** Re-emit each SlideBlock with its embedded image (if any) transformed.
-     *  Non-ImageBlock kinds pass through unchanged. */
+    /**
+     * Re-emit each SlideBlock with its embedded image (if any) transformed.
+     * Non-ImageBlock kinds pass through unchanged.
+     */
     private static List<SlideBlock> mapBlocks(List<SlideBlock> blocks, UnaryOperator<Image> op) {
-        if (blocks == null) return null;
+        if (blocks == null)
+            return null;
         List<SlideBlock> mapped = new ArrayList<>(blocks.size());
         for (SlideBlock block : blocks) {
             if (block instanceof ImageBlock ib) {
-                mapped.add(ib.withImage(applyNullable(ib.image(), op)));
+                mapped.add(ib.withImage("image", applyNullable(ib.image(), op)));
             } else {
                 mapped.add(block);
             }
@@ -255,6 +277,7 @@ public final class DeckImageMapper {
     }
 
     private static void visitNullable(Image image, Consumer<Image> visitor) {
-        if (image != null) visitor.accept(image);
+        if (image != null)
+            visitor.accept(image);
     }
 }

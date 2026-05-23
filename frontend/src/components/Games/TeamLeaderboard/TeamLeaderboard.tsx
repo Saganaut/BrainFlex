@@ -20,27 +20,25 @@ import type {
 interface TeamLeaderboardProps {
   teams: Team[];
   players: InteractiveSessionPlayerDto[];
-  currentUserId?: string;
+  // Session-scoped playerId of the viewer; their team gets the "me" highlight.
+  currentPlayerId?: string;
   hideScores?: boolean;
 }
 
 const TeamLeaderboard = ({
   teams,
   players,
-  currentUserId,
+  currentPlayerId,
   hideScores,
 }: TeamLeaderboardProps) => {
   if (teams.length === 0) return null;
-  const myTeamId = currentUserId
-    ? players.find((p) => p.userId === currentUserId)?.teamId
+  const myTeamId = currentPlayerId
+    ? players.find((p) => p.playerId === currentPlayerId)?.teamId
     : undefined;
   const memberCountByTeam = new Map<string, number>();
   for (const p of players) {
     if (!p.teamId) continue;
-    memberCountByTeam.set(
-      p.teamId,
-      (memberCountByTeam.get(p.teamId) ?? 0) + 1,
-    );
+    memberCountByTeam.set(p.teamId, (memberCountByTeam.get(p.teamId) ?? 0) + 1);
   }
   const sorted = hideScores
     ? teams

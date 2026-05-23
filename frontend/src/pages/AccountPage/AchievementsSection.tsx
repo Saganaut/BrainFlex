@@ -5,7 +5,7 @@
 // route handles the longer "what's still ahead" exploration.
 import { Link } from "@tanstack/react-router";
 import {
-  type UserAchievementDto,
+  type UserAchievementResponse,
   useListMyAchievementsQuery,
 } from "../../store/BrainFlexApi";
 import styles from "./AccountPage.module.css";
@@ -71,7 +71,10 @@ const AchievementsSection = () => {
   );
 };
 
-const byEarnedAtDesc = (a: UserAchievementDto, b: UserAchievementDto): number => {
+const byEarnedAtDesc = (
+  a: UserAchievementResponse,
+  b: UserAchievementResponse,
+): number => {
   const ad = a.earnedAt ?? "";
   const bd = b.earnedAt ?? "";
   if (ad === bd) return 0;

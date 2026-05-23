@@ -35,11 +35,11 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import cephadex.brainflex.model.NotificationPrefs;
-import cephadex.brainflex.model.Organization;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.model.user.NotificationPrefs;
+import cephadex.brainflex.model.org.Organization;
 
 @Configuration
 @ConditionalOnProperty(name = "migrate.user-profile", havingValue = "true")
@@ -75,10 +75,8 @@ public class UserProfileBackfillMigration {
 
                     if (user.getNotificationPrefs() == null) {
                         NotificationPrefs prefs = NotificationPrefs.withDefaults();
-                        if (user.getNewsletter() != null) {
-                            prefs.setMarketingEmail(user.getNewsletter());
-                            marketingEmailMirrored++;
-                        }
+                        prefs.setMarketingEmail(user.isNewsletter());
+                        marketingEmailMirrored++;
                         user.setNotificationPrefs(prefs);
                         notificationPrefsUpdated++;
                         changed = true;
@@ -94,7 +92,8 @@ public class UserProfileBackfillMigration {
                 for (Organization org : organizationRepository.findAll()) {
                     orgsScanned++;
                     String domain = org.getEmailDomain();
-                    if (domain == null || domain.isBlank()) continue;
+                    if (domain == null || domain.isBlank())
+                        continue;
                     String normalised = domain.toLowerCase(Locale.ROOT);
                     if (!normalised.equals(domain)) {
                         org.setEmailDomain(normalised);
@@ -122,8 +121,10 @@ public class UserProfileBackfillMigration {
     }
 
     private static String firstNonBlank(String a, String b) {
-        if (!isBlank(a)) return a;
-        if (!isBlank(b)) return b;
+        if (!isBlank(a))
+            return a;
+        if (!isBlank(b))
+            return b;
         return null;
     }
 }

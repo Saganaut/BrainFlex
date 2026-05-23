@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.model.element.ImageSize;
+import cephadex.brainflex.model.image.ImageSize;
 import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 
 @Service

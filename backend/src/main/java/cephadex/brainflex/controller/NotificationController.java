@@ -30,13 +30,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.NotificationDTO;
+import cephadex.brainflex.dto.NotificationResponse;
 import cephadex.brainflex.dto.Page;
-import cephadex.brainflex.dto.UnreadNotificationCount;
-import cephadex.brainflex.model.Notification;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.UnreadNotificationCountResponse;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.NotificationService;
 import cephadex.brainflex.service.UserService;
+import cephadex.brainflex.model.user.Notification;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -55,40 +55,41 @@ public class NotificationController {
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping
-    public Page<NotificationDTO> listNotifications(
+    public Page<NotificationResponse> listNotifications(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
         User caller = requireUser(authentication);
-        org.springframework.data.domain.Page<Notification> rows = notificationService.listForUser(caller.getId(), buildPageable(page, size));
-        List<NotificationDTO> items = rows.getContent().stream().map(NotificationDTO::from).toList();
+        org.springframework.data.domain.Page<Notification> rows = notificationService.listForUser(caller.getId(),
+                buildPageable(page, size));
+        List<NotificationResponse> items = rows.getContent().stream().map(NotificationResponse::from).toList();
         boolean hasMore = (long) (rows.getNumber() + 1) * rows.getSize() < rows.getTotalElements();
         return new Page<>(items, rows.getNumber(), rows.getSize(), rows.getTotalElements(), hasMore);
     }
 
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/unread-count")
-    public UnreadNotificationCount getUnreadNotificationCount(Authentication authentication) {
+    public UnreadNotificationCountResponse getUnreadNotificationCount(Authentication authentication) {
         User caller = requireUser(authentication);
-        return new UnreadNotificationCount(notificationService.unreadCount(caller.getId()));
+        return new UnreadNotificationCountResponse(notificationService.unreadCount(caller.getId()));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}/read")
-    public NotificationDTO markNotificationRead(@PathVariable String id, Authentication authentication) {
+    public NotificationResponse markNotificationRead(@PathVariable String id, Authentication authentication) {
         User caller = requireUser(authentication);
         return notificationService.markRead(id, caller.getId());
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/read-all")
-    public UnreadNotificationCount markAllNotificationsRead(Authentication authentication) {
+    public UnreadNotificationCountResponse markAllNotificationsRead(Authentication authentication) {
         User caller = requireUser(authentication);
         notificationService.markAllRead(caller.getId());
         // Echo the current unread count (always 0 after read-all unless a new
         // notification raced the request) so the badge can update from the
         // mutation response without a second fetch.
-        return new UnreadNotificationCount(notificationService.unreadCount(caller.getId()));
+        return new UnreadNotificationCountResponse(notificationService.unreadCount(caller.getId()));
     }
 
     @PreAuthorize("hasRole('USER')")

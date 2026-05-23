@@ -3,7 +3,7 @@
  * never scored — the host may run a Best Answer vote on top to crown a
  * favourite, but the base scorer always returns ZERO.
  *
- * Storage strategy is inline on {@link cephadex.brainflex.model.PlayerAnswer}.
+ * Storage strategy is inline on {@link cephadex.brainflex.model.session.PlayerAnswer}.
  * The size of one submission is bounded by the question's
  * {@code maxStrokesPerPlayer} + {@code maxPointsPerStroke} caps and an
  * additional per-answer byte cap enforced inside InteractiveSessionService — submissions

@@ -5,8 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.Organization;
-
+import cephadex.brainflex.model.org.Organization;
 public interface OrganizationRepository extends MongoRepository<Organization, String> {
 
     Optional<Organization> findByOwnerId(String ownerId);

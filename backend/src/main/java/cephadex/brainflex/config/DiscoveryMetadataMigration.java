@@ -26,7 +26,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import cephadex.brainflex.model.Deck;
+import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;
 import cephadex.brainflex.model.enums.PublishStatus;
@@ -80,7 +80,8 @@ public class DiscoveryMetadataMigration {
                         dirty = true;
                     }
 
-                    if (dirty) deckRepository.save(deck);
+                    if (dirty)
+                        deckRepository.save(deck);
                 }
 
                 System.out.println("=== Discovery metadata migration: done ===");

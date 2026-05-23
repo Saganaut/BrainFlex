@@ -1,6 +1,6 @@
 /**
  * One-shot migration that promotes the legacy free-form {@code Deck.tags}
- * strings into first-class {@link cephadex.brainflex.model.Tag} documents.
+ * strings into first-class {@link cephadex.brainflex.model.deck.Tag} documents.
  *
  * Gated on {@code --migrate.legacy-tags=true} so it never runs during a
  * normal boot. Triggered by {@code scripts/migrate-legacy-tags.sh}, which
@@ -19,8 +19,8 @@
  */
 package cephadex.brainflex.config;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -33,8 +33,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.Tag;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.Tag;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.service.TagService;
 
@@ -56,22 +56,28 @@ public class LegacyTagMigration {
 
                 List<Deck> decks = deckRepository.findAll();
                 for (Deck deck : decks) {
-                    if (deck.getTagIds() != null && !deck.getTagIds().isEmpty()) continue;
-                    List<String> legacy = deck.getTags();
-                    if (legacy == null || legacy.isEmpty()) continue;
+                    if (deck.getTagIds() != null && !deck.getTagIds().isEmpty())
+                        continue;
+                    Set<String> legacy = deck.getTags();
+                    if (legacy == null || legacy.isEmpty())
+                        continue;
 
                     Set<String> tagIds = new LinkedHashSet<>();
                     for (String legacyTag : legacy) {
-                        if (legacyTag == null || legacyTag.isBlank()) continue;
+                        if (legacyTag == null || legacyTag.isBlank())
+                            continue;
                         Tag tag = tagService.findOrCreateFromLegacyTag(legacyTag);
-                        if (tag == null) continue;
-                        if (tag.getCreatedAt() != null && tag.getCreatedAt().isAfter(LocalDateTime.now().minusMinutes(1))) {
+                        if (tag == null)
+                            continue;
+                        if (tag.getCreatedAt() != null
+                                && tag.getCreatedAt().isAfter(Instant.now().minus(Duration.ofMinutes(1)))) {
                             tagsCreated++;
                         }
                         tagIds.add(tag.getId());
                     }
-                    if (tagIds.isEmpty()) continue;
-                    deck.setTagIds(new ArrayList<>(tagIds));
+                    if (tagIds.isEmpty())
+                        continue;
+                    deck.setTagIds(tagIds);
                     deckRepository.save(deck);
                     decksTouched++;
                 }

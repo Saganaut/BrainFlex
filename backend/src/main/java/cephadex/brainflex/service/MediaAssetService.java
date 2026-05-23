@@ -26,13 +26,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.MediaAssetDTO;
-import cephadex.brainflex.model.MediaAsset;
-import cephadex.brainflex.model.StoredImageVariant;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.element.ImageSize;
-import cephadex.brainflex.model.element.ImageVariant;
+import cephadex.brainflex.dto.CreateEmbedRequest;
+import cephadex.brainflex.dto.MediaAssetResponse;
+import cephadex.brainflex.dto.UpdateMediaAssetRequest;
+import cephadex.brainflex.model.image.ImageSize;
+import cephadex.brainflex.model.image.ImageVariant;
 import cephadex.brainflex.model.enums.MediaKind;
+import cephadex.brainflex.model.media.MediaAsset;
+import cephadex.brainflex.model.media.StoredImageVariant;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.MediaAssetRepository;
 import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 import cephadex.brainflex.service.MediaProcessingService.ProcessedFile;
@@ -76,20 +78,27 @@ public class MediaAssetService {
 
     // ── Reads ─────────────────────────────────────────────────────────────────
 
-    /** Owner's assets + every asset shared with any of the caller's orgs, optionally filtered by kind + tag. */
-    public List<MediaAssetDTO.MediaAssetResponse> list(User caller, MediaKind kindFilter, String tagFilter) {
+    /**
+     * Owner's assets + every asset shared with any of the caller's orgs, optionally
+     * filtered by kind + tag.
+     */
+    public List<MediaAssetResponse> list(User caller, MediaKind kindFilter, String tagFilter) {
         List<MediaAsset> assets = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (MediaAsset a : ownerScopedAssets(caller.getId(), kindFilter)) {
-            if (seen.add(a.getId())) assets.add(a);
+            if (seen.add(a.getId()))
+                assets.add(a);
         }
         List<String> orgIds = caller.getOrganizationIds();
         if (orgIds != null) {
             for (String orgId : orgIds) {
-                if (orgId == null || orgId.isBlank()) continue;
+                if (orgId == null || orgId.isBlank())
+                    continue;
                 for (MediaAsset a : orgScopedAssets(orgId, kindFilter)) {
-                    if (a.getOwnerId() == null || a.getOwnerId().equals(caller.getId())) continue;
-                    if (seen.add(a.getId())) assets.add(a);
+                    if (a.getOwnerId() == null || a.getOwnerId().equals(caller.getId()))
+                        continue;
+                    if (seen.add(a.getId()))
+                        assets.add(a);
                 }
             }
         }
@@ -101,13 +110,13 @@ public class MediaAssetService {
         return assets.stream().map(this::toResponse).toList();
     }
 
-    public MediaAssetDTO.MediaAssetResponse get(MediaAsset asset) {
+    public MediaAssetResponse get(MediaAsset asset) {
         return toResponse(asset);
     }
 
     // ── Uploads ──────────────────────────────────────────────────────────────
 
-    public MediaAssetDTO.MediaAssetResponse uploadImage(
+    public MediaAssetResponse uploadImage(
             User caller, MultipartFile file, String name, String tagsCsv, String organizationId, String altText)
             throws IOException {
         Map<ImageSize, ProcessedVariant> processed = mediaProcessing.processImage(file);
@@ -131,21 +140,23 @@ public class MediaAssetService {
         return toResponse(repository.save(asset));
     }
 
-    public MediaAssetDTO.MediaAssetResponse uploadAudio(
+    public MediaAssetResponse uploadAudio(
             User caller, MultipartFile file, String name, String tagsCsv, String organizationId)
             throws IOException {
         ProcessedFile processed = mediaProcessing.processAudio(file);
-        return uploadFile(caller, MediaKind.AUDIO, processed, file.getOriginalFilename(), name, tagsCsv, organizationId);
+        return uploadFile(caller, MediaKind.AUDIO, processed, file.getOriginalFilename(), name, tagsCsv,
+                organizationId);
     }
 
-    public MediaAssetDTO.MediaAssetResponse uploadVideoFile(
+    public MediaAssetResponse uploadVideoFile(
             User caller, MultipartFile file, String name, String tagsCsv, String organizationId)
             throws IOException {
         ProcessedFile processed = mediaProcessing.processVideoFile(file);
-        return uploadFile(caller, MediaKind.VIDEO_FILE, processed, file.getOriginalFilename(), name, tagsCsv, organizationId);
+        return uploadFile(caller, MediaKind.VIDEO_FILE, processed, file.getOriginalFilename(), name, tagsCsv,
+                organizationId);
     }
 
-    private MediaAssetDTO.MediaAssetResponse uploadFile(
+    private MediaAssetResponse uploadFile(
             User caller, MediaKind kind, ProcessedFile processed, String originalFilename,
             String name, String tagsCsv, String organizationId) {
         MediaAsset asset = newAsset(caller, kind, name, originalFilename, tagsCsv, organizationId);
@@ -160,7 +171,7 @@ public class MediaAssetService {
 
     // ── Embeds ───────────────────────────────────────────────────────────────
 
-    public MediaAssetDTO.MediaAssetResponse createEmbed(User caller, MediaAssetDTO.CreateEmbedRequest req) {
+    public MediaAssetResponse createEmbed(User caller, CreateEmbedRequest req) {
         if (req == null || req.url() == null || req.url().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Embed URL is required");
         }
@@ -177,7 +188,8 @@ public class MediaAssetService {
 
     // ── Updates / deletes ────────────────────────────────────────────────────
 
-    public MediaAssetDTO.MediaAssetResponse update(MediaAsset asset, MediaAssetDTO.UpdateMediaAssetRequest req, User caller) {
+    public MediaAssetResponse update(MediaAsset asset, UpdateMediaAssetRequest req,
+            User caller) {
         if (req.name() != null && !req.name().isBlank()) {
             asset.setName(sanitiseName(req.name(), asset.getName()));
         }
@@ -233,13 +245,15 @@ public class MediaAssetService {
         return asset;
     }
 
-    MediaAssetDTO.MediaAssetResponse toResponse(MediaAsset asset) {
-        return new MediaAssetDTO.MediaAssetResponse(asset, refreshVariants(asset), refreshUrl(asset));
+    MediaAssetResponse toResponse(MediaAsset asset) {
+        return new MediaAssetResponse(asset, refreshVariants(asset), refreshUrl(asset));
     }
 
     private Map<ImageSize, ImageVariant> refreshVariants(MediaAsset asset) {
-        if (asset.getKind() != MediaKind.IMAGE) return Map.of();
-        if (asset.getVariants() == null || asset.getVariants().isEmpty()) return Map.of();
+        if (asset.getKind() != MediaKind.IMAGE)
+            return Map.of();
+        if (asset.getVariants() == null || asset.getVariants().isEmpty())
+            return Map.of();
         return s3Service.refreshMediaAssetImage(asset.getId(), asset.getVariants());
     }
 
@@ -267,7 +281,8 @@ public class MediaAssetService {
 
     /** Same normalisation rule as GalleryController.resolveOrgScope. */
     private static String resolveOrgScope(User caller, String orgId) {
-        if (orgId == null || orgId.isBlank()) return null;
+        if (orgId == null || orgId.isBlank())
+            return null;
         List<String> memberships = caller.getOrganizationIds();
         if (memberships == null || !memberships.contains(orgId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -278,7 +293,8 @@ public class MediaAssetService {
 
     private static String sanitiseName(String supplied, String fallback) {
         String candidate = supplied == null || supplied.isBlank() ? fallback : supplied;
-        if (candidate == null || candidate.isBlank()) candidate = "Untitled";
+        if (candidate == null || candidate.isBlank())
+            candidate = "Untitled";
         if (candidate.length() > MAX_NAME_LENGTH) {
             candidate = candidate.substring(0, MAX_NAME_LENGTH);
         }
@@ -286,7 +302,8 @@ public class MediaAssetService {
     }
 
     private static List<String> parseTags(String csv) {
-        if (csv == null || csv.isBlank()) return new ArrayList<>();
+        if (csv == null || csv.isBlank())
+            return new ArrayList<>();
         return Arrays.stream(csv.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
@@ -294,12 +311,14 @@ public class MediaAssetService {
     }
 
     private static String joinTags(List<String> tags) {
-        if (tags == null || tags.isEmpty()) return null;
+        if (tags == null || tags.isEmpty())
+            return null;
         return String.join(",", tags);
     }
 
     private static List<String> sanitiseTags(List<String> raw) {
-        if (raw == null) return new ArrayList<>();
+        if (raw == null)
+            return new ArrayList<>();
         return raw.stream()
                 .filter(t -> t != null && !t.isBlank())
                 .map(String::trim)
@@ -310,8 +329,10 @@ public class MediaAssetService {
     }
 
     private static String sanitiseShort(String raw, int maxLength) {
-        if (raw == null) return null;
-        if (raw.isBlank()) return null;
+        if (raw == null)
+            return null;
+        if (raw.isBlank())
+            return null;
         String trimmed = raw.trim();
         return trimmed.length() > maxLength ? trimmed.substring(0, maxLength) : trimmed;
     }

@@ -35,8 +35,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckFavorite;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckFavorite;
 import cephadex.brainflex.repository.DeckFavoriteRepository;
 
 @ExtendWith(MockitoExtension.class)

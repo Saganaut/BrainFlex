@@ -5,25 +5,23 @@
  */
 package cephadex.brainflex.service;
 
-import java.util.List;
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
-import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
 import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.Difficulty;
-import cephadex.brainflex.model.enums.MediaPosition;
-import cephadex.brainflex.model.enums.ResponseMode;
 
 class WordCloudAggregatorTest {
 
     private static WordCloudQuestion question(boolean caseSensitive, int maxPerPlayer,
-                                              int maxWordLength, List<String> banned) {
+            int maxWordLength, List<String> banned) {
         return new WordCloudQuestion(
                 "wc-1",
                 "Prompt", maxPerPlayer, maxWordLength, caseSensitive, true, banned,

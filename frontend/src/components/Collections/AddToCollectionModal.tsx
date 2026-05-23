@@ -3,7 +3,7 @@
 //
 // Membership is derived client-side by checking each collection's
 // `deckIds` for the target id — that keeps the action's response payload
-// trivial (a single DeckCollectionDto summary) and lets the cache-sync
+// trivial (a single DeckCollectionResponse summary) and lets the cache-sync
 // layer in apiEnhancements light the toggle up without a refetch.
 //
 // "+ New collection" at the bottom defers to CollectionCreateForm and
@@ -16,7 +16,7 @@ import {
   useAddDeckToCollectionMutation,
   useRemoveDeckFromCollectionMutation,
   useCreateCollectionMutation,
-  type DeckCollectionDto,
+  type DeckCollectionResponse,
 } from "@/store/BrainFlexApi";
 import styles from "./AddToCollectionModal.module.css";
 
@@ -27,7 +27,10 @@ interface AddToCollectionModalProps {
 
 const PAGE_SIZE = 50;
 
-const AddToCollectionModal = ({ deckId, onClose }: AddToCollectionModalProps) => {
+const AddToCollectionModal = ({
+  deckId,
+  onClose,
+}: AddToCollectionModalProps) => {
   const { data, isLoading } = useListMyCollectionsQuery(
     { page: 0, size: PAGE_SIZE },
     { refetchOnMountOrArgChange: true },
@@ -37,15 +40,16 @@ const AddToCollectionModal = ({ deckId, onClose }: AddToCollectionModalProps) =>
     useAddDeckToCollectionMutation();
   const [removeDeckFromCollection, { isLoading: isRemoving }] =
     useRemoveDeckFromCollectionMutation();
-  const [createCollection, { isLoading: isCreating }] = useCreateCollectionMutation();
+  const [createCollection, { isLoading: isCreating }] =
+    useCreateCollectionMutation();
 
   const [newName, setNewName] = useState("");
   const [showCreate, setShowCreate] = useState(false);
 
-  const collections: DeckCollectionDto[] = data?.items ?? [];
+  const collections: DeckCollectionResponse[] = data?.items ?? [];
   const isBusy = isAdding || isRemoving || isCreating;
 
-  const handleToggle = (collection: DeckCollectionDto) => {
+  const handleToggle = (collection: DeckCollectionResponse) => {
     if (!collection.id || isBusy) return;
     const isMember = (collection.deckIds ?? []).includes(deckId);
     const mutation = isMember
@@ -129,7 +133,10 @@ const AddToCollectionModal = ({ deckId, onClose }: AddToCollectionModalProps) =>
               setNewName(e.target.value);
             }}
           />
-          <Btn size='sm' type='submit' disabled={isBusy || newName.trim() === ""}>
+          <Btn
+            size='sm'
+            type='submit'
+            disabled={isBusy || newName.trim() === ""}>
             Create &amp; add
           </Btn>
           <Btn

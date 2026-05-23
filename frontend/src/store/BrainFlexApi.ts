@@ -120,7 +120,7 @@ const injectedRtkApi = api.injectEndpoints({
       MovePlayerToTeamApiArg
     >({
       query: (queryArg) => ({
-        url: `/api/interactive-sessions/${queryArg.roomCode}/players/${queryArg.userId}/team`,
+        url: `/api/interactive-sessions/${queryArg.roomCode}/players/${queryArg.playerId}/team`,
         method: "PUT",
         body: queryArg.teamMoveRequest,
       }),
@@ -985,12 +985,12 @@ export type DeleteTagApiArg = {
   id: string;
 };
 export type GetScheduledSessionApiResponse =
-  /** status 200 OK */ ScheduledInteractiveSessionDto;
+  /** status 200 OK */ ScheduledInteractiveSessionResponse;
 export type GetScheduledSessionApiArg = {
   id: string;
 };
 export type UpdateScheduledSessionApiResponse =
-  /** status 200 OK */ ScheduledInteractiveSessionDto;
+  /** status 200 OK */ ScheduledInteractiveSessionResponse;
 export type UpdateScheduledSessionApiArg = {
   id: string;
   updateScheduledInteractiveSessionRequest: UpdateScheduledInteractiveSessionRequest;
@@ -1001,12 +1001,12 @@ export type UpdateOrgApiArg = {
   updateOrganizationRequest: UpdateOrganizationRequest;
 };
 export type MarkNotificationReadApiResponse =
-  /** status 200 OK */ NotificationDto;
+  /** status 200 OK */ NotificationResponse;
 export type MarkNotificationReadApiArg = {
   id: string;
 };
 export type MarkAllNotificationsReadApiResponse =
-  /** status 200 OK */ UnreadNotificationCount;
+  /** status 200 OK */ UnreadNotificationCountResponse;
 export type MarkAllNotificationsReadApiArg = void;
 export type GetMediaApiResponse = /** status 200 OK */ MediaAssetResponse;
 export type GetMediaApiArg = {
@@ -1021,32 +1021,34 @@ export type DeleteMediaApiResponse = unknown;
 export type DeleteMediaApiArg = {
   id: string;
 };
-export type UpdateTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type UpdateTeamApiResponse =
+  /** status 200 OK */ InteractiveSessionResponse;
 export type UpdateTeamApiArg = {
   roomCode: string;
   teamId: string;
   teamCrudRequest: TeamCrudRequest;
 };
-export type DeleteTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type DeleteTeamApiResponse =
+  /** status 200 OK */ InteractiveSessionResponse;
 export type DeleteTeamApiArg = {
   roomCode: string;
   teamId: string;
 };
 export type MovePlayerToTeamApiResponse =
-  /** status 200 OK */ InteractiveSessionDto;
+  /** status 200 OK */ InteractiveSessionResponse;
 export type MovePlayerToTeamApiArg = {
   roomCode: string;
-  userId: string;
+  playerId: string;
   teamMoveRequest: TeamMoveRequest;
 };
 export type UpdateMyAvatarApiResponse =
-  /** status 200 OK */ InteractiveSessionDto;
+  /** status 200 OK */ InteractiveSessionResponse;
 export type UpdateMyAvatarApiArg = {
   roomCode: string;
   updatePlayerAvatarRequest: UpdatePlayerAvatarRequest;
 };
 export type ModerateChatApiResponse =
-  /** status 200 OK */ InteractiveSessionChatMessageDto;
+  /** status 200 OK */ InteractiveSessionChatMessageResponse;
 export type ModerateChatApiArg = {
   roomCode: string;
   messageId: string;
@@ -1060,11 +1062,11 @@ export type DeleteImageApiResponse = unknown;
 export type DeleteImageApiArg = {
   id: string;
 };
-export type GetDeckApiResponse = /** status 200 OK */ DeckDto;
+export type GetDeckApiResponse = /** status 200 OK */ DeckResponse;
 export type GetDeckApiArg = {
   id: string;
 };
-export type UpdateDeckApiResponse = /** status 200 OK */ DeckDto;
+export type UpdateDeckApiResponse = /** status 200 OK */ DeckResponse;
 export type UpdateDeckApiArg = {
   id: string;
   updateDeckRequest: UpdateDeckRequest;
@@ -1073,7 +1075,7 @@ export type DeleteDeckApiResponse = unknown;
 export type DeleteDeckApiArg = {
   id: string;
 };
-export type RateDeckApiResponse = /** status 200 OK */ DeckRatingDto;
+export type RateDeckApiResponse = /** status 200 OK */ DeckRatingResponse;
 export type RateDeckApiArg = {
   id: string;
   rateDeckRequest: RateDeckRequest;
@@ -1082,7 +1084,7 @@ export type DeleteMyRatingApiResponse = unknown;
 export type DeleteMyRatingApiArg = {
   id: string;
 };
-export type UpdateElementApiResponse = /** status 200 OK */ DeckDto;
+export type UpdateElementApiResponse = /** status 200 OK */ DeckResponse;
 export type UpdateElementApiArg = {
   id: string;
   elementId: string;
@@ -1101,13 +1103,13 @@ export type UpdateElementApiArg = {
     | TextQuestion
     | WordCloudQuestion;
 };
-export type DeleteElementApiResponse = /** status 200 OK */ DeckDto;
+export type DeleteElementApiResponse = /** status 200 OK */ DeckResponse;
 export type DeleteElementApiArg = {
   id: string;
   elementId: string;
 };
 export type UpdateCollaboratorRoleApiResponse =
-  /** status 200 OK */ DeckCollaboratorDto;
+  /** status 200 OK */ DeckCollaboratorResponse;
 export type UpdateCollaboratorRoleApiArg = {
   id: string;
   userId: string;
@@ -1118,23 +1120,24 @@ export type RemoveCollaboratorApiArg = {
   id: string;
   userId: string;
 };
-export type EditCommentApiResponse = /** status 200 OK */ DeckCommentDto;
+export type EditCommentApiResponse = /** status 200 OK */ DeckCommentResponse;
 export type EditCommentApiArg = {
   deckId: string;
   commentId: string;
   updateCommentRequest: UpdateCommentRequest;
 };
-export type DeleteCommentApiResponse = /** status 200 OK */ DeckCommentDto;
+export type DeleteCommentApiResponse = /** status 200 OK */ DeckCommentResponse;
 export type DeleteCommentApiArg = {
   deckId: string;
   commentId: string;
 };
-export type GetCollectionApiResponse = /** status 200 OK */ DeckCollectionDto;
+export type GetCollectionApiResponse =
+  /** status 200 OK */ DeckCollectionResponse;
 export type GetCollectionApiArg = {
   id: string;
 };
 export type UpdateCollectionApiResponse =
-  /** status 200 OK */ DeckCollectionDto;
+  /** status 200 OK */ DeckCollectionResponse;
 export type UpdateCollectionApiArg = {
   id: string;
   updateDeckCollectionRequest: UpdateDeckCollectionRequest;
@@ -1183,18 +1186,18 @@ export type CreateTagApiArg = {
   createTagRequest: CreateTagRequest;
 };
 export type CreateScheduledSessionApiResponse =
-  /** status 200 OK */ ScheduledInteractiveSessionDto;
+  /** status 200 OK */ ScheduledInteractiveSessionResponse;
 export type CreateScheduledSessionApiArg = {
   createScheduledInteractiveSessionRequest: CreateScheduledInteractiveSessionRequest;
 };
 export type AddScheduledInviteApiResponse =
-  /** status 200 OK */ InteractiveSessionInviteDto;
+  /** status 200 OK */ InteractiveSessionInviteResponse;
 export type AddScheduledInviteApiArg = {
   id: string;
   addInviteRequest: AddInviteRequest;
 };
 export type CancelScheduledSessionApiResponse =
-  /** status 200 OK */ ScheduledInteractiveSessionDto;
+  /** status 200 OK */ ScheduledInteractiveSessionResponse;
 export type CancelScheduledSessionApiArg = {
   id: string;
 };
@@ -1250,11 +1253,12 @@ export type RedeemInviteApiArg = {
   token: string;
 };
 export type CreateInteractiveSessionApiResponse =
-  /** status 200 OK */ InteractiveSessionDto;
+  /** status 200 OK */ InteractiveSessionResponse;
 export type CreateInteractiveSessionApiArg = {
   createInteractiveSessionRequest: CreateInteractiveSessionRequest;
 };
-export type CreateTeamApiResponse = /** status 200 OK */ InteractiveSessionDto;
+export type CreateTeamApiResponse =
+  /** status 200 OK */ InteractiveSessionResponse;
 export type CreateTeamApiArg = {
   roomCode: string;
   teamCrudRequest: TeamCrudRequest;
@@ -1265,20 +1269,20 @@ export type SendReactionApiArg = {
   reactionSendRequest: ReactionSendRequest;
 };
 export type JoinByRoomCodeApiResponse =
-  /** status 200 OK */ InteractiveSessionDto;
+  /** status 200 OK */ InteractiveSessionResponse;
 export type JoinByRoomCodeApiArg = {
   roomCode: string;
   joinInteractiveSessionRequest: JoinInteractiveSessionRequest;
 };
 export type ListChatApiResponse =
-  /** status 200 OK */ InteractiveSessionChatMessageDto[];
+  /** status 200 OK */ InteractiveSessionChatMessageResponse[];
 export type ListChatApiArg = {
   roomCode: string;
   page?: number;
   size?: number;
 };
 export type SendChatApiResponse =
-  /** status 200 OK */ InteractiveSessionChatMessageDto;
+  /** status 200 OK */ InteractiveSessionChatMessageResponse;
 export type SendChatApiArg = {
   roomCode: string;
   chatSendRequest: ChatSendRequest;
@@ -1294,17 +1298,17 @@ export type UploadImageApiArg = {
     image: Blob;
   };
 };
-export type ListDecksApiResponse = /** status 200 OK */ DeckDto[];
+export type ListDecksApiResponse = /** status 200 OK */ DeckResponse[];
 export type ListDecksApiArg = void;
-export type CreateDeckApiResponse = /** status 200 OK */ DeckDto;
+export type CreateDeckApiResponse = /** status 200 OK */ DeckResponse;
 export type CreateDeckApiArg = {
   createDeckRequest: CreateDeckRequest;
 };
-export type UnpublishDeckApiResponse = /** status 200 OK */ DeckDto;
+export type UnpublishDeckApiResponse = /** status 200 OK */ DeckResponse;
 export type UnpublishDeckApiArg = {
   id: string;
 };
-export type PublishDeckApiResponse = /** status 200 OK */ DeckDto;
+export type PublishDeckApiResponse = /** status 200 OK */ DeckResponse;
 export type PublishDeckApiArg = {
   id: string;
 };
@@ -1322,7 +1326,7 @@ export type RecountFavoritesApiResponse =
 export type RecountFavoritesApiArg = {
   id: string;
 };
-export type AddElementApiResponse = /** status 200 OK */ DeckDto;
+export type AddElementApiResponse = /** status 200 OK */ DeckResponse;
 export type AddElementApiArg = {
   id: string;
   body:
@@ -1340,70 +1344,71 @@ export type AddElementApiArg = {
     | TextQuestion
     | WordCloudQuestion;
 };
-export type MoveMcqOptionApiResponse = /** status 200 OK */ DeckDto;
+export type MoveMcqOptionApiResponse = /** status 200 OK */ DeckResponse;
 export type MoveMcqOptionApiArg = {
   id: string;
   elementId: string;
   optionId: string;
   to: number;
 };
-export type MoveElementApiResponse = /** status 200 OK */ DeckDto;
+export type MoveElementApiResponse = /** status 200 OK */ DeckResponse;
 export type MoveElementApiArg = {
   id: string;
   elementId: string;
   to: number;
 };
-export type ListCommentsApiResponse = /** status 200 OK */ PageDeckCommentDto;
+export type ListCommentsApiResponse =
+  /** status 200 OK */ PageDeckCommentResponse;
 export type ListCommentsApiArg = {
   id: string;
   page?: number;
   size?: number;
 };
-export type PostCommentApiResponse = /** status 200 OK */ DeckCommentDto;
+export type PostCommentApiResponse = /** status 200 OK */ DeckCommentResponse;
 export type PostCommentApiArg = {
   id: string;
   createCommentRequest: CreateCommentRequest;
 };
 export type ListCollaboratorsApiResponse =
-  /** status 200 OK */ DeckCollaboratorDto[];
+  /** status 200 OK */ DeckCollaboratorResponse[];
 export type ListCollaboratorsApiArg = {
   id: string;
 };
 export type InviteCollaboratorApiResponse =
-  /** status 200 OK */ DeckCollaboratorDto;
+  /** status 200 OK */ DeckCollaboratorResponse;
 export type InviteCollaboratorApiArg = {
   id: string;
   inviteCollaboratorRequest: InviteCollaboratorRequest;
 };
 export type TransferOwnershipApiResponse =
-  /** status 200 OK */ DeckCollaboratorDto[];
+  /** status 200 OK */ DeckCollaboratorResponse[];
 export type TransferOwnershipApiArg = {
   id: string;
   transferOwnershipRequest: TransferOwnershipRequest;
 };
-export type ArchiveDeckApiResponse = /** status 200 OK */ DeckDto;
+export type ArchiveDeckApiResponse = /** status 200 OK */ DeckResponse;
 export type ArchiveDeckApiArg = {
   id: string;
 };
 export type ToggleCommentUpvoteApiResponse =
-  /** status 200 OK */ DeckCommentDto;
+  /** status 200 OK */ DeckCommentResponse;
 export type ToggleCommentUpvoteApiArg = {
   deckId: string;
   commentId: string;
 };
 export type CreateCollectionApiResponse =
-  /** status 200 OK */ DeckCollectionDto;
+  /** status 200 OK */ DeckCollectionResponse;
 export type CreateCollectionApiArg = {
   createDeckCollectionRequest: CreateDeckCollectionRequest;
 };
 export type AddDeckToCollectionApiResponse =
-  /** status 200 OK */ DeckCollectionDto;
+  /** status 200 OK */ DeckCollectionResponse;
 export type AddDeckToCollectionApiArg = {
   id: string;
   addDeckToCollectionRequest: AddDeckToCollectionRequest;
 };
 export type ReorderCollectionDecksApiResponse =
-  /** status 200 OK */ DeckCollectionDto;
+  /** status 200 OK */ DeckCollectionResponse;
 export type ReorderCollectionDecksApiArg = {
   id: string;
   reorderCollectionDecksRequest: ReorderCollectionDecksRequest;
@@ -1421,7 +1426,7 @@ export type UpdateProfileApiArg = {
   updateProfileRequest: UpdateProfileRequest;
 };
 export type ListUserHistoryApiResponse =
-  /** status 200 OK */ PageGameHistoryDto;
+  /** status 200 OK */ PageGameHistoryResponse;
 export type ListUserHistoryApiArg = {
   userId: string;
   page?: number;
@@ -1436,12 +1441,13 @@ export type GetUserProfileApiResponse = /** status 200 OK */ RegisteredUser;
 export type GetUserProfileApiArg = {
   id: string;
 };
-export type ListMyHistoryApiResponse = /** status 200 OK */ PageGameHistoryDto;
+export type ListMyHistoryApiResponse =
+  /** status 200 OK */ PageGameHistoryResponse;
 export type ListMyHistoryApiArg = {
   page?: number;
   size?: number;
 };
-export type ListMyFavoritesApiResponse = /** status 200 OK */ PageDeckDto;
+export type ListMyFavoritesApiResponse = /** status 200 OK */ PageDeckResponse;
 export type ListMyFavoritesApiArg = {
   page?: number;
   size?: number;
@@ -1461,26 +1467,26 @@ export type CheckUsernameApiArg = {
   username: string;
 };
 export type ListScheduledInvitesApiResponse =
-  /** status 200 OK */ InteractiveSessionInviteDto[];
+  /** status 200 OK */ InteractiveSessionInviteResponse[];
 export type ListScheduledInvitesApiArg = {
   id: string;
 };
 export type ListMyScheduledSessionsApiResponse =
-  /** status 200 OK */ ScheduledInteractiveSessionDto[];
+  /** status 200 OK */ ScheduledInteractiveSessionResponse[];
 export type ListMyScheduledSessionsApiArg = void;
 export type ListMyOrgsApiResponse = /** status 200 OK */ OrganizationResponse[];
 export type ListMyOrgsApiArg = void;
 export type ListNotificationsApiResponse =
-  /** status 200 OK */ PageNotificationDto;
+  /** status 200 OK */ PageNotificationResponse;
 export type ListNotificationsApiArg = {
   page?: number;
   size?: number;
 };
 export type GetUnreadNotificationCountApiResponse =
-  /** status 200 OK */ UnreadNotificationCount;
+  /** status 200 OK */ UnreadNotificationCountResponse;
 export type GetUnreadNotificationCountApiArg = void;
 export type GetInteractiveSessionApiResponse =
-  /** status 200 OK */ InteractiveSessionDto;
+  /** status 200 OK */ InteractiveSessionResponse;
 export type GetInteractiveSessionApiArg = {
   roomCode: string;
 };
@@ -1489,7 +1495,7 @@ export type CancelInteractiveSessionApiArg = {
   roomCode: string;
 };
 export type GetReviewApiResponse =
-  /** status 200 OK */ InteractiveSessionReviewDto;
+  /** status 200 OK */ InteractiveSessionReviewResponse;
 export type GetReviewApiArg = {
   roomCode: string;
 };
@@ -1499,7 +1505,7 @@ export type GetResultsApiArg = {
   roomCode: string;
 };
 export type GetByInviteTokenApiResponse =
-  /** status 200 OK */ InteractiveSessionDto;
+  /** status 200 OK */ InteractiveSessionResponse;
 export type GetByInviteTokenApiArg = {
   inviteToken: string;
 };
@@ -1511,7 +1517,7 @@ export type ListRatingsApiArg = {
   page?: number;
   size?: number;
 };
-export type GetMyRatingApiResponse = /** status 200 OK */ DeckRatingDto;
+export type GetMyRatingApiResponse = /** status 200 OK */ DeckRatingResponse;
 export type GetMyRatingApiArg = {
   id: string;
 };
@@ -1524,22 +1530,23 @@ export type GetDeckAnalyticsCsvApiArg = {
   id: string;
 };
 export type ListMyHistoryForDeckApiResponse =
-  /** status 200 OK */ PageGameHistoryDto;
+  /** status 200 OK */ PageGameHistoryResponse;
 export type ListMyHistoryForDeckApiArg = {
   deckId: string;
   page?: number;
   size?: number;
 };
-export type ListRepliesApiResponse = /** status 200 OK */ PageDeckCommentDto;
+export type ListRepliesApiResponse =
+  /** status 200 OK */ PageDeckCommentResponse;
 export type ListRepliesApiArg = {
   deckId: string;
   commentId: string;
   page?: number;
   size?: number;
 };
-export type ListMyDecksApiResponse = /** status 200 OK */ DeckDto[];
+export type ListMyDecksApiResponse = /** status 200 OK */ DeckResponse[];
 export type ListMyDecksApiArg = void;
-export type ExploreDecksApiResponse = /** status 200 OK */ PageDeckDto;
+export type ExploreDecksApiResponse = /** status 200 OK */ PageDeckResponse;
 export type ExploreDecksApiArg = {
   tagId?: string;
   language?: string;
@@ -1549,14 +1556,14 @@ export type ExploreDecksApiArg = {
   size?: number;
 };
 export type ListMyCollectionsApiResponse =
-  /** status 200 OK */ PageDeckCollectionDto;
+  /** status 200 OK */ PageDeckCollectionResponse;
 export type ListMyCollectionsApiArg = {
   page?: number;
   size?: number;
 };
 export type ListAvatarsApiResponse = /** status 200 OK */ AvatarPreset[];
 export type ListAvatarsApiArg = void;
-export type GetCurrentUserApiResponse = /** status 200 OK */ UserDto;
+export type GetCurrentUserApiResponse = /** status 200 OK */ UserResponse;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
 export type LoginApiArg = {
@@ -1564,7 +1571,7 @@ export type LoginApiArg = {
   guestId?: string;
   provider?: string;
 };
-export type ListCatalogApiResponse = /** status 200 OK */ AchievementDto[];
+export type ListCatalogApiResponse = /** status 200 OK */ AchievementResponse[];
 export type ListCatalogApiArg = void;
 export type LeaveOrgApiResponse = unknown;
 export type LeaveOrgApiArg = {
@@ -1575,7 +1582,7 @@ export type DismissNotificationApiArg = {
   id: string;
 };
 export type RemoveDeckFromCollectionApiResponse =
-  /** status 200 OK */ DeckCollectionDto;
+  /** status 200 OK */ DeckCollectionResponse;
 export type RemoveDeckFromCollectionApiArg = {
   id: string;
   deckId: string;
@@ -1611,7 +1618,7 @@ export type ThemeResponse = {
   organizationId?: string;
   huePrimary?: number;
   hueAccent?: number;
-  mode?: string;
+  mode?: "LIGHT" | "DARK" | "SYSTEM";
   backgroundImageUrl?: string;
   logoImageUrl?: string;
   background?: Image;
@@ -1622,7 +1629,7 @@ export type UpdateThemeRequest = {
   name?: string;
   huePrimary?: number;
   hueAccent?: number;
-  mode?: string;
+  mode?: "LIGHT" | "DARK" | "SYSTEM";
   organizationId?: string;
 };
 export type TagResponse = {
@@ -1675,7 +1682,7 @@ export type InteractiveSessionSettings = {
   allowReJoin?: boolean;
   answerSubmissionMode?: "SIMULTANEOUS" | "TURN_BASED";
 };
-export type ScheduledInteractiveSessionDto = {
+export type ScheduledInteractiveSessionResponse = {
   id?: string;
   hostUserId?: string;
   hostName?: string;
@@ -1697,15 +1704,13 @@ export type UpdateScheduledInteractiveSessionRequest = {
   settings?: InteractiveSessionSettings;
   reminderEmailTemplate?: string;
 };
-export type OrganizationPlan = {
+export type OrganizationPlanResponse = {
   tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
   status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
   seatLimit?: number;
   startedAt?: string;
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
   featureFlags?: string[];
   monthlyInteractiveSessionLimit?: number;
   quotaResetsAt?: string;
@@ -1719,7 +1724,7 @@ export type OrganizationResponse = {
   id?: string;
   name?: string;
   ownerId?: string;
-  plan?: OrganizationPlan;
+  plan?: OrganizationPlanResponse;
   description?: string;
   logoVariants?: StoredImageVariant[];
   websiteUrl?: string;
@@ -1741,7 +1746,13 @@ export type UpdateOrganizationRequest = {
   allowPublicJoin?: boolean;
   defaultThemeId?: string;
 };
-export type NotificationDto = {
+export type UserSnapshot = {
+  userId?: string;
+  name?: string;
+  pictureUrl?: string;
+  guest?: boolean;
+};
+export type NotificationResponse = {
   id?: string;
   userId?: string;
   kind?:
@@ -1765,14 +1776,12 @@ export type NotificationDto = {
   meta?: {
     [key: string]: string;
   };
-  actorUserId?: string;
-  actorName?: string;
-  actorPictureUrl?: string;
+  actor?: UserSnapshot;
   read?: boolean;
   createdAt?: string;
   readAt?: string;
 };
-export type UnreadNotificationCount = {
+export type UnreadNotificationCountResponse = {
   count?: number;
 };
 export type MediaAssetResponse = {
@@ -2080,11 +2089,14 @@ export type WordCloudQuestion = {
     explanation?: string;
     chrome?: ElementChrome;
   };
-export type InteractiveSessionPlayerDto = {
-  userId?: string;
-  userName?: string;
+export type PublicUserSnapshot = {
+  name?: string;
   pictureUrl?: string;
-  isGuest?: boolean;
+  guest?: boolean;
+};
+export type InteractiveSessionPlayerDto = {
+  playerId?: string;
+  user?: PublicUserSnapshot;
   score?: number;
   teamId?: string;
   avatarKey?: string;
@@ -2102,21 +2114,22 @@ export type Team = {
   id?: string;
   name?: string;
   color?: string;
-  captainUserId?: string;
+  captainPlayerId?: string;
   score?: number;
   memberCount?: number;
 };
-export type InteractiveSessionDto = {
+export type InteractiveSessionResponse = {
   id?: string;
   roomCode?: string;
   inviteToken?: string;
   status?: "LOBBY" | "IN_PROGRESS" | "RESULTS" | "FINISHED" | "CANCELLED";
   phase?: "SUBMIT" | "VOTE" | "REVEAL";
   format?: "GAME" | "PRESENTATION";
-  hostUserId?: string;
+  hostPlayerId?: string;
   hostName?: string;
   hostAvatarUrl?: string;
   deckId?: string;
+  deckVersion?: number;
   deckSnapshot?: (
     | AllocationQuestion
     | DrawingQuestion
@@ -2139,10 +2152,12 @@ export type InteractiveSessionDto = {
   spectatorCount?: number;
   lobbyOpenedAt?: string;
   currentRound?: number;
+  totalRounds?: number;
   revealedElementIds?: string[];
   elementResponseModeOverrides?: {
     [key: string]: "ACCEPTING_RESPONSES" | "NOT_ACCEPTING_RESPONSES";
   };
+  viewerPlayerId?: string;
   createdAt?: string;
   startedAt?: string;
 };
@@ -2157,13 +2172,10 @@ export type UpdatePlayerAvatarRequest = {
   avatarKey?: string;
   colorTag?: string;
 };
-export type InteractiveSessionChatMessageDto = {
+export type InteractiveSessionChatMessageResponse = {
   id?: string;
-  authorUserId?: string;
-  authorName?: string;
-  authorPictureUrl?: string;
+  author?: UserSnapshot;
   fromHost?: boolean;
-  guest?: boolean;
   body?: string;
   sentAt?: string;
   moderated?: boolean;
@@ -2186,7 +2198,7 @@ export type UpdateGalleryImageRequest = {
   tags?: string[];
   organizationId?: string;
 };
-export type DeckDto = {
+export type DeckResponse = {
   id?: string;
   name?: string;
   description?: string;
@@ -2259,12 +2271,10 @@ export type UpdateDeckRequest = {
   ageRange?: string;
   license?: "ALL_RIGHTS_RESERVED" | "CC_BY" | "CC_BY_SA" | "CC_BY_NC" | "CC0";
 };
-export type DeckRatingDto = {
+export type DeckRatingResponse = {
   id?: string;
   deckId?: string;
-  userId?: string;
-  userName?: string;
-  userPictureUrl?: string;
+  user?: UserSnapshot;
   stars?: number;
   review?: string;
   createdAt?: string;
@@ -2274,14 +2284,12 @@ export type RateDeckRequest = {
   stars?: number;
   review?: string;
 };
-export type DeckCollaboratorDto = {
+export type DeckCollaboratorResponse = {
   id?: string;
   deckId?: string;
-  userId?: string;
   email?: string;
+  user?: UserSnapshot;
   userName?: string;
-  name?: string;
-  pictureUrl?: string;
   role?: "VIEWER" | "EDITOR" | "OWNER";
   invitedByUserId?: string;
   invitedAt?: string;
@@ -2290,12 +2298,10 @@ export type DeckCollaboratorDto = {
 export type UpdateCollaboratorRoleRequest = {
   role: "VIEWER" | "EDITOR" | "OWNER";
 };
-export type DeckCommentDto = {
+export type DeckCommentResponse = {
   id?: string;
   deckId?: string;
-  authorUserId?: string;
-  authorName?: string;
-  authorPictureUrl?: string;
+  author?: UserSnapshot;
   parentCommentId?: string;
   body?: string;
   upvotes?: number;
@@ -2309,7 +2315,7 @@ export type DeckCommentDto = {
 export type UpdateCommentRequest = {
   body: string;
 };
-export type DeckCollectionDto = {
+export type DeckCollectionResponse = {
   id?: string;
   ownerUserId?: string;
   organizationId?: string;
@@ -2320,7 +2326,7 @@ export type DeckCollectionDto = {
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   viewCount?: number;
   deckCount?: number;
-  decks?: DeckDto[];
+  decks?: DeckResponse[];
   createdAt?: string;
   updatedAt?: string;
 };
@@ -2330,11 +2336,15 @@ export type UpdateDeckCollectionRequest = {
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   cover?: Image;
 };
+export type ExternalIdentity = {
+  provider?: string;
+  id?: string;
+};
 export type PlayerStats = {
   gamesPlayed?: number;
   highScore?: number;
   totalPoints?: number;
-  currentStreak?: number;
+  dailyLoginStreak?: number;
   longestStreak?: number;
   perfectGames?: number;
   totalReactionsSent?: number;
@@ -2350,15 +2360,18 @@ export type PlayerStats = {
   monthlyPointsResetAt?: string;
   lastPlayedAt?: string;
 };
-export type Membership = {
+export type BillingState = {
   tier?: "FREE" | "INDIVIDUAL" | "ORG_SEAT" | "ORG_TEAM" | "ORG_BUSINESS";
   status?: "ACTIVE" | "TRIALING" | "PAST_DUE" | "CANCELED" | "EXPIRED" | "NONE";
   startedAt?: string;
   currentPeriodEnd?: string;
   cancelAtPeriodEnd?: boolean;
-  sourceOrganizationId?: string;
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
+};
+export type Membership = {
+  billing?: BillingState;
+  sourceOrganizationId?: string;
   monthlyInteractiveSessionCount?: number;
   monthlyCountPeriodStart?: string;
   featureFlags?: string[];
@@ -2371,7 +2384,7 @@ export type RegisteredUser = {
   name?: string;
   userName?: string;
   isGuest?: boolean;
-  googleId?: string;
+  externalIdentity?: ExternalIdentity;
   pictureUrl?: string;
   picture?: Image;
   stats?: PlayerStats;
@@ -2388,7 +2401,7 @@ export type CreateThemeRequest = {
   name?: string;
   huePrimary?: number;
   hueAccent?: number;
-  mode?: string;
+  mode?: "LIGHT" | "DARK" | "SYSTEM";
   organizationId?: string;
 };
 export type CreateTagRequest = {
@@ -2407,7 +2420,7 @@ export type CreateScheduledInteractiveSessionRequest = {
   reminderEmailTemplate?: string;
   invitedEmails?: string[];
 };
-export type InteractiveSessionInviteDto = {
+export type InteractiveSessionInviteResponse = {
   id?: string;
   email?: string;
   resolvedUserId?: string;
@@ -2477,9 +2490,8 @@ export type Reaction = {
   id?: string;
   interactiveSessionId?: string;
   elementId?: string;
-  userId?: string;
-  userName?: string;
-  guest?: boolean;
+  playerId?: string;
+  user?: UserSnapshot;
   emoji?: string;
   offsetMs?: number;
   sentAt?: string;
@@ -2519,8 +2531,8 @@ export type DeckFavoriteResponse = {
   isFavorited?: boolean;
   favoriteCount?: number;
 };
-export type PageDeckCommentDto = {
-  items?: DeckCommentDto[];
+export type PageDeckCommentResponse = {
+  items?: DeckCommentResponse[];
   page?: number;
   size?: number;
   totalElements?: number;
@@ -2573,13 +2585,12 @@ export type UpdateProfileRequest = {
   activeThemeId?: string;
   timezone?: string;
 };
-export type GameHistoryDto = {
+export type GameHistoryResponse = {
   id?: string;
   interactiveSessionId?: string;
   deckId?: string;
   deckName?: string;
-  hostUserId?: string;
-  hostName?: string;
+  host?: UserSnapshot;
   finalScore?: number;
   placement?: number;
   totalQuestions?: number;
@@ -2595,14 +2606,14 @@ export type GameHistoryDto = {
   wasGuest?: boolean;
   playedAt?: string;
 };
-export type PageGameHistoryDto = {
-  items?: GameHistoryDto[];
+export type PageGameHistoryResponse = {
+  items?: GameHistoryResponse[];
   page?: number;
   size?: number;
   totalElements?: number;
   hasMore?: boolean;
 };
-export type UserAchievementDto = {
+export type UserAchievementResponse = {
   id?: string;
   name?: string;
   description?: string;
@@ -2630,37 +2641,39 @@ export type UserAchievementDto = {
   currentProgress?: number;
 };
 export type UserAchievementsPage = {
-  items?: UserAchievementDto[];
+  items?: UserAchievementResponse[];
   earnedCount?: number;
   totalCount?: number;
 };
-export type PageDeckDto = {
-  items?: DeckDto[];
+export type PageDeckResponse = {
+  items?: DeckResponse[];
   page?: number;
   size?: number;
   totalElements?: number;
   hasMore?: boolean;
 };
-export type PageNotificationDto = {
-  items?: NotificationDto[];
+export type PageNotificationResponse = {
+  items?: NotificationResponse[];
   page?: number;
   size?: number;
   totalElements?: number;
   hasMore?: boolean;
+};
+export type PlayerEndStats = {
+  longestStreak?: number;
+  accuracy?: number;
+  reactionsSent?: number;
 };
 export type PlayerPlacement = {
-  userId?: string;
-  userName?: string;
+  playerId?: string;
+  user?: UserSnapshot;
   finalScore?: number;
   placement?: number;
   correctAnswers?: number;
   totalQuestions?: number;
   teamId?: string;
-  longestStreak?: number;
-  accuracy?: number;
-  reactionsSent?: number;
+  endStats?: PlayerEndStats;
   speedBonusTotal?: number;
-  guest?: boolean;
 };
 export type AnswerPayloadBase = {
   kind: string;
@@ -2735,8 +2748,8 @@ export type WordCloudAnswer = {
 } & AnswerPayloadBase & {
     words?: string[];
   };
-export type PlayerRoundDetail = {
-  userId?: string;
+export type PlayerRoundResponse = {
+  playerId?: string;
   userName?: string;
   payload?:
     | AllocationAnswer
@@ -2753,6 +2766,7 @@ export type PlayerRoundDetail = {
     | WordCloudAnswer;
   wasCorrect?: boolean;
   pointsAwarded?: number;
+  totalScore?: number;
 };
 export type RoundReview = {
   round?: number;
@@ -2771,9 +2785,9 @@ export type RoundReview = {
     | TextQuestion
     | WordCloudQuestion;
   timedOutCount?: number;
-  playerAnswers?: PlayerRoundDetail[];
+  playerAnswers?: PlayerRoundResponse[];
 };
-export type InteractiveSessionReviewDto = {
+export type InteractiveSessionReviewResponse = {
   interactiveSessionId?: string;
   roomCode?: string;
   endedAt?: string;
@@ -2795,7 +2809,7 @@ export type HealthCheckResponse = {
   redis?: string;
 };
 export type DeckRatingsPage = {
-  items?: DeckRatingDto[];
+  items?: DeckRatingResponse[];
   page?: number;
   size?: number;
   totalElements?: number;
@@ -2825,6 +2839,8 @@ export type FormatRollup = {
   lastRunAt?: string;
 };
 export type DeckAnalytics = {
+  createdAt?: string;
+  updatedAt?: string;
   deckId?: string;
   totalPlays?: number;
   totalPlayers?: number;
@@ -2837,10 +2853,9 @@ export type DeckAnalytics = {
   gameRollup?: FormatRollup;
   presentationRollup?: FormatRollup;
   lastPlayedAt?: string;
-  updatedAt?: string;
 };
-export type PageDeckCollectionDto = {
-  items?: DeckCollectionDto[];
+export type PageDeckCollectionResponse = {
+  items?: DeckCollectionResponse[];
   page?: number;
   size?: number;
   totalElements?: number;
@@ -2852,8 +2867,8 @@ export type AvatarPreset = {
   imageUrl?: string;
   colorTag?: string;
 };
-export type UserDto = GuestUser | RegisteredUser;
-export type AchievementDto = {
+export type UserResponse = GuestUser | RegisteredUser;
+export type AchievementResponse = {
   id?: string;
   name?: string;
   description?: string;

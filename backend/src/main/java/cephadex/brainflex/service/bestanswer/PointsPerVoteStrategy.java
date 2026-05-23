@@ -11,8 +11,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
-import cephadex.brainflex.model.PlayerAnswer;
-import cephadex.brainflex.model.RoundVote;
+import cephadex.brainflex.model.session.PlayerAnswer;
+import cephadex.brainflex.model.session.RoundVote;
 import cephadex.brainflex.model.enums.BestAnswerScoring;
 
 @Component

@@ -20,7 +20,7 @@
 package cephadex.brainflex.service;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,16 +29,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.GameHistoryEntry;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionPlayer;
-import cephadex.brainflex.model.Membership;
-import cephadex.brainflex.model.PlayerPlacement;
-import cephadex.brainflex.model.Team;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
 import cephadex.brainflex.model.enums.AchievementTrigger;
+import cephadex.brainflex.model.org.Membership;
+import cephadex.brainflex.model.org.Team;
+import cephadex.brainflex.model.session.GameHistoryEntry;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionPlayer;
+import cephadex.brainflex.model.session.PlayerPlacement;
+import cephadex.brainflex.model.shared.UserSnapshot;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GameHistoryRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -68,24 +67,27 @@ public class GameHistoryService {
      * once — the unique index swallows duplicates.
      */
     public void recordFinish(InteractiveSession session, List<PlayerPlacement> placements) {
-        if (session == null) return;
+        if (session == null)
+            return;
 
         String deckName = deckRepository.findById(session.getDeckId())
-                .map(Deck::getName)
+                .map(d -> d.getContent().getName())
                 .orElse(null);
         long durationMs = computeDurationMs(session);
-        LocalDateTime playedAt = session.getEndedAt() != null
+        Instant playedAt = session.getEndedAt() != null
                 ? session.getEndedAt()
-                : LocalDateTime.now();
+                : Instant.now();
         boolean hostPlayed = false;
         boolean hostRowInserted = false;
 
         for (PlayerPlacement p : placements) {
             boolean isHost = session.getHostUserId() != null
                     && session.getHostUserId().equals(p.getUserId());
-            if (isHost) hostPlayed = true;
+            if (isHost)
+                hostPlayed = true;
             boolean inserted = writeEntry(buildPlayerEntry(session, p, deckName, durationMs, playedAt, isHost));
-            if (isHost) hostRowInserted = inserted;
+            if (isHost)
+                hostRowInserted = inserted;
             // Chunk 17 — fire-and-forget achievement evaluation. Only runs on
             // a true insert so a replayed finish doesn't double-evaluate.
             if (inserted && !p.isGuest()) {
@@ -125,7 +127,8 @@ public class GameHistoryService {
     private void evaluatePlayerAchievements(
             InteractiveSession session, PlayerPlacement p, boolean isHost) {
         String userId = p.getUserId();
-        if (userId == null || userId.isBlank()) return;
+        if (userId == null || userId.isBlank())
+            return;
         String sessionId = session.getId();
 
         long gamesPlayed = historyRepository.countByUserId(userId);
@@ -135,12 +138,12 @@ public class GameHistoryService {
         achievementService.evaluate(userId, AchievementTrigger.HIGH_SCORE,
                 p.getFinalScore(), sessionId, null);
         achievementService.evaluate(userId, AchievementTrigger.STREAK,
-                p.getLongestStreak(), sessionId, null);
+                p.getEndStats().longestStreak(), sessionId, null);
 
         // PERFECT_GAME only applies when the player got every question right;
         // threshold gates on the minimum number of questions so a one-question
         // deck doesn't trivially unlock the badge.
-        if (p.getAccuracy() >= 1.0d && p.getTotalQuestions() > 0) {
+        if (p.getEndStats().accuracy() >= 1.0d && p.getTotalQuestions() > 0) {
             achievementService.evaluate(userId, AchievementTrigger.PERFECT_GAME,
                     p.getTotalQuestions(), sessionId, null);
         }
@@ -159,7 +162,8 @@ public class GameHistoryService {
      */
     private void evaluateHostOnlyAchievements(InteractiveSession session) {
         String hostId = session.getHostUserId();
-        if (hostId == null || hostId.isBlank()) return;
+        if (hostId == null || hostId.isBlank())
+            return;
         String sessionId = session.getId();
 
         long gamesPlayed = historyRepository.countByUserId(hostId);
@@ -176,22 +180,23 @@ public class GameHistoryService {
         return historyRepository.findAllByUserId(userId, pageable);
     }
 
-    /** Paginated history filtered to a single deck — drives "your best on this deck". */
+    /**
+     * Paginated history filtered to a single deck — drives "your best on this
+     * deck".
+     */
     public Page<GameHistoryEntry> listForUserAndDeck(String userId, String deckId, Pageable pageable) {
         return historyRepository.findAllByUserIdAndDeckId(userId, deckId, pageable);
     }
 
     private GameHistoryEntry buildPlayerEntry(InteractiveSession session, PlayerPlacement p,
-            String deckName, long durationMs, LocalDateTime playedAt, boolean isHost) {
+            String deckName, long durationMs, Instant playedAt, boolean isHost) {
         GameHistoryEntry e = baseEntry(session, deckName, durationMs, playedAt);
         e.setUserId(p.getUserId());
         e.setFinalScore(p.getFinalScore());
         e.setPlacement(p.getPlacement());
         e.setTotalQuestions(p.getTotalQuestions());
         e.setCorrectAnswers(p.getCorrectAnswers());
-        e.setLongestStreak(p.getLongestStreak());
-        e.setAccuracy(p.getAccuracy());
-        e.setReactionsSent(p.getReactionsSent());
+        e.setEndStats(p.getEndStats());
         e.setTeamId(p.getTeamId());
         e.setTeamName(resolveTeamName(session, p.getTeamId()));
         e.setWasHost(isHost);
@@ -210,17 +215,17 @@ public class GameHistoryService {
     }
 
     private GameHistoryEntry buildHostOnlyEntry(InteractiveSession session, String deckName,
-            long durationMs, LocalDateTime playedAt) {
+            long durationMs, Instant playedAt) {
         GameHistoryEntry e = baseEntry(session, deckName, durationMs, playedAt);
         e.setUserId(session.getHostUserId());
-        e.setTotalQuestions(session.getDeckSnapshot() == null ? 0 : session.getDeckSnapshot().size());
+        e.setTotalQuestions(session.getContent().getElements() == null ? 0 : session.getContent().getElements().size());
         e.setWasHost(true);
         e.setWasGuest(isUserGuest(session.getHostUserId()));
         return e;
     }
 
     private GameHistoryEntry baseEntry(InteractiveSession session, String deckName,
-            long durationMs, LocalDateTime playedAt) {
+            long durationMs, Instant playedAt) {
         GameHistoryEntry e = new GameHistoryEntry();
         e.setId(UUID.randomUUID().toString());
         e.setInteractiveSessionId(session.getId());
@@ -243,22 +248,26 @@ public class GameHistoryService {
     }
 
     private boolean isUserGuest(String userId) {
-        if (userId == null) return false;
+        if (userId == null)
+            return false;
         return userRepository.findById(userId)
-                .map(u -> Boolean.TRUE.equals(u.getIsGuest()))
+                .map(User::isGuest)
                 .orElse(false);
     }
 
     private String resolveTeamName(InteractiveSession session, String teamId) {
-        if (teamId == null || session.getTeams() == null) return null;
+        if (teamId == null || session.getTeams() == null)
+            return null;
         for (Team t : session.getTeams()) {
-            if (teamId.equals(t.getId())) return t.getName();
+            if (teamId.equals(t.getId()))
+                return t.getName();
         }
         return null;
     }
 
     private long computeDurationMs(InteractiveSession session) {
-        if (session.getStartedAt() == null || session.getEndedAt() == null) return 0L;
+        if (session.getStartedAt() == null || session.getEndedAt() == null)
+            return 0L;
         return Duration.between(session.getStartedAt(), session.getEndedAt()).toMillis();
     }
 
@@ -269,22 +278,28 @@ public class GameHistoryService {
      * Counter rolls over when the previous period start falls in an earlier
      * calendar month.
      */
-    private void bumpHostMonthlyCounter(String hostUserId, LocalDateTime playedAt) {
-        if (hostUserId == null) return;
+    private void bumpHostMonthlyCounter(String hostUserId, Instant playedAt) {
+        if (hostUserId == null)
+            return;
         userRepository.findById(hostUserId).ifPresent(user -> {
-            if (Boolean.TRUE.equals(user.getIsGuest())) return;
+            if (user.isGuest())
+                return;
             Membership membership = user.getMembership();
             if (membership == null) {
                 membership = new Membership();
                 user.setMembership(membership);
             }
-            LocalDateTime periodStart = membership.getMonthlyCountPeriodStart();
-            boolean newMonth = periodStart == null
-                    || periodStart.getYear() != playedAt.getYear()
-                    || periodStart.getMonthValue() != playedAt.getMonthValue();
+            Instant periodStart = membership.getMonthlyCountPeriodStart();
+            java.time.LocalDate periodDay = periodStart == null ? null
+                    : periodStart.atZone(java.time.ZoneOffset.UTC).toLocalDate();
+            java.time.LocalDate playedDay = playedAt.atZone(java.time.ZoneOffset.UTC).toLocalDate();
+            boolean newMonth = periodDay == null
+                    || periodDay.getYear() != playedDay.getYear()
+                    || periodDay.getMonthValue() != playedDay.getMonthValue();
             if (newMonth) {
                 membership.setMonthlyInteractiveSessionCount(1);
-                membership.setMonthlyCountPeriodStart(playedAt.withDayOfMonth(1).toLocalDate().atStartOfDay());
+                membership.setMonthlyCountPeriodStart(
+                        playedDay.withDayOfMonth(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant());
             } else {
                 membership.setMonthlyInteractiveSessionCount(
                         membership.getMonthlyInteractiveSessionCount() + 1);

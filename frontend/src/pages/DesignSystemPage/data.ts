@@ -323,66 +323,85 @@ export const semanticTokenGroups: SemanticTokenGroup[] = [
   },
 ];
 
+// Player identity is the session-scoped playerId (never the underlying userId).
+// The mocks use stable "player-<name>" handles so design-system snapshots stay
+// readable across regenerations.
 export const playersData: ScoreBoardProps = {
   players: [
     {
-      userId: "user-001",
-      userName: "Frodo Baggins",
-      pictureUrl: "https://example.com/avatars/frodo.jpg",
-      isGuest: false,
+      playerId: "player-001",
+      user: {
+        name: "Frodo Baggins",
+        pictureUrl: "https://example.com/avatars/frodo.jpg",
+        guest: false,
+      },
       score: 450,
     },
     {
-      userId: "user-002",
-      userName: "Samwise Gamgee",
-      pictureUrl: "https://example.com/avatars/sam.jpg",
-      isGuest: false,
+      playerId: "player-002",
+      user: {
+        name: "Samwise Gamgee",
+        pictureUrl: "https://example.com/avatars/sam.jpg",
+        guest: false,
+      },
       score: 500,
     },
     {
-      userId: "user-003",
-      userName: "Gandalf the Grey",
-      pictureUrl: "https://example.com/avatars/gandalf.jpg",
-      isGuest: false,
+      playerId: "player-003",
+      user: {
+        name: "Gandalf the Grey",
+        pictureUrl: "https://example.com/avatars/gandalf.jpg",
+        guest: false,
+      },
       score: 9001,
     },
     {
-      userId: "user-004",
-      userName: "Aragorn",
-      pictureUrl: "https://example.com/avatars/aragorn.jpg",
-      isGuest: false,
+      playerId: "player-004",
+      user: {
+        name: "Aragorn",
+        pictureUrl: "https://example.com/avatars/aragorn.jpg",
+        guest: false,
+      },
       score: 850,
     },
     {
-      userId: "user-005",
-      userName: "Legolas Greenleaf",
-      pictureUrl: "https://example.com/avatars/legolas.jpg",
-      isGuest: false,
+      playerId: "player-005",
+      user: {
+        name: "Legolas Greenleaf",
+        pictureUrl: "https://example.com/avatars/legolas.jpg",
+        guest: false,
+      },
       score: 770,
     },
     {
-      userId: "user-006",
-      userName: "Gimli Son of Gloin",
-      pictureUrl: "https://example.com/avatars/gimli.jpg",
-      isGuest: false,
+      playerId: "player-006",
+      user: {
+        name: "Gimli Son of Gloin",
+        pictureUrl: "https://example.com/avatars/gimli.jpg",
+        guest: false,
+      },
       score: 769,
     },
     {
-      userId: "guest-999",
-      userName: "Strider",
-      pictureUrl: "",
-      isGuest: true,
+      playerId: "player-guest-999",
+      user: {
+        name: "Strider",
+        pictureUrl: "",
+        guest: true,
+      },
       score: 120,
     },
     {
-      userId: "guest-888",
-      userName: "Peregrin Took",
-      pictureUrl: "https://example.com/avatars/pippin.jpg",
-      isGuest: true,
+      playerId: "player-guest-888",
+      user: {
+        name: "Peregrin Took",
+        pictureUrl: "https://example.com/avatars/pippin.jpg",
+        guest: true,
+      },
       score: 50,
     },
   ],
-  currentUserId: "user-001",
+  currentPlayerId: "player-001",
 };
 
 export const formSampleData = {
@@ -414,7 +433,7 @@ export const RoundResultData = {
   },
   playerResults: [
     {
-      userId: "user-003",
+      playerId: "player-003",
       userName: "Gandalf the Grey",
       selectedOption: 9,
       wasCorrect: true,
@@ -422,7 +441,7 @@ export const RoundResultData = {
       totalScore: 9101,
     },
     {
-      userId: "user-002",
+      playerId: "player-002",
       userName: "Samwise Gamgee",
       selectedOption: 9,
       wasCorrect: true,
@@ -430,7 +449,7 @@ export const RoundResultData = {
       totalScore: 600,
     },
     {
-      userId: "user-005",
+      playerId: "player-005",
       userName: "Legolas Greenleaf",
       selectedOption: 9,
       wasCorrect: true,
@@ -438,7 +457,7 @@ export const RoundResultData = {
       totalScore: 870,
     },
     {
-      userId: "user-006",
+      playerId: "player-006",
       userName: "Gimli Son of Gloin",
       selectedOption: 9,
       wasCorrect: true,
@@ -446,7 +465,7 @@ export const RoundResultData = {
       totalScore: 869,
     },
     {
-      userId: "user-001",
+      playerId: "player-001",
       userName: "Frodo Baggins",
       selectedOption: 9,
       wasCorrect: true,
@@ -454,7 +473,7 @@ export const RoundResultData = {
       totalScore: 550,
     },
     {
-      userId: "user-004",
+      playerId: "player-004",
       userName: "Aragorn",
       selectedOption: 9,
       wasCorrect: true,
@@ -462,7 +481,7 @@ export const RoundResultData = {
       totalScore: 950,
     },
     {
-      userId: "guest-888",
+      playerId: "player-guest-888",
       userName: "Peregrin Took",
       selectedOption: 2,
       wasCorrect: false,
@@ -470,7 +489,7 @@ export const RoundResultData = {
       totalScore: 50,
     },
     {
-      userId: "guest-999",
+      playerId: "player-guest-999",
       userName: "Strider",
       selectedOption: 1,
       wasCorrect: false,
@@ -484,14 +503,14 @@ export const RoundResultData = {
     tallies: [
       {
         submissionId: "sub-aragorn",
-        userId: "user-004",
+        playerId: "player-004",
         userName: "Aragorn",
         payload: { kind: "TextAnswer" as const, text: "Strider of the North" },
         voteCount: 3,
       },
       {
         submissionId: "sub-frodo",
-        userId: "user-001",
+        playerId: "player-001",
         userName: "Frodo Baggins",
         payload: {
           kind: "TextAnswer" as const,
@@ -501,13 +520,13 @@ export const RoundResultData = {
       },
       {
         submissionId: "sub-gimli",
-        userId: "user-006",
+        playerId: "player-006",
         userName: "Gimli",
         payload: { kind: "TextAnswer" as const, text: "And my axe!" },
         voteCount: 1,
       },
     ],
-    winnerUserIds: ["user-004"],
+    winnerPlayerIds: ["player-004"],
     bonusAwarded: 50,
   },
 };

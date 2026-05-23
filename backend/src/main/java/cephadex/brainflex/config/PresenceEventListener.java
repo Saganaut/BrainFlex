@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.messaging.SessionConnectedEvent;
 import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.OAuthProviderService;
 import cephadex.brainflex.service.PresenceService;
 
@@ -34,13 +34,15 @@ public class PresenceEventListener {
     @EventListener
     public void onSessionConnected(SessionConnectedEvent event) {
         String userId = resolveUserId(event.getUser());
-        if (userId != null) presenceService.onConnect(userId);
+        if (userId != null)
+            presenceService.onConnect(userId);
     }
 
     @EventListener
     public void onSessionDisconnected(SessionDisconnectEvent event) {
         String userId = resolveUserId(event.getUser());
-        if (userId != null) presenceService.onDisconnect(userId);
+        if (userId != null)
+            presenceService.onDisconnect(userId);
     }
 
     /**
@@ -48,10 +50,13 @@ public class PresenceEventListener {
      * Returns null for anonymous sessions (which we don't track presence for).
      */
     private String resolveUserId(Principal principal) {
-        if (principal == null) return null;
+        if (principal == null)
+            return null;
         String name = principal.getName();
-        if (name == null) return null;
-        if (name.startsWith("guest:")) return name.substring(6);
+        if (name == null)
+            return null;
+        if (name.startsWith("guest:"))
+            return name.substring(6);
         return oAuthProviderService.findByAnyProviderId(name)
                 .map(User::getId)
                 .orElse(null);

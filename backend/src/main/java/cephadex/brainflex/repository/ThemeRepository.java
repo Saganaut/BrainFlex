@@ -4,8 +4,7 @@ import java.util.List;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.Theme;
-
+import cephadex.brainflex.model.theme.Theme;
 public interface ThemeRepository extends MongoRepository<Theme, String> {
 
     List<Theme> findByOwnerId(String ownerId);

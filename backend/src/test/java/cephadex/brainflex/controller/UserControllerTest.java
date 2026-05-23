@@ -1,6 +1,6 @@
 package cephadex.brainflex.controller;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,8 +22,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import cephadex.brainflex.model.PlayerStats;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.PlayerStats;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.UserService;
 
@@ -47,7 +47,7 @@ class UserControllerTest {
         User user = new User();
         user.setId("1");
         user.setUserName("testuser");
-        user.setIsGuest(true);
+        user.setGuest(true);
         user.setPictureUrl("pic.jpg");
         PlayerStats stats = new PlayerStats();
         stats.setGamesPlayed(10);
@@ -79,12 +79,12 @@ class UserControllerTest {
         user.setEmail("test@example.com");
         user.setName("Test User");
         user.setUserName("testuser");
-        user.setIsGuest(false);
+        user.setGuest(false);
         user.setGoogleId("google123");
         user.setPictureUrl("pic.jpg");
         user.setStats(new PlayerStats());
-        user.setLastLogin(LocalDateTime.now());
-        user.setCreatedAt(LocalDateTime.now());
+        user.setLastLogin(Instant.now());
+        user.setCreatedAt(Instant.now());
 
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
 

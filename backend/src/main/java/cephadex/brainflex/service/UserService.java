@@ -1,32 +1,29 @@
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.springframework.context.annotation.Lazy;
-
 import cephadex.brainflex.dto.RegisterRequest;
 import cephadex.brainflex.dto.UpdateProfileRequest;
-import cephadex.brainflex.model.NotificationPrefs;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.OAuthProviderService.ProviderProfile;
 import cephadex.brainflex.service.email.EmailCategory;
 import cephadex.brainflex.service.email.EmailJob;
 import cephadex.brainflex.service.email.EmailService;
 import cephadex.brainflex.service.email.EmailTemplate;
+import cephadex.brainflex.model.user.NotificationPrefs;
 
 @Service
 public class UserService {
@@ -38,15 +35,17 @@ public class UserService {
     private final EmailService emailService;
     private final OrganizationService organizationService;
 
-    /** {@code @Lazy} on {@link OrganizationService} keeps Spring's bean graph
-     *  acyclic — OrganizationService injects UserRepository directly, while the
-     *  OAuth success handler in SecurityConfig wires both services together
-     *  through constructor injection on UserService. Lazy resolution closes
-     *  the would-be cycle without forcing a setter-based wiring. */
+    /**
+     * {@code @Lazy} on {@link OrganizationService} keeps Spring's bean graph
+     * acyclic — OrganizationService injects UserRepository directly, while the
+     * OAuth success handler in SecurityConfig wires both services together
+     * through constructor injection on UserService. Lazy resolution closes
+     * the would-be cycle without forcing a setter-based wiring.
+     */
     public UserService(UserRepository userRepository,
-                       OAuthProviderService oAuthProviderService,
-                       EmailService emailService,
-                       @Lazy OrganizationService organizationService) {
+            OAuthProviderService oAuthProviderService,
+            EmailService emailService,
+            @Lazy OrganizationService organizationService) {
         this.userRepository = userRepository;
         this.oAuthProviderService = oAuthProviderService;
         this.emailService = emailService;
@@ -60,7 +59,7 @@ public class UserService {
                 .findByProviderId(profile.provider(), profile.providerId());
         if (existingByProvider.isPresent()) {
             User existing = existingByProvider.get();
-            if (!Boolean.TRUE.equals(existing.getIsClosed()))
+            if (!existing.isClosed())
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "User already registered");
 
             // Reopen a closed account — username check excludes the user's own record
@@ -68,15 +67,15 @@ public class UserService {
             if (usernameTaken.isPresent() && !usernameTaken.get().getId().equals(existing.getId()))
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
 
-            existing.setIsClosed(false);
+            existing.setClosed(false);
             existing.setClosedAt(null);
             existing.setUserName(request.username());
             existing.setNewsletter(request.newsletter());
             existing.setPictureUrl(profile.picture());
             existing.setName(profile.name());
-            existing.setLastLogin(LocalDateTime.now());
+            existing.setLastLogin(Instant.now());
             if (existing.getEmailVerifiedAt() == null)
-                existing.setEmailVerifiedAt(LocalDateTime.now());
+                existing.setEmailVerifiedAt(Instant.now());
             User reopened = userRepository.save(existing);
             // Reopening sends the welcome email again — the user just went
             // through the same flow as a fresh sign-up and seeing a "welcome
@@ -94,10 +93,10 @@ public class UserService {
         user.setName(profile.name());
         user.setPictureUrl(profile.picture());
         user.setUserName(request.username());
-        user.setIsGuest(false);
+        user.setGuest(false);
         user.setNewsletter(request.newsletter());
-        user.setLastLogin(LocalDateTime.now());
-        user.setEmailVerifiedAt(LocalDateTime.now());
+        user.setLastLogin(Instant.now());
+        user.setEmailVerifiedAt(Instant.now());
 
         // Chunk 20 — materialise prefs at registration so reads never have to
         // chain through withDefaults() once the migration backfills legacy users.
@@ -120,8 +119,10 @@ public class UserService {
     }
 
     private static String firstNonBlank(String a, String b) {
-        if (a != null && !a.isBlank()) return a;
-        if (b != null && !b.isBlank()) return b;
+        if (a != null && !a.isBlank())
+            return a;
+        if (b != null && !b.isBlank())
+            return b;
         return null;
     }
 
@@ -131,8 +132,8 @@ public class UserService {
 
         User user = new User();
         user.setUserName(username);
-        user.setIsGuest(true);
-        user.setLastLogin(LocalDateTime.now());
+        user.setGuest(true);
+        user.setLastLogin(Instant.now());
 
         return userRepository.save(user);
     }
@@ -165,14 +166,15 @@ public class UserService {
     }
 
     public void closeAccount(User user) {
-        user.setIsClosed(true);
-        user.setClosedAt(LocalDateTime.now());
+        user.setClosed(true);
+        user.setClosedAt(Instant.now());
         userRepository.save(user);
         sendAccountClosedEmail(user);
     }
 
     private void sendWelcomeEmail(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) return;
+        if (user.getEmail() == null || user.getEmail().isBlank())
+            return;
         try {
             Map<String, Object> model = new HashMap<>();
             model.put("displayName", displayNameOf(user));
@@ -190,7 +192,8 @@ public class UserService {
     }
 
     private void sendAccountClosedEmail(User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank()) return;
+        if (user.getEmail() == null || user.getEmail().isBlank())
+            return;
         try {
             Map<String, Object> model = new HashMap<>();
             model.put("displayName", displayNameOf(user));
@@ -207,8 +210,10 @@ public class UserService {
     }
 
     private static String displayNameOf(User user) {
-        if (user.getName() != null && !user.getName().isBlank()) return user.getName();
-        if (user.getUserName() != null && !user.getUserName().isBlank()) return user.getUserName();
+        if (user.getName() != null && !user.getName().isBlank())
+            return user.getName();
+        if (user.getUserName() != null && !user.getUserName().isBlank())
+            return user.getUserName();
         return "there";
     }
 
@@ -243,7 +248,8 @@ public class UserService {
 
     /**
      * Applies end-of-game stat changes to a registered user.
-     * Called by InteractiveSessionService after each game finishes; guests are excluded
+     * Called by InteractiveSessionService after each game finishes; guests are
+     * excluded
      * because their accounts are ephemeral and not tracked on the leaderboard.
      */
     public void updateStatsAfterGame(String userId, int finalScore, boolean won) {
@@ -253,7 +259,7 @@ public class UserService {
             stats.setTotalPoints(stats.getTotalPoints() + finalScore);
             if (finalScore > stats.getHighScore())
                 stats.setHighScore(finalScore);
-            stats.setCurrentStreak(won ? stats.getCurrentStreak() + 1 : 0);
+            stats.setDailyLoginStreak(won ? stats.getDailyLoginStreak() + 1 : 0);
             userRepository.save(user);
         });
     }

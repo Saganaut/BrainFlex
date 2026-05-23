@@ -12,8 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import cephadex.brainflex.model.DeckRating;
-
+import cephadex.brainflex.model.deck.DeckRating;
 public interface DeckRatingRepository extends MongoRepository<DeckRating, String> {
 
     Optional<DeckRating> findByDeckIdAndUserId(String deckId, String userId);

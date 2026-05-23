@@ -1,5 +1,5 @@
 /**
- * Business logic for {@link cephadex.brainflex.model.DeckComment} threads.
+ * Business logic for {@link cephadex.brainflex.model.deck.DeckComment} threads.
  *
  * Two-level thread model: top-level comments (parent=null) and replies (parent
  * pointing at a top-level id). Replies of replies are not modelled — the
@@ -15,7 +15,7 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -31,10 +31,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.model.DeckComment;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.deck.DeckComment;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckCommentRepository;
+import cephadex.brainflex.model.shared.UserSnapshot;
 
 @Service
 public class DeckCommentService {
@@ -124,10 +124,11 @@ public class DeckCommentService {
         if (!caller.getId().equals(authorIdOf(row))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the author can delete this comment");
         }
-        if (row.isDeleted()) return row;
+        if (row.isDeleted())
+            return row;
         row.setDeleted(true);
         row.setBody(REMOVED_BODY);
-        row.setDeletedAt(LocalDateTime.now());
+        row.setDeletedAt(Instant.now());
         return commentRepository.save(row);
     }
 
@@ -151,14 +152,14 @@ public class DeckCommentService {
         Update update = new Update()
                 .set("upvoterUserIds", voters)
                 .set("upvotes", voters.size())
-                .set("updatedAt", LocalDateTime.now());
+                .set("updatedAt", Instant.now());
         mongoTemplate.updateFirst(
                 new Query(Criteria.where("_id").is(commentId)),
                 update,
                 DeckComment.class);
         row.setUpvoterUserIds(voters);
         row.setUpvotes(voters.size());
-        row.setUpdatedAt(LocalDateTime.now());
+        row.setUpdatedAt(Instant.now());
         return row;
     }
 
@@ -167,7 +168,9 @@ public class DeckCommentService {
         return commentRepository.findAllByDeckIdAndParentCommentIdIsNull(deckId, pageable);
     }
 
-    /** Page of replies to a top-level comment, oldest first (natural thread order). */
+    /**
+     * Page of replies to a top-level comment, oldest first (natural thread order).
+     */
     public Page<DeckComment> listReplies(String deckId, String parentCommentId, Pageable pageable) {
         return commentRepository.findAllByDeckIdAndParentCommentId(deckId, parentCommentId, pageable);
     }

@@ -9,17 +9,24 @@
  */
 package cephadex.brainflex.controller;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -31,17 +38,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckCollection;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckCollection;
 import cephadex.brainflex.model.enums.DeckVisibility;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.DeckCollectionService;
 import cephadex.brainflex.service.DeckFavoriteService;
 import cephadex.brainflex.service.DeckImageHydrationService;
@@ -54,13 +55,19 @@ import cephadex.brainflex.service.UserService;
 @WithMockUser
 class DeckCollectionControllerTest {
 
-    @Autowired private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-    @MockitoBean private DeckCollectionService collectionService;
-    @MockitoBean private UserService userService;
-    @MockitoBean private DeckImageHydrationService deckImageHydrationService;
-    @MockitoBean private DeckTagHydrationService deckTagHydrationService;
-    @MockitoBean private DeckFavoriteService deckFavoriteService;
+    @MockitoBean
+    private DeckCollectionService collectionService;
+    @MockitoBean
+    private UserService userService;
+    @MockitoBean
+    private DeckImageHydrationService deckImageHydrationService;
+    @MockitoBean
+    private DeckTagHydrationService deckTagHydrationService;
+    @MockitoBean
+    private DeckFavoriteService deckFavoriteService;
 
     private User caller;
 
@@ -92,7 +99,7 @@ class DeckCollectionControllerTest {
         col.setDeckIds(new java.util.ArrayList<>(List.of("deck-1")));
         Deck deck = new Deck();
         deck.setId("deck-1");
-        deck.setName("Deck One");
+        deck.getContent().setName("Deck One");
         deck.setVisibility(DeckVisibility.PUBLIC);
         when(collectionService.getViewable(any(), eq("col-1"))).thenReturn(col);
         when(collectionService.resolveDecks(eq(col), any())).thenReturn(List.of(deck));
@@ -127,9 +134,9 @@ class DeckCollectionControllerTest {
         when(collectionService.create(eq(caller), any())).thenReturn(col);
 
         mockMvc.perform(post("/api/collections")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"New Folder\"}"))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"New Folder\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("col-2"))
                 .andExpect(jsonPath("$.name").value("New Folder"));
@@ -141,10 +148,10 @@ class DeckCollectionControllerTest {
         when(collectionService.update(eq("col-1"), eq(caller), any())).thenReturn(col);
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .put("/api/collections/col-1")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Renamed\"}"))
+                .put("/api/collections/col-1")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"name\":\"Renamed\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Renamed"));
     }
@@ -164,9 +171,9 @@ class DeckCollectionControllerTest {
         when(collectionService.addDeck(eq("col-1"), eq(caller), eq("deck-1"), eq(null))).thenReturn(col);
 
         mockMvc.perform(post("/api/collections/col-1/decks")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"deckId\":\"deck-1\"}"))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"deckId\":\"deck-1\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.deckIds[0]").value("deck-1"));
     }
@@ -189,9 +196,9 @@ class DeckCollectionControllerTest {
                 .thenReturn(col);
 
         mockMvc.perform(patch("/api/collections/col-1/decks")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"deckIds\":[\"deck-2\",\"deck-1\"]}"))
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"deckIds\":[\"deck-2\",\"deck-1\"]}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.deckIds[0]").value("deck-2"))
                 .andExpect(jsonPath("$.deckIds[1]").value("deck-1"));
@@ -206,9 +213,7 @@ class DeckCollectionControllerTest {
         return col;
     }
 
-    private static org.springframework.security.test.web.servlet.request
-            .SecurityMockMvcRequestPostProcessors.CsrfRequestPostProcessor csrf() {
-        return org.springframework.security.test.web.servlet.request
-                .SecurityMockMvcRequestPostProcessors.csrf();
+    private static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.CsrfRequestPostProcessor csrf() {
+        return org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf();
     }
 }

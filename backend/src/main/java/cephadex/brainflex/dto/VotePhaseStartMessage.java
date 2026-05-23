@@ -12,21 +12,21 @@
  */
 package cephadex.brainflex.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.element.DeckElement;
 
 public record VotePhaseStartMessage(
-        int round,
-        DeckElement element,                 // still redacted (no correct answer)
-        List<AnonymizedSubmission> submissions,
-        int timePerVote,
-        LocalDateTime phaseStartedAt) {
+                int round,
+                DeckElement element, // still redacted (no correct answer)
+                List<AnonymizedSubmission> submissions,
+                int timePerVote,
+                Instant phaseStartedAt) {
 
-    public record AnonymizedSubmission(
-            String submissionId,
-            AnswerPayload payload) {
-    }
+        public record AnonymizedSubmission(
+                        String submissionId,
+                        AnswerPayload payload) {
+        }
 }

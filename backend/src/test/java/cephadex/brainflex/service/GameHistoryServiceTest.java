@@ -12,7 +12,7 @@
  */
 package cephadex.brainflex.service;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,15 +33,15 @@ import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.GameHistoryEntry;
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionPlayer;
-import cephadex.brainflex.model.Membership;
-import cephadex.brainflex.model.PlayerPlacement;
-import cephadex.brainflex.model.Team;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserSnapshot;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.session.GameHistoryEntry;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionPlayer;
+import cephadex.brainflex.model.org.Membership;
+import cephadex.brainflex.model.session.PlayerPlacement;
+import cephadex.brainflex.model.org.Team;
+import cephadex.brainflex.model.user.User;
+import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.GameHistoryRepository;
 import cephadex.brainflex.repository.UserRepository;
@@ -70,7 +70,7 @@ class GameHistoryServiceTest {
 
         Deck deck = new Deck();
         deck.setId("deck-1");
-        deck.setName("LOTR Trivia");
+        deck.getContent().setName("LOTR Trivia");
         when(deckRepository.findById("deck-1")).thenReturn(Optional.of(deck));
         User host = registeredUser("host-1");
         when(userRepository.findById("host-1")).thenReturn(Optional.of(host));
@@ -140,13 +140,13 @@ class GameHistoryServiceTest {
     @Test
     void recordFinish_NewMonth_ResetsCounterToOne() {
         InteractiveSession session = sessionWithHost("host-1", "Kevin");
-        session.setEndedAt(LocalDateTime.of(2026, 6, 1, 9, 0));
+        session.setEndedAt(Instant.parse("2026-06-01T09:00:00Z"));
         session.getPlayers().add(player("host-1", "Kevin", false));
         List<PlayerPlacement> placements = List.of(placement("host-1", "Kevin", 1, 50, false));
 
         User host = registeredUser("host-1");
         host.getMembership().setMonthlyInteractiveSessionCount(7);
-        host.getMembership().setMonthlyCountPeriodStart(LocalDateTime.of(2026, 5, 1, 0, 0));
+        host.getMembership().setMonthlyCountPeriodStart(Instant.parse("2026-05-01T00:00:00Z"));
         when(userRepository.findById("host-1")).thenReturn(Optional.of(host));
         when(deckRepository.findById("deck-1")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -157,19 +157,19 @@ class GameHistoryServiceTest {
         verify(userRepository).save(captor.capture());
         Membership after = captor.getValue().getMembership();
         assertEquals(1, after.getMonthlyInteractiveSessionCount(), "new month resets to 1");
-        assertEquals(LocalDateTime.of(2026, 6, 1, 0, 0), after.getMonthlyCountPeriodStart());
+        assertEquals(Instant.parse("2026-06-01T00:00:00Z"), after.getMonthlyCountPeriodStart());
     }
 
     @Test
     void recordFinish_SameMonth_IncrementsCounter() {
         InteractiveSession session = sessionWithHost("host-1", "Kevin");
-        session.setEndedAt(LocalDateTime.of(2026, 5, 20, 9, 0));
+        session.setEndedAt(Instant.parse("2026-05-20T09:00:00Z"));
         session.getPlayers().add(player("host-1", "Kevin", false));
         List<PlayerPlacement> placements = List.of(placement("host-1", "Kevin", 1, 50, false));
 
         User host = registeredUser("host-1");
         host.getMembership().setMonthlyInteractiveSessionCount(3);
-        host.getMembership().setMonthlyCountPeriodStart(LocalDateTime.of(2026, 5, 1, 0, 0));
+        host.getMembership().setMonthlyCountPeriodStart(Instant.parse("2026-05-01T00:00:00Z"));
         when(userRepository.findById("host-1")).thenReturn(Optional.of(host));
         when(deckRepository.findById("deck-1")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -189,7 +189,7 @@ class GameHistoryServiceTest {
 
         User guest = new User();
         guest.setId("guest-h");
-        guest.setIsGuest(true);
+        guest.setGuest(true);
         guest.setMembership(new Membership());
         when(userRepository.findById("guest-h")).thenReturn(Optional.of(guest));
         when(deckRepository.findById("deck-1")).thenReturn(Optional.empty());
@@ -264,8 +264,8 @@ class GameHistoryServiceTest {
         s.setHostName(hostName);
         s.setDeckId("deck-1");
         s.setPlayers(new ArrayList<>());
-        s.setStartedAt(LocalDateTime.of(2026, 5, 20, 8, 0));
-        s.setEndedAt(LocalDateTime.of(2026, 5, 20, 8, 30));
+        s.setStartedAt(Instant.parse("2026-05-20T08:00:00Z"));
+        s.setEndedAt(Instant.parse("2026-05-20T08:30:00Z"));
         return s;
     }
 
@@ -289,7 +289,7 @@ class GameHistoryServiceTest {
     private User registeredUser(String id) {
         User u = new User();
         u.setId(id);
-        u.setIsGuest(false);
+        u.setGuest(false);
         u.setMembership(new Membership());
         return u;
     }

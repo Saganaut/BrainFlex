@@ -259,7 +259,7 @@ const DrawingView = ({
       .map((r) => {
         if (r.payload?.kind !== "DrawingAnswer") return null;
         return {
-          id: r.userId,
+          id: r.playerId,
           authorName: r.userName,
           strokes: r.payload.strokes ?? [],
         };

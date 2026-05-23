@@ -36,7 +36,8 @@ interface TeamPickerProps {
   roomCode: string;
   teams: Team[];
   players: InteractiveSessionPlayerDto[];
-  currentUserId?: string;
+  // Session-scoped playerId of the viewer.
+  currentPlayerId?: string;
   isHost: boolean;
   autoBalanceTeams: boolean;
 }
@@ -61,7 +62,7 @@ const TeamPicker = ({
   roomCode,
   teams,
   players,
-  currentUserId,
+  currentPlayerId,
   isHost,
   autoBalanceTeams,
 }: TeamPickerProps) => {
@@ -71,26 +72,26 @@ const TeamPicker = ({
 
   // The current player's team membership, used to highlight the active card
   // and to gate the "Auto-assign me" affordance.
-  const myTeamId = currentUserId
-    ? players.find((p) => p.userId === currentUserId)?.teamId
+  const myTeamId = currentPlayerId
+    ? players.find((p) => p.playerId === currentPlayerId)?.teamId
     : undefined;
 
   const handleJoin = (teamId: string | undefined) => {
-    if (!currentUserId || !teamId || teamId === myTeamId) return;
+    if (!currentPlayerId || !teamId || teamId === myTeamId) return;
     void movePlayerToTeam({
       roomCode,
-      userId: currentUserId,
+      playerId: currentPlayerId,
       teamMoveRequest: { teamId },
     });
   };
 
   const handleAutoAssign = () => {
-    if (!currentUserId) return;
+    if (!currentPlayerId) return;
     // Sentinel value the backend treats as "auto-balance me into the
     // smallest team" — mirrors the lobby join path's autoBalance branch.
     void movePlayerToTeam({
       roomCode,
-      userId: currentUserId,
+      playerId: currentPlayerId,
       teamMoveRequest: { teamId: "__AUTO__" },
     });
   };
@@ -138,10 +139,10 @@ const TeamPicker = ({
             onJoin={() => {
               handleJoin(team.id);
             }}
-            onMoveMember={(targetUserId, targetTeamId) => {
+            onMoveMember={(targetPlayerId, targetTeamId) => {
               void movePlayerToTeam({
                 roomCode,
-                userId: targetUserId,
+                playerId: targetPlayerId,
                 teamMoveRequest: { teamId: targetTeamId },
               });
             }}
@@ -168,7 +169,8 @@ interface TeamCardProps {
   isMyTeam: boolean;
   isHost: boolean;
   onJoin: () => void;
-  onMoveMember: (userId: string, teamId: string) => void;
+  // Receives the session-scoped playerId of the target.
+  onMoveMember: (playerId: string, teamId: string) => void;
   onDeleteConfirm: ReturnType<typeof useConfirm>;
   roomCode: string;
 }
@@ -203,7 +205,10 @@ const TeamCard = ({
     void updateTeam({
       roomCode,
       teamId: team.id,
-      teamCrudRequest: { name: draftName.trim() || team.name, color: draftColor },
+      teamCrudRequest: {
+        name: draftName.trim() || team.name,
+        color: draftColor,
+      },
     });
     setEditing(false);
   };
@@ -267,18 +272,22 @@ const TeamCard = ({
       {members.length > 0 ? (
         <ul className={styles.memberList}>
           {members.map((m) => (
-            <li key={m.userId} className={styles.member}>
-              <span className={styles.memberName}>{m.userName ?? "?"}</span>
-              {isHost && m.userId && allTeams.length > 1 && (
+            <li key={m.playerId} className={styles.member}>
+              <span className={styles.memberName}>{m.user?.name ?? "?"}</span>
+              {isHost && m.playerId && allTeams.length > 1 && (
                 <select
                   className={styles.moveSelect}
                   value=''
-                  aria-label={`Move ${m.userName ?? "player"} to another team`}
+                  aria-label={`Move ${m.user?.name ?? "player"} to another team`}
                   onChange={(e) => {
                     const targetTeamId = e.target.value;
-                    if (!targetTeamId || targetTeamId === team.id || !m.userId)
+                    if (
+                      !targetTeamId ||
+                      targetTeamId === team.id ||
+                      !m.playerId
+                    )
                       return;
-                    onMoveMember(m.userId, targetTeamId);
+                    onMoveMember(m.playerId, targetTeamId);
                     // Reset to placeholder so the same destination can be
                     // picked again for the next member without re-renders
                     // freezing the bound value.
@@ -307,15 +316,9 @@ const TeamCard = ({
             Join
           </Btn>
         )}
-        {!editing && isMyTeam && (
-          <span className={styles.youTag}>You</span>
-        )}
+        {!editing && isMyTeam && <span className={styles.youTag}>You</span>}
         {isHost && !editing && (
-          <Btn
-            size='sm'
-            type='button'
-            variant='secondary'
-            onClick={startEdit}>
+          <Btn size='sm' type='button' variant='secondary' onClick={startEdit}>
             Edit
           </Btn>
         )}
@@ -333,11 +336,7 @@ const TeamCard = ({
         )}
         {editing && (
           <>
-            <Btn
-              size='sm'
-              type='button'
-              disabled={updating}
-              onClick={saveEdit}>
+            <Btn size='sm' type='button' disabled={updating} onClick={saveEdit}>
               Save
             </Btn>
             <Btn

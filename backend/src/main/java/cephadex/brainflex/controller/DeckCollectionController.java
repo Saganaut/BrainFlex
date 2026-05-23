@@ -1,5 +1,5 @@
 /**
- * REST endpoints for the {@link cephadex.brainflex.model.DeckCollection}
+ * REST endpoints for the {@link cephadex.brainflex.model.deck.DeckCollection}
  * surface — owner-scoped CRUD plus the four list-mutation paths (add deck,
  * remove deck, reorder, soft-update metadata).
  *
@@ -43,14 +43,14 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.AddDeckToCollectionRequest;
 import cephadex.brainflex.dto.CreateDeckCollectionRequest;
-import cephadex.brainflex.dto.DeckCollectionDTO;
-import cephadex.brainflex.dto.DeckDTO;
+import cephadex.brainflex.dto.DeckCollectionResponse;
+import cephadex.brainflex.dto.DeckResponse;
 import cephadex.brainflex.dto.Page;
 import cephadex.brainflex.dto.ReorderCollectionDecksRequest;
 import cephadex.brainflex.dto.UpdateDeckCollectionRequest;
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckCollection;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckCollection;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.DeckCollectionService;
 import cephadex.brainflex.service.DeckFavoriteService;
 import cephadex.brainflex.service.DeckImageHydrationService;
@@ -84,7 +84,7 @@ public class DeckCollectionController {
     /** Paginated list of collections owned by the caller, newest-first. */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/mine")
-    public Page<DeckCollectionDTO> listMyCollections(
+    public Page<DeckCollectionResponse> listMyCollections(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             Authentication authentication) {
@@ -93,11 +93,12 @@ public class DeckCollectionController {
         int safeSize = Math.max(1, Math.min(50, size));
         PageRequest pageRequest = PageRequest.of(
                 safePage, safeSize, Sort.by("updatedAt").descending());
-        org.springframework.data.domain.Page<DeckCollection> rows = collectionService.listForOwner(caller.getId(), pageRequest);
-        List<DeckCollectionDTO> items = new ArrayList<>(rows.getNumberOfElements());
+        org.springframework.data.domain.Page<DeckCollection> rows = collectionService.listForOwner(caller.getId(),
+                pageRequest);
+        List<DeckCollectionResponse> items = new ArrayList<>(rows.getNumberOfElements());
         for (DeckCollection col : rows.getContent()) {
             collectionService.hydrateCover(col);
-            items.add(DeckCollectionDTO.summary(col));
+            items.add(DeckCollectionResponse.summary(col));
         }
         boolean hasMore = (long) (safePage + 1) * safeSize < rows.getTotalElements();
         return new Page<>(items, safePage, safeSize, rows.getTotalElements(), hasMore);
@@ -109,7 +110,7 @@ public class DeckCollectionController {
      * counter so a future "popular collections" sort has data to work with.
      */
     @GetMapping("/{id}")
-    public DeckCollectionDTO getCollection(@PathVariable String id, Authentication authentication) {
+    public DeckCollectionResponse getCollection(@PathVariable String id, Authentication authentication) {
         Optional<User> caller = userService.resolveRegisteredUser(authentication);
         DeckCollection col = collectionService.getViewable(caller, id);
         boolean isOwner = caller.map(u -> u.getId().equals(col.getOwnerUserId())).orElse(false);
@@ -125,34 +126,34 @@ public class DeckCollectionController {
         Set<String> favorites = caller
                 .map(u -> deckFavoriteService.favoritedDeckIds(u.getId(), idsOf(decks)))
                 .orElse(Set.of());
-        List<DeckDTO> deckDtos = new ArrayList<>(decks.size());
+        List<DeckResponse> deckResponses = new ArrayList<>(decks.size());
         for (Deck deck : decks) {
-            deckDtos.add(new DeckDTO(deck, favorites.contains(deck.getId())));
+            deckResponses.add(new DeckResponse(deck, favorites.contains(deck.getId())));
         }
-        return DeckCollectionDTO.detail(col, deckDtos);
+        return DeckCollectionResponse.detail(col, deckResponses);
     }
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public ResponseEntity<DeckCollectionDTO> createCollection(
+    public ResponseEntity<DeckCollectionResponse> createCollection(
             @Valid @RequestBody CreateDeckCollectionRequest request,
             Authentication authentication) {
         User caller = resolveUser(authentication);
         DeckCollection col = collectionService.create(caller, request);
         collectionService.hydrateCover(col);
-        return ResponseEntity.status(HttpStatus.CREATED).body(DeckCollectionDTO.summary(col));
+        return ResponseEntity.status(HttpStatus.CREATED).body(DeckCollectionResponse.summary(col));
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("/{id}")
-    public DeckCollectionDTO updateCollection(
+    public DeckCollectionResponse updateCollection(
             @PathVariable String id,
             @Valid @RequestBody UpdateDeckCollectionRequest request,
             Authentication authentication) {
         User caller = resolveUser(authentication);
         DeckCollection col = collectionService.update(id, caller, request);
         collectionService.hydrateCover(col);
-        return DeckCollectionDTO.summary(col);
+        return DeckCollectionResponse.summary(col);
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -167,38 +168,38 @@ public class DeckCollectionController {
 
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/decks")
-    public DeckCollectionDTO addDeckToCollection(
+    public DeckCollectionResponse addDeckToCollection(
             @PathVariable String id,
             @Valid @RequestBody AddDeckToCollectionRequest request,
             Authentication authentication) {
         User caller = resolveUser(authentication);
         DeckCollection col = collectionService.addDeck(id, caller, request.deckId(), request.position());
         collectionService.hydrateCover(col);
-        return DeckCollectionDTO.summary(col);
+        return DeckCollectionResponse.summary(col);
     }
 
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/{id}/decks/{deckId}")
-    public DeckCollectionDTO removeDeckFromCollection(
+    public DeckCollectionResponse removeDeckFromCollection(
             @PathVariable String id,
             @PathVariable String deckId,
             Authentication authentication) {
         User caller = resolveUser(authentication);
         DeckCollection col = collectionService.removeDeck(id, caller, deckId);
         collectionService.hydrateCover(col);
-        return DeckCollectionDTO.summary(col);
+        return DeckCollectionResponse.summary(col);
     }
 
     @PreAuthorize("hasRole('USER')")
     @PatchMapping("/{id}/decks")
-    public DeckCollectionDTO reorderCollectionDecks(
+    public DeckCollectionResponse reorderCollectionDecks(
             @PathVariable String id,
             @Valid @RequestBody ReorderCollectionDecksRequest request,
             Authentication authentication) {
         User caller = resolveUser(authentication);
         DeckCollection col = collectionService.reorderDecks(id, caller, request.deckIds());
         collectionService.hydrateCover(col);
-        return DeckCollectionDTO.summary(col);
+        return DeckCollectionResponse.summary(col);
     }
 
     private User resolveUser(Authentication authentication) {
@@ -208,7 +209,8 @@ public class DeckCollectionController {
 
     private static List<String> idsOf(List<Deck> decks) {
         List<String> ids = new ArrayList<>(decks.size());
-        for (Deck d : decks) ids.add(d.getId());
+        for (Deck d : decks)
+            ids.add(d.getId());
         return ids;
     }
 }

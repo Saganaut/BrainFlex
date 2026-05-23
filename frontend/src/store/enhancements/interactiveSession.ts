@@ -9,7 +9,7 @@
  *   yet.
  *
  * - `syncInteractiveSessionCache` splices an authoritative
- *   {@link InteractiveSessionDto} into every cached `getInteractiveSession`
+ *   {@link InteractiveSessionResponse} into every cached `getInteractiveSession`
  *   view for the same roomCode. Team mutations
  *   (create/update/delete/movePlayer) all return the whole session so the
  *   lobby + scoreboard re-render without a refetch and the per-player
@@ -17,7 +17,7 @@
  *
  * Imported for its side effect via the `../apiEnhancements` barrel.
  */
-import { BrainFlex, type InteractiveSessionDto } from "../BrainFlexApi";
+import { BrainFlex, type InteractiveSessionResponse } from "../BrainFlexApi";
 import type { CacheSyncApi } from "./types";
 
 const syncInteractiveSessionCache = async (
@@ -30,7 +30,7 @@ const syncInteractiveSessionCache = async (
       BrainFlex.util.upsertQueryData(
         "getInteractiveSession",
         { roomCode },
-        data as InteractiveSessionDto,
+        data as InteractiveSessionResponse,
       ),
     );
   } catch {
@@ -41,7 +41,7 @@ const syncInteractiveSessionCache = async (
 const seedInteractiveSessionCache = async (api: CacheSyncApi) => {
   try {
     const { data } = await api.queryFulfilled;
-    const session = data as InteractiveSessionDto;
+    const session = data as InteractiveSessionResponse;
     if (!session.roomCode) return;
     api.dispatch(
       BrainFlex.util.upsertQueryData(

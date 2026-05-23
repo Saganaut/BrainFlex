@@ -37,8 +37,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.model.Deck;
-import cephadex.brainflex.model.DeckRating;
+import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.deck.DeckRating;
 import cephadex.brainflex.repository.DeckRatingRepository;
 
 @ExtendWith(MockitoExtension.class)

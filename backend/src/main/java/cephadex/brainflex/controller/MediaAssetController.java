@@ -26,10 +26,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.MediaAssetDTO;
-import cephadex.brainflex.model.MediaAsset;
-import cephadex.brainflex.model.User;
+import cephadex.brainflex.dto.CreateEmbedRequest;
+import cephadex.brainflex.dto.MediaAssetResponse;
+import cephadex.brainflex.dto.UpdateMediaAssetRequest;
 import cephadex.brainflex.model.enums.MediaKind;
+import cephadex.brainflex.model.media.MediaAsset;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.AuthorizationService;
 import cephadex.brainflex.service.MediaAssetService;
 import cephadex.brainflex.service.UserService;
@@ -38,98 +40,100 @@ import cephadex.brainflex.service.UserService;
 @RequestMapping("/api/media")
 public class MediaAssetController {
 
-    private final MediaAssetService mediaAssetService;
-    private final UserService userService;
-    private final AuthorizationService authorizationService;
+        private final MediaAssetService mediaAssetService;
+        private final UserService userService;
+        private final AuthorizationService authorizationService;
 
-    public MediaAssetController(
-            MediaAssetService mediaAssetService,
-            UserService userService,
-            AuthorizationService authorizationService) {
-        this.mediaAssetService = mediaAssetService;
-        this.userService = userService;
-        this.authorizationService = authorizationService;
-    }
+        public MediaAssetController(
+                        MediaAssetService mediaAssetService,
+                        UserService userService,
+                        AuthorizationService authorizationService) {
+                this.mediaAssetService = mediaAssetService;
+                this.userService = userService;
+                this.authorizationService = authorizationService;
+        }
 
-    @GetMapping
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<java.util.List<MediaAssetDTO.MediaAssetResponse>> listMedia(
-            @RequestParam(value = "kind", required = false) MediaKind kind,
-            @RequestParam(value = "tag", required = false) String tag,
-            Authentication authentication) {
-        User caller = userService.resolveRegisteredUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-        return ResponseEntity.ok(mediaAssetService.list(caller, kind, tag));
-    }
+        @GetMapping
+        @PreAuthorize("hasRole('USER')")
+        public ResponseEntity<java.util.List<MediaAssetResponse>> listMedia(
+                        @RequestParam(value = "kind", required = false) MediaKind kind,
+                        @RequestParam(value = "tag", required = false) String tag,
+                        Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+                return ResponseEntity.ok(mediaAssetService.list(caller, kind, tag));
+        }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> getMedia(
-            @PathVariable String id,
-            Authentication authentication) {
-        User caller = userService.resolveRegisteredUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-        MediaAsset asset = authorizationService.requireMediaAssetVisible(id, caller);
-        return ResponseEntity.ok(mediaAssetService.get(asset));
-    }
+        @GetMapping("/{id}")
+        @PreAuthorize("hasRole('USER')")
+        public ResponseEntity<MediaAssetResponse> getMedia(
+                        @PathVariable String id,
+                        Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+                MediaAsset asset = authorizationService.requireMediaAssetVisible(id, caller);
+                return ResponseEntity.ok(mediaAssetService.get(asset));
+        }
 
-    // @PreAuthorize omitted: Spring Session + multipart compatibility — see
-    // AccountController.uploadProfileImage for the full rationale. The inline
-    // resolveRegisteredUser call upgrades anyRequest().authenticated() to a
-    // registered-user check.
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> uploadMedia(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("kind") MediaKind kind,
-            @RequestParam(value = "name", required = false) String name,
-            @RequestParam(value = "tags", required = false) String tagsCsv,
-            @RequestParam(value = "organizationId", required = false) String organizationId,
-            @RequestParam(value = "altText", required = false) String altText,
-            Authentication authentication) throws IOException {
-        User caller = userService.resolveRegisteredUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-        MediaAssetDTO.MediaAssetResponse response = switch (kind) {
-            case IMAGE -> mediaAssetService.uploadImage(caller, file, name, tagsCsv, organizationId, altText);
-            case AUDIO -> mediaAssetService.uploadAudio(caller, file, name, tagsCsv, organizationId);
-            case VIDEO_FILE -> mediaAssetService.uploadVideoFile(caller, file, name, tagsCsv, organizationId);
-            case VIDEO_EMBED -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Use POST /api/media/embed for video embeds");
-        };
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+        // @PreAuthorize omitted: Spring Session + multipart compatibility — see
+        // AccountController.uploadProfileImage for the full rationale. The inline
+        // resolveRegisteredUser call upgrades anyRequest().authenticated() to a
+        // registered-user check.
+        @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+        public ResponseEntity<MediaAssetResponse> uploadMedia(
+                        @RequestParam("file") MultipartFile file,
+                        @RequestParam("kind") MediaKind kind,
+                        @RequestParam(value = "name", required = false) String name,
+                        @RequestParam(value = "tags", required = false) String tagsCsv,
+                        @RequestParam(value = "organizationId", required = false) String organizationId,
+                        @RequestParam(value = "altText", required = false) String altText,
+                        Authentication authentication) throws IOException {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+                MediaAssetResponse response = switch (kind) {
+                        case IMAGE ->
+                                mediaAssetService.uploadImage(caller, file, name, tagsCsv, organizationId, altText);
+                        case AUDIO -> mediaAssetService.uploadAudio(caller, file, name, tagsCsv, organizationId);
+                        case VIDEO_FILE ->
+                                mediaAssetService.uploadVideoFile(caller, file, name, tagsCsv, organizationId);
+                        case VIDEO_EMBED -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                        "Use POST /api/media/embed for video embeds");
+                };
+                return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        }
 
-    @PostMapping(value = "/embed", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> createMediaEmbed(
-            @RequestBody MediaAssetDTO.CreateEmbedRequest request,
-            Authentication authentication) {
-        User caller = userService.resolveRegisteredUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(mediaAssetService.createEmbed(caller, request));
-    }
+        @PostMapping(value = "/embed", consumes = MediaType.APPLICATION_JSON_VALUE)
+        @PreAuthorize("hasRole('USER')")
+        public ResponseEntity<MediaAssetResponse> createMediaEmbed(
+                        @RequestBody CreateEmbedRequest request,
+                        Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+                return ResponseEntity.status(HttpStatus.CREATED)
+                                .body(mediaAssetService.createEmbed(caller, request));
+        }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<MediaAssetDTO.MediaAssetResponse> updateMedia(
-            @PathVariable String id,
-            @RequestBody MediaAssetDTO.UpdateMediaAssetRequest request,
-            Authentication authentication) {
-        User caller = userService.resolveRegisteredUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-        MediaAsset asset = authorizationService.requireMediaAssetEditable(id, caller);
-        return ResponseEntity.ok(mediaAssetService.update(asset, request, caller));
-    }
+        @PutMapping("/{id}")
+        @PreAuthorize("hasRole('USER')")
+        public ResponseEntity<MediaAssetResponse> updateMedia(
+                        @PathVariable String id,
+                        @RequestBody UpdateMediaAssetRequest request,
+                        Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+                MediaAsset asset = authorizationService.requireMediaAssetEditable(id, caller);
+                return ResponseEntity.ok(mediaAssetService.update(asset, request, caller));
+        }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deleteMedia(
-            @PathVariable String id,
-            Authentication authentication) {
-        User caller = userService.resolveRegisteredUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
-        MediaAsset asset = authorizationService.requireMediaAssetEditable(id, caller);
-        mediaAssetService.delete(asset);
-        return ResponseEntity.ok().build();
-    }
+        @DeleteMapping("/{id}")
+        @PreAuthorize("hasRole('USER')")
+        public ResponseEntity<Void> deleteMedia(
+                        @PathVariable String id,
+                        Authentication authentication) {
+                User caller = userService.resolveRegisteredUser(authentication)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN));
+                MediaAsset asset = authorizationService.requireMediaAssetEditable(id, caller);
+                mediaAssetService.delete(asset);
+                return ResponseEntity.ok().build();
+        }
 }

@@ -3,7 +3,7 @@ package cephadex.brainflex.config;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,9 +51,9 @@ public class SecurityConfig {
     private final OrganizationService organizationService;
 
     public SecurityConfig(UserRepository userRepository,
-                          AuthoritiesService authoritiesService,
-                          OAuthProviderService oAuthProviderService,
-                          OrganizationService organizationService) {
+            AuthoritiesService authoritiesService,
+            OAuthProviderService oAuthProviderService,
+            OrganizationService organizationService) {
         this.userRepository = userRepository;
         this.authoritiesService = authoritiesService;
         this.oAuthProviderService = oAuthProviderService;
@@ -118,7 +118,7 @@ public class SecurityConfig {
             }
             if (providerId != null) {
                 oAuthProviderService.findByAnyProviderId(providerId)
-                        .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()))
+                        .filter(u -> !u.isClosed())
                         .ifPresent(u -> mapped.addAll(authoritiesService.authoritiesFor(u)));
             }
             mapped.add(new SimpleGrantedAuthority(AuthoritiesService.ROLE_USER));
@@ -140,10 +140,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/health",
                                 "/api/public/**",
                                 "/swagger-ui/**", "/**/api-docs",
-                                "/oauth2/**", "/ws/**").permitAll()
+                                "/oauth2/**", "/ws/**")
+                        .permitAll()
                         .requestMatchers("/api/auth/login",
                                 "/api/auth/me",
-                                "/api/auth/guest").permitAll()
+                                "/api/auth/guest")
+                        .permitAll()
                         // Invite token is the credential; endpoint is public.
                         .requestMatchers(HttpMethod.POST, "/api/invites/*/redeem").permitAll()
                         .requestMatchers(HttpMethod.GET,
@@ -154,7 +156,8 @@ public class SecurityConfig {
                                 "/api/decks/**",
                                 "/api/collections/*",
                                 "/api/avatars",
-                                "/api/achievements").permitAll()
+                                "/api/achievements")
+                        .permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -163,7 +166,8 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userAuthoritiesMapper(oauthUserAuthoritiesMapper()))
-                        .successHandler(new OAuth2SuccessHandler(userRepository, oAuthProviderService, organizationService)))
+                        .successHandler(
+                                new OAuth2SuccessHandler(userRepository, oAuthProviderService, organizationService)))
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/logout")
                         .logoutSuccessHandler((request, response, authentication) -> {
@@ -192,8 +196,8 @@ public class SecurityConfig {
         private final OrganizationService organizationService;
 
         public OAuth2SuccessHandler(UserRepository userRepository,
-                                    OAuthProviderService oAuthProviderService,
-                                    OrganizationService organizationService) {
+                OAuthProviderService oAuthProviderService,
+                OrganizationService organizationService) {
             this.userRepository = userRepository;
             this.oAuthProviderService = oAuthProviderService;
             this.organizationService = organizationService;
@@ -217,7 +221,7 @@ public class SecurityConfig {
 
             var existingOpt = oAuthProviderService
                     .findByProviderId(profile.provider(), profile.providerId())
-                    .filter(u -> !Boolean.TRUE.equals(u.getIsClosed()));
+                    .filter(u -> !u.isClosed());
             // Lazy backfill so users created before emailVerifiedAt landed pick it up
             // on their next OAuth login. Reaching this branch means the IdP accepted
             // the credentials — for Google/Microsoft (OIDC) that's a verified-email
@@ -225,7 +229,7 @@ public class SecurityConfig {
             // on the account, which is good enough for our purposes.
             existingOpt.ifPresent(u -> {
                 if (u.getEmailVerifiedAt() == null) {
-                    u.setEmailVerifiedAt(LocalDateTime.now());
+                    u.setEmailVerifiedAt(Instant.now());
                     userRepository.save(u);
                 }
                 // Chunk 20 — every login is a fresh chance for a domain-claimed
@@ -242,13 +246,13 @@ public class SecurityConfig {
 
             if (guestId != null && !guestId.isBlank()) {
                 userRepository.findById(guestId).ifPresent(guestUser -> {
-                    if (guestUser.getIsGuest()) {
-                        guestUser.setIsGuest(false);
+                    if (guestUser.isGuest()) {
+                        guestUser.setGuest(false);
                         oAuthProviderService.setProviderIdOn(guestUser, profile);
                         guestUser.setEmail(profile.email());
                         guestUser.setName(profile.name());
                         guestUser.setPictureUrl(profile.picture());
-                        guestUser.setEmailVerifiedAt(LocalDateTime.now());
+                        guestUser.setEmailVerifiedAt(Instant.now());
                         userRepository.save(guestUser);
                         // Chunk 20 — same auto-join sweep as the existing-user
                         // branch above, so a guest converting to a registered
@@ -261,20 +265,16 @@ public class SecurityConfig {
                 return;
             }
 
-            // We emit both `provider`+`providerId` (new, multi-provider) and
-            // — for Google only — the legacy `googleId` query param so the
-            // existing /register page on the frontend keeps working without
-            // immediate changes.
             UriComponentsBuilder builder = UriComponentsBuilder
                     .fromUriString("http://localhost:5173/register")
                     .queryParam("provider", profile.provider())
                     .queryParam("providerId", profile.providerId());
-            if (OAuthProviderService.GOOGLE.equals(profile.provider())) {
-                builder.queryParam("googleId", profile.providerId());
-            }
-            if (profile.email() != null) builder.queryParam("email", profile.email());
-            if (profile.name() != null) builder.queryParam("name", profile.name());
-            if (profile.picture() != null) builder.queryParam("picture", profile.picture());
+            if (profile.email() != null)
+                builder.queryParam("email", profile.email());
+            if (profile.name() != null)
+                builder.queryParam("name", profile.name());
+            if (profile.picture() != null)
+                builder.queryParam("picture", profile.picture());
 
             String targetUrl = builder.build().toUriString();
             if (sessionReturnUrl != null) {

@@ -6,13 +6,13 @@
  */
 package cephadex.brainflex.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record RedeemInviteResponse(
-        String scheduledInteractiveSessionId,
-        String interactiveSessionId,
-        String roomCode,
-        String deckName,
-        String hostName,
-        LocalDateTime scheduledStartAt) {
+                String scheduledInteractiveSessionId,
+                String interactiveSessionId,
+                String roomCode,
+                String deckName,
+                String hostName,
+                Instant scheduledStartAt) {
 }

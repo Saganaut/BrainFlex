@@ -1,12 +1,12 @@
 /**
- * Awards {@link cephadex.brainflex.model.Achievement} badges to a user when a
+ * Awards {@link cephadex.brainflex.model.user.Achievement} badges to a user when a
  * trigger event happens.
  *
  * Designed for fire-and-forget call sites: every public method swallows its
  * own exceptions and logs, so a broken achievement evaluation can never break
  * the underlying user action (finishing a game, publishing a deck, etc.).
  * Idempotency is structural — the {@code (userId, achievementId)} unique
- * index on {@link cephadex.brainflex.model.UserAchievement} guarantees no
+ * index on {@link cephadex.brainflex.model.user.UserAchievement} guarantees no
  * duplicate awards even under retries.
  *
  * Guests are intentionally excluded: their accounts are ephemeral, the
@@ -31,13 +31,13 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
-import cephadex.brainflex.model.Achievement;
-import cephadex.brainflex.model.User;
-import cephadex.brainflex.model.UserAchievement;
 import cephadex.brainflex.model.enums.AchievementTrigger;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.AchievementRepository;
 import cephadex.brainflex.repository.UserAchievementRepository;
 import cephadex.brainflex.repository.UserRepository;
+import cephadex.brainflex.model.user.Achievement;
+import cephadex.brainflex.model.user.UserAchievement;
 
 @Service
 public class AchievementService {
@@ -85,18 +85,20 @@ public class AchievementService {
             // Skip guests — ephemeral accounts that never appear on the
             // leaderboard shouldn't accrue achievements either.
             Optional<User> userOpt = userRepository.findById(userId);
-            if (userOpt.isEmpty() || Boolean.TRUE.equals(userOpt.get().getIsGuest())) {
+            if (userOpt.isEmpty() || userOpt.get().isGuest()) {
                 return Collections.emptyList();
             }
             User user = userOpt.get();
 
             List<Achievement> candidates = achievementRepository.findAllByTrigger(trigger);
-            if (candidates.isEmpty()) return Collections.emptyList();
+            if (candidates.isEmpty())
+                return Collections.emptyList();
 
             List<Achievement> earned = new ArrayList<>();
             int totalReward = 0;
             for (Achievement achievement : candidates) {
-                if (achievement.getThreshold() > currentValue) continue;
+                if (achievement.getThreshold() > currentValue)
+                    continue;
                 if (userAchievementRepository.existsByUserIdAndAchievementId(
                         userId, achievement.getId())) {
                     continue;
@@ -139,9 +141,12 @@ public class AchievementService {
     public List<UserAchievement> listEarnedByUser(String userId) {
         List<UserAchievement> earned = new ArrayList<>(userAchievementRepository.findAllByUserId(userId));
         earned.sort((a, b) -> {
-            if (a.getEarnedAt() == null && b.getEarnedAt() == null) return 0;
-            if (a.getEarnedAt() == null) return 1;
-            if (b.getEarnedAt() == null) return -1;
+            if (a.getEarnedAt() == null && b.getEarnedAt() == null)
+                return 0;
+            if (a.getEarnedAt() == null)
+                return 1;
+            if (b.getEarnedAt() == null)
+                return -1;
             return b.getEarnedAt().compareTo(a.getEarnedAt());
         });
         return earned;

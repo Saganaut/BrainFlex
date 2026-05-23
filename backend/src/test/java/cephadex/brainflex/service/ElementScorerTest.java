@@ -9,6 +9,7 @@ package cephadex.brainflex.service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,9 +27,9 @@ import cephadex.brainflex.model.answer.TextAnswer;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
 import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DrawingQuestion;
-import cephadex.brainflex.model.element.MatchingPair;
+import cephadex.brainflex.model.element.parts.MatchingPair;
 import cephadex.brainflex.model.element.MatchingQuestion;
-import cephadex.brainflex.model.element.McqOption;
+import cephadex.brainflex.model.element.parts.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.TextQuestion;
@@ -150,7 +151,7 @@ class ElementScorerTest {
         var c = new McqOption("c", "C", null, null);
         return new McqQuestion(
                 "mcq-1",
-                "Pick", List.of(a, b, c), List.of(a.id(), b.id()),
+                "Pick", List.of(a, b, c), Set.of(a.id(), b.id()),
                 100, Difficulty.EASY, null,
                 true, allowMultiple, maxSelections,
                 TestElementChromes.scored("mcq-1", "Pick"));

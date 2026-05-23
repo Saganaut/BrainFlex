@@ -26,8 +26,8 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import cephadex.brainflex.model.InteractiveSession;
-import cephadex.brainflex.model.InteractiveSessionResult;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionResult;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
 import cephadex.brainflex.repository.InteractiveSessionResultRepository;
 import cephadex.brainflex.service.GameHistoryService;

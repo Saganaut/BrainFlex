@@ -158,16 +158,16 @@
 .autoAdvanceRing {
   --progress: 0;
   --ring-size: 56px;
+
   width: var(--ring-size);
   height: var(--ring-size);
   border-radius: var(--radius-full);
   display: grid;
   place-items: center;
-  background:
-    conic-gradient(
-      var(--text-success) calc(var(--progress) * 360deg),
-      var(--bg-subtle) 0deg
-    );
+  background: conic-gradient(
+    var(--text-success) calc(var(--progress) * 360deg),
+    var(--bg-subtle) 0deg
+  );
   position: relative;
   margin-top: var(--space-2);
 }

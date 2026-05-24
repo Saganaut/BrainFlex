@@ -27,7 +27,6 @@ import cephadex.brainflex.dto.session.JoinInteractiveSessionRequest;
 import cephadex.brainflex.dto.session.ReactionSendRequest;
 import cephadex.brainflex.dto.session.TeamCrudRequest;
 import cephadex.brainflex.dto.session.TeamMoveRequest;
-import cephadex.brainflex.dto.session.UpdatePlayerAvatarRequest;
 import cephadex.brainflex.model.session.InteractiveSession;
 import cephadex.brainflex.model.session.Reaction;
 import cephadex.brainflex.service.InteractiveSessionService;
@@ -100,9 +99,7 @@ public class InteractiveSessionController {
                         "You must be logged in or playing as a guest to join a game"));
 
         String teamId = body == null ? null : body.teamId();
-        String avatarKey = body == null ? null : body.avatarKey();
-        String colorTag = body == null ? null : body.colorTag();
-        InteractiveSession session = gameService.joinInteractiveSession(roomCode, player, teamId, avatarKey, colorTag);
+        InteractiveSession session = gameService.joinInteractiveSession(roomCode, player, teamId);
         return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, player.getId()));
     }
 
@@ -267,26 +264,6 @@ public class InteractiveSessionController {
         User host = requireUser(authentication);
         InteractiveSession session = gameService.movePlayerToTeam(roomCode, playerId, body.teamId(), host);
         return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, host.getId()));
-    }
-
-    /**
-     * Chunk 13 — lobby avatar picker. Updates the caller's preset avatar (and
-     * optionally their {@code colorTag}) on the in-lobby player record. Only
-     * valid in LOBBY status; the player must already be in the session.
-     */
-    @PreAuthorize("hasAnyRole('GUEST', 'USER')")
-    @PutMapping("/{roomCode}/me/avatar")
-    public ResponseEntity<InteractiveSessionResponse> updateMyAvatar(
-            @PathVariable String roomCode,
-            @RequestBody UpdatePlayerAvatarRequest body,
-            Authentication authentication) {
-        User player = userService.resolveAnyAuthenticatedUser(authentication)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
-                        "Authentication required"));
-        InteractiveSession session = gameService.updatePlayerAvatar(roomCode, player.getId(),
-                body == null ? null : body.avatarKey(),
-                body == null ? null : body.colorTag());
-        return ResponseEntity.ok(InteractiveSessionResponse.forViewer(session, player.getId()));
     }
 
     private User requireUser(Authentication authentication) {

@@ -1,6 +1,6 @@
 /* Style panel body. Sized to live inside the 320px right-sidebar drawer.
-   Two sections: deck-wide theme (dropdown + new-theme button) and per-slide
-   style (content/background image tiles). */
+   Sections: deck-wide theme (dropdown + new-theme button), session defaults,
+   and per-slide background image (the tile chrome lives in ImagePicker). */
 
 .panel {
   display: flex;
@@ -25,64 +25,4 @@
 
 .newBtn {
   align-self: stretch;
-}
-
-.imagePicker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-.imagePickerLabel {
-  font-size: var(--font-size-sm);
-  color: var(--text-primary);
-}
-
-.imageTile {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: var(--bg-subtle);
-  border: var(--border-size-sm) solid var(--edge-canvas);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  cursor: pointer;
-  padding: 0;
-  transition: border-color var(--duration-fast) var(--ease-out);
-
-  &:hover {
-    border-color: var(--action-hover);
-  }
-
-  & img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-}
-
-.imageTileEmpty {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-1);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-
-  & svg {
-    width: 24px;
-    height: 24px;
-  }
-}
-
-.imageClear {
-  position: absolute;
-  top: var(--space-1);
-  right: var(--space-1);
-  background: var(--bg-surface-raised);
-  border-radius: var(--radius-full);
 }

@@ -50,23 +50,23 @@ import org.springframework.web.server.ResponseStatusException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import cephadex.brainflex.dto.session.message.AnswerProgressMessage;
 import cephadex.brainflex.dto.session.AnswerSubmitRequest;
 import cephadex.brainflex.dto.session.ChatSendRequest;
 import cephadex.brainflex.dto.session.CreateInteractiveSessionRequest;
 import cephadex.brainflex.dto.session.InteractiveSessionChatMessageResponse;
-import cephadex.brainflex.dto.session.message.InteractiveSessionEndedMessage;
 import cephadex.brainflex.dto.session.InteractiveSessionResponse;
 import cephadex.brainflex.dto.session.InteractiveSessionReviewResponse;
 import cephadex.brainflex.dto.session.PlayerRoundResponse;
-import cephadex.brainflex.dto.session.message.ReactionBroadcastMessage;
 import cephadex.brainflex.dto.session.ReactionSendRequest;
+import cephadex.brainflex.dto.session.VoteSubmitRequest;
+import cephadex.brainflex.dto.session.message.AnswerProgressMessage;
+import cephadex.brainflex.dto.session.message.InteractiveSessionEndedMessage;
+import cephadex.brainflex.dto.session.message.ReactionBroadcastMessage;
 import cephadex.brainflex.dto.session.message.RoundResultMessage;
 import cephadex.brainflex.dto.session.message.RoundStartMessage;
 import cephadex.brainflex.dto.session.message.TeamUpdateMessage;
 import cephadex.brainflex.dto.session.message.VotePhaseStartMessage;
 import cephadex.brainflex.dto.session.message.VoteProgressMessage;
-import cephadex.brainflex.dto.session.VoteSubmitRequest;
 import cephadex.brainflex.dto.session.message.WordCloudUpdateMessage;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.DrawingAnswer;
@@ -77,14 +77,14 @@ import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.DrawingQuestion;
-import cephadex.brainflex.model.image.Image;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.enums.AnswerSubmissionMode;
 import cephadex.brainflex.model.enums.RoundPhase;
-import cephadex.brainflex.model.enums.SessionLifecycle;
 import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.enums.SessionLifecycle;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
+import cephadex.brainflex.model.image.Image;
 import cephadex.brainflex.model.org.Team;
 import cephadex.brainflex.model.session.InteractiveSession;
 import cephadex.brainflex.model.session.InteractiveSessionChatMessage;
@@ -95,6 +95,8 @@ import cephadex.brainflex.model.session.PlayerAnswer;
 import cephadex.brainflex.model.session.PlayerPlacement;
 import cephadex.brainflex.model.session.Reaction;
 import cephadex.brainflex.model.session.RoundVote;
+import cephadex.brainflex.model.shared.Avatar;
+import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.InteractiveSessionChatMessageRepository;
@@ -103,7 +105,6 @@ import cephadex.brainflex.repository.InteractiveSessionResultRepository;
 import cephadex.brainflex.repository.ReactionRepository;
 import cephadex.brainflex.repository.UserRepository;
 import jakarta.annotation.PreDestroy;
-import cephadex.brainflex.model.shared.UserSnapshot;
 
 @Service
 public class InteractiveSessionService {
@@ -128,7 +129,6 @@ public class InteractiveSessionService {
     private final ReactionRepository reactionRepository;
     private final InteractiveSessionChatMessageRepository chatRepository;
     private final InteractiveSessionRateLimiter rateLimiter;
-    private final AvatarService avatarService;
     private final ApplicationEventPublisher events;
     private final GameHistoryService gameHistoryService;
     private final DeckAnalyticsService deckAnalyticsService;
@@ -154,6 +154,14 @@ public class InteractiveSessionService {
     // session's persisted timerGeneration is the durable guard if this is lost.
     private final ConcurrentHashMap<String, ScheduledFuture<?>> roundTimerHandles = new ConcurrentHashMap<>();
 
+    // Handle on each room's pending between-rounds auto-advance (the scheduled
+    // startNextRound after a round completes). Tracked so a host's manual
+    // nextRound can cancel it and advance immediately instead of racing — and
+    // double-starting — the scheduled fire. Temporally exclusive with the
+    // round-timer above (a round either has a live countdown or is between
+    // rounds), but kept separate for clarity.
+    private final ConcurrentHashMap<String, ScheduledFuture<?>> pendingAdvanceHandles = new ConcurrentHashMap<>();
+
     // Chunk 25 — keys ("roomCode:elementId") for rounds inside the end-submit
     // grace window. submitAnswer consults this so the auto-flush of drafts is
     // accepted even if the host had already frozen the round. Cleared when the
@@ -167,7 +175,7 @@ public class InteractiveSessionService {
      * limit. Default 256 KB.
      */
     @Value("${app.drawing.max-payload-bytes:262144}")
-    private int drawingMaxPayloadBytes = 262144;
+    private final int drawingMaxPayloadBytes = 262144;
 
     /** Used to count the serialized size of {@link DrawingAnswer} submissions. */
     private final ObjectMapper objectMapper;
@@ -186,7 +194,6 @@ public class InteractiveSessionService {
             ReactionRepository reactionRepository,
             InteractiveSessionChatMessageRepository chatRepository,
             InteractiveSessionRateLimiter rateLimiter,
-            AvatarService avatarService,
             ApplicationEventPublisher events,
             GameHistoryService gameHistoryService,
             DeckAnalyticsService deckAnalyticsService,
@@ -208,7 +215,6 @@ public class InteractiveSessionService {
         this.reactionRepository = reactionRepository;
         this.chatRepository = chatRepository;
         this.rateLimiter = rateLimiter;
-        this.avatarService = avatarService;
         this.events = events;
         this.gameHistoryService = gameHistoryService;
         this.deckAnalyticsService = deckAnalyticsService;
@@ -250,8 +256,6 @@ public class InteractiveSessionService {
             settings.setAnswerSubmissionMode(request.answerSubmissionMode());
         if (request.showResponses() != null)
             settings.setShowResponses(request.showResponses());
-        if (request.totalRounds() != null)
-            settings.setTotalRounds(request.totalRounds());
         if (request.timePerQuestion() != null)
             settings.setTimePerQuestion(request.timePerQuestion());
         if (request.speedBonus() != null)
@@ -287,16 +291,12 @@ public class InteractiveSessionService {
             settings.setPodiumDuration(request.podiumDuration());
         if (request.lobbyCountdownSeconds() != null)
             settings.setLobbyCountdownSeconds(request.lobbyCountdownSeconds());
-        if (request.requireFullName() != null)
-            settings.setRequireFullName(request.requireFullName());
         if (request.spectatorsAllowed() != null)
             settings.setSpectatorsAllowed(request.spectatorsAllowed());
-        // totalRounds is upper-bounded by the deck's actual element count.
-        settings.setTotalRounds(Math.min(settings.getTotalRounds(), elements.size()));
 
-        // Frozen snapshot of the elements as authored — drawn in deck order, truncated
-        // to totalRounds. Slides participate in deck order; we never shuffle.
-        List<DeckElement> snapshot = new ArrayList<>(elements.subList(0, settings.getTotalRounds()));
+        // Frozen snapshot of the elements as authored — the full deck in author
+        // order. Slides participate in deck order; we never shuffle.
+        List<DeckElement> snapshot = new ArrayList<>(elements);
 
         // Frozen presentation assets — kept on settings so they travel with
         // the settings copy and can never be re-read off a live Deck mid-game.
@@ -435,15 +435,10 @@ public class InteractiveSessionService {
     }
 
     public InteractiveSession joinInteractiveSession(String roomCode, User player) {
-        return joinInteractiveSession(roomCode, player, null, null, null);
+        return joinInteractiveSession(roomCode, player, null);
     }
 
     public InteractiveSession joinInteractiveSession(String roomCode, User player, String preferredTeamId) {
-        return joinInteractiveSession(roomCode, player, preferredTeamId, null, null);
-    }
-
-    public InteractiveSession joinInteractiveSession(String roomCode, User player, String preferredTeamId,
-            String avatarKey, String colorTag) {
         InteractiveSession session = getByRoomCode(roomCode);
 
         SessionLifecycle status = session.getStatus();
@@ -460,36 +455,10 @@ public class InteractiveSessionService {
         if (!session.getContent().getSettings().isAllowGuests() && player.isGuest())
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This interactiveSession does not allow guests");
 
-        // Chunk 13 — requireFullName disallows nickname-only joins. Guests
-        // have no registered name on file, so requireFullName implicitly
-        // blocks them too (even if allowGuests is on).
-        if (session.getContent().getSettings().isRequireFullName()) {
-            if (player.isGuest())
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "This interactiveSession requires a real account (guests not allowed)");
-            if (player.getName() == null || player.getName().isBlank())
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "This interactiveSession requires a full name on your account");
-        }
-
         if (session.getPlayers().size() >= session.getContent().getSettings().getMaxPlayers())
             throw new ResponseStatusException(HttpStatus.CONFLICT, "InteractiveSession is full");
 
         InteractiveSessionPlayer newPlayer = playerFromUser(player);
-
-        // Chunk 13 — lobby avatar pick. Unknown keys are silently dropped so
-        // a client with a stale preset list doesn't trip a 400; the player
-        // just falls back to their real pictureUrl.
-        if (avatarService.has(avatarKey)) {
-            newPlayer.setAvatarKey(avatarKey);
-            if (colorTag == null || colorTag.isBlank()) {
-                newPlayer.setColorTag(avatarService.get(avatarKey).colorTag());
-            } else {
-                newPlayer.setColorTag(colorTag);
-            }
-        } else if (colorTag != null && !colorTag.isBlank()) {
-            newPlayer.setColorTag(colorTag);
-        }
 
         // Chunk 13 — late-join tag is purely informational on the player
         // record (lobby vs. mid-game arrival); allowLateJoin is the gate.
@@ -576,54 +545,6 @@ public class InteractiveSessionService {
         }
     }
 
-    /**
-     * Chunk 13 — lobby avatar swap. Lets a player update their {@code avatarKey}
-     * (and optionally {@code colorTag}) after they've joined. Only valid in
-     * LOBBY status: once the game starts, the preset is locked. Unknown keys
-     * are rejected with 400 — unlike the join path (which silently drops them
-     * so a stale client can't trip a 400 on join), this endpoint is opt-in and
-     * the picker UI is built from the same live preset list.
-     */
-    public InteractiveSession updatePlayerAvatar(String roomCode, String userId, String avatarKey, String colorTag) {
-        if (userId == null)
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
-
-        synchronized (getLock(roomCode)) {
-            InteractiveSession session = loadActiveSession(roomCode);
-            if (session.getStatus() != SessionLifecycle.LOBBY)
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Avatar can only be changed in the lobby");
-
-            InteractiveSessionPlayer player = session.getPlayers().stream()
-                    .filter(p -> userId.equals(p.getUserId()))
-                    .findFirst()
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                            "You are not a player in this session"));
-
-            if (avatarKey != null && !avatarKey.isBlank() && !avatarService.has(avatarKey))
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown avatar");
-
-            if (avatarKey == null || avatarKey.isBlank()) {
-                player.setAvatarKey(null);
-            } else {
-                player.setAvatarKey(avatarKey);
-                if (colorTag == null || colorTag.isBlank()) {
-                    player.setColorTag(avatarService.get(avatarKey).colorTag());
-                } else {
-                    player.setColorTag(colorTag);
-                }
-            }
-            if (avatarKey != null && (colorTag != null && !colorTag.isBlank())) {
-                player.setColorTag(colorTag);
-            }
-
-            interactiveSessionRepository.save(session);
-            interactiveSessionCache.put(session);
-            messagingTemplate.convertAndSend("/topic/interactive-session/" + roomCode + "/lobby",
-                    new InteractiveSessionResponse(session));
-            return session;
-        }
-    }
-
     public void cancelInteractiveSession(String roomCode, User requestingUser) {
         InteractiveSession session = authorizationService.requireInteractiveSessionHost(roomCode, requestingUser);
         if (session.getStatus() == SessionLifecycle.FINISHED
@@ -644,6 +565,7 @@ public class InteractiveSessionService {
 
     // ---- Review ----
 
+    @SuppressWarnings("null")
     public InteractiveSessionReviewResponse buildReview(String roomCode) {
         InteractiveSession session = getByRoomCode(roomCode);
         if (session.getStatus() != SessionLifecycle.FINISHED)
@@ -914,8 +836,11 @@ public class InteractiveSessionService {
             validateHost(session, principalName);
             if (session.getStatus() != SessionLifecycle.IN_PROGRESS)
                 return;
-            if (session.getContent().getSettings().getAnswerSubmissionMode() != AnswerSubmissionMode.TURN_BASED)
-                return;
+            // Works in any submission mode: TURN_BASED waits for this call, while
+            // SIMULTANEOUS schedules an auto-advance the host can pre-empt. Cancel
+            // that pending advance first so we don't fire startNextRound twice
+            // (which would re-broadcast the round and reset its timer).
+            cancelPendingAdvance(roomCode);
             startNextRound(roomCode);
         }
     }
@@ -953,7 +878,8 @@ public class InteractiveSessionService {
             interactiveSessionCache.put(session);
             messagingTemplate.convertAndSend(
                     "/topic/interactive-session/" + roomCode + "/responsesRevealed",
-                    new cephadex.brainflex.dto.session.message.ResponsesRevealedMessage(session.getCurrentRound(), current.id()));
+                    new cephadex.brainflex.dto.session.message.ResponsesRevealedMessage(session.getCurrentRound(),
+                            current.id()));
         }
     }
 
@@ -1172,6 +1098,7 @@ public class InteractiveSessionService {
             }
 
             cancelRoundTimer(session);
+            cancelPendingAdvance(roomCode);
 
             for (InteractiveSessionPlayer player : session.getPlayers()) {
                 player.setScore(0);
@@ -1382,28 +1309,29 @@ public class InteractiveSessionService {
 
         if (session.getContent().getSettings().getAnswerSubmissionMode() == AnswerSubmissionMode.SIMULTANEOUS) {
             String roomCode = session.getRoomCode();
-            scheduler.schedule(() -> {
+            ScheduledFuture<?> future = scheduler.schedule(() -> {
                 try {
                     startNextRound(roomCode);
                 } catch (Exception ignored) {
                 }
             }, BETWEEN_ROUNDS_DELAY_SECONDS, TimeUnit.SECONDS);
+            pendingAdvanceHandles.put(roomCode, future);
         } else if (session.getContent().getSettings().getAnswerSubmissionMode() == AnswerSubmissionMode.TURN_BASED
                 && session.getContent().getSettings().isAutoAdvance()) {
             // Chunk 13 — when the host turns on autoAdvance for a TURN_BASED
             // session, advance from the reveal to the next round on a timer
             // (podiumDuration seconds) instead of waiting for the host's
             // "Next" click. Host can still call nextRound() to short-circuit
-            // the wait; startNextRound is idempotent against currentRound so
-            // a double-fire here is a no-op.
+            // the wait; the handle lets that call cancel this scheduled fire.
             String roomCode = session.getRoomCode();
             int delay = Math.max(0, session.getContent().getSettings().getPodiumDuration());
-            scheduler.schedule(() -> {
+            ScheduledFuture<?> future = scheduler.schedule(() -> {
                 try {
                     startNextRound(roomCode);
                 } catch (Exception ignored) {
                 }
             }, delay, TimeUnit.SECONDS);
+            pendingAdvanceHandles.put(roomCode, future);
         }
     }
 
@@ -1624,6 +1552,9 @@ public class InteractiveSessionService {
     }
 
     private void startNextRound(String roomCode) {
+        // This advance is now happening (auto or manual) — drop any pending
+        // auto-advance handle so a later nextRound can't cancel a stale future.
+        pendingAdvanceHandles.remove(roomCode);
         synchronized (getLock(roomCode)) {
             InteractiveSession session = interactiveSessionCache.get(roomCode)
                     .orElseGet(() -> interactiveSessionRepository.findByRoomCode(roomCode).orElse(null));
@@ -1676,6 +1607,9 @@ public class InteractiveSessionService {
         // Chunk 25 — drop the round-timer handle; the pending timeout (if any)
         // will no-op on the status guard, but don't leak the future.
         roundTimerHandles.remove(session.getRoomCode());
+        // Likewise cancel any pending between-rounds auto-advance so it can't
+        // fire against the just-finished session.
+        cancelPendingAdvance(session.getRoomCode());
 
         // Bump the deck's denormalized play counter atomically so Explore's
         // "most played" / "trending" sorts reflect this finish without a
@@ -1730,7 +1664,8 @@ public class InteractiveSessionService {
             }
             messagingTemplate.convertAndSend(
                     "/topic/interactive-session/" + session.getRoomCode() + "/summary",
-                    new cephadex.brainflex.dto.session.message.SessionSummaryMessage(roundsPlayed, anyScoring, roundSummaries));
+                    new cephadex.brainflex.dto.session.message.SessionSummaryMessage(roundsPlayed, anyScoring,
+                            roundSummaries));
         } else {
             List<cephadex.brainflex.dto.session.PlayerPlacementResponse> wirePlacements = placements.stream()
                     .map(cephadex.brainflex.dto.session.PlayerPlacementResponse::new)
@@ -1978,6 +1913,18 @@ public class InteractiveSessionService {
         }
     }
 
+    /**
+     * Cancel and drop any pending between-rounds auto-advance for a room, so a
+     * scheduled startNextRound can't fire after the host has taken over the
+     * pacing (manual nextRound) or after the session moved on (restart / end).
+     */
+    private void cancelPendingAdvance(String roomCode) {
+        ScheduledFuture<?> pending = pendingAdvanceHandles.remove(roomCode);
+        if (pending != null) {
+            pending.cancel(false);
+        }
+    }
+
     // ---- Utility ----
 
     private void validateHost(InteractiveSession session, String principalName) {
@@ -2006,11 +1953,21 @@ public class InteractiveSessionService {
 
     private InteractiveSessionPlayer playerFromUser(User user) {
         InteractiveSessionPlayer p = new InteractiveSessionPlayer();
+        // Session-scoped public handle. Every player (host included) gets one at
+        // creation so the wire shape's playerId — and thus hostPlayerId /
+        // viewerPlayerId, which resolve through it — is never null. The raw
+        // account userId never crosses the wire to other participants.
+        p.setPlayerId(UUID.randomUUID().toString());
         p.setUser(UserSnapshot.of(
                 user.getId(),
                 user.getUserName(),
                 userImageHydrator.pictureUrlOf(user),
                 user.isGuest()));
+        // Default to "use my real picture" — the DTO materializes the url from
+        // the snapshot's pictureUrl. The Avatar value object is retained as a
+        // LINK-only seam: KEY (preset) avatars are dormant until the lobby
+        // avatar picker is rebuilt (the preset roster was removed).
+        p.setAvatar(Avatar.ofLink(null));
         p.setPrincipalName(oAuthProviderService.principalNameFor(user));
         return p;
     }
@@ -2024,7 +1981,6 @@ public class InteractiveSessionService {
         if (src == null)
             return out;
         out.setMaxPlayers(src.getMaxPlayers());
-        out.setTotalRounds(src.getTotalRounds());
         out.setTimePerQuestion(src.getTimePerQuestion());
         out.setSpeedBonus(src.isSpeedBonus());
         out.setAllowGuests(src.isAllowGuests());
@@ -2043,7 +1999,6 @@ public class InteractiveSessionService {
         out.setPodiumDuration(src.getPodiumDuration());
         out.setLobbyCountdownSeconds(src.getLobbyCountdownSeconds());
         out.setLobbyMusicAssetId(src.getLobbyMusicAssetId());
-        out.setRequireFullName(src.isRequireFullName());
         out.setSpectatorsAllowed(src.isSpectatorsAllowed());
         out.setDeckCoverImageUrl(src.getDeckCoverImageUrl());
         out.setDeckBackgroundImageUrl(src.getDeckBackgroundImageUrl());
@@ -2417,7 +2372,10 @@ public class InteractiveSessionService {
         }
     }
 
-    /** Host moves a player into a different team. {@code playerId} is the session-scoped public handle. */
+    /**
+     * Host moves a player into a different team. {@code playerId} is the
+     * session-scoped public handle.
+     */
     public InteractiveSession movePlayerToTeam(String roomCode, String playerId, String teamId, User host) {
         synchronized (getLock(roomCode)) {
             InteractiveSession session = authorizationService.requireInteractiveSessionHost(roomCode, host);

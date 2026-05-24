@@ -11,7 +11,6 @@ type AnswerSubmissionMode = "SIMULTANEOUS" | "TURN_BASED";
 type SessionFormat = "GAME" | "PRESENTATION";
 type ShowResponsesMode = "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
 
-const DEFAULT_ROUNDS = 10;
 const DEFAULT_TIME = 15;
 const DEFAULT_SPEED_BONUS = true;
 const DEFAULT_MODE: AnswerSubmissionMode = "SIMULTANEOUS";
@@ -35,7 +34,6 @@ const DEFAULT_SHUFFLE_ANSWERS = true;
 const DEFAULT_AUTO_ADVANCE = false;
 const DEFAULT_PODIUM_DURATION = 15;
 const DEFAULT_LOBBY_COUNTDOWN_SECONDS = 5;
-const DEFAULT_REQUIRE_FULL_NAME = false;
 const DEFAULT_SPECTATORS_ALLOWED = false;
 
 interface SettingsState {
@@ -47,7 +45,6 @@ interface SettingsState {
   // to the deck's default, which itself defers to the per-element value,
   // which finally falls back to the format default.
   showResponses: ShowResponsesMode;
-  totalRounds: number;
   // 0 = unlimited (no countdown). Any positive value enables the timer.
   timePerQuestion: number;
   speedBonus: boolean;
@@ -70,14 +67,12 @@ interface SettingsState {
   autoAdvance: boolean;
   podiumDuration: number;
   lobbyCountdownSeconds: number;
-  requireFullName: boolean;
   spectatorsAllowed: boolean;
 }
 
 const PLATFORM_DEFAULTS: SettingsState = {
   format: DEFAULT_FORMAT,
   showResponses: DEFAULT_SHOW_RESPONSES,
-  totalRounds: DEFAULT_ROUNDS,
   timePerQuestion: DEFAULT_TIME,
   speedBonus: DEFAULT_SPEED_BONUS,
   answerSubmissionMode: DEFAULT_MODE,
@@ -97,7 +92,6 @@ const PLATFORM_DEFAULTS: SettingsState = {
   autoAdvance: DEFAULT_AUTO_ADVANCE,
   podiumDuration: DEFAULT_PODIUM_DURATION,
   lobbyCountdownSeconds: DEFAULT_LOBBY_COUNTDOWN_SECONDS,
-  requireFullName: DEFAULT_REQUIRE_FULL_NAME,
   spectatorsAllowed: DEFAULT_SPECTATORS_ALLOWED,
 };
 
@@ -112,7 +106,6 @@ const seedFromDeck = (deck: DeckResponse): SettingsState => {
     // is the visible default until the host opens "More options" and picks
     // something explicit.
     showResponses: DEFAULT_SHOW_RESPONSES,
-    totalRounds: d.totalRounds ?? DEFAULT_ROUNDS,
     timePerQuestion: d.timePerQuestion ?? DEFAULT_TIME,
     speedBonus: d.speedBonus ?? DEFAULT_SPEED_BONUS,
     answerSubmissionMode: d.answerSubmissionMode ?? DEFAULT_MODE,
@@ -134,7 +127,6 @@ const seedFromDeck = (deck: DeckResponse): SettingsState => {
     podiumDuration: d.podiumDuration ?? DEFAULT_PODIUM_DURATION,
     lobbyCountdownSeconds:
       d.lobbyCountdownSeconds ?? DEFAULT_LOBBY_COUNTDOWN_SECONDS,
-    requireFullName: d.requireFullName ?? DEFAULT_REQUIRE_FULL_NAME,
     spectatorsAllowed: d.spectatorsAllowed ?? DEFAULT_SPECTATORS_ALLOWED,
   };
 };

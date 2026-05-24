@@ -1,11 +1,11 @@
 /**
- * Shared billing/subscription state embedded in both {@link Membership} (user-scoped)
- * and {@link OrganizationPlan} (org-scoped).
+ * Shared billing/subscription state embedded in both { Membership} (user-scoped)
+ * and { OrganizationPlan} (org-scoped).
  *
  * Both surfaces are driven by the same Stripe webhook handler (tier change, status
  * change, period renewal, cancel-at-period-end), so the seven fields covered here
  * carry identical semantics on either side. Keeping the value object lets the
- * webhook write to a {@code BillingState} regardless of whether the affected scope
+ * webhook write to a {@code BillingState regardless of whether the affected scope
  * is a user or an organization, and gives MembershipResponse / OrganizationPlanResponse a
  * single projection path.
  *
@@ -19,7 +19,7 @@
  *    {@code monthlyCountPeriodStart}, {@code featureFlags}, {@code monthlyInteractiveSessionLimit},
  *    {@code quotaResetsAt} (gameplay/usage state that doesn't belong on the billing record —
  *    cf. issue 2h in z-docs/to-do/java-model-issues.md, which calls out moving usage counters
- *    off Membership entirely as a follow-up).
+ *    off "Membership" entirely as a follow-up).
  */
 package cephadex.brainflex.model.user;
 
@@ -35,7 +35,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BillingState {
-
+    // TODO: Revisit when in scope
     private MembershipTier tier = MembershipTier.FREE;
     private MembershipStatus status = MembershipStatus.NONE;
 

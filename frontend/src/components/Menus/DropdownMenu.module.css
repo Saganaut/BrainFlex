@@ -1,12 +1,13 @@
-/* Reusable dropdown panel anchored to an arbitrary trigger element */
+/* Reusable dropdown panel anchored to an arbitrary trigger element.
+   Positioning (placement, offset, flip, shift, cursor anchoring) is owned by
+   @floating-ui/react and applied as inline styles on the panel — this module
+   only carries the panel's appearance and the menu-item visuals. */
 
 .wrapper {
-  position: relative;
   display: inline-flex;
 }
 
 .panel {
-  position: absolute;
   background: var(--bg-surface);
   border: var(--border-size-sm) solid var(--border-default);
   border-radius: var(--radius-md);
@@ -16,60 +17,6 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-
-/* Position names the corner of the panel anchored to the trigger.
-   top-* anchors the panel's top edge to the trigger's bottom → appears below.
-   bottom-* anchors the panel's bottom edge to the trigger's top → appears above. */
-
-.panel.topRight {
-  top: calc(100% + 0.5rem);
-  right: 0;
-}
-
-.panel.topLeft {
-  top: calc(100% + 0.5rem);
-  left: 0;
-}
-
-.panel.bottomRight {
-  bottom: calc(100% + 0.5rem);
-  right: 0;
-}
-
-.panel.bottomLeft {
-  bottom: calc(100% + 0.5rem);
-  left: 0;
-}
-
-/* Cursor mode: the panel is fixed-positioned at the click point. The caller
-   passes the click coords through `--cursor-x` / `--cursor-y` on the element's
-   inline style; the corner picked by `position` decides which two viewport
-   edges the panel hangs from. Rules sit after the trigger-anchored block so
-   equal-specificity selectors resolve in their favor. */
-
-.panelAtCursor {
-  position: fixed;
-}
-
-.panelAtCursor.topRight {
-  top: var(--cursor-y);
-  right: calc(100vw - var(--cursor-x));
-}
-
-.panelAtCursor.topLeft {
-  top: var(--cursor-y);
-  left: var(--cursor-x);
-}
-
-.panelAtCursor.bottomRight {
-  bottom: calc(100vh - var(--cursor-y));
-  right: calc(100vw - var(--cursor-x));
-}
-
-.panelAtCursor.bottomLeft {
-  bottom: calc(100vh - var(--cursor-y));
-  left: var(--cursor-x);
 }
 
 .item {

@@ -104,19 +104,6 @@ const SettingsForm = ({
       </div>
 
       <label className={styles.setting}>
-        <span>Rounds</span>
-        <Input
-          type='number'
-          min={3}
-          max={30}
-          value={settings.totalRounds}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            patch({ totalRounds: e.target.valueAsNumber });
-          }}
-          className={styles.numberInput}
-        />
-      </label>
-      <label className={styles.setting}>
         <span>
           Seconds per question
           <span className={styles.settingHint}> (0 = unlimited )</span>
@@ -386,22 +373,6 @@ const SettingsForm = ({
           </label>
 
           <label className={styles.setting}>
-            <span>
-              Require full name
-              <span className={styles.settingHint}>
-                {" "}
-                — blocks guest joins and nickname-only accounts
-              </span>
-            </span>
-            <Checkbox
-              checked={settings.requireFullName}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                patch({ requireFullName: e.target.checked });
-              }}
-            />
-          </label>
-
-          <label className={styles.setting}>
             <span>Allow spectators (no player slot)</span>
             <Checkbox
               checked={settings.spectatorsAllowed}
@@ -442,7 +413,6 @@ const CreateGamePage = () => {
           deckId,
           format: settings.format,
           showResponses: settings.showResponses,
-          totalRounds: settings.totalRounds,
           timePerQuestion: settings.timePerQuestion,
           speedBonus: settings.speedBonus,
           answerSubmissionMode: settings.answerSubmissionMode,
@@ -467,7 +437,6 @@ const CreateGamePage = () => {
               : undefined,
           podiumDuration: settings.podiumDuration,
           lobbyCountdownSeconds: settings.lobbyCountdownSeconds,
-          requireFullName: settings.requireFullName,
           spectatorsAllowed: settings.spectatorsAllowed,
         },
       }).unwrap();

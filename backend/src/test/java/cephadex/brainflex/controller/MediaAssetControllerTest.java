@@ -6,6 +6,12 @@
 // org-scope enforcement, and owner-only edit/delete.
 package cephadex.brainflex.controller;
 
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -13,20 +19,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -37,15 +29,21 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import cephadex.brainflex.model.enums.MediaKind;
 import cephadex.brainflex.model.image.ImageSize;
 import cephadex.brainflex.model.image.ImageVariant;
-import cephadex.brainflex.model.enums.MediaKind;
 import cephadex.brainflex.model.media.MediaAsset;
 import cephadex.brainflex.model.media.StoredImageVariant;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.MediaAssetRepository;
-import cephadex.brainflex.service.ImageProcessingService;
 import cephadex.brainflex.service.ImageProcessingService.ProcessedVariant;
 import cephadex.brainflex.service.MediaProcessingService;
 import cephadex.brainflex.service.MediaProcessingService.ProcessedFile;
@@ -73,8 +71,8 @@ class MediaAssetControllerTest {
     @MockitoBean
     private MediaProcessingService mediaProcessingService;
 
-    @MockitoBean
-    private ImageProcessingService imageProcessingService;
+    // @MockitoBean
+    // private ImageProcessingService imageProcessingService;
 
     private static User user(String id, String... orgIds) {
         User u = new User();

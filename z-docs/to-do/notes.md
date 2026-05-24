@@ -9,3 +9,12 @@ Backend
 I fixed localdate time errors by doing this, need to decide
 if the time can just be set on create or on update and if not need to pass in correct value
 Instant.parse("2026-05-01T12:00:00Z")
+
+Exception Handling
+We need a better exception handling strategy + logging strategy
+
+Question, how do we pass errors to the frontend to inform users without revealling too much?
+
+Logging
+
+Need a logging strategy for front and back + all services we will use when we integrate to AWS.

@@ -30,8 +30,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class NotificationPrefs {
-
-    /** Kinds whose email channel is on by default. Every other kind starts opted out. */
+    // TODO: Revisit this when its in scope
+    /**
+     * Kinds whose email channel is on by default. Every other kind starts opted
+     * out.
+     */
     private static final Set<NotificationKind> EMAIL_DEFAULT_ON = Set.of(
             NotificationKind.INTERACTIVE_SESSION_INVITE,
             NotificationKind.COLLAB_INVITE,
@@ -43,14 +46,17 @@ public class NotificationPrefs {
     private boolean weeklyDigestEmail = true;
 
     /**
-     * Mirrors {@code User.newsletter} on first materialisation. Stored as Boolean so the
+     * Mirrors {@code User.newsletter} on first materialisation. Stored as Boolean
+     * so the
      * "not yet decided" state survives a round trip through the persisted document.
      */
     private Boolean marketingEmail;
 
     /**
-     * Returns a fresh {@code NotificationPrefs} with the per-kind maps seeded to the spec
-     * defaults. Use this when promoting a legacy user record that has no embedded prefs yet,
+     * Returns a fresh {@code NotificationPrefs} with the per-kind maps seeded to
+     * the spec
+     * defaults. Use this when promoting a legacy user record that has no embedded
+     * prefs yet,
      * or when constructing prefs for a brand-new user.
      */
     public static NotificationPrefs withDefaults() {
@@ -62,15 +68,22 @@ public class NotificationPrefs {
         return prefs;
     }
 
-    /** True if the user wants in-app notifications for {@code kind}; falls back to the spec
-     *  default (always on) when the map has no entry — keeps newly-added kinds opt-in by default. */
+    /**
+     * True if the user wants in-app notifications for {@code kind}; falls back to
+     * the spec
+     * default (always on) when the map has no entry — keeps newly-added kinds
+     * opt-in by default.
+     */
     public boolean inAppEnabled(NotificationKind kind) {
         Boolean v = inApp.get(kind);
         return v == null ? true : v;
     }
 
-    /** True if the user wants email notifications for {@code kind}; falls back to the spec
-     *  default (only the three invite kinds are on) when the map has no entry. */
+    /**
+     * True if the user wants email notifications for {@code kind}; falls back to
+     * the spec
+     * default (only the three invite kinds are on) when the map has no entry.
+     */
     public boolean emailEnabled(NotificationKind kind) {
         Boolean v = email.get(kind);
         return v == null ? EMAIL_DEFAULT_ON.contains(kind) : v;

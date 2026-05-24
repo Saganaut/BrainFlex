@@ -288,6 +288,7 @@ export const semanticTokenGroups: SemanticTokenGroup[] = [
 // each mock below only has to specify the fields it actually demonstrates
 // (playerId / user / score).
 const playerStatDefaults = {
+  avatar: { avatarType: "LINK" as const },
   currentStreak: 0,
   longestStreak: 0,
   accuracy: 0,

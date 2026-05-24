@@ -1,29 +1,54 @@
-// MCQ presentation surface for the board. A single component covers every
-// moment, switched by `mode`:
-//   - prompt      → option cards; tappable when `interactive` (participant on
-//                   their own device), otherwise read-only (projected / host).
-//   - liveResults → cards with the response tally filling in; still tappable for
-//                   a participant who hasn't answered yet.
+// MCQ presentation + answer surface for the board. A single component covers
+// every moment, switched by `mode`:
+//   - prompt      → option cards; selectable when `interactive` (participant on
+//                   their own device), read-only when projected/host.
+//   - liveResults → cards with the response tally filling in; still answerable
+//                   for a participant who hasn't submitted yet.
 //   - results     → cards with the final distribution + the correct answer(s)
 //                   highlighted.
 //
-// `distribution` (optionId → response count) is the seam for real data: it
-// arrives over the round-result WebSocket broadcast once the board is wired off
-// mock data. Until then the results modes still render honestly — correct-answer
-// highlighting is real (it's on the element), and the bars simply read empty.
+// Answering: a participant builds a draft selection then taps Submit, which
+// publishes an McqAnswer over the session connection and locks the inputs. The
+// host's "end submit phase" also flushes the current draft (useFlushOnClosing).
+// Results distribution comes from the round-result broadcast (per-option counts
+// derived from each player's submitted McqAnswer).
 import { useState } from "react";
-import type { McqQuestion } from "@/types/elements";
+import type { AnswerPayload, McqQuestion } from "@/types/elements";
 import type { BoardQuestionMode } from "../resolveBoardStage";
 import { useFlushOnClosing } from "./useFlushOnClosing";
+import { useSessionConnection } from "@/pages/SessionPage/SessionConnectionContext";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  answerSubmittedLocally,
+  type RoundResultPayload,
+} from "@/store/interactiveSessionSlice";
+import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./McqBoardContent.module.css";
 
 interface McqBoardContentProps {
   question: McqQuestion;
   mode: BoardQuestionMode;
   interactive: boolean;
-  /** optionId → number of responses. Absent until wired to the live broadcast. */
+  /** optionId → response count. Defaults to the live round-result tally. */
   distribution?: Record<string, number>;
 }
+
+/** Per-option response counts from the round result for this element. */
+const deriveDistribution = (
+  roundResult: RoundResultPayload | null,
+  elementId: string,
+): Record<string, number> | undefined => {
+  if (roundResult?.element.id !== elementId) return undefined;
+  const counts: Record<string, number> = {};
+  for (const pr of roundResult.playerResults) {
+    if (pr.payload?.kind === "McqAnswer") {
+      for (const optionId of pr.payload.optionIds ?? []) {
+        counts[optionId] = (counts[optionId] ?? 0) + 1;
+      }
+    }
+  }
+  return counts;
+};
 
 const McqBoardContent = ({
   question,
@@ -37,25 +62,40 @@ const McqBoardContent = ({
     question.allowMultipleSelect === true
       ? (question.maxSelections ?? options.length)
       : 1;
+  const elementId = question.id ?? "";
 
-  // Local selection only — the board runs on mock data today, so this stands
-  // in for a submitted answer. The seam to the real `sendAnswer` is this state.
+  const dispatch = useAppDispatch();
+  const { sendAnswer } = useSessionConnection();
+  const myAnswer = useAppSelector((s) => s.interactiveSession.myAnswer);
+  const roundResult = useAppSelector((s) => s.interactiveSession.roundResult);
+  // myAnswer is cleared at the top of every round, so a non-null value here
+  // means this participant has already locked in their answer for this question.
+  const submitted = myAnswer !== null;
+
+  // Draft selection until the participant submits.
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
 
-  // Chunk 25 — when the host ends the submit phase, flush this device's current
-  // selection as the answer. The submit path itself is still mock (see the
-  // `selected` seam above), so this is wired but inert until answers go live;
-  // it consumes the closing signal regardless so the one-shot doesn't dangle.
-  useFlushOnClosing(question.id, () => {
-    if (!interactive || selected.size === 0) return;
-    // TODO(answers-live): sendAnswer(question.id, { kind: "McqAnswer", optionIds: [...selected] })
-  });
+  const submit = () => {
+    if (!interactive || submitted || selected.size === 0) return;
+    const payload: AnswerPayload = {
+      kind: "McqAnswer",
+      optionIds: [...selected],
+    };
+    sendAnswer(elementId, payload);
+    dispatch(answerSubmittedLocally(payload));
+  };
+
+  // Host ended the submit phase → flush this device's draft before it freezes.
+  useFlushOnClosing(question.id, submit);
+
+  const resolvedDistribution =
+    distribution ?? deriveDistribution(roundResult, elementId);
 
   const showResults = mode === "results" || mode === "liveResults";
   const revealCorrect = mode === "results";
-  const canSelect = interactive && mode !== "results";
+  const canSelect = interactive && !submitted && mode !== "results";
 
-  const totalResponses = Object.values(distribution ?? {}).reduce(
+  const totalResponses = Object.values(resolvedDistribution ?? {}).reduce(
     (sum, n) => sum + n,
     0,
   );
@@ -80,53 +120,71 @@ const McqBoardContent = ({
   const columns = options.length ? Math.max(Math.ceil(options.length / 2), 2) : 2;
 
   return (
-    <div
-      className={styles.mcqBoardContent}
-      style={{ "--cols": columns } as React.CSSProperties}>
-      {options.map((option) => {
-        const id = option.id ?? "";
-        const isSelected = selected.has(id);
-        const isCorrect = revealCorrect && correctIds.has(id);
-        const count = distribution?.[id] ?? 0;
-        const pct =
-          totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0;
+    <div className={styles.mcqBoardContent}>
+      <div
+        className={styles.options}
+        style={{ "--cols": columns } as React.CSSProperties}>
+        {options.map((option) => {
+          const id = option.id ?? "";
+          const isSelected = selected.has(id);
+          const isCorrect = revealCorrect && correctIds.has(id);
+          const count = resolvedDistribution?.[id] ?? 0;
+          const pct =
+            totalResponses > 0 ? Math.round((count / totalResponses) * 100) : 0;
 
-        const classes = [
-          styles.option,
-          isSelected ? styles.selected : "",
-          isCorrect ? styles.correct : "",
-          canSelect ? styles.selectable : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
+          const classes = [
+            styles.option,
+            isSelected ? styles.selected : "",
+            isCorrect ? styles.correct : "",
+            canSelect ? styles.selectable : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
 
-        return (
-          <button
-            key={id}
-            type='button'
-            className={classes}
-            disabled={!canSelect}
-            aria-pressed={canSelect ? isSelected : undefined}
-            onClick={() => {
-              toggle(id);
-            }}
-            style={
-              { "--option-accent": option.color ?? "var(--bg-brand)" } as React.CSSProperties
-            }>
-            {showResults && (
-              <span
-                className={styles.bar}
-                style={{ width: `${pct.toString()}%` }}
-                aria-hidden='true'
-              />
-            )}
-            <span className={styles.label}>{option.text}</span>
-            {showResults && (
-              <span className={styles.pct}>{pct.toString()}%</span>
-            )}
-          </button>
-        );
-      })}
+          return (
+            <button
+              key={id}
+              type='button'
+              className={classes}
+              disabled={!canSelect}
+              aria-pressed={canSelect ? isSelected : undefined}
+              onClick={() => {
+                toggle(id);
+              }}
+              style={
+                { "--option-accent": option.color ?? "var(--bg-brand)" } as React.CSSProperties
+              }>
+              {showResults && (
+                <span
+                  className={styles.bar}
+                  style={{ width: `${pct.toString()}%` }}
+                  aria-hidden='true'
+                />
+              )}
+              <span className={styles.label}>{option.text}</span>
+              {showResults && (
+                <span className={styles.pct}>{pct.toString()}%</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {interactive && mode !== "results" && (
+        <div className={styles.actions}>
+          {submitted ? (
+            <p className={styles.submitted}>Answer locked in ✓</p>
+          ) : (
+            <Btn
+              size='sm'
+              variant='brand'
+              disabled={selected.size === 0}
+              onClick={submit}>
+              {maxSelections > 1 ? "Submit answer" : "Lock in answer"}
+            </Btn>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -37,26 +37,25 @@ import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
-import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
 
 @Service
 public class DeckCollaboratorService {
 
     private final DeckCollaboratorRepository collaboratorRepository;
-    private final DeckRepository deckRepository;
+    // private final DeckRepository deckRepository;
     private final UserRepository userRepository;
     private final UserImageHydrator userImageHydrator;
     private final ApplicationEventPublisher events;
 
     public DeckCollaboratorService(
             DeckCollaboratorRepository collaboratorRepository,
-            DeckRepository deckRepository,
+            // DeckRepository deckRepository,
             UserRepository userRepository,
             UserImageHydrator userImageHydrator,
             ApplicationEventPublisher events) {
         this.collaboratorRepository = collaboratorRepository;
-        this.deckRepository = deckRepository;
+        // this.deckRepository = deckRepository;
         this.userRepository = userRepository;
         this.userImageHydrator = userImageHydrator;
         this.events = events;

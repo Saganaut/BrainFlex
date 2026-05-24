@@ -12,6 +12,8 @@ import { NumberOptionsSection } from "./EditSlideSections/NumberOptionsSection";
 import { RankingOptionsSection } from "./EditSlideSections/RankingOptionsSection";
 import { QAndAOptionsSection } from "./EditSlideSections/QAndAOptionsSection";
 import { BehaviorSection } from "./EditSlideSections/BehaviorSection";
+import { SlideImageSection } from "./EditSlideSections/SlideImageSection";
+import { SessionPacingSection } from "./EditSlideSections/SessionPacingSection";
 import { CommonOptionsSection } from "./EditSlideSections/CommonOptionsSection";
 import { ProvenanceFooter } from "./EditSlideSections/ProvenanceFooter";
 import styles from "./EditSlidePanel.module.css";
@@ -61,11 +63,17 @@ const EditSlidePanel = () => {
   return (
     <div className={styles.panel}>
       <PerKindSection kind={element.kind} />
+      {/* Per-slide content image — moved out of ThemePanel (the deck
+          background stays there as a styling concern). */}
+      <SlideImageSection />
       {/* Chunk 24 — shared Behavior section sits between the per-kind
           options and the universal Common section. Currently hosts the
           promoted `showResponses` dropdown; future runtime cascade knobs
           (scoringEnabledOverride, etc.) land here too. */}
       <BehaviorSection />
+      {/* Deck-wide default session pacing/scoring (defaultSettings). Author
+          suggestions a host may override at session start — not per-slide. */}
+      <SessionPacingSection />
       <CommonOptionsSection />
       <ProvenanceFooter
         createdByUserId={element.chrome?.createdByUserId}

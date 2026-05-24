@@ -10,6 +10,7 @@ Per-feature design docs. One subfolder per feature; each owns its `README.md` pl
 - [Data Models](data-models.md) — User / PlayerStats / Organization / Theme MongoDB documents, DTOs, image processing tiers.
 - [Membership](membership/README.md) — Organization membership semantics and flows.
 - [Email](email/README.md) — Outbox-backed dispatch for transactional / system / marketing email; design sketch for the v1 module + future Lambda+SQS swap.
+- [Exception Handling](exceptions.md) — Centralized RFC 9457 ProblemDetail error contract, ApiException hierarchy, 5xx disclosure policy, tiered 404-vs-403.
 
 ## Adding a new feature
 

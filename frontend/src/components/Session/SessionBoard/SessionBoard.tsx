@@ -10,6 +10,7 @@
 // from session state and each stage component owns its own rendering.
 import { Container } from "@/components/Containers/Container";
 import { useSession } from "@/pages/SessionPage/useSession";
+import { useAppSelector } from "@/store/hooks";
 import { resolveBoardStage } from "./resolveBoardStage";
 import { BoardSlide } from "./stages/BoardSlide";
 import { BoardQuestion } from "./stages/BoardQuestion";
@@ -23,10 +24,13 @@ interface SessionBoardProps {
 
 const SessionBoard = ({ className }: SessionBoardProps) => {
   const { interactiveSession } = useSession();
+  // The reveal moment rides on /roundResult, not a phase flip — read it from the
+  // slice so the board can switch to results when the round completes.
+  const roundResult = useAppSelector((s) => s.interactiveSession.roundResult);
   const viewerIsHost =
     !!interactiveSession.viewerPlayerId &&
     interactiveSession.viewerPlayerId === interactiveSession.hostPlayerId;
-  const stage = resolveBoardStage(interactiveSession, viewerIsHost);
+  const stage = resolveBoardStage(interactiveSession, viewerIsHost, roundResult);
 
   return (
     <Container

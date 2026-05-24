@@ -6,6 +6,10 @@ For the loose, unstructured component/feature checklist see [todo.md](todo.md).
 
 For a cross-cutting audit of the Java `model/` and `dto/` packages (repetition, fields on the wrong owner, sealed-hierarchy inconsistencies, naming/typing gaps), see [java-model-issues.md](java-model-issues.md).
 
+For ad-hoc model/DTO field-bloat cleanup items, see [cleanup.md](cleanup.md).
+
+For an audit of the Gen-2 interactive-session frontend logic (`useSession` merge smell, WebSocket-hook organization, and unwired reaction/chat/vote pipelines), see [session-audit.md](session-audit.md).
+
 ## How to use this
 
 - Each chunk lives in its own subfolder so notes, scratch code, migration scripts, and design docs can be added next to the README later.

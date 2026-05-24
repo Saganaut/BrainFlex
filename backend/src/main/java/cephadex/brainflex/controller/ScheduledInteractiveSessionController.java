@@ -25,15 +25,14 @@ import cephadex.brainflex.dto.session.CreateScheduledInteractiveSessionRequest;
 import cephadex.brainflex.dto.session.InteractiveSessionInviteResponse;
 import cephadex.brainflex.dto.session.ScheduledInteractiveSessionResponse;
 import cephadex.brainflex.dto.session.UpdateScheduledInteractiveSessionRequest;
-import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.session.InteractiveSessionInvite;
 import cephadex.brainflex.model.session.ScheduledInteractiveSession;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.ScheduledInteractiveSessionService;
 import cephadex.brainflex.service.UserService;
 import jakarta.validation.Valid;
-import cephadex.brainflex.model.user.User;
 
 @RestController
 @RequestMapping("/api/scheduled-interactive-sessions")

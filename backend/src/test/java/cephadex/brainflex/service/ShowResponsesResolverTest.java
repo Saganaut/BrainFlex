@@ -14,17 +14,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 
 import cephadex.brainflex.model.deck.Deck;
-import cephadex.brainflex.model.session.InteractiveSession;
-import cephadex.brainflex.model.session.InteractiveSessionSettings;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.block.SlideBlock;
 import cephadex.brainflex.model.enums.JoinType;
-import cephadex.brainflex.model.enums.MediaPosition;
-import cephadex.brainflex.model.enums.ResponseMode;
 import cephadex.brainflex.model.enums.ResultsDisplayType;
 import cephadex.brainflex.model.enums.SessionFormat;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
 import cephadex.brainflex.model.enums.SlideKind;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
 
 class ShowResponsesResolverTest {
 

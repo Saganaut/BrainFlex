@@ -10,24 +10,25 @@
  */
 package cephadex.brainflex.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
@@ -42,19 +43,21 @@ import cephadex.brainflex.repository.DeckFavoriteRepository;
 @ExtendWith(MockitoExtension.class)
 class DeckFavoriteServiceTest {
 
-    @Mock private DeckFavoriteRepository favoriteRepository;
-    @Mock private MongoTemplate mongoTemplate;
-    @Mock private AchievementService achievementService;
-    @Mock private org.springframework.context.ApplicationEventPublisher events;
+    @Mock
+    private DeckFavoriteRepository favoriteRepository;
+    @Mock
+    private MongoTemplate mongoTemplate;
 
-    @InjectMocks private DeckFavoriteService deckFavoriteService;
+    @InjectMocks
+    private DeckFavoriteService deckFavoriteService;
 
     @Test
     void favorite_FirstTime_InsertsRowAndIncrementsCounter() {
         Deck after = new Deck();
         after.setId("deck-1");
         after.setFavoriteCount(3);
-        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Deck.class)))
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class),
+                eq(Deck.class)))
                 .thenReturn(after);
 
         long count = deckFavoriteService.favorite("user-1", "deck-1");
@@ -67,8 +70,10 @@ class DeckFavoriteServiceTest {
         assertEquals("deck-1", rowCaptor.getValue().getDeckId());
 
         ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
-        verify(mongoTemplate).findAndModify(any(Query.class), updateCaptor.capture(), any(FindAndModifyOptions.class), eq(Deck.class));
-        assertEquals(1, updateCaptor.getValue().getUpdateObject().get("$inc", org.bson.Document.class).getInteger("favoriteCount"));
+        verify(mongoTemplate).findAndModify(any(Query.class), updateCaptor.capture(), any(FindAndModifyOptions.class),
+                eq(Deck.class));
+        assertEquals(1, updateCaptor.getValue().getUpdateObject().get("$inc", org.bson.Document.class)
+                .getInteger("favoriteCount"));
     }
 
     @Test
@@ -85,7 +90,8 @@ class DeckFavoriteServiceTest {
         assertEquals(7, count);
         // The duplicate path must NOT bump the counter — otherwise repeated
         // taps on the heart would drift it.
-        verify(mongoTemplate, never()).findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Deck.class));
+        verify(mongoTemplate, never()).findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Deck.class));
     }
 
     @Test
@@ -94,15 +100,18 @@ class DeckFavoriteServiceTest {
         Deck after = new Deck();
         after.setId("deck-1");
         after.setFavoriteCount(2);
-        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Deck.class)))
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class),
+                eq(Deck.class)))
                 .thenReturn(after);
 
         long count = deckFavoriteService.unfavorite("user-1", "deck-1");
 
         assertEquals(2, count);
         ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
-        verify(mongoTemplate).findAndModify(any(Query.class), updateCaptor.capture(), any(FindAndModifyOptions.class), eq(Deck.class));
-        assertEquals(-1, updateCaptor.getValue().getUpdateObject().get("$inc", org.bson.Document.class).getInteger("favoriteCount"));
+        verify(mongoTemplate).findAndModify(any(Query.class), updateCaptor.capture(), any(FindAndModifyOptions.class),
+                eq(Deck.class));
+        assertEquals(-1, updateCaptor.getValue().getUpdateObject().get("$inc", org.bson.Document.class)
+                .getInteger("favoriteCount"));
     }
 
     @Test
@@ -116,7 +125,8 @@ class DeckFavoriteServiceTest {
         long count = deckFavoriteService.unfavorite("user-1", "deck-1");
 
         assertEquals(5, count);
-        verify(mongoTemplate, never()).findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), eq(Deck.class));
+        verify(mongoTemplate, never()).findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), eq(Deck.class));
     }
 
     @Test
@@ -162,6 +172,7 @@ class DeckFavoriteServiceTest {
         assertEquals(4L, result);
         ArgumentCaptor<Update> updateCaptor = ArgumentCaptor.forClass(Update.class);
         verify(mongoTemplate).updateFirst(any(Query.class), updateCaptor.capture(), eq(Deck.class));
-        assertEquals(4, updateCaptor.getValue().getUpdateObject().get("$set", org.bson.Document.class).getInteger("favoriteCount"));
+        assertEquals(4, updateCaptor.getValue().getUpdateObject().get("$set", org.bson.Document.class)
+                .getInteger("favoriteCount"));
     }
 }

@@ -52,7 +52,6 @@ import type {
 } from "../types/bestAnswer";
 
 export function useInteractiveSessionWebSocket(roomCode: string | null) {
-  console.log("using interactive session start");
   const dispatch = useAppDispatch();
   const clientRef = useRef<Client | null>(null);
 
@@ -232,7 +231,6 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
 
   return {
     sendStart: useCallback(() => {
-      console.log("sending starT");
       send(`/app/interactive-session/${roomCode}/start`);
     }, [roomCode, send]),
 

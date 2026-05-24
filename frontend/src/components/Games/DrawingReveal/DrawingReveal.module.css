@@ -33,7 +33,7 @@
   }
 
   .tileBtn:hover {
-    border-color: var(--edge-strong);
+    border-color: var(--edge-surface);
   }
 
   .tileBtn:focus-visible {
@@ -96,7 +96,7 @@
     gap: var(--space-3);
     background: var(--bg-surface);
     border-radius: var(--radius-lg);
-    border: var(--border-size-sm) solid var(--edge-strong);
+    border: var(--border-size-sm) solid var(--edge-surface);
     padding: var(--space-5);
     max-width: 90vw;
     max-height: 90vh;

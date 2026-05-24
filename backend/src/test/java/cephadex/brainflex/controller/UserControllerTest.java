@@ -84,7 +84,6 @@ class UserControllerTest {
         user.setPictureUrl("pic.jpg");
         user.setStats(new PlayerStats());
         user.setLastLogin(Instant.now());
-        user.setCreatedAt(Instant.now());
 
         when(userRepository.findById("1")).thenReturn(Optional.of(user));
 

@@ -30,6 +30,7 @@ public final class WordCloudAggregator {
      * casing (relevant when {@code caseSensitive=false} — two submissions
      * differing only in case collapse onto the form first seen).
      */
+    @SuppressWarnings("null")
     public static Map<String, Integer> aggregate(WordCloudQuestion question,
             Collection<WordCloudAnswer> answers) {
         Map<String, Integer> counts = new LinkedHashMap<>();

@@ -84,7 +84,7 @@ const ContentDeckPicker = ({
       )}
 
       <div className={styles.section}>
-        <span className={styles.sectionLabel}>System Decks</span>
+        <span className={styles.sectionLabel}>Templates</span>
         {systemDecks.length > 0 ? (
           <div className={styles.grid}>
             {systemDecks.map((deck) => (
@@ -97,7 +97,7 @@ const ContentDeckPicker = ({
             ))}
           </div>
         ) : (
-          <p className={styles.message}>No content decks available.</p>
+          <p className={styles.message}>No templates available.</p>
         )}
       </div>
 

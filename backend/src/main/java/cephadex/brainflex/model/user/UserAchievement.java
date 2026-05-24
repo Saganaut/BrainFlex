@@ -24,14 +24,13 @@ import lombok.Data;
 
 @Data
 @Document(collection = "user_achievements")
-@CompoundIndex(name = "user_achievement_unique_idx",
-        def = "{'userId': 1, 'achievementId': 1}",
-        unique = true)
+@CompoundIndex(name = "user_achievement_unique_idx", def = "{'userId': 1, 'achievementId': 1}", unique = true)
 public class UserAchievement {
 
     @Id
     private String id;
 
+    // TODO: We re going to have to have a public facing id for this
     @Indexed
     private String userId;
 

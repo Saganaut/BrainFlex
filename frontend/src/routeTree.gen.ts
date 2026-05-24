@@ -28,9 +28,6 @@ import { Route as AuthenticatedAchievementsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as SessionsSessionIdIndexRouteImport } from './routes/sessions/$sessionId/index'
 import { Route as AuthenticatedDecksIndexRouteImport } from './routes/_authenticated/decks/index'
-import { Route as GamesRoomCodeResultsRouteImport } from './routes/games/$roomCode/results'
-import { Route as GamesRoomCodePlayRouteImport } from './routes/games/$roomCode/play'
-import { Route as GamesRoomCodeLobbyRouteImport } from './routes/games/$roomCode/lobby'
 import { Route as DecksDeckIdViewRouteImport } from './routes/decks/$deckId/view'
 import { Route as DecksDeckIdPresentRouteImport } from './routes/decks/$deckId/present'
 import { Route as DecksDeckIdEditRouteImport } from './routes/decks/$deckId/edit'
@@ -134,21 +131,6 @@ const AuthenticatedDecksIndexRoute = AuthenticatedDecksIndexRouteImport.update({
   path: '/decks/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const GamesRoomCodeResultsRoute = GamesRoomCodeResultsRouteImport.update({
-  id: '/games/$roomCode/results',
-  path: '/games/$roomCode/results',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GamesRoomCodePlayRoute = GamesRoomCodePlayRouteImport.update({
-  id: '/games/$roomCode/play',
-  path: '/games/$roomCode/play',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GamesRoomCodeLobbyRoute = GamesRoomCodeLobbyRouteImport.update({
-  id: '/games/$roomCode/lobby',
-  path: '/games/$roomCode/lobby',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DecksDeckIdViewRoute = DecksDeckIdViewRouteImport.update({
   id: '/decks/$deckId/view',
   path: '/decks/$deckId/view',
@@ -205,9 +187,6 @@ export interface FileRoutesByFullPath {
   '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
   '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
-  '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
-  '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
-  '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
   '/decks/': typeof AuthenticatedDecksIndexRoute
   '/sessions/$sessionId/': typeof SessionsSessionIdIndexRoute
 }
@@ -234,9 +213,6 @@ export interface FileRoutesByTo {
   '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
   '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
-  '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
-  '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
-  '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
   '/decks': typeof AuthenticatedDecksIndexRoute
   '/sessions/$sessionId': typeof SessionsSessionIdIndexRoute
 }
@@ -265,9 +241,6 @@ export interface FileRoutesById {
   '/decks/$deckId/edit': typeof DecksDeckIdEditRoute
   '/decks/$deckId/present': typeof DecksDeckIdPresentRoute
   '/decks/$deckId/view': typeof DecksDeckIdViewRoute
-  '/games/$roomCode/lobby': typeof GamesRoomCodeLobbyRoute
-  '/games/$roomCode/play': typeof GamesRoomCodePlayRoute
-  '/games/$roomCode/results': typeof GamesRoomCodeResultsRoute
   '/_authenticated/decks/': typeof AuthenticatedDecksIndexRoute
   '/sessions/$sessionId/': typeof SessionsSessionIdIndexRoute
 }
@@ -296,9 +269,6 @@ export interface FileRouteTypes {
     | '/decks/$deckId/edit'
     | '/decks/$deckId/present'
     | '/decks/$deckId/view'
-    | '/games/$roomCode/lobby'
-    | '/games/$roomCode/play'
-    | '/games/$roomCode/results'
     | '/decks/'
     | '/sessions/$sessionId/'
   fileRoutesByTo: FileRoutesByTo
@@ -325,9 +295,6 @@ export interface FileRouteTypes {
     | '/decks/$deckId/edit'
     | '/decks/$deckId/present'
     | '/decks/$deckId/view'
-    | '/games/$roomCode/lobby'
-    | '/games/$roomCode/play'
-    | '/games/$roomCode/results'
     | '/decks'
     | '/sessions/$sessionId'
   id:
@@ -355,9 +322,6 @@ export interface FileRouteTypes {
     | '/decks/$deckId/edit'
     | '/decks/$deckId/present'
     | '/decks/$deckId/view'
-    | '/games/$roomCode/lobby'
-    | '/games/$roomCode/play'
-    | '/games/$roomCode/results'
     | '/_authenticated/decks/'
     | '/sessions/$sessionId/'
   fileRoutesById: FileRoutesById
@@ -380,9 +344,6 @@ export interface RootRouteChildren {
   DecksDeckIdEditRoute: typeof DecksDeckIdEditRoute
   DecksDeckIdPresentRoute: typeof DecksDeckIdPresentRoute
   DecksDeckIdViewRoute: typeof DecksDeckIdViewRoute
-  GamesRoomCodeLobbyRoute: typeof GamesRoomCodeLobbyRoute
-  GamesRoomCodePlayRoute: typeof GamesRoomCodePlayRoute
-  GamesRoomCodeResultsRoute: typeof GamesRoomCodeResultsRoute
   SessionsSessionIdIndexRoute: typeof SessionsSessionIdIndexRoute
 }
 
@@ -521,27 +482,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDecksIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/games/$roomCode/results': {
-      id: '/games/$roomCode/results'
-      path: '/games/$roomCode/results'
-      fullPath: '/games/$roomCode/results'
-      preLoaderRoute: typeof GamesRoomCodeResultsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/games/$roomCode/play': {
-      id: '/games/$roomCode/play'
-      path: '/games/$roomCode/play'
-      fullPath: '/games/$roomCode/play'
-      preLoaderRoute: typeof GamesRoomCodePlayRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/games/$roomCode/lobby': {
-      id: '/games/$roomCode/lobby'
-      path: '/games/$roomCode/lobby'
-      fullPath: '/games/$roomCode/lobby'
-      preLoaderRoute: typeof GamesRoomCodeLobbyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/decks/$deckId/view': {
       id: '/decks/$deckId/view'
       path: '/decks/$deckId/view'
@@ -629,9 +569,6 @@ const rootRouteChildren: RootRouteChildren = {
   DecksDeckIdEditRoute: DecksDeckIdEditRoute,
   DecksDeckIdPresentRoute: DecksDeckIdPresentRoute,
   DecksDeckIdViewRoute: DecksDeckIdViewRoute,
-  GamesRoomCodeLobbyRoute: GamesRoomCodeLobbyRoute,
-  GamesRoomCodePlayRoute: GamesRoomCodePlayRoute,
-  GamesRoomCodeResultsRoute: GamesRoomCodeResultsRoute,
   SessionsSessionIdIndexRoute: SessionsSessionIdIndexRoute,
 }
 export const routeTree = rootRouteImport

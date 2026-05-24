@@ -81,10 +81,10 @@ const ScheduledRow = ({ session, onCancel }: RowProps) => {
       <div className={styles.rowActions}>
         {isLive && live?.roomCode && (
           <Link
-            to='/games/$roomCode/lobby'
-            params={{ roomCode: live.roomCode }}>
+            to='/sessions/$sessionId'
+            params={{ sessionId: live.roomCode }}>
             <Btn size='sm' shape='pill' variant='brand'>
-              Open lobby
+              Open session
             </Btn>
           </Link>
         )}

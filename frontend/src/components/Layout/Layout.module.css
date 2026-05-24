@@ -79,4 +79,14 @@
   position: relative;
   min-width: 0;
   min-height: 0;
+
+  /* Query container: descendants (e.g. the session board) size to the display
+     width via `@container display`. Safe because flex:1 makes the width
+     layout-owned. Only innerDisplay is a container for now — container-type
+     turns a region into a containing block for fixed/absolute descendants, and
+     the larger regions (canvasBody/mainBodyDashboard) hold inline
+     position:fixed overlays (e.g. SessionChat) that would be trapped. Defer
+     those until overlays are portaled. See STYLE-RULES "Container queries". */
+  container-type: inline-size;
+  container-name: display;
 }

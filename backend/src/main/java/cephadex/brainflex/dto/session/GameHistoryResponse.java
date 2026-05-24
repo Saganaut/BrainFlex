@@ -7,8 +7,6 @@
  */
 package cephadex.brainflex.dto.session;
 
-import cephadex.brainflex.dto.shared.Page;
-
 import java.time.Instant;
 
 import cephadex.brainflex.model.session.GameHistoryEntry;

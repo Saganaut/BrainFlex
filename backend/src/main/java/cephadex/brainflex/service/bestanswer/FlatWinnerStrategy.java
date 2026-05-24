@@ -14,9 +14,9 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.session.PlayerAnswer;
 import cephadex.brainflex.model.session.RoundVote;
-import cephadex.brainflex.model.enums.BestAnswerScoring;
 
 @Component
 public class FlatWinnerStrategy implements BestAnswerScoringStrategy {
@@ -26,6 +26,7 @@ public class FlatWinnerStrategy implements BestAnswerScoringStrategy {
         return BestAnswerScoring.FLAT_WINNER;
     }
 
+    @SuppressWarnings("null")
     @Override
     public Map<String, Integer> award(
             Map<String, PlayerAnswer> submissionsByUserId,
@@ -36,7 +37,8 @@ public class FlatWinnerStrategy implements BestAnswerScoringStrategy {
         }
         Map<String, Integer> voteCounts = new HashMap<>();
         for (RoundVote v : votes) {
-            if (v.getVotedSubmissionId() == null) continue;
+            if (v.getVotedSubmissionId() == null)
+                continue;
             voteCounts.merge(v.getVotedSubmissionId(), 1, Integer::sum);
         }
         int maxVotes = voteCounts.values().stream().max(Integer::compareTo).orElse(0);
@@ -46,7 +48,8 @@ public class FlatWinnerStrategy implements BestAnswerScoringStrategy {
         Map<String, Integer> result = new HashMap<>();
         for (Map.Entry<String, PlayerAnswer> entry : submissionsByUserId.entrySet()) {
             String submissionId = entry.getValue().getSubmissionId();
-            if (submissionId == null) continue;
+            if (submissionId == null)
+                continue;
             int count = voteCounts.getOrDefault(submissionId, 0);
             if (count == maxVotes) {
                 result.put(entry.getKey(), configuredPoints);

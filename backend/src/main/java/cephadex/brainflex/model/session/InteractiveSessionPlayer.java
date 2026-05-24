@@ -2,6 +2,9 @@
  * Represents a player who has joined an active InteractiveSession.
  * Embedded in InteractiveSession.players so player state (score, answers) lives
  * inside the session document and is updated atomically with game state.
+ * 
+ * The playerId is sent to the front and should be used for all game related events
+ * At the end of the presentation/game or when a player items that need to be reconciled cna be done so
  */
 package cephadex.brainflex.model.session;
 
@@ -11,8 +14,10 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import lombok.Data;
+import cephadex.brainflex.model.shared.Avatar;
+import cephadex.brainflex.model.shared.PublicUserSnapshot;
 import cephadex.brainflex.model.shared.UserSnapshot;
+import lombok.Data;
 
 @Data
 public class InteractiveSessionPlayer {
@@ -83,12 +88,17 @@ public class InteractiveSessionPlayer {
 
     private Instant joinedAt = Instant.now();
 
-    // Chunk 13 — Kahoot-style preset avatars chosen in the lobby. avatarKey
-    // references one of AvatarService's preset keys (e.g. "fox-orange") and
-    // is distinct from pictureUrl (which is the user's real avatar — used by
-    // the host view and post-game review). colorTag is the design-token name
-    // that drives the player's accent color in lobby + leaderboard tiles.
-    private String avatarKey;
+    // Chunk 13 — unified player avatar. A KEY avatar carries a Kahoot-style
+    // preset id (e.g. "fox-orange") the frontend resolves to a bundled image;
+    // a LINK avatar points at the player's real picture. Every player starts
+    // LINK (use my real picture) and flips to KEY when they pick a preset in
+    // the lobby. Stored as an intent marker: LINK leaves avatarUrl null here
+    // and the DTO materializes it from UserSnapshot.pictureUrl at the wire
+    // boundary so a long-lived session never freezes an expiring presigned URL.
+    // colorTag is the design-token name that drives the player's accent color
+    // in lobby + leaderboard tiles; it stays a sibling field (orthogonal to the
+    // avatar image — a LINK player can still carry a chosen accent).
+    private Avatar avatar;
     private String colorTag;
 
     // Chunk 13 — currentStreak resets to 0 on the first wrong answer (live-only,

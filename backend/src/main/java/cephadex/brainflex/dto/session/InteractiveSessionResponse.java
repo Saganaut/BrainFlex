@@ -7,7 +7,7 @@
  * (see {@link cephadex.brainflex.model.session.InteractiveSessionPlayer#playerId}) —
  * the real account {@code userId} never ships. The host is identified the same
  * way via {@code hostPlayerId}. Display fields are projected through
- * {@link PublicUserSnapshot}, which drops {@code userId} from {@link UserSnapshot}.
+ * {@link PublicUserSnapshot}, which drops {@code userId} from { UserSnapshot}.
  *
  * Self-identification: {@code viewerPlayerId} carries the caller's playerId on
  * REST responses (constructed through {@link #forViewer}); it is {@code null} on
@@ -20,17 +20,14 @@
  */
 package cephadex.brainflex.dto.session;
 
-import cephadex.brainflex.dto.session.message.RoundStartMessage;
-
 import static io.swagger.v3.oas.annotations.media.Schema.RequiredMode.REQUIRED;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 import cephadex.brainflex.model.element.DeckElement;
+import cephadex.brainflex.model.enums.AvatarType;
 import cephadex.brainflex.model.enums.ResponseMode;
 import cephadex.brainflex.model.enums.RoundPhase;
 import cephadex.brainflex.model.enums.SessionFormat;
@@ -39,8 +36,9 @@ import cephadex.brainflex.model.org.Team;
 import cephadex.brainflex.model.session.InteractiveSession;
 import cephadex.brainflex.model.session.InteractiveSessionPlayer;
 import cephadex.brainflex.model.session.InteractiveSessionSettings;
+import cephadex.brainflex.model.shared.Avatar;
 import cephadex.brainflex.model.shared.PublicUserSnapshot;
-import cephadex.brainflex.model.shared.UserSnapshot;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public record InteractiveSessionResponse(
                 @Schema(requiredMode = REQUIRED) String id,
@@ -199,10 +197,12 @@ public record InteractiveSessionResponse(
                         @Schema(requiredMode = REQUIRED) int score,
                         // teamId is null unless the session is in team mode.
                         String teamId,
-                        // Chunk 13 — lobby avatar + presence + per-player chrome stats.
-                        // avatarKey / colorTag are null until the player picks them in
-                        // the lobby; lastSeenAt is null until the first presence tick.
-                        String avatarKey,
+                        // Chunk 13 — unified avatar + presence + per-player chrome stats.
+                        // avatar is always present: KEY when the player picked a preset,
+                        // otherwise LINK with the player's real pictureUrl materialized
+                        // below. colorTag is null until the player picks a preset;
+                        // lastSeenAt is null until the first presence tick.
+                        @Schema(requiredMode = REQUIRED) Avatar avatar,
                         String colorTag,
                         @Schema(requiredMode = REQUIRED) int currentStreak,
                         @Schema(requiredMode = REQUIRED) int longestStreak,
@@ -219,7 +219,7 @@ public record InteractiveSessionResponse(
                                         PublicUserSnapshot.from(player.getUser()),
                                         player.getScore(),
                                         player.getTeamId(),
-                                        player.getAvatarKey(),
+                                        resolveAvatar(player),
                                         player.getColorTag(),
                                         player.getCurrentStreak(),
                                         player.getEndStats().longestStreak(),
@@ -229,6 +229,21 @@ public record InteractiveSessionResponse(
                                         player.isLateJoin(),
                                         player.isDisconnected(),
                                         player.getLastSeenAt());
+                }
+
+                /**
+                 * Materializes the wire avatar. A KEY avatar travels verbatim
+                 * (the frontend resolves the key). Anything else — a LINK, or a
+                 * null avatar on a legacy doc written before the unification —
+                 * resolves to a LINK carrying the player's (re-hydrated)
+                 * pictureUrl, so the url is never a frozen, expiring presigned
+                 * URL stored in the session document.
+                 */
+                private static Avatar resolveAvatar(InteractiveSessionPlayer player) {
+                        Avatar avatar = player.getAvatar();
+                        if (avatar != null && avatar.avatarType() == AvatarType.KEY)
+                                return avatar;
+                        return Avatar.ofLink(player.getPictureUrl());
                 }
         }
 }

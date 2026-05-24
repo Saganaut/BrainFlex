@@ -53,6 +53,11 @@ const SessionControls = ({ className }: SessionControlsProps) => {
   const revealedElementIds = useAppSelector(
     (s) => s.interactiveSession.revealedElementIds,
   );
+  // Present once the round has completed and its result has been broadcast.
+  // The backend never flips to a REVEAL phase, so this is how we know we're in
+  // the between-rounds reveal window (and must stop offering submit-phase
+  // actions). Cleared at the top of the next round.
+  const roundResult = useAppSelector((s) => s.interactiveSession.roundResult);
 
   // Controls are the host's surface only.
   const viewerIsHost = !!viewerPlayerId && viewerPlayerId === hostPlayerId;
@@ -84,8 +89,10 @@ const SessionControls = ({ className }: SessionControlsProps) => {
   const elementId = element?.id ?? "";
   const isSlide = element?.kind === "Slide";
   const inProgress = status === "IN_PROGRESS";
-  const inSubmit = phase === "SUBMIT";
-  const isTurnBased = settings.answerSubmissionMode === "TURN_BASED";
+  // The submit window is open only before the round result lands; once it does
+  // we're in the reveal window and submit-phase actions no longer apply.
+  const inSubmit = phase === "SUBMIT" && !roundResult;
+  const inReveal = inProgress && !!roundResult;
   const isRevealed = revealedElementIds.includes(elementId);
 
   // Reveal-now only applies on a live ON_CLICK question that hasn't been
@@ -93,16 +100,28 @@ const SessionControls = ({ className }: SessionControlsProps) => {
   // per-element showResponses override is Slide-only and reveal never targets a
   // slide, so the element arg is left undefined and the cascade falls through to
   // deck / session / format.
-  const resolved = resolveShowResponsesFor(interactiveSession, undefined, undefined);
+  const resolved = resolveShowResponsesFor(
+    interactiveSession,
+    undefined,
+    undefined,
+  );
   const canReveal =
-    inProgress && inSubmit && !isSlide && resolved === "ON_CLICK" && !isRevealed;
+    inProgress &&
+    inSubmit &&
+    !isSlide &&
+    resolved === "ON_CLICK" &&
+    !isRevealed;
   const canEndSubmit = inProgress && inSubmit && !isSlide;
   // Pause only matters when the round has a countdown. We key off the session's
   // per-question time; per-element overrides are a rarer case and the button is
   // hidden, not broken, when they're the only timer.
   const hasTimer = (settings.timePerQuestion ?? 0) > 0;
   const canPauseTimer = inProgress && inSubmit && !isSlide && hasTimer;
-  const canNextRound = inProgress && isTurnBased;
+  // Advance is offered once the round's result is showing, in any submission
+  // mode. The server's nextRound now works for SIMULTANEOUS too (it cancels the
+  // pending auto-advance), so the host can step forward immediately instead of
+  // waiting out the between-rounds delay.
+  const canNextRound = inReveal;
   const canEnd = inProgress;
   const canRestart = inProgress || status === "FINISHED";
 
@@ -130,21 +149,26 @@ const SessionControls = ({ className }: SessionControlsProps) => {
   return (
     <div className={`${styles.sessionControls} ${className ?? ""}`}>
       <div className={styles.actions}>
+        {/* The generic reveal: ends the submit window (flushing drafts) and
+            reveals the round result + correct answer, in any showResponses
+            mode. */}
         <Btn
           size='sm'
           disabled={!canEndSubmit}
           onClick={() => {
             sendEndSubmitPhase(elementId);
           }}>
-          End submit phase
+          Reveal answers
         </Btn>
+        {/* ON_CLICK only: surface the live response distribution without ending
+            the round (the PRESENTATION "peek"). */}
         <Btn
           size='sm'
           disabled={!canReveal}
           onClick={() => {
             sendRevealNow(elementId);
           }}>
-          {isRevealed ? "Results revealed" : "Reveal results"}
+          {isRevealed ? "Live results shown" : "Show live results"}
         </Btn>
         {canNextRound && (
           <Btn size='sm' onClick={sendNextRound}>

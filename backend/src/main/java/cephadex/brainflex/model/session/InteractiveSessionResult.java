@@ -14,6 +14,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.Data;
 
+//TODO: we need to rethink this document.  Instead we should have a larger one that contains
+// all the analytics of the session and also include placements
 @Data
 @Document(collection = "interactive_session_results")
 public class InteractiveSessionResult {

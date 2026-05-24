@@ -33,8 +33,9 @@
   }
 }
 
-/* Larger prompt once the board has room (projected / wide screens). */
-@container (min-width: 50rem) {
+/* Larger prompt once the display has room (projected / wide screens).
+   Targets the named `display` container (innerDisplay) explicitly. */
+@container display (min-width: 50rem) {
   .prompt {
     font-size: var(--font-size-2xl);
   }

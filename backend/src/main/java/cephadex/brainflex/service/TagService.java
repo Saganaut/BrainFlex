@@ -189,6 +189,7 @@ public class TagService {
      * fresh boot lines up with current data, and exposed for explicit
      * resync requests. Returns the number of tags whose count changed.
      */
+    @SuppressWarnings("null")
     public int recomputeDeckCounts(List<Deck> allDecks) {
         Map<String, Integer> counts = new HashMap<>();
         for (Deck deck : allDecks) {

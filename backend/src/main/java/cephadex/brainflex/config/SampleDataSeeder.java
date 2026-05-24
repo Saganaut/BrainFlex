@@ -41,6 +41,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.Tag;
+import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DeckElement;
 import cephadex.brainflex.model.element.ElementChrome;
 import cephadex.brainflex.model.element.GridQuestion;
@@ -52,6 +53,7 @@ import cephadex.brainflex.model.element.RankingQuestion;
 import cephadex.brainflex.model.element.ScalesQuestion;
 import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.TextQuestion;
+import cephadex.brainflex.model.element.WordCloudQuestion;
 import cephadex.brainflex.model.element.block.BodyBlock;
 import cephadex.brainflex.model.element.block.SlideBlock;
 import cephadex.brainflex.model.element.parts.GridCellsConfig;
@@ -93,7 +95,14 @@ import cephadex.brainflex.service.TagService;
 public class SampleDataSeeder {
 
         private static final String WELCOME_TOUR_ID = "00000000-0000-4000-8000-000000000001";
-        private static final String GENERAL_KNOWLEDGE_ID = "00000000-0000-4000-8000-000000000002";
+        // Facilitation templates — Mentimeter-style workshop decks, all unscored
+        // surveys.
+        // The old General Knowledge trivia deck (…0002) was retired; new IDs continue
+        // the sequence.
+        private static final String TEAM_BUILDING_ID = "00000000-0000-4000-8000-000000000003";
+        private static final String BRAINSTORMING_ID = "00000000-0000-4000-8000-000000000004";
+        private static final String RETROSPECTIVE_ID = "00000000-0000-4000-8000-000000000005";
+        private static final String ICEBREAKER_ID = "00000000-0000-4000-8000-000000000006";
 
         private final ObjectMapper objectMapper = new ObjectMapper()
                         .registerModule(new JavaTimeModule())
@@ -233,7 +242,9 @@ public class SampleDataSeeder {
                                 new CuratedTag("pop-culture", "Pop Culture",
                                                 "Film, TV, music, and internet phenomena."),
                                 new CuratedTag("trivia", "Trivia",
-                                                "Catch-all bucket for grab-bag question decks."));
+                                                "Catch-all bucket for grab-bag question decks."),
+                                new CuratedTag("facilitation", "Facilitation",
+                                                "Workshop and meeting facilitation templates."));
                 int added = 0;
                 for (CuratedTag entry : curated) {
                         if (tagRepository.existsById(entry.id()))
@@ -334,7 +345,6 @@ public class SampleDataSeeder {
                                                 AchievementTrigger.FAVORITES_RECEIVED, 10, 200, false, 180));
 
                 int added = 0;
-                Instant now = Instant.now();
                 for (Seed seed : catalog) {
                         if (achievementRepository.existsById(seed.id()))
                                 continue;
@@ -348,7 +358,6 @@ public class SampleDataSeeder {
                         a.setRewardPoints(seed.rewardPoints());
                         a.setHidden(seed.hidden());
                         a.setDisplayOrder(seed.displayOrder());
-                        a.setCreatedAt(now);
                         achievementRepository.save(a);
                         added++;
                 }
@@ -362,9 +371,21 @@ public class SampleDataSeeder {
                         deckRepository.save(buildWelcomeTourDeck());
                         System.out.println("Seeded system deck: Welcome Tour");
                 }
-                if (!deckRepository.existsById(GENERAL_KNOWLEDGE_ID)) {
-                        deckRepository.save(buildGeneralKnowledgeDeck());
-                        System.out.println("Seeded system deck: General Knowledge");
+                if (!deckRepository.existsById(TEAM_BUILDING_ID)) {
+                        deckRepository.save(buildTeamBuildingDeck());
+                        System.out.println("Seeded template: Team Building");
+                }
+                if (!deckRepository.existsById(BRAINSTORMING_ID)) {
+                        deckRepository.save(buildBrainstormingDeck());
+                        System.out.println("Seeded template: Brainstorming");
+                }
+                if (!deckRepository.existsById(RETROSPECTIVE_ID)) {
+                        deckRepository.save(buildRetrospectiveDeck());
+                        System.out.println("Seeded template: Sprint Retrospective");
+                }
+                if (!deckRepository.existsById(ICEBREAKER_ID)) {
+                        deckRepository.save(buildIcebreakerDeck());
+                        System.out.println("Seeded template: Icebreaker");
                 }
         }
 
@@ -593,7 +614,6 @@ public class SampleDataSeeder {
                 deck.setEstimatedDurationMinutes(4);
                 InteractiveSessionSettings settings = deck.getContent().getSettings();
                 settings.setScoringEnabled(false);
-                settings.setTotalRounds(4);
 
                 List<DeckElement> els = new ArrayList<>();
                 els.add(titleSlide("sb-s-1", "Second Breakfast",
@@ -821,7 +841,8 @@ public class SampleDataSeeder {
                 deck.setVisibility(DeckVisibility.PRIVATE);
                 deck.getContent().setFormat(SessionFormat.GAME);
                 deck.getContent().setCover(Image.external("https://picsum.photos/seed/" + seedSlug + "/480/280"));
-                deck.getContent().setBackground(Image.external("https://picsum.photos/seed/" + seedSlug + "-bg/1600/1000"));
+                deck.getContent().setBackground(
+                                Image.external("https://picsum.photos/seed/" + seedSlug + "-bg/1600/1000"));
                 // Sample LOTR decks ship as PUBLISHED with CC_BY so the Explore feed
                 // has something to render against a fresh DB.
                 deck.setPublishStatus(PublishStatus.PUBLISHED);
@@ -931,6 +952,101 @@ public class SampleDataSeeder {
                                 seedChrome(id, prompt, true, false, 20));
         }
 
+        // ---------- facilitation-template helpers -----------------------------
+        // Workshop templates are opinion-only: every element is an unscored survey
+        // (scored=false, survey=true, pointValue=0). These mirror the scored
+        // mcq()/textQ() helpers above but flip the chrome flags and zero the points.
+
+        /**
+         * Shared base for system facilitation templates. Like {@link #baseDeck}, but
+         * marks the deck as a PUBLIC, PUBLISHED system deck in PRESENTATION format
+         * with scoring disabled — the Pulse-style preset for surveys.
+         */
+        private static Deck templateDeck(String id, String name, String description,
+                        String seedSlug, List<String> tags, int durationMinutes) {
+                Deck deck = new Deck();
+                deck.setId(id);
+                deck.getContent().setName(name);
+                deck.getContent().setDescription(description);
+                deck.setTags(new java.util.LinkedHashSet<>(tags));
+                deck.setSubjectTagId("facilitation");
+                deck.setTagIds(new java.util.LinkedHashSet<>(List.of("facilitation")));
+                deck.setSystem(true);
+                deck.setVisibility(DeckVisibility.PUBLIC);
+                deck.getContent().setFormat(SessionFormat.PRESENTATION);
+                deck.getContent().setCover(
+                                Image.external("https://picsum.photos/seed/brainflex-" + seedSlug + "/480/280"));
+                deck.getContent().setBackground(
+                                Image.external("https://picsum.photos/seed/brainflex-" + seedSlug + "-bg/1600/1000"));
+                deck.setEstimatedDurationMinutes(durationMinutes);
+                deck.setPublishStatus(PublishStatus.PUBLISHED);
+                deck.setPublishedAt(Instant.now());
+                deck.setLanguage("en");
+                deck.setDifficulty(Difficulty.EASY);
+                deck.setLicense(License.CC_BY);
+
+                InteractiveSessionSettings settings = new InteractiveSessionSettings();
+                settings.setScoringEnabled(false);
+                settings.setSpeedBonus(false);
+                deck.getContent().setSettings(settings);
+                return deck;
+        }
+
+        private static WordCloudQuestion wordCloud(String id, String prompt) {
+                return new WordCloudQuestion(id, prompt, 3, 30, false, true, List.of(),
+                                0, Difficulty.EASY, null,
+                                seedChrome(id, prompt, false, true, 30));
+        }
+
+        /** Unscored free-text prompt (open-ended survey response). */
+        private static TextQuestion openText(String id, String prompt) {
+                return new TextQuestion(id, prompt, "open", List.of(), false,
+                                0, Difficulty.EASY, null,
+                                80, true, false, 1,
+                                seedChrome(id, prompt, false, true, 30));
+        }
+
+        /** Opinion poll: an MCQ with no correct answer and no scoring. */
+        private static McqQuestion pollMcq(String id, String prompt, List<String> options) {
+                List<McqOption> opts = new ArrayList<>();
+                for (int i = 0; i < options.size(); i++) {
+                        opts.add(new McqOption(id + "-opt-" + i, options.get(i), null, null));
+                }
+                return new McqQuestion(id, prompt, opts, Set.of(),
+                                0, Difficulty.EASY, null,
+                                false, false, 0,
+                                seedChrome(id, prompt, false, true, 20));
+        }
+
+        private static ScalesQuestion surveyScales(String id, String prompt,
+                        List<String> statements, String minLabel, String maxLabel) {
+                List<ScaleStatement> rows = new ArrayList<>();
+                for (int i = 0; i < statements.size(); i++) {
+                        rows.add(new ScaleStatement(id + "-st-" + i, statements.get(i)));
+                }
+                return new ScalesQuestion(id, prompt, rows, 1, 5, minLabel, maxLabel, List.of(),
+                                0, Difficulty.EASY, null,
+                                seedChrome(id, prompt, false, true, 25));
+        }
+
+        /** Mentimeter-style "100 Points" weighted-preference survey. */
+        private static AllocationQuestion allocation(String id, String prompt, List<String> options) {
+                List<McqOption> opts = new ArrayList<>();
+                for (int i = 0; i < options.size(); i++) {
+                        opts.add(new McqOption(id + "-opt-" + i, options.get(i), null, null));
+                }
+                return new AllocationQuestion(id, prompt, opts, 100, true, true,
+                                0, Difficulty.EASY, null,
+                                seedChrome(id, prompt, false, true, 30));
+        }
+
+        private static QAndAQuestion qAndA(String id, String prompt) {
+                return new QAndAQuestion(id, prompt, 3, true, false,
+                                0, Difficulty.EASY, null,
+                                false, 0,
+                                seedChrome(id, prompt, false, true, 45));
+        }
+
         // ---------- system decks (preserved from the old startup seeder) ------
 
         private static Deck buildWelcomeTourDeck() {
@@ -946,7 +1062,8 @@ public class SampleDataSeeder {
                 deck.setVisibility(DeckVisibility.PUBLIC);
                 deck.getContent().setFormat(SessionFormat.GAME);
                 deck.getContent().setCover(Image.external("https://picsum.photos/seed/brainflex-welcome-tour/480/280"));
-                deck.getContent().setBackground(Image.external("https://picsum.photos/seed/brainflex-welcome-tour-bg/1600/1000"));
+                deck.getContent().setBackground(
+                                Image.external("https://picsum.photos/seed/brainflex-welcome-tour-bg/1600/1000"));
                 deck.setEstimatedDurationMinutes(8);
                 deck.setPublishStatus(PublishStatus.PUBLISHED);
                 deck.setPublishedAt(Instant.now());
@@ -955,7 +1072,6 @@ public class SampleDataSeeder {
                 deck.setLicense(License.CC_BY);
 
                 InteractiveSessionSettings defaults = new InteractiveSessionSettings();
-                defaults.setTotalRounds(16);
                 defaults.setScoringEnabled(true);
                 defaults.setSpeedBonus(true);
                 deck.getContent().setSettings(defaults);
@@ -1148,62 +1264,96 @@ public class SampleDataSeeder {
                 return deck;
         }
 
-        private static Deck buildGeneralKnowledgeDeck() {
-                Deck deck = new Deck();
-                deck.setId(GENERAL_KNOWLEDGE_ID);
-                deck.getContent().setName("General Knowledge");
-                deck.getContent().setDescription("A mix of geography, history, science, and pop culture. MCQ + text-input only.");
-                deck.setTags(new java.util.LinkedHashSet<>(List.of("general", "trivia")));
-                deck.setSubjectTagId("general-knowledge");
-                deck.setTagIds(new java.util.LinkedHashSet<>(List.of("general-knowledge", "trivia")));
-                deck.setSystem(true);
-                deck.setVisibility(DeckVisibility.PUBLIC);
-                deck.getContent().setFormat(SessionFormat.GAME);
-                deck.getContent().setCover(Image.external("https://picsum.photos/seed/brainflex-general-knowledge/480/280"));
-                deck.getContent().setBackground(
-                                Image.external("https://picsum.photos/seed/brainflex-general-knowledge-bg/1600/1000"));
-                deck.setEstimatedDurationMinutes(6);
-                deck.setPublishStatus(PublishStatus.PUBLISHED);
-                deck.setPublishedAt(Instant.now());
-                deck.setLanguage("en");
-                deck.setDifficulty(Difficulty.MEDIUM);
-                deck.setLicense(License.CC_BY);
+        // ---------- facilitation templates (chunk: replace trivia system decks) -
 
-                InteractiveSessionSettings defaults = new InteractiveSessionSettings();
-                defaults.setTotalRounds(8);
-                deck.getContent().setSettings(defaults);
+        private static Deck buildTeamBuildingDeck() {
+                Deck deck = templateDeck(TEAM_BUILDING_ID, "Team Building",
+                                "Warm up the room, take the team's pulse, and celebrate each other. "
+                                                + "A ready-to-run facilitation flow — no right answers, no scoring.",
+                                "team-building", List.of("facilitation", "team-building"), 12);
 
                 List<DeckElement> els = new ArrayList<>();
-                els.add(mcq("gk-1", "What is the capital city of Australia?",
-                                List.of("Sydney", "Melbourne", "Canberra", "Brisbane"), 2, 100, Difficulty.EASY));
-                els.add(mcq("gk-2", "Who painted the Mona Lisa?",
-                                List.of("Michelangelo", "Raphael", "Leonardo da Vinci", "Donatello"), 2, 100,
-                                Difficulty.EASY));
-                els.add(mcq("gk-3", "What language has the most native speakers worldwide?",
-                                List.of("English", "Spanish", "Hindi", "Mandarin Chinese"), 3, 200, Difficulty.MEDIUM));
-                els.add(mcq("gk-4", "In what year did World War II end?",
-                                List.of("1943", "1944", "1945", "1946"), 2, 200, Difficulty.MEDIUM));
-                els.add(mcq("gk-5", "Which element has the chemical symbol 'Au'?",
-                                List.of("Silver", "Copper", "Aluminum", "Gold"), 3, 200, Difficulty.MEDIUM));
-                els.add(new TextQuestion("gk-6",
-                                "What is the capital of France?",
-                                "Paris", List.of("paree"), false,
-                                150, Difficulty.EASY, null,
-                                80, true, false, 1,
-                                seedChrome("gk-6", "What is the capital of France?", true, false, 15)));
-                els.add(new TextQuestion("gk-7",
-                                "Who wrote the play 'Hamlet'?",
-                                "Shakespeare", List.of("William Shakespeare"), false,
-                                200, Difficulty.MEDIUM, null,
-                                80, true, false, 1,
-                                seedChrome("gk-7", "Who wrote the play 'Hamlet'?", true, false, 20)));
-                els.add(new NumberQuestion("gk-8",
-                                "How many planets are in our solar system?",
-                                8.0, 0.0, " planets", 0,
-                                150, Difficulty.EASY, null,
-                                null, null, true,
-                                seedChrome("gk-8", "How many planets are in our solar system?", true, false, 15)));
+                els.add(titleSlide("tb-s-1", "Team Building",
+                                "Let's connect before we dive in. Grab your phone and join."));
+                els.add(wordCloud("tb-wc-1", "One word for how the team feels right now."));
+                els.add(surveyScales("tb-sc-1",
+                                "How are we doing as a team lately?",
+                                List.of("We communicate openly", "I trust my teammates", "We're having fun"),
+                                "Not yet", "Absolutely"));
+                els.add(openText("tb-ot-1", "Give a shout-out to a teammate — who, and what for?"));
+                els.add(pollMcq("tb-poll-1", "What's our ideal team offsite?",
+                                List.of("Escape room", "Cooking class", "Hiking day", "Board-game café")));
+                els.add(qAndA("tb-qa-1", "Anything you want to raise with the team? Ask away."));
+                els.add(endSlide("tb-s-end", "Stronger together.",
+                                "Thanks for sharing — see you at the next one."));
+                deck.getContent().setElements(els);
+                return deck;
+        }
 
+        private static Deck buildBrainstormingDeck() {
+                Deck deck = templateDeck(BRAINSTORMING_ID, "Brainstorming",
+                                "Diverge, capture, and prioritize ideas as a group. "
+                                                + "Collect raw ideas, vote them up, then spend points on what matters most.",
+                                "brainstorming", List.of("facilitation", "brainstorming"), 15);
+
+                List<DeckElement> els = new ArrayList<>();
+                els.add(titleSlide("bs-s-1", "Brainstorming",
+                                "No bad ideas. Let's get everything on the board first."));
+                els.add(wordCloud("bs-wc-1", "First word that comes to mind about the problem we're solving."));
+                els.add(openText("bs-ot-1", "Drop one idea — keep it short and specific."));
+                els.add(qAndA("bs-qa-1", "Add your ideas and upvote the ones you'd back."));
+                els.add(allocation("bs-alloc-1", "Spend 100 points across these themes — where should we focus?",
+                                List.of("Quick wins", "Bigger bets", "Customer experience", "Reduce toil")));
+                els.add(endSlide("bs-s-end", "Great thinking.",
+                                "We'll turn the top ideas into next steps."));
+                deck.getContent().setElements(els);
+                return deck;
+        }
+
+        private static Deck buildRetrospectiveDeck() {
+                Deck deck = templateDeck(RETROSPECTIVE_ID, "Sprint Retrospective",
+                                "Reflect on the last sprint: what to start, stop, and continue, "
+                                                + "plus a quick mood read and a focus for next time.",
+                                "retrospective", List.of("facilitation", "retrospective"), 20);
+
+                List<DeckElement> els = new ArrayList<>();
+                els.add(titleSlide("rt-s-1", "Sprint Retrospective",
+                                "Honest, blameless, forward-looking. Let's reflect."));
+                els.add(surveyScales("rt-sc-1",
+                                "How did the sprint feel?",
+                                List.of("The sprint went well", "Our pace was sustainable", "Team morale is high"),
+                                "Strongly disagree", "Strongly agree"));
+                els.add(openText("rt-ot-1", "START — what should we begin doing?"));
+                els.add(openText("rt-ot-2", "STOP — what should we stop doing?"));
+                els.add(openText("rt-ot-3", "CONTINUE — what's working that we should keep?"));
+                els.add(allocation("rt-alloc-1", "Spend 100 points on where we should focus next sprint.",
+                                List.of("Code quality", "Faster delivery", "Better planning", "Team health")));
+                els.add(endSlide("rt-s-end", "Onward to the next sprint.",
+                                "Thanks for the honesty — we'll act on the top items."));
+                deck.getContent().setElements(els);
+                return deck;
+        }
+
+        private static Deck buildIcebreakerDeck() {
+                Deck deck = templateDeck(ICEBREAKER_ID, "Icebreaker",
+                                "A five-minute warm-up to get a new or remote group talking. "
+                                                + "Light, fast, and entirely opinion-based.",
+                                "icebreaker", List.of("facilitation", "icebreaker"), 5);
+
+                List<DeckElement> els = new ArrayList<>();
+                els.add(titleSlide("ib-s-1", "Icebreaker",
+                                "Quick warm-up — no wrong answers. Join in!"));
+                els.add(wordCloud("ib-wc-1", "Describe your week so far in one word."));
+                els.add(pollMcq("ib-poll-1", "Would you rather…",
+                                List.of("Always be 10 min early", "Always be 10 min late",
+                                                "Teleport anywhere", "Read minds")));
+                els.add(surveyScales("ib-sc-1",
+                                "Quick pulse check.",
+                                List.of("I've had enough coffee", "I'm ready for today"),
+                                "Nope", "Definitely"));
+                els.add(openText("ib-ot-1", "Share a fun fact about yourself."));
+                els.add(endSlide("ib-s-end", "Nice to meet you all.",
+                                "Now let's get started."));
                 deck.getContent().setElements(els);
                 return deck;
         }

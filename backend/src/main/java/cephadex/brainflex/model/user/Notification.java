@@ -34,8 +34,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import cephadex.brainflex.model.enums.NotificationKind;
-import lombok.Data;
 import cephadex.brainflex.model.shared.UserSnapshot;
+import lombok.Data;
 
 @Data
 @Document(collection = "notifications")
@@ -45,7 +45,7 @@ public class Notification {
 
     @Id
     private String id;
-
+    // TODO: Revisit when in scope
     /** Recipient. Indexed for the cross-collection paginated read. */
     @Indexed
     private String userId;
@@ -55,7 +55,9 @@ public class Notification {
     /** Short — sized to fit on one dropdown row. */
     private String title;
 
-    /** Expanded copy; markdown allowed. May be null when the title is sufficient. */
+    /**
+     * Expanded copy; markdown allowed. May be null when the title is sufficient.
+     */
     private String body;
 
     /** In-app route to navigate to on click, e.g. "/decks/abc123". */
@@ -71,15 +73,28 @@ public class Notification {
      */
     private Map<String, String> meta = new HashMap<>();
 
-    /** Who triggered the notification, with denormalized display fields. Null
-     *  for SYSTEM notifications. Frozen at write time so the row still renders
-     *  after the actor is removed; renderers fall back to a default avatar
-     *  when {@link UserSnapshot#pictureUrl()} is null. */
+    /**
+     * Who triggered the notification, with denormalized display fields. Null
+     * for SYSTEM notifications. Frozen at write time so the row still renders
+     * after the actor is removed; renderers fall back to a default avatar
+     * when {@link UserSnapshot#pictureUrl()} is null.
+     */
     private UserSnapshot actor;
 
-    @JsonIgnore public String getActorUserId()      { return actor == null ? null : actor.userId(); }
-    @JsonIgnore public String getActorName()        { return actor == null ? null : actor.name(); }
-    @JsonIgnore public String getActorPictureUrl()  { return actor == null ? null : actor.pictureUrl(); }
+    @JsonIgnore
+    public String getActorUserId() {
+        return actor == null ? null : actor.userId();
+    }
+
+    @JsonIgnore
+    public String getActorName() {
+        return actor == null ? null : actor.name();
+    }
+
+    @JsonIgnore
+    public String getActorPictureUrl() {
+        return actor == null ? null : actor.pictureUrl();
+    }
 
     private boolean read;
 

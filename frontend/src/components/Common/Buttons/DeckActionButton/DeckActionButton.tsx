@@ -30,7 +30,8 @@ const DeckActionButton = ({
   size = "sm",
   label = "Play",
 }: DeckActionButtonProps) => {
-  const { quickStart, customize, isStarting, error } = useStartInteractiveSession();
+  const { quickStart, customize, isStarting, error } =
+    useStartInteractiveSession();
 
   return (
     <div
@@ -50,7 +51,7 @@ const DeckActionButton = ({
         {isStarting ? "Starting…" : label}
       </Btn>
       <DropdownMenu
-        position='bottom-right'
+        position='top-right'
         trigger={(toggle) => (
           <Btn
             size={size}

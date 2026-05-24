@@ -43,10 +43,12 @@ public class InteractiveSessionCacheService {
     }
 
     /** Serialize and store the session; refreshes the TTL on every write. */
+    @SuppressWarnings("UseSpecificCatch")
     public void put(InteractiveSession session) {
         try {
             String json = objectMapper.writeValueAsString(session);
             redis.opsForValue().set(KEY_PREFIX + session.getRoomCode(), json, TTL);
+            // TODO: Come up wiht more details exception strategy
         } catch (Exception e) {
             log.warn("Redis write failed for room {}: {}", session.getRoomCode(), e.getMessage());
         }
@@ -55,6 +57,7 @@ public class InteractiveSessionCacheService {
     /**
      * Return the cached session, or empty if not cached or Redis is unavailable.
      */
+    @SuppressWarnings("UseSpecificCatch")
     public Optional<InteractiveSession> get(String roomCode) {
         try {
             String json = redis.opsForValue().get(KEY_PREFIX + roomCode);
@@ -104,7 +107,7 @@ public class InteractiveSessionCacheService {
      * Read all (emoji -> count) pairs collected for a round. Empty when Redis is
      * unreachable.
      */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({ "rawtypes" })
     public Map<String, Long> getReactionCounts(String roomCode, String elementId) {
         try {
             String key = REACTION_PREFIX + roomCode + ":" + elementId;

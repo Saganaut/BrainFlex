@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.config.AdminProperties;
 import cephadex.brainflex.dto.deck.CreateCommentRequest;
 import cephadex.brainflex.dto.deck.CreateDeckRequest;
 import cephadex.brainflex.dto.deck.DeckCollaboratorResponse;
@@ -45,12 +44,12 @@ import cephadex.brainflex.dto.deck.DeckRatingResponse;
 import cephadex.brainflex.dto.deck.DeckRatingsPage;
 import cephadex.brainflex.dto.deck.DeckResponse;
 import cephadex.brainflex.dto.deck.InviteCollaboratorRequest;
-import cephadex.brainflex.dto.shared.Page;
 import cephadex.brainflex.dto.deck.RateDeckRequest;
 import cephadex.brainflex.dto.deck.TransferOwnershipRequest;
 import cephadex.brainflex.dto.deck.UpdateCollaboratorRoleRequest;
 import cephadex.brainflex.dto.deck.UpdateCommentRequest;
 import cephadex.brainflex.dto.deck.UpdateDeckRequest;
+import cephadex.brainflex.dto.shared.Page;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckAnalytics;
 import cephadex.brainflex.model.deck.DeckCollaborator;
@@ -92,7 +91,6 @@ public class DeckController {
     private final AuthorizationService authorizationService;
     private final DeckRepository deckRepository;
     private final UserRepository userRepository;
-    private final AdminProperties adminProperties;
     private final UserImageHydrator userImageHydrator;
 
     public DeckController(
@@ -109,7 +107,6 @@ public class DeckController {
             AuthorizationService authorizationService,
             DeckRepository deckRepository,
             UserRepository userRepository,
-            AdminProperties adminProperties,
             UserImageHydrator userImageHydrator) {
         this.deckService = deckService;
         this.userService = userService;
@@ -124,7 +121,6 @@ public class DeckController {
         this.authorizationService = authorizationService;
         this.deckRepository = deckRepository;
         this.userRepository = userRepository;
-        this.adminProperties = adminProperties;
         this.userImageHydrator = userImageHydrator;
     }
 

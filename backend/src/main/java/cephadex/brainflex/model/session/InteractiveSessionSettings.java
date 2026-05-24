@@ -18,12 +18,10 @@ import cephadex.brainflex.model.enums.AnswerSubmissionMode;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
 import lombok.Data;
 
-//TODO: We don't have a clear delimitation between Deck and InteractiveSession, a interactiveSession uses a deck but the delimitation is blurry
 @Data
 public class InteractiveSessionSettings {
     private int maxPlayers = 8;
-    private int totalRounds = 10;
-    private int timePerQuestion = 15; // 0 = unlimited
+    private int timePerQuestion = 30; // 0 = unlimited
     private boolean speedBonus = true;
     private boolean allowGuests = true;
     // Mongo key stays `mode` so existing documents keep round-tripping;
@@ -47,11 +45,7 @@ public class InteractiveSessionSettings {
     private boolean reactionsEnabled = true;
     private boolean chatEnabled = true;
 
-    // Team mode (chunk 12). When `teamMode` is true, createInteractiveSession seeds
-    // `teamCount` default teams; players are auto-balanced into them on join
-    // unless `autoBalanceTeams` is disabled (in which case the join payload
-    // must carry a teamId). teamCount is ignored when the host pre-creates
-    // teams via the CRUD endpoints.
+    // Ignore this feature for now
     private boolean teamMode = false;
     private int teamCount = 2;
     private boolean autoBalanceTeams = true;
@@ -74,8 +68,6 @@ public class InteractiveSessionSettings {
     // transitions the lobby to IN_PROGRESS.
     // lobbyMusicAssetId: MediaAsset reference (chunk 19) for ambient lobby
     // music; null = silence.
-    // requireFullName: disallow lobby-only nicknames; players must use their
-    // registered name (guests are rejected when also set).
     // spectatorsAllowed: viewers without a player slot.
     private boolean shuffleQuestions = false;
     private boolean shuffleAnswers = true;
@@ -83,7 +75,6 @@ public class InteractiveSessionSettings {
     private int podiumDuration = 15;
     private int lobbyCountdownSeconds = 5;
     private String lobbyMusicAssetId;
-    private boolean requireFullName = false;
     private boolean spectatorsAllowed = false;
 
     // Denormalised presentation assets copied from the source deck at session

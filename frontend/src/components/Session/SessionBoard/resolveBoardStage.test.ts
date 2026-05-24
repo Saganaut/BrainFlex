@@ -48,7 +48,7 @@ describe("resolveBoardStage", () => {
     expect(stage).toMatchObject({ type: "question", mode: "prompt" });
   });
 
-  it("makes the prompt interactive for a participant, read-only for the host", () => {
+  it("makes the prompt interactive for a participant (and the host, while testing)", () => {
     const session = base({
       status: "IN_PROGRESS",
       currentRound: 1,
@@ -56,7 +56,9 @@ describe("resolveBoardStage", () => {
       format: "GAME",
     });
     expect(resolveBoardStage(session, false)).toMatchObject({ interactive: true });
-    expect(resolveBoardStage(session, true)).toMatchObject({ interactive: false });
+    // HOST_CAN_PARTICIPATE is on while MCQ answering is brought up, so the host
+    // can answer on the same board rather than watching read-only.
+    expect(resolveBoardStage(session, true)).toMatchObject({ interactive: true });
   });
 
   it("streams live results only for PRESENTATION + INSTANT", () => {
@@ -93,5 +95,22 @@ describe("resolveBoardStage", () => {
     const session = base({ status: "IN_PROGRESS", currentRound: 1, phase: "SUBMIT" });
     session.revealedElementIds = [questionId(session)];
     expect(resolveBoardStage(session, false)).toMatchObject({ mode: "results" });
+  });
+
+  it("shows results once the round result lands for the current element", () => {
+    // A normal GAME round never enters a REVEAL phase — the reveal rides on the
+    // /roundResult broadcast, so a matching roundResult flips the board.
+    const session = base({ status: "IN_PROGRESS", currentRound: 1, phase: "SUBMIT" });
+    const element = session.deckSnapshot[1];
+    const roundResult = {
+      round: 1,
+      element,
+      playerResults: [],
+    } as unknown as Parameters<typeof resolveBoardStage>[2];
+    expect(resolveBoardStage(session, false, roundResult)).toMatchObject({
+      type: "question",
+      mode: "results",
+      interactive: false,
+    });
   });
 });

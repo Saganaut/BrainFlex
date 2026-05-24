@@ -1,10 +1,9 @@
 import { useSession } from "@/pages/SessionPage/useSession";
 import styles from "./SessionPlayerList.module.css";
-import { PlayerListItem } from "./PlayerListeItem";
+import { PlayerListItem } from "./PlayerListItem";
 const SessionPlayerList = () => {
   const { interactiveSession } = useSession();
 
-  console.log("player list", interactiveSession.players);
   return (
     <div className={styles.sessionPlayerList}>
       {interactiveSession.players.map((player) => (

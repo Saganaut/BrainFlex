@@ -37,7 +37,7 @@ Catch-all chunk for the field additions that make a live show feel polished: shu
 
 ### InteractiveSessionPlayer
 
-- `String avatarKey` — Kahoot-style preset avatar id (e.g. `"fox-orange"`); distinct from real `pictureUrl`
+- `Avatar avatar` — unified player avatar (`{ avatarType: KEY | LINK, avatarUrl, avatarKey }`). KEY carries a Kahoot-style preset id (e.g. `"fox-orange"`); LINK carries the player's real picture. Replaced the original standalone `String avatarKey` so consumers read one field instead of branching preset-vs-`pictureUrl`. Stored as an intent marker (LINK leaves `avatarUrl` null; the DTO materializes it from `UserSnapshot.pictureUrl`). See the deferred note below — preset KEY image assets are not served yet.
 - `String colorTag` — assigned in lobby (color token name)
 - `String teamId` — coordinate with chunk 12
 - `int longestStreak, currentStreak` — track across rounds
@@ -125,6 +125,13 @@ Catch-all chunk for the field additions that make a live show feel polished: shu
 
 - `InteractiveSession.hostName` + `hostAvatarUrl` denormalized in `createInteractiveSession` so the lobby header doesn't need a `UserRepository` round trip on every refresh.
 - `InteractiveSession.allowReJoin` + `InteractiveSession.lobbyOpenedAt` defaults populated at create time.
-- `InteractiveSessionDTO` + `InteractiveSessionPlayerDTO` now expose the new player chrome stats (avatarKey, colorTag, currentStreak, longestStreak, accuracy, reactionsSent, speedBonusTotal, lateJoin, disconnected, lastSeenAt) so the frontend can render them without a separate fetch.
+- `InteractiveSessionDTO` + `InteractiveSessionPlayerDTO` now expose the new player chrome stats (avatar, colorTag, currentStreak, longestStreak, accuracy, reactionsSent, speedBonusTotal, lateJoin, disconnected, lastSeenAt) so the frontend can render them without a separate fetch. (`avatar` was originally a bare `avatarKey` — see the avatar-unification follow-up below.)
 - `InteractiveSessionRepository.findByStatusAndPlayersUserId` added so `PresenceService` can flip the per-interactive-session `disconnected` flag without a full collection scan.
 - Chunk 11's `acceptReaction` now increments `InteractiveSessionPlayer.reactionsSent` (the counter existed in the DTO surface but was never written — the field is wired here so chunk 13's placement-card UI has real data when it lands).
+
+## Follow-up — avatar unification & deferred preset assets
+
+> **Update (removed).** The preset roster (`AvatarService`, `GET /api/avatars`), the lobby avatar picker (`PUT /me/avatar`, `useListAvatarsQuery`/`useUpdateMyAvatarMutation`), and the entire Gen-1 game flow (lobby/play/results) have since been **removed** — the preset images were never served and the picker lived only in the throwaway Gen-1 lobby. The `Avatar` value object below is retained as a LINK-only seam (KEY is dormant until a picker is rebuilt); player-join now routes to the Gen-2 `/sessions/$sessionId`. See [migrations-needed.md](../../../to-do/migrations-needed.md). The record below is left as-built.
+
+- **Unified avatar value object (landed).** The standalone `InteractiveSessionPlayer.avatarKey` was replaced by `Avatar avatar` (`{ avatarType: KEY | LINK, avatarUrl, avatarKey }`, in `model/shared/` + `model/enums/AvatarType`). A player is LINK by default (their real `pictureUrl`, materialized at the DTO boundary by `InteractiveSessionPlayerResponse.resolveAvatar`) and flips to KEY when they pick a preset. Consumers now read one field instead of branching preset-vs-`pictureUrl`. The canonical Gen-2 `SessionPlayerList/PlayerListItem.tsx` renders it via the shared `<Avatar>` + the `resolvePlayerAvatarSrc` helper in `frontend/src/utils/avatarUrl.ts`. No data migration — see [migrations-needed.md](../migrations-needed.md).
+- **TODO — serve preset images.** `AvatarService`'s 16 presets advertise `imageUrl` values under `/assets/images/avatars/*.svg` that **do not exist** — those URLs 404 today, so KEY avatars currently degrade to the player's initial via `<Avatar>`'s `onError`. Serve the preset images from S3/Garage (and/or wire the orphaned mascot library under `frontend/src/assets/images/mascots/`) so KEY avatars render. When that lands, `resolvePlayerAvatarSrc` (in `frontend/src/utils/avatarUrl.ts`) lights up with no change (it already resolves KEY against the live preset list). This is the asset half tracked against the chunk-19 media library — see [19-media-asset](../19-media-asset/README.md).

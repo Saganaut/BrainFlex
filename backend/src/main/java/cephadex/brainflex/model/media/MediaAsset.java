@@ -28,9 +28,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import cephadex.brainflex.model.enums.MediaKind;
-import lombok.Data;
 import cephadex.brainflex.model.shared.Auditable;
+import lombok.Data;
 
+//TODO this is very similar to GalleryImage, tthere should be more composobility
 @Data
 @Document(collection = "media_assets")
 public class MediaAsset extends Auditable {
@@ -46,26 +47,44 @@ public class MediaAsset extends Auditable {
     /** Null = private to owner. Set to an org id to share with all org members. */
     private String organizationId;
 
-    /** One entry per ImageSize tier for IMAGE; empty for AUDIO/VIDEO_FILE/VIDEO_EMBED. */
+    /**
+     * One entry per ImageSize tier for IMAGE; empty for
+     * AUDIO/VIDEO_FILE/VIDEO_EMBED.
+     */
     private List<StoredImageVariant> variants = new ArrayList<>();
 
-    /** File extension for AUDIO + VIDEO_FILE (e.g. "mp3", "m4a", "mp4"). Null for IMAGE (webp implied) and VIDEO_EMBED. */
+    /**
+     * File extension for AUDIO + VIDEO_FILE (e.g. "mp3", "m4a", "mp4"). Null for
+     * IMAGE (webp implied) and VIDEO_EMBED.
+     */
     private String fileExtension;
 
-    /** VIDEO_EMBED only: the literal iframe URL (YouTube/Vimeo). Null for everything else. */
+    /**
+     * VIDEO_EMBED only: the literal iframe URL (YouTube/Vimeo). Null for everything
+     * else.
+     */
     private String embedUrl;
 
     /** Original upload size. 0 for VIDEO_EMBED. */
     private long sizeBytes;
 
-    /** Pixel dimensions when known (IMAGE: largest variant; VIDEO_FILE: source dims). Null for AUDIO + VIDEO_EMBED. */
+    /**
+     * Pixel dimensions when known (IMAGE: largest variant; VIDEO_FILE: source
+     * dims). Null for AUDIO + VIDEO_EMBED.
+     */
     private Integer width;
     private Integer height;
 
-    /** Audio + video duration in milliseconds when known. Null for IMAGE and when metadata extraction is unavailable. */
+    /**
+     * Audio + video duration in milliseconds when known. Null for IMAGE and when
+     * metadata extraction is unavailable.
+     */
     private Integer durationMs;
 
-    /** Source MIME type (image/jpeg, audio/mpeg, video/mp4, …). Null for VIDEO_EMBED. */
+    /**
+     * Source MIME type (image/jpeg, audio/mpeg, video/mp4, …). Null for
+     * VIDEO_EMBED.
+     */
     private String mimeType;
 
     private String altText;

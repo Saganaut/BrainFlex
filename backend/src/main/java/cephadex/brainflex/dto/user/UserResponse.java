@@ -12,6 +12,8 @@ import cephadex.brainflex.model.user.PlayerStats;
 import cephadex.brainflex.model.user.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+// IDE throughing warnings for the static imports TODO: Resolve it
+@SuppressWarnings("unused")
 @Schema(oneOf = { UserResponse.GuestUser.class, UserResponse.RegisteredUser.class })
 public sealed interface UserResponse {
     // The shared contract

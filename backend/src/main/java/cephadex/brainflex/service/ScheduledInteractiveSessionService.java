@@ -416,7 +416,6 @@ public class ScheduledInteractiveSessionService {
                 null, // format — defaulted from deck.defaultSessionFormat
                 cfg.getAnswerSubmissionMode(),
                 cfg.getShowResponses(),
-                cfg.getTotalRounds(),
                 cfg.getTimePerQuestion(),
                 cfg.isSpeedBonus(),
                 cfg.isAllowGuests(),
@@ -436,7 +435,6 @@ public class ScheduledInteractiveSessionService {
                 cfg.isAutoAdvance(),
                 cfg.getPodiumDuration(),
                 cfg.getLobbyCountdownSeconds(),
-                cfg.isRequireFullName(),
                 cfg.isSpectatorsAllowed());
     }
 
@@ -445,7 +443,6 @@ public class ScheduledInteractiveSessionService {
             return new InteractiveSessionSettings();
         InteractiveSessionSettings out = new InteractiveSessionSettings();
         out.setMaxPlayers(src.getMaxPlayers());
-        out.setTotalRounds(src.getTotalRounds());
         out.setTimePerQuestion(src.getTimePerQuestion());
         out.setSpeedBonus(src.isSpeedBonus());
         out.setAllowGuests(src.isAllowGuests());
@@ -465,7 +462,6 @@ public class ScheduledInteractiveSessionService {
         out.setPodiumDuration(src.getPodiumDuration());
         out.setLobbyCountdownSeconds(src.getLobbyCountdownSeconds());
         out.setLobbyMusicAssetId(src.getLobbyMusicAssetId());
-        out.setRequireFullName(src.isRequireFullName());
         out.setSpectatorsAllowed(src.isSpectatorsAllowed());
         return out;
     }

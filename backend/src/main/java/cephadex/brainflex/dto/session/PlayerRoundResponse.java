@@ -6,7 +6,7 @@
  * ever embedded in an outbound payload, so it takes the {@code Response} suffix
  * (see DTO-NAMING-RULES §9). Two callers exist and they read it differently:
  *
- *  - {@link RoundResultMessage}.playerResults — broadcast on
+ *  - { RoundResultMessage}.playerResults — broadcast on
  *    /topic/interactive-session/{roomCode}/roundResult the moment a round
  *    ends. `totalScore` is the player's cumulative score at broadcast time
  *    (i.e. {@code InteractiveSessionPlayer.getScore()} after the round was
@@ -23,15 +23,13 @@
  */
 package cephadex.brainflex.dto.session;
 
-import cephadex.brainflex.dto.session.message.RoundResultMessage;
-
 import cephadex.brainflex.model.answer.AnswerPayload;
 
 public record PlayerRoundResponse(
-                String playerId,
-                String userName,
-                AnswerPayload payload,
-                boolean wasCorrect,
-                int pointsAwarded,
-                int totalScore) {
+        String playerId,
+        String userName,
+        AnswerPayload payload,
+        boolean wasCorrect,
+        int pointsAwarded,
+        int totalScore) {
 }

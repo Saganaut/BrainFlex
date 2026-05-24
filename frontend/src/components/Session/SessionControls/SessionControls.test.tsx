@@ -7,7 +7,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
-import interactiveSessionReducer from "@/store/interactiveSessionSlice";
+import interactiveSessionReducer, {
+  roundResultReceived,
+  type RoundResultPayload,
+} from "@/store/interactiveSessionSlice";
 import type { InteractiveSessionResponse } from "@/store/BrainFlexApi";
 import type { McqQuestion } from "@/types/elements";
 import { mockFellowshipSession } from "@/utils/MockData";
@@ -72,12 +75,12 @@ const baseSession = (
   ...overrides,
 });
 
-const renderControls = () =>
+const makeStore = () =>
+  configureStore({ reducer: { interactiveSession: interactiveSessionReducer } });
+
+const renderControls = (store = makeStore()) =>
   render(
-    <Provider
-      store={configureStore({
-        reducer: { interactiveSession: interactiveSessionReducer },
-      })}>
+    <Provider store={store}>
       <SessionControls />
     </Provider>,
   );
@@ -97,34 +100,35 @@ describe("SessionControls", () => {
   it("shows a Start button in the lobby and sends start", async () => {
     h.sessionRef.current = baseSession({ status: "LOBBY" });
     renderControls();
-    // Only the start action shows in the lobby — no End submit phase yet.
+    // Only the start action shows in the lobby — no reveal control yet.
     expect(
-      screen.queryByRole("button", { name: "End submit phase" }),
+      screen.queryByRole("button", { name: "Reveal answers" }),
     ).not.toBeInTheDocument();
     const start = screen.getByRole("button", { name: "Start session" });
     await userEvent.click(start);
     expect(h.send.sendStart).toHaveBeenCalled();
   });
 
-  it("sends end-submit for the current element", async () => {
+  it("sends end-submit (the generic reveal) for the current element", async () => {
     h.sessionRef.current = baseSession();
     renderControls();
     await userEvent.click(
-      screen.getByRole("button", { name: "End submit phase" }),
+      screen.getByRole("button", { name: "Reveal answers" }),
     );
     expect(h.send.sendEndSubmitPhase).toHaveBeenCalledWith("el-0");
   });
 
-  it("enables reveal on a live ON_CLICK round and sends revealNow", async () => {
+  it("enables the live-results peek on a live ON_CLICK round and sends revealNow", async () => {
     h.sessionRef.current = baseSession();
     renderControls();
-    const reveal = screen.getByRole("button", { name: "Reveal results" });
+    const reveal = screen.getByRole("button", { name: "Show live results" });
     expect(reveal).not.toBeDisabled();
     await userEvent.click(reveal);
     expect(h.send.sendRevealNow).toHaveBeenCalledWith("el-0");
   });
 
-  it("hides Next round outside TURN_BASED and shows it within", () => {
+  it("hides Next round during submit, shows it once the result lands (any mode)", async () => {
+    // SIMULTANEOUS, still in the submit window → no Next round yet.
     h.sessionRef.current = baseSession();
     const { unmount } = renderControls();
     expect(
@@ -132,18 +136,20 @@ describe("SessionControls", () => {
     ).not.toBeInTheDocument();
     unmount();
 
-    h.sessionRef.current = baseSession({
-      settings: {
-        ...mockFellowshipSession.settings,
-        answerSubmissionMode: "TURN_BASED",
-        timePerQuestion: 30,
-        showResponses: "ON_CLICK",
-      },
-    });
-    renderControls();
-    expect(
-      screen.getByRole("button", { name: "Next round" }),
-    ).toBeInTheDocument();
+    // Once the round result is broadcast we're in the reveal window — Next round
+    // appears even in SIMULTANEOUS, and clicking it advances.
+    const store = makeStore();
+    const roundResult: RoundResultPayload = {
+      round: 0,
+      element: mcq,
+      playerResults: [],
+    };
+    store.dispatch(roundResultReceived(roundResult));
+    h.sessionRef.current = baseSession();
+    renderControls(store);
+    const next = screen.getByRole("button", { name: "Next round" });
+    await userEvent.click(next);
+    expect(h.send.sendNextRound).toHaveBeenCalled();
   });
 
   it("confirms before restarting, then sends restart", async () => {

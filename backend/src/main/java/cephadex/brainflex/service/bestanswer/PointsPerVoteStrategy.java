@@ -11,9 +11,9 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.session.PlayerAnswer;
 import cephadex.brainflex.model.session.RoundVote;
-import cephadex.brainflex.model.enums.BestAnswerScoring;
 
 @Component
 public class PointsPerVoteStrategy implements BestAnswerScoringStrategy {
@@ -23,6 +23,7 @@ public class PointsPerVoteStrategy implements BestAnswerScoringStrategy {
         return BestAnswerScoring.POINTS_PER_VOTE;
     }
 
+    @SuppressWarnings("null")
     @Override
     public Map<String, Integer> award(
             Map<String, PlayerAnswer> submissionsByUserId,
@@ -33,15 +34,18 @@ public class PointsPerVoteStrategy implements BestAnswerScoringStrategy {
         }
         Map<String, Integer> voteCounts = new HashMap<>();
         for (RoundVote v : votes) {
-            if (v.getVotedSubmissionId() == null) continue;
+            if (v.getVotedSubmissionId() == null)
+                continue;
             voteCounts.merge(v.getVotedSubmissionId(), 1, Integer::sum);
         }
         Map<String, Integer> result = new HashMap<>();
         for (Map.Entry<String, PlayerAnswer> entry : submissionsByUserId.entrySet()) {
             String submissionId = entry.getValue().getSubmissionId();
-            if (submissionId == null) continue;
+            if (submissionId == null)
+                continue;
             int count = voteCounts.getOrDefault(submissionId, 0);
-            if (count == 0) continue;
+            if (count == 0)
+                continue;
             result.put(entry.getKey(), count * configuredPoints);
         }
         return result;

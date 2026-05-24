@@ -6,27 +6,25 @@
  */
 package cephadex.brainflex.service;
 
-import java.util.List;
-import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.Set;
+
 import org.junit.jupiter.api.Test;
 
-import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.element.parts.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
-import cephadex.brainflex.model.element.parts.RankingItem;
 import cephadex.brainflex.model.element.RankingQuestion;
+import cephadex.brainflex.model.element.parts.McqOption;
+import cephadex.brainflex.model.element.parts.RankingItem;
 import cephadex.brainflex.model.enums.Difficulty;
-import cephadex.brainflex.model.enums.MediaPosition;
 import cephadex.brainflex.model.enums.RankingScoring;
-import cephadex.brainflex.model.enums.ResponseMode;
 
 class ElementShufflerTest {
 

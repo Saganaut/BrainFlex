@@ -23,7 +23,6 @@ public record CreateInteractiveSessionRequest(
         AnswerSubmissionMode answerSubmissionMode,    // null → deck default
         // Session-level entry of the show-responses cascade.
         ShowResponsesMode showResponses,              // null → deck default → format default
-        @Min(1) @Max(60) Integer totalRounds,           // null → deck default
         @Min(0) @Max(120) Integer timePerQuestion,      // null → deck default; 0 = unlimited
         Boolean speedBonus,
         Boolean allowGuests,
@@ -50,6 +49,5 @@ public record CreateInteractiveSessionRequest(
         Boolean autoAdvance,
         @Min(0) @Max(60) Integer podiumDuration,
         @Min(0) @Max(30) Integer lobbyCountdownSeconds,
-        Boolean requireFullName,
         Boolean spectatorsAllowed) {
 }

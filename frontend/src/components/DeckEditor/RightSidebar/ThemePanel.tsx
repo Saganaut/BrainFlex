@@ -2,32 +2,31 @@
 //   1. Deck-wide theme — a single Dropdown collapsing the preset list +
 //      the user's custom themes into one compact control. "+ New theme"
 //      opens the shared ThemeEditor modal.
-//   2. Per-element style — content image (element.image) and background
-//      image (element.background). Both go through useGalleryPicker so the
+//   2. Per-element background image (element.background) — the deck's themed
+//      backdrop, a styling concern. It goes through useGalleryPicker so the
 //      full Image record (useExternalImg / internalImgId / variants) is
 //      what's committed; the backend strips imgUrl on write and rehydrates
-//      variants on read.
+//      variants on read. The per-slide *content* image moved to the edit-slide
+//      panel (SlideImageSection) since it's slide content, not styling.
 //
-// Every DeckElement kind carries `image` and `background` on the shared
-// interface, so the per-element block mounts for any selected element. It's
-// only hidden when no element is selected (e.g. the deck editor is open
-// without a focused slide in the route).
+// Every DeckElement kind carries `background` on the shared interface, so the
+// per-element block mounts for any selected element. It's only hidden when no
+// element is selected (e.g. the deck editor is open without a focused slide in
+// the route).
 import { getRouteApi } from "@tanstack/react-router";
 import {
   useGetDeckQuery,
   useUpdateDeckMutation,
   type DeckResponse,
-  type Image,
   type ThemeResponse,
 } from "@/store/BrainFlexApi";
 import { useThemePicker } from "@/hooks/useThemePicker";
 import { useElementEditor } from "../SlideContentTypes/useElementEditor";
 import { useGalleryPicker } from "@/hooks/useGalleryPicker";
-import { emptyImage, isImageEmpty, resolveImageUrl } from "@/utils/image";
+import { emptyImage } from "@/utils/image";
 import { Btn } from "@/components/Common/Buttons/Btn";
-import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { Dropdown } from "@/components/Common/Input/Dropdown/Dropdown";
-import { XMarkIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { ImagePicker } from "./ImagePicker";
 import styles from "./ThemePanel.module.css";
 
 const routeApi = getRouteApi("/decks/$deckId/edit");
@@ -57,58 +56,6 @@ type DeckElement = NonNullable<DeckResponse["elements"]>[number];
 // signature.
 const anyElement = (_e: DeckElement): _e is DeckElement => true;
 
-interface ImagePickerProps {
-  label: string;
-  image: Image | undefined;
-  seed: string;
-  onPick: () => void;
-  onClear: () => void;
-}
-
-const ImagePicker = ({
-  label,
-  image,
-  seed,
-  onPick,
-  onClear,
-}: ImagePickerProps) => {
-  const hasImage = !isImageEmpty(image);
-  const thumbnailSrc = resolveImageUrl(image, "SM", seed, 200, 200, false);
-
-  return (
-    <div className={styles.imagePicker}>
-      <span className={styles.imagePickerLabel}>{label}</span>
-      <button
-        type='button'
-        className={styles.imageTile}
-        onClick={onPick}
-        aria-label={`Pick ${label.toLowerCase()}`}>
-        {hasImage && thumbnailSrc ? (
-          <img src={thumbnailSrc} alt='' />
-        ) : (
-          <span className={styles.imageTileEmpty}>
-            <PhotoIcon aria-hidden='true' />
-            <span>Choose image</span>
-          </span>
-        )}
-        {hasImage && (
-          <IconBtn
-            fill='ghost'
-            size='xs'
-            className={styles.imageClear}
-            icon={<XMarkIcon />}
-            aria-label={`Clear ${label.toLowerCase()}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-            }}
-          />
-        )}
-      </button>
-    </div>
-  );
-};
-
 const PerSlideStyle = () => {
   const { element, commit, syncedFromId, markSynced } =
     useElementEditor<DeckElement>(anyElement);
@@ -123,16 +70,6 @@ const PerSlideStyle = () => {
   // Spreading a discriminated union and overriding shared fields keeps the
   // `kind` discriminator intact, but TS can't prove that for the union
   // member type, so the cast is required on the way out.
-  const handlePickImage = () => {
-    openPicker((image) => {
-      commit({ ...element, chrome: { ...element.chrome, image } });
-    });
-  };
-
-  const handleClearImage = () => {
-    commit({ ...element, chrome: { ...element.chrome, image: emptyImage() } });
-  };
-
   const handlePickBackground = () => {
     openPicker((background) => {
       commit({ ...element, chrome: { ...element.chrome, background } });
@@ -151,13 +88,6 @@ const PerSlideStyle = () => {
   return (
     <section className={styles.section}>
       <h4 className={styles.heading}>This slide</h4>
-      <ImagePicker
-        label='Content image'
-        image={element.chrome?.image}
-        seed={`${elId}-content`}
-        onPick={handlePickImage}
-        onClear={handleClearImage}
-      />
       <ImagePicker
         label='Background image'
         image={element.chrome?.background}

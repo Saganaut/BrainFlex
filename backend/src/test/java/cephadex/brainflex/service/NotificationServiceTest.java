@@ -41,30 +41,40 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.dto.user.NotificationResponse;
+import cephadex.brainflex.model.enums.NotificationKind;
 import cephadex.brainflex.model.user.Notification;
 import cephadex.brainflex.model.user.User;
-import cephadex.brainflex.model.enums.NotificationKind;
 import cephadex.brainflex.repository.NotificationRepository;
 import cephadex.brainflex.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
 
-    @Mock private NotificationRepository notificationRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private MongoTemplate mongoTemplate;
-    @Mock private SimpMessagingTemplate messagingTemplate;
-    @Mock private OAuthProviderService oAuthProviderService;
-    @Mock private UserImageHydrator userImageHydrator;
-    @Mock private StringRedisTemplate redis;
-    @Mock private ValueOperations<String, String> redisValueOps;
+    @Mock
+    private NotificationRepository notificationRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private MongoTemplate mongoTemplate;
+    @Mock
+    private SimpMessagingTemplate messagingTemplate;
+    @Mock
+    private OAuthProviderService oAuthProviderService;
+    @Mock
+    private UserImageHydrator userImageHydrator;
+    @Mock
+    private StringRedisTemplate redis;
+    @Mock
+    private ValueOperations<String, String> redisValueOps;
 
-    @InjectMocks private NotificationService service;
+    @InjectMocks
+    private NotificationService service;
 
     private User recipient;
     private User actor;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         recipient = registeredUser("u-recipient", "Recipient", "google-1");
         actor = registeredUser("u-actor", "Actor", "google-2");

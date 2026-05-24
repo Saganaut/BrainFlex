@@ -32,26 +32,34 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 import cephadex.brainflex.model.deck.Deck;
-import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.model.enums.PublishStatus;
+import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DeckServiceTest {
 
-    @Mock private DeckRepository deckRepository;
-    @Mock private AuthorizationService authorizationService;
-    @Mock private TagService tagService;
-    @Mock private MongoTemplate mongoTemplate;
-    @Mock private DeckCollaboratorService deckCollaboratorService;
-    @Mock private AchievementService achievementService;
+    @Mock
+    private DeckRepository deckRepository;
+    @Mock
+    private AuthorizationService authorizationService;
+    @Mock
+    private TagService tagService;
+    @Mock
+    private MongoTemplate mongoTemplate;
+    @Mock
+    private DeckCollaboratorService deckCollaboratorService;
+    @Mock
+    private AchievementService achievementService;
 
-    @InjectMocks private DeckService deckService;
+    @InjectMocks
+    private DeckService deckService;
 
     private User owner;
     private Deck deck;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         owner = new User();
         owner.setId("owner-1");
@@ -177,5 +185,48 @@ class DeckServiceTest {
         // that after-the-fact so anonymous reads on a public deck still
         // bypass it via the controller's isOwner check.
         verify(mongoTemplate, never()).updateFirst(any(Query.class), any(Update.class), any(Class.class));
+    }
+
+    // ---- updateDeck: defaultSettings write path (right-sidebar panels) ----
+
+    @Test
+    void updateDeck_WithDefaultSettings_ReplacesContentSettingsAndBumpsVersion() {
+        deck.setVersion(3);
+        when(authorizationService.requireDeckEditable("deck-1", owner)).thenReturn(deck);
+        when(deckRepository.save(any(Deck.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        cephadex.brainflex.model.session.InteractiveSessionSettings settings = new cephadex.brainflex.model.session.InteractiveSessionSettings();
+        settings.setMaxPlayers(20);
+        settings.setAllowGuests(false);
+        settings.setReactionsEnabled(false);
+
+        // Only defaultSettings is non-null; every other field is left unchanged.
+        cephadex.brainflex.dto.deck.UpdateDeckRequest request = new cephadex.brainflex.dto.deck.UpdateDeckRequest(
+                null, null, null, null, null, null, null, null,
+                settings,
+                null, null, null, null, null, null, null, null);
+
+        Deck result = deckService.updateDeck("deck-1", owner, request);
+
+        assertSame(settings, result.getContent().getSettings());
+        assertEquals(20, result.getContent().getSettings().getMaxPlayers());
+        assertEquals(4, result.getVersion());
+    }
+
+    @Test
+    void updateDeck_NullDefaultSettings_LeavesContentSettingsUntouched() {
+        cephadex.brainflex.model.session.InteractiveSessionSettings original = deck.getContent().getSettings();
+        when(authorizationService.requireDeckEditable("deck-1", owner)).thenReturn(deck);
+        when(deckRepository.save(any(Deck.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        cephadex.brainflex.dto.deck.UpdateDeckRequest request = new cephadex.brainflex.dto.deck.UpdateDeckRequest(
+                "Renamed", null, null, null, null, null, null, null,
+                null,
+                null, null, null, null, null, null, null, null);
+
+        Deck result = deckService.updateDeck("deck-1", owner, request);
+
+        assertSame(original, result.getContent().getSettings());
+        assertEquals("Renamed", result.getContent().getName());
     }
 }

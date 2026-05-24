@@ -38,7 +38,7 @@
       background-color var(--duration-fast) var(--ease-out),
       border-color var(--duration-fast) var(--ease-out);
 
-    &:hover:not(:disabled):not(.current) {
+    &:hover:not(:disabled, .current) {
       color: var(--text-primary);
       background-color: var(--bg-subtle);
     }

@@ -45,33 +45,7 @@ const mergeSessionView = (
   const seeded = live.status !== null && live.roomCode === roomCode;
 
   if (!snapshot) {
-    // Pre-load fallback. The provider gates the page on the snapshot, so this is
-    // only hit transiently; enough shape for the lobby to render without error.
-    return {
-      id: "",
-      roomCode,
-      inviteToken: "",
-      status: live.status ?? "LOBBY",
-      phase: live.phase,
-      format: live.format,
-      hostPlayerId: "",
-      hostName: "",
-      deckId: "",
-      deckVersion: 0,
-      deckSnapshot: [],
-      settings: {},
-      players: live.players,
-      teams: live.teams,
-      spectatorCount: 0,
-      lobbyOpenedAt: "",
-      currentRound: live.round,
-      totalRounds: live.totalRounds,
-      revealedElementIds: live.revealedElementIds,
-      elementResponseModeOverrides: {},
-      viewerPlayerId: live.viewerPlayerId ?? undefined,
-      createdAt: "",
-      timerPaused: live.timerPaused,
-    };
+    throw Error("No snapshot provided");
   }
 
   if (!seeded) return snapshot;

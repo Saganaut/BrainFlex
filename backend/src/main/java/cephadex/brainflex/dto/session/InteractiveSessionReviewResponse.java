@@ -10,8 +10,6 @@
  */
 package cephadex.brainflex.dto.session;
 
-import cephadex.brainflex.dto.session.message.RoundResultMessage;
-
 import java.time.Instant;
 import java.util.List;
 

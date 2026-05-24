@@ -34,15 +34,19 @@ import cephadex.brainflex.service.email.provider.NoOpEmailProvider;
 @ExtendWith(MockitoExtension.class)
 class EmailDispatcherTest {
 
-    @Mock private EmailTemplateRenderer renderer;
-    @Mock private EmailSuppressionService suppression;
-    @Mock private EmailOutboxRepository outboxRepository;
+    @Mock
+    private EmailTemplateRenderer renderer;
+    @Mock
+    private EmailSuppressionService suppression;
+    @Mock
+    private EmailOutboxRepository outboxRepository;
 
     private EmailProvider realProvider;
     private NoOpEmailProvider noop;
     private EmailDispatcher dispatcher;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         realProvider = new RecordingProvider("smtp-fake");
         noop = new NoOpEmailProvider();
@@ -143,13 +147,19 @@ class EmailDispatcherTest {
         int sent;
         EmailSendException failWith;
 
-        RecordingProvider(String name) { this.name = name; }
+        RecordingProvider(String name) {
+            this.name = name;
+        }
 
-        @Override public String name() { return name; }
+        @Override
+        public String name() {
+            return name;
+        }
 
         @Override
         public void send(RenderedEmail email) throws EmailSendException {
-            if (failWith != null) throw failWith;
+            if (failWith != null)
+                throw failWith;
             sent++;
         }
     }

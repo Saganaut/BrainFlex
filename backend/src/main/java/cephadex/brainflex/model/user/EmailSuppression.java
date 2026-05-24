@@ -22,15 +22,17 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import cephadex.brainflex.model.shared.Auditable;
 import cephadex.brainflex.service.email.EmailCategory;
 import lombok.Data;
-import cephadex.brainflex.model.shared.Auditable;
 
 @Data
 @Document(collection = "email_suppression")
 public class EmailSuppression extends Auditable {
-
-    public enum Reason { UNSUBSCRIBE, BOUNCE, COMPLAINT, MANUAL }
+    // TODO: Revist when in scope
+    public enum Reason {
+        UNSUBSCRIBE, BOUNCE, COMPLAINT, MANUAL
+    }
 
     @Id
     private String id;

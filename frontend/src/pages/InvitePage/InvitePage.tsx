@@ -32,12 +32,12 @@ const InvitePage = () => {
     void redeem({ token }).unwrap().catch(() => null);
   }, [token, pollCount, redeem]);
 
-  // When we know the live session is up, jump into the lobby immediately.
+  // When we know the live session is up, jump into the session immediately.
   useEffect(() => {
     if (data?.roomCode) {
       void navigate({
-        to: "/games/$roomCode/lobby",
-        params: { roomCode: data.roomCode },
+        to: "/sessions/$sessionId",
+        params: { sessionId: data.roomCode },
         replace: true,
       });
     }

@@ -155,7 +155,6 @@ public class SecurityConfig {
                                 "/api/interactive-sessions/**",
                                 "/api/decks/**",
                                 "/api/collections/*",
-                                "/api/avatars",
                                 "/api/achievements")
                         .permitAll()
                         .anyRequest().authenticated())

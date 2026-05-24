@@ -125,16 +125,6 @@ const injectedRtkApi = api.injectEndpoints({
         body: queryArg.teamMoveRequest,
       }),
     }),
-    updateMyAvatar: build.mutation<
-      UpdateMyAvatarApiResponse,
-      UpdateMyAvatarApiArg
-    >({
-      query: (queryArg) => ({
-        url: `/api/interactive-sessions/${queryArg.roomCode}/me/avatar`,
-        method: "PUT",
-        body: queryArg.updatePlayerAvatarRequest,
-      }),
-    }),
     moderateChat: build.mutation<ModerateChatApiResponse, ModerateChatApiArg>({
       query: (queryArg) => ({
         url: `/api/interactive-sessions/${queryArg.roomCode}/chat/${queryArg.messageId}/moderate`,
@@ -904,9 +894,6 @@ const injectedRtkApi = api.injectEndpoints({
         },
       }),
     }),
-    listAvatars: build.query<ListAvatarsApiResponse, ListAvatarsApiArg>({
-      query: () => ({ url: `/api/avatars` }),
-    }),
     getCurrentUser: build.query<
       GetCurrentUserApiResponse,
       GetCurrentUserApiArg
@@ -1040,12 +1027,6 @@ export type MovePlayerToTeamApiArg = {
   roomCode: string;
   playerId: string;
   teamMoveRequest: TeamMoveRequest;
-};
-export type UpdateMyAvatarApiResponse =
-  /** status 200 OK */ InteractiveSessionResponse;
-export type UpdateMyAvatarApiArg = {
-  roomCode: string;
-  updatePlayerAvatarRequest: UpdatePlayerAvatarRequest;
 };
 export type ModerateChatApiResponse =
   /** status 200 OK */ InteractiveSessionChatMessageResponse;
@@ -1561,8 +1542,6 @@ export type ListMyCollectionsApiArg = {
   page?: number;
   size?: number;
 };
-export type ListAvatarsApiResponse = /** status 200 OK */ AvatarPreset[];
-export type ListAvatarsApiArg = void;
 export type GetCurrentUserApiResponse = /** status 200 OK */ UserResponse;
 export type GetCurrentUserApiArg = void;
 export type LoginApiResponse = unknown;
@@ -2094,12 +2073,17 @@ export type PublicUserSnapshot = {
   pictureUrl?: string;
   guest?: boolean;
 };
+export type Avatar = {
+  avatarType?: "KEY" | "LINK";
+  avatarUrl?: string;
+  avatarKey?: string;
+};
 export type InteractiveSessionPlayerResponse = {
   playerId: string;
   user: PublicUserSnapshot;
   score: number;
   teamId?: string;
-  avatarKey?: string;
+  avatar: Avatar;
   colorTag?: string;
   currentStreak: number;
   longestStreak: number;
@@ -2169,10 +2153,6 @@ export type TeamCrudRequest = {
 };
 export type TeamMoveRequest = {
   teamId: string;
-};
-export type UpdatePlayerAvatarRequest = {
-  avatarKey?: string;
-  colorTag?: string;
 };
 export type InteractiveSessionChatMessageResponse = {
   id?: string;
@@ -2265,6 +2245,7 @@ export type UpdateDeckRequest = {
   visibility?: "PRIVATE" | "UNLISTED" | "ORG" | "PUBLIC";
   defaultSessionFormat?: "GAME" | "PRESENTATION";
   defaultShowResponses?: "INHERIT" | "INSTANT" | "ON_CLICK" | "PRIVATE";
+  defaultSettings?: InteractiveSessionSettings;
   cover?: Image;
   background?: Image;
   themeId?: string;
@@ -2504,8 +2485,6 @@ export type ReactionSendRequest = {
 };
 export type JoinInteractiveSessionRequest = {
   teamId?: string;
-  avatarKey?: string;
-  colorTag?: string;
 };
 export type ChatSendRequest = {
   body: string;
@@ -2864,12 +2843,6 @@ export type PageDeckCollectionResponse = {
   totalElements?: number;
   hasMore?: boolean;
 };
-export type AvatarPreset = {
-  key?: string;
-  displayName?: string;
-  imageUrl?: string;
-  colorTag?: string;
-};
 export type UserResponse = GuestUser | RegisteredUser;
 export type AchievementResponse = {
   id?: string;
@@ -2916,7 +2889,6 @@ export const {
   useUpdateTeamMutation,
   useDeleteTeamMutation,
   useMovePlayerToTeamMutation,
-  useUpdateMyAvatarMutation,
   useModerateChatMutation,
   useUpdateImageMutation,
   useDeleteImageMutation,
@@ -3052,8 +3024,6 @@ export const {
   useLazyExploreDecksQuery,
   useListMyCollectionsQuery,
   useLazyListMyCollectionsQuery,
-  useListAvatarsQuery,
-  useLazyListAvatarsQuery,
   useGetCurrentUserQuery,
   useLazyGetCurrentUserQuery,
   useLoginQuery,

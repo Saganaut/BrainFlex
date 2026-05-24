@@ -13,6 +13,7 @@ import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.License;
 import cephadex.brainflex.model.enums.SessionFormat;
 import cephadex.brainflex.model.enums.ShowResponsesMode;
+import cephadex.brainflex.model.session.InteractiveSessionSettings;
 import jakarta.validation.constraints.Size;
 
 public record UpdateDeckRequest(
@@ -25,6 +26,12 @@ public record UpdateDeckRequest(
         DeckVisibility visibility,
         SessionFormat defaultSessionFormat,
         ShowResponsesMode defaultShowResponses,
+        // Author-suggested default session settings (the InteractiveSessionSettings
+        // embedded on the deck's PlayableContent). Sent whole by the deck editor's
+        // right-sidebar panels as a read-modify-write of deck.content.settings;
+        // a non-null value replaces the settings object wholesale. Null leaves it
+        // unchanged. A session takes a frozen copy at create time and may override.
+        InteractiveSessionSettings defaultSettings,
         Image cover,
         Image background,
         String themeId,

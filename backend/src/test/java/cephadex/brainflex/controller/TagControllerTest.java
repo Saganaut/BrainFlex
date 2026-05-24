@@ -10,15 +10,12 @@
  */
 package cephadex.brainflex.controller;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +32,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import cephadex.brainflex.config.AdminProperties;
 import cephadex.brainflex.dto.deck.CreateTagRequest;
 import cephadex.brainflex.model.deck.Tag;
@@ -48,16 +47,22 @@ import cephadex.brainflex.service.UserService;
 @WithMockUser
 class TagControllerTest {
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    @MockitoBean private TagService tagService;
-    @MockitoBean private UserService userService;
-    @MockitoBean private AdminProperties adminProperties;
+    @MockitoBean
+    private TagService tagService;
+    @MockitoBean
+    private UserService userService;
+    @MockitoBean
+    private AdminProperties adminProperties;
 
     private User callerUser;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         callerUser = new User();
         callerUser.setId("user-1");
@@ -135,8 +140,8 @@ class TagControllerTest {
                 "history", "History", null, null, null, true);
 
         mockMvc.perform(post("/api/tags")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value("history"));
     }
@@ -154,8 +159,6 @@ class TagControllerTest {
                     tag.setId(req.id() != null ? req.id() : "frontend-tips");
                     tag.setDisplayName(req.displayName());
                     tag.setCurated(false);
-                    tag.setCreatedAt(Instant.now());
-                    tag.setUpdatedAt(Instant.now());
                     return tag;
                 });
 
@@ -163,8 +166,8 @@ class TagControllerTest {
                 null, "Frontend Tips", null, null, null, true);
 
         mockMvc.perform(post("/api/tags")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(body)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.curated").value(false));
     }
@@ -191,8 +194,7 @@ class TagControllerTest {
         tag.setId(id);
         tag.setDisplayName(name);
         tag.setCurated(true);
-        tag.setCreatedAt(Instant.now());
-        tag.setUpdatedAt(Instant.now());
+
         return tag;
     }
 }

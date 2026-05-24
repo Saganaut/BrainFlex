@@ -1,6 +1,6 @@
 // Player-facing form for joining an interactive session by typing the 6-char
 // room code. Self-contained: owns its input state, calls the join-by-code
-// mutation, and navigates into the lobby on success. Lives in components/Games
+// mutation, and navigates into the Gen-2 session on success. Lives in components/Games
 // so it can be embedded in the join page as well as alongside DisplayQR /
 // DisplayJoinCode on a host's "share this game" panel.
 import { useState } from "react";
@@ -29,8 +29,8 @@ const JoinWithCode = () => {
         joinInteractiveSessionRequest: {},
       }).unwrap();
       await navigate({
-        to: "/games/$roomCode/lobby",
-        params: { roomCode: trimmed },
+        to: "/sessions/$sessionId",
+        params: { sessionId: trimmed },
       });
     } catch {
       // surfaced through `error` below

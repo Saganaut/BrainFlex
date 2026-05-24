@@ -27,16 +27,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.model.deck.DeckComment;
 import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.model.user.User;
-import cephadex.brainflex.model.deck.DeckComment;
 import cephadex.brainflex.repository.DeckCommentRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,10 +45,6 @@ class DeckCommentServiceTest {
     private DeckCommentRepository commentRepository;
     @Mock
     private MongoTemplate mongoTemplate;
-    @Mock
-    private UserImageHydrator userImageHydrator;
-    @Mock
-    private ApplicationEventPublisher events;
 
     @InjectMocks
     private DeckCommentService deckCommentService;
@@ -115,6 +110,20 @@ class DeckCommentServiceTest {
                 "deck-1", author("user-1", "kevin"), "wrong deck", "comment-parent"));
     }
 
+    // TODO: We should follow this example when throwing asserts, check that that we
+    // re getting the error we want
+    // @Test
+    // void create_RejectsBlankBody() {
+    // // Capture the exception
+    // ResponseStatusException exception =
+    // assertThrows(ResponseStatusException.class, () ->
+    // deckCommentService.create("deck-1", author("user-1", "kevin"), " ", null)
+    // );
+
+    // // Verify the specific HTTP status code or message
+    // assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+    // assertTrue(exception.getReason().contains("body cannot be empty"));
+    // }
     @Test
     void create_RejectsBlankBody() {
         assertThrows(ResponseStatusException.class, () -> deckCommentService.create(

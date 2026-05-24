@@ -203,6 +203,8 @@ public class DeckService {
             deck.getContent().setFormat(request.defaultSessionFormat());
         if (request.defaultShowResponses() != null)
             deck.getContent().setShowResponses(request.defaultShowResponses());
+        if (request.defaultSettings() != null)
+            deck.getContent().setSettings(request.defaultSettings());
         if (request.cover() != null) {
             deck.getContent().setCover(normalizeImage(request.cover()));
         }

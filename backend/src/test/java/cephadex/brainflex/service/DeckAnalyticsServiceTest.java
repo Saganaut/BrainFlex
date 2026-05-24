@@ -24,6 +24,17 @@
  */
 package cephadex.brainflex.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,34 +42,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import cephadex.brainflex.model.enums.BestAnswerScoring;
-import cephadex.brainflex.model.enums.SessionFormat;
-import cephadex.brainflex.model.deck.DeckAnalytics;
-import cephadex.brainflex.model.session.ElementStats;
-import cephadex.brainflex.model.session.FormatRollup;
-import cephadex.brainflex.model.session.InteractiveSession;
-import cephadex.brainflex.model.session.InteractiveSessionPlayer;
-import cephadex.brainflex.model.session.PlayerAnswer;
-import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.AnswerPayload;
 import cephadex.brainflex.model.answer.DrawingAnswer;
@@ -72,10 +63,17 @@ import cephadex.brainflex.model.answer.ScalesAnswer;
 import cephadex.brainflex.model.answer.TextAnswer;
 import cephadex.brainflex.model.answer.TimeoutAnswer;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
+import cephadex.brainflex.model.deck.DeckAnalytics;
 import cephadex.brainflex.model.element.DeckElement;
-import cephadex.brainflex.model.element.Slide;
 import cephadex.brainflex.model.element.QAndAQuestion;
-import cephadex.brainflex.model.enums.ElementKind;
+import cephadex.brainflex.model.element.Slide;
+import cephadex.brainflex.model.enums.SessionFormat;
+import cephadex.brainflex.model.session.ElementStats;
+import cephadex.brainflex.model.session.FormatRollup;
+import cephadex.brainflex.model.session.InteractiveSession;
+import cephadex.brainflex.model.session.InteractiveSessionPlayer;
+import cephadex.brainflex.model.session.PlayerAnswer;
+import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.repository.DeckAnalyticsRepository;
 import cephadex.brainflex.repository.InteractiveSessionChatMessageRepository;
 import cephadex.brainflex.repository.ReactionRepository;
@@ -83,13 +81,18 @@ import cephadex.brainflex.repository.ReactionRepository;
 @ExtendWith(MockitoExtension.class)
 class DeckAnalyticsServiceTest {
 
-    @Mock private DeckAnalyticsRepository analyticsRepository;
-    @Mock private ReactionRepository reactionRepository;
-    @Mock private InteractiveSessionChatMessageRepository chatRepository;
+    @Mock
+    private DeckAnalyticsRepository analyticsRepository;
+    @Mock
+    private ReactionRepository reactionRepository;
+    @Mock
+    private InteractiveSessionChatMessageRepository chatRepository;
 
-    @InjectMocks private DeckAnalyticsService service;
+    @InjectMocks
+    private DeckAnalyticsService service;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void emptyRollupByDefault() {
         // Most tests start with an empty rollup and just inspect the captured
         // save. lenient() because a handful of tests (e.g. null-deck short-circuit)
@@ -129,7 +132,7 @@ class DeckAnalyticsServiceTest {
         // First game: one player, score 100.
         InteractiveSession game1 = baseSession();
         game1.setStartedAt(Instant.parse("2026-05-20T08:00:00Z"));
-        game1.setEndedAt(Instant.parse("2026-05-20T08:10:00Z"));   // 10 min
+        game1.setEndedAt(Instant.parse("2026-05-20T08:10:00Z")); // 10 min
         game1.getPlayers().add(playerWithScore("p-1", 100, 1.0));
         service.recordSessionFinish(game1);
 
@@ -138,7 +141,7 @@ class DeckAnalyticsServiceTest {
         when(analyticsRepository.findById("deck-1")).thenReturn(Optional.of(afterGame1));
         InteractiveSession game2 = baseSession();
         game2.setStartedAt(Instant.parse("2026-05-21T08:00:00Z"));
-        game2.setEndedAt(Instant.parse("2026-05-21T08:20:00Z"));   // 20 min
+        game2.setEndedAt(Instant.parse("2026-05-21T08:20:00Z")); // 20 min
         game2.getPlayers().add(playerWithScore("p-2", 50, 0.5));
         service.recordSessionFinish(game2);
 
@@ -217,7 +220,7 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_NumberAnswer_BucketsByIntegerFloor() {
         InteractiveSession session = baseSession();
-        session.getContent().getElements().add(mcqElement("num-1"));  // kind doesn't matter for bucketing
+        session.getContent().getElements().add(mcqElement("num-1")); // kind doesn't matter for bucketing
         addAnswer(session, "p-1", "num-1", new NumberAnswer(42.0), true, 1000);
         addAnswer(session, "p-2", "num-1", new NumberAnswer(42.7), false, 1500);
         addAnswer(session, "p-3", "num-1", new NumberAnswer(50.0), false, 800);
@@ -292,7 +295,8 @@ class DeckAnalyticsServiceTest {
     void recordSessionFinish_PlaceOnImageAnswer_BucketsTo10x10Grid() {
         InteractiveSession session = baseSession();
         session.getContent().getElements().add(mcqElement("place-1"));
-        // (0.05, 0.05) → (row 0, col 0); (0.07, 0.04) → also (0, 0); (0.55, 0.95) → (9, 5)
+        // (0.05, 0.05) → (row 0, col 0); (0.07, 0.04) → also (0, 0); (0.55, 0.95) → (9,
+        // 5)
         addAnswer(session, "p-1", "place-1", new PlaceOnImageAnswer(0.05, 0.05), true, 0);
         addAnswer(session, "p-2", "place-1", new PlaceOnImageAnswer(0.07, 0.04), true, 0);
         addAnswer(session, "p-3", "place-1", new PlaceOnImageAnswer(0.55, 0.95), false, 0);
@@ -392,8 +396,8 @@ class DeckAnalyticsServiceTest {
     @Test
     void recordSessionFinish_TotalSessionChat_AttachesToFirstScoredElement() {
         InteractiveSession session = baseSession();
-        session.getContent().getElements().add(slide("slide-1"));      // skipped
-        session.getContent().getElements().add(mcqElement("mcq-1"));    // gets the chat count
+        session.getContent().getElements().add(slide("slide-1")); // skipped
+        session.getContent().getElements().add(mcqElement("mcq-1")); // gets the chat count
         session.getContent().getElements().add(mcqElement("mcq-2"));
         addAnswer(session, "p-1", "mcq-1", new McqAnswer(List.of("opt-a")), true, 0);
         addAnswer(session, "p-1", "mcq-2", new McqAnswer(List.of("opt-a")), true, 0);

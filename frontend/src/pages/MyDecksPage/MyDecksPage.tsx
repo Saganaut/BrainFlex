@@ -301,7 +301,7 @@ const MyDecksPage = () => {
       </section>
 
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>System Decks</h2>
+        <h2 className={styles.sectionTitle}>Templates</h2>
         {loadingSystem ? (
           <p className={styles.empty}>Loading…</p>
         ) : (

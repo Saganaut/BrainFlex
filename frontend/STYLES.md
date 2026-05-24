@@ -250,3 +250,101 @@ Earlier exploration considered `:global(.variantError)` utility classes instead 
 - The DOM self-documents: `<button class="btn_abc" data-variant="error">` makes the structural class and semantic axis visually distinct.
 - Variants stack with native HTML state (`[data-variant="error"][aria-disabled="true"]`) without combinatoric class concatenation.
 - No need for `:global()` indirection in CSS Modules.
+
+---
+
+## 12. Container Queries
+
+Responsive behavior comes from **container queries**, never viewport media queries. A component should adapt to the space _it_ is given, not to the size of the window — so the same component works in a wide board, a narrow sidebar, or a design-system demo cell without knowing where it lives.
+
+The mental model: separate two roles.
+
+- **Who sizes the box?** The layout (flex / grid / explicit width).
+- **What can a child query?** Whatever ancestor is marked a _query container_.
+
+These don't conflict with flexbox — but a single element must not try to be both _sized by its content_ and a _query container_, or it collapses (see the rule below).
+
+### 12.1 Default to `inline-size`
+
+```css
+.panel {
+  container-type: inline-size; /* default — query the width */
+}
+```
+
+`inline-size` contains only the inline axis (width); height still grows with content normally. Reach for `container-type: size` **only** when you genuinely need to query height/aspect-ratio **and** the element already has a layout-definite height — otherwise `size` collapses the block axis to 0. In practice that's rare; default to `inline-size`.
+
+### 12.2 The queried size must be layout-owned, never content-owned
+
+`container-type` makes the contained axis **independent of the element's contents** (that's how it avoids infinite query↔reflow loops). So the box must get that size from its layout context. If it's a flex item whose width comes from its _content_ (`flex: 0 0 auto` / auto basis / `width: fit-content`), containment makes the content size ≈ 0 and the box collapses.
+
+```css
+/* ✅ DO — width is layout-owned (flex:1 fills the track) */
+.display {
+  flex: 1;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+/* ❌ DON'T — width is content-owned; container-type collapses it to 0,
+   and any fit-content child then overflows the 0-width box. */
+.sidebarPanel {
+  display: flex; /* flex row, child has flex:0 1 auto / width:fit-content */
+  container-type: inline-size;
+}
+```
+
+A sidebar can absolutely be a container — but give it a **defined width** first (a token), so its width is layout-owned.
+
+### 12.3 Name every container, and query by name
+
+A bare `@container (…)` matches the **nearest** ancestor with `container-type` — which silently changes meaning (or matches nothing) as nesting evolves. We hit exactly this: a board query was written as `@container (min-width: 50rem)` with no container ancestor at all, so it never fired. Always name containers and target them explicitly:
+
+```css
+/* region */
+.display { container-type: inline-size; container-name: display; }
+
+/* descendant, anywhere below */
+@container display (min-width: 50rem) { .prompt { font-size: var(--font-size-2xl); } }
+```
+
+For component-level containers use the **`Container` component** (`src/components/Containers/Container.tsx`); it requires a `name` and defaults to `inline-size`.
+
+### 12.4 Children fill, then adapt
+
+Inside a container, content fills it (`width: 100%` / auto — never `fit-content`) and reacts via `@container`, ideally by flipping the component's manifest vars (§3). `Kpi.module.css` is the reference:
+
+```css
+.kpi {
+  min-width: 0;
+  container-type: inline-size;
+}
+@container (width < 180px) {
+  .kpi {
+    --value-size: var(--font-size-md);
+  }
+}
+```
+
+### 12.5 Breakpoints aren't tokenizable; prefer fluid units
+
+`var()` is **not allowed inside `@container` (or `@media`) conditions** — thresholds must be literal values. So container breakpoints can't be tokens the way colors and spacing are. Two consequences:
+
+- Prefer **container-query units** (`cqi`, `cqw`) for fluid sizing where you can — they scale continuously and _can_ use `var()` in the value position, so you avoid hard breakpoints entirely.
+- When you do need a hard layout switch, use a small, **consistent** rem ladder (documented here) rather than ad-hoc magic numbers.
+
+### 12.6 Pitfall: containers trap `position: fixed`
+
+`container-type` implies layout containment, which makes the element a **containing block for `position: fixed` and `absolute` descendants**. An inline `position: fixed` overlay (modal, toast, popover, drawer) rendered _inside_ a container is then positioned relative to that container instead of the viewport — i.e. it breaks.
+
+The fix is the architecture you'd want anyway: **portal viewport-level overlays to the document root** (`createPortal`) so they aren't descendants of any layout region. Until overlays are portaled, don't make a region a container if it holds inline fixed overlays.
+
+### 12.7 Where containers live today
+
+| Region                                | Container?                        | Why                                                                                            |
+| ------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `innerDisplay` (`container-name: display`) | ✅                                | `flex: 1` (layout-owned width); no inline fixed descendants — the board sizes to it.           |
+| `canvasBody`, `mainBodyDashboard`     | ⏳ deferred                       | Layout-owned, but hold inline `position: fixed` overlays (e.g. `SessionChat`) — §12.6. Gated on portaling overlays first. |
+| `leftSidebar`, `rightSidebar`         | ❌ not yet                        | Content-sized — need a defined width token first (§12.2).                                       |
+
+When overlays are portaled, promote `canvasBody` / `mainBodyDashboard` to named containers; when sidebars get a width token, make them `container-name: sidebar`.

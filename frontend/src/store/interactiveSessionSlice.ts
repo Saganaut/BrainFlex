@@ -322,7 +322,9 @@ export const interactiveSessionSlice = createSlice({
         state.viewerPlayerId = s.viewerPlayerId;
       }
       state.players = s.players;
-      state.totalRounds = s.settings.totalRounds ?? 0;
+      // totalRounds is a top-level derived count (== deckSnapshot.size()); the
+      // settings object no longer carries it.
+      state.totalRounds = s.totalRounds;
       state.round = s.currentRound;
       state.teams = s.teams;
       state.teamMode = s.settings.teamMode ?? false;

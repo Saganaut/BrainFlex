@@ -35,13 +35,16 @@ import cephadex.brainflex.repository.TagRepository;
 @ExtendWith(MockitoExtension.class)
 class TagServiceTest {
 
-    @Mock private TagRepository tagRepository;
+    @Mock
+    private TagRepository tagRepository;
 
-    @InjectMocks private TagService tagService;
+    @InjectMocks
+    private TagService tagService;
 
     private Tag math;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         math = new Tag();
         math.setId("math");
@@ -204,8 +207,10 @@ class TagServiceTest {
 
     @Test
     void requireAllExist_WhenAllPresent_Passes() {
-        Tag a = new Tag(); a.setId("a");
-        Tag b = new Tag(); b.setId("b");
+        Tag a = new Tag();
+        a.setId("a");
+        Tag b = new Tag();
+        b.setId("b");
         when(tagRepository.findAllById(List.of("a", "b"))).thenReturn(List.of(a, b));
 
         tagService.requireAllExist(List.of("a", "b"));
@@ -213,7 +218,8 @@ class TagServiceTest {
 
     @Test
     void requireAllExist_WhenMissing_ThrowsBadRequest() {
-        Tag a = new Tag(); a.setId("a");
+        Tag a = new Tag();
+        a.setId("a");
         when(tagRepository.findAllById(List.of("a", "missing"))).thenReturn(List.of(a));
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
@@ -234,15 +240,24 @@ class TagServiceTest {
 
     @Test
     void recomputeDeckCounts_UpdatesChangedTagsOnly() {
-        Tag a = new Tag(); a.setId("a"); a.setDeckCount(5);
-        Tag b = new Tag(); b.setId("b"); b.setDeckCount(0);
-        Tag c = new Tag(); c.setId("c"); c.setDeckCount(2);
+        Tag a = new Tag();
+        a.setId("a");
+        a.setDeckCount(5);
+        Tag b = new Tag();
+        b.setId("b");
+        b.setDeckCount(0);
+        Tag c = new Tag();
+        c.setId("c");
+        c.setDeckCount(2);
         when(tagRepository.findAll()).thenReturn(List.of(a, b, c));
         when(tagRepository.save(any(Tag.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Deck d1 = new Deck(); d1.setTagIds(Set.of("a", "b"));
-        Deck d2 = new Deck(); d2.setTagIds(Set.of("a"));
-        Deck d3 = new Deck(); d3.setTagIds(Set.of("b"));
+        Deck d1 = new Deck();
+        d1.setTagIds(Set.of("a", "b"));
+        Deck d2 = new Deck();
+        d2.setTagIds(Set.of("a"));
+        Deck d3 = new Deck();
+        d3.setTagIds(Set.of("b"));
 
         int changed = tagService.recomputeDeckCounts(List.of(d1, d2, d3));
 

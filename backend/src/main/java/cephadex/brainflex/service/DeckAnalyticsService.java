@@ -291,6 +291,7 @@ public class DeckAnalyticsService {
         }
     }
 
+    @SuppressWarnings("unused")
     private void applyAnswer(DeckElement element, ElementStats stats, PlayerAnswer answer) {
         AnswerPayload payload = answer.getPayload();
         if (payload instanceof TimeoutAnswer || payload == null) {
@@ -319,6 +320,7 @@ public class DeckAnalyticsService {
             case WordCloudAnswer wc -> bucketWordCloud(dist, wc);
             case AllocationAnswer alloc -> bucketAllocation(dist, alloc);
             case MatchingAnswer match -> bucketMatching(dist, match);
+            // TODO: Implement Drawing and timeout
             case DrawingAnswer drawing -> {
                 /* survey only: no per-stroke bucketing */ }
             case TimeoutAnswer ignored -> {
@@ -328,6 +330,7 @@ public class DeckAnalyticsService {
 
     // ── Per-kind distribution buckets ────────────────────────────────────
 
+    @SuppressWarnings("null")
     private void bucketMcq(Map<String, Integer> dist, McqAnswer answer) {
         if (answer.optionIds() == null)
             return;
@@ -339,11 +342,13 @@ public class DeckAnalyticsService {
     }
 
     /** Integer floor of the submitted value used as the bucket key. */
+    @SuppressWarnings("null")
     private void bucketNumber(Map<String, Integer> dist, NumberAnswer answer) {
         long bucket = (long) Math.floor(answer.value());
         dist.merge(Long.toString(bucket), 1, Integer::sum);
     }
 
+    @SuppressWarnings("null")
     private void bucketText(Map<String, Integer> dist, TextAnswer answer) {
         if (answer.text() == null)
             return;
@@ -357,6 +362,7 @@ public class DeckAnalyticsService {
     }
 
     /** Sum-style: distribution[itemId] += zero-based placement. */
+    @SuppressWarnings("null")
     private void bucketRanking(Map<String, Integer> dist, RankingAnswer answer) {
         if (answer.orderedItemIds() == null)
             return;
@@ -369,6 +375,7 @@ public class DeckAnalyticsService {
     }
 
     /** Sum-style: distribution[statementId] += chosen rating. */
+    @SuppressWarnings("null")
     private void bucketScales(Map<String, Integer> dist, ScalesAnswer answer) {
         if (answer.ratings() == null)
             return;
@@ -379,6 +386,7 @@ public class DeckAnalyticsService {
         }
     }
 
+    @SuppressWarnings("null")
     private void bucketGrid(Map<String, Integer> dist, GridAnswer answer) {
         if (answer.selectedCellIndexes() == null)
             return;
@@ -390,6 +398,7 @@ public class DeckAnalyticsService {
     }
 
     /** Bucket by 10x10 grid cell of the normalized (x, y) coordinate. */
+    @SuppressWarnings("null")
     private void bucketPlaceOnImage(Map<String, Integer> dist, PlaceOnImageAnswer answer) {
         int col = clamp((int) Math.floor(answer.x() * PLACE_ON_IMAGE_GRID), 0, PLACE_ON_IMAGE_GRID - 1);
         int row = clamp((int) Math.floor(answer.y() * PLACE_ON_IMAGE_GRID), 0, PLACE_ON_IMAGE_GRID - 1);
@@ -397,6 +406,7 @@ public class DeckAnalyticsService {
         dist.merge(key, 1, Integer::sum);
     }
 
+    @SuppressWarnings("null")
     private void bucketWordCloud(Map<String, Integer> dist, WordCloudAnswer answer) {
         if (answer.words() == null)
             return;
@@ -413,6 +423,7 @@ public class DeckAnalyticsService {
     }
 
     /** Sum-style: distribution[optionId] += points allocated. */
+    @SuppressWarnings("null")
     private void bucketAllocation(Map<String, Integer> dist, AllocationAnswer answer) {
         if (answer.optionIdToPoints() == null)
             return;
@@ -427,6 +438,7 @@ public class DeckAnalyticsService {
      * Bucket by "leftId>rightId" pair string so the dashboard can see actual pair
      * frequency.
      */
+    @SuppressWarnings("null")
     private void bucketMatching(Map<String, Integer> dist, MatchingAnswer answer) {
         if (answer.leftIdToRightId() == null)
             return;

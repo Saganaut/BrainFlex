@@ -7,16 +7,16 @@
  */
 package cephadex.brainflex.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
-import cephadex.brainflex.model.enums.BestAnswerScoring;
 import cephadex.brainflex.model.answer.AllocationAnswer;
 import cephadex.brainflex.model.answer.DrawingAnswer;
 import cephadex.brainflex.model.answer.MatchingAnswer;
@@ -27,17 +27,15 @@ import cephadex.brainflex.model.answer.TextAnswer;
 import cephadex.brainflex.model.answer.WordCloudAnswer;
 import cephadex.brainflex.model.element.AllocationQuestion;
 import cephadex.brainflex.model.element.DrawingQuestion;
-import cephadex.brainflex.model.element.parts.MatchingPair;
 import cephadex.brainflex.model.element.MatchingQuestion;
-import cephadex.brainflex.model.element.parts.McqOption;
 import cephadex.brainflex.model.element.McqQuestion;
 import cephadex.brainflex.model.element.NumberQuestion;
 import cephadex.brainflex.model.element.TextQuestion;
 import cephadex.brainflex.model.element.WordCloudQuestion;
+import cephadex.brainflex.model.element.parts.MatchingPair;
+import cephadex.brainflex.model.element.parts.McqOption;
 import cephadex.brainflex.model.enums.Difficulty;
 import cephadex.brainflex.model.enums.MatchingScoring;
-import cephadex.brainflex.model.enums.MediaPosition;
-import cephadex.brainflex.model.enums.ResponseMode;
 
 class ElementScorerTest {
 

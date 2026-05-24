@@ -23,29 +23,18 @@ public class PlayerAnswer {
     private Instant answeredAt;
 
     // Best Answer mode: server-generated id used to anonymously identify this
-    // submission during the VOTE phase. Null on non-best-answer rounds and on
-    // TimeoutAnswers (timed-out submissions are not eligible to be voted on).
+    // submission during the VOTE phase. Null on non-best-answer rounds
     private String submissionId;
 
     // Best Answer mode: set to true on REVEAL for the player(s) whose
-    // submission received the most votes. Drives the "winner" indicator in
-    // round result + review UIs.
+    // submission received the most votes.
     private boolean bestAnswerWinner;
 
-    // Chunk 13 — timing + streak metadata. timeTakenMs is always populated
-    // (answeredAt - roundStartedAt, in millis) regardless of whether
-    // speedBonus is on — chunks 15 (game history) and 16 (analytics) need
-    // it. streakBeforeAnswer captures the player's currentStreak as it was
-    // immediately before this answer was scored, so the reveal can render
-    // "5x streak!" without the client doing its own walking sum.
-    // speedBonusAwarded is the bonus portion of pointsAwarded — non-zero
-    // only on correct answers when settings.speedBonus is true.
     private long timeTakenMs;
     private int streakBeforeAnswer;
     private int speedBonusAwarded;
 
-    // Placeholder for a future power-up chunk. Tracked here so historical
-    // PlayerAnswer documents already carry the field once power-ups land.
+    // Placeholder for a future power-up chunk.
     private boolean usedPowerUp;
     private String powerUpId;
 }

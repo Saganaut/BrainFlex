@@ -42,7 +42,9 @@ import lombok.Data;
 })
 public class EmailOutboxEntry {
 
-    public enum Status { PENDING, CLAIMED, SENT, FAILED, SUPPRESSED }
+    public enum Status {
+        PENDING, CLAIMED, SENT, FAILED, SUPPRESSED
+    }
 
     @Id
     private String id;
@@ -62,7 +64,9 @@ public class EmailOutboxEntry {
 
     private int attempts;
 
-    /** Last provider/render error message; nullable. Capped at 512 chars on write. */
+    /**
+     * Last provider/render error message; nullable. Capped at 512 chars on write.
+     */
     private String lastError;
 
     /**
@@ -81,6 +85,6 @@ public class EmailOutboxEntry {
      * Set when status flips to SENT. TTL index drops the row 90 days later;
      * FAILED / SUPPRESSED rows have a null sentAt and stick around.
      */
-    @Indexed(name = "sentAt_ttl_idx", expireAfterSeconds = 60 * 60 * 24 * 90)
+    @Indexed(name = "sentAt_ttl_idx", expireAfter = "90d")
     private Instant sentAt;
 }

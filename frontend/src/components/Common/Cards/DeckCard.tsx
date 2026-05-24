@@ -56,7 +56,7 @@ interface DeckCardProps {
 
 const StatusRow = ({ deck }: { deck: DeckResponse }) => {
   if (deck.isSystem) {
-    return <Badge size='sm' variant='brand' label='System' />;
+    return <Badge size='sm' variant='brand' label='Template' />;
   }
   const status = deck.publishStatus ?? "DRAFT";
   const role = deck.myRole;

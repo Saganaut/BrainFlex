@@ -120,3 +120,34 @@ db.themes.find({ mode: { $in: ["light", "dark", "system"] } }).forEach(function 
 **Frontend — done in this change.** A conversion seam (`frontend/src/utils/themeMode.ts` — `apiToUiMode` / `uiToApiMode`) maps the uppercase API enum to/from the lowercase convention the CSS theme system + editor select use (those lowercase values double as DOM class suffixes and localStorage entries, so they stay lowercase). Applied at every boundary: `useThemePicker`, `useActiveThemeSync`, `useThemeEditor` (seed + save), and the four `MockData.ts` theme literals.
 
 **Tests + seed.** No backend test asserts a theme `mode` wire value and there is no `ThemeController` test, so nothing to update there. The seeder already writes the enum, so seeded themes need no change.
+
+---
+
+## `InteractiveSessionPlayer.avatarKey` → unified `Avatar avatar` — **no migration required**
+
+The standalone `String avatarKey` on `InteractiveSessionPlayer` (embedded in `interactive_sessions`) was replaced by an `Avatar avatar` value object (`{ avatarType: KEY | LINK, avatarUrl, avatarKey }`) so consumers read one field instead of branching preset-vs-`pictureUrl`. **No backfill is needed:**
+
+- `interactive_sessions` is ephemeral game state (lobby → in-progress → finished). The avatar is cosmetic and finished games are read-only.
+- The change is backward-compatible on read. An old document keeps a now-unmapped `avatarKey` field (Spring Data ignores unknown stored fields) and has no `avatar` field, so `player.getAvatar()` returns `null`. `InteractiveSessionPlayerResponse.resolveAvatar` treats a null/non-KEY avatar as a LINK and materializes the player's `pictureUrl` — a correct, graceful fallback (a mid-game player simply loses a previously-picked preset on that one in-flight session).
+
+If you want to drop stale session docs anyway (e.g. a clean local DB), `scripts/seed-sample-data.sh --clear` already drops `interactive_sessions` among the seeded collections. The seeder itself creates no players, so it needs no change.
+
+**Tests.** `InteractiveSessionServiceTest` asserts the new `Avatar` shape on join / update / DTO projection. **Mock data — done in this change:** the four `mockFellowshipPlayers` fixtures in `frontend/src/utils/MockData.ts` and the `playerStatDefaults` spread in `frontend/src/pages/DesignSystemPage/data.ts` now carry an `avatar` object.
+
+---
+
+## Avatar preset roster + lobby picker + Gen-1 game flow removed — **no migration required**
+
+The half-built chunk-13 avatar preset system (preset images never served → KEY avatars 404'd to initials; `colorTag` never rendered; pickable only from the throwaway Gen-1 lobby) was removed. A picker will be rebuilt later.
+
+**Removed (backend).** `AvatarService`, `AvatarController` (`GET /api/avatars`), `PUT /api/interactive-sessions/{roomCode}/me/avatar` + `InteractiveSessionService.updatePlayerAvatar`, and `UpdatePlayerAvatarRequest`. `JoinInteractiveSessionRequest` dropped `avatarKey` + `colorTag` (kept `teamId`). The `/api/avatars` entry was removed from `SecurityConfig`.
+
+**Removed (frontend).** The whole Gen-1 game flow — routes `games/$roomCode/{lobby,play,results}`, pages `GamePage/{LobbyPage,PlayPage,ResultsPage}`, the `Games/Lobby` component, and 16 now-orphaned Gen-1-only `components/Games/*` (AnswerOptions, ChatPanel, DisplayQR, DrawingCanvas[.tsx]/PaletteSwatch/ThicknessOption, ElementRenderer, NumberAnswerInput, PlaceholderAnswer, ReactionBar, ReactionRain, ScanToJoinBtn, TeamLeaderboard, TeamPicker, WordCloud, WordCloudInput). `DrawingCanvas/drawingUtils.ts` stayed (Gen-2 uses it). Player-join now routes to the Gen-2 `/sessions/$sessionId` (`JoinWithCode`, `InvitePage`, `ScheduledSessionsPage`).
+
+**Kept (the seam).** The `Avatar` value object (`{ avatarType: KEY | LINK, avatarUrl, avatarKey }`) + `AvatarType`, the `InteractiveSessionPlayer.avatar`/`colorTag` fields, and `InteractiveSessionResponse.resolveAvatar`. KEY is now dormant (nothing sets it); every player resolves to their `pictureUrl` (LINK). `resolvePlayerAvatarSrc` returns `null` for KEY.
+
+**No DB migration.** `interactive_sessions` is ephemeral; the `Avatar` model is unchanged. Old docs with a now-unsettable KEY avatar still deserialize and render their initial.
+
+**API client.** Regenerated — `useListAvatarsQuery`, `useUpdateMyAvatarMutation`, and `AvatarPreset` are gone; `JoinInteractiveSessionRequest` is `{ teamId? }`.
+
+**Tests.** Backend: `AvatarServiceTest` deleted; the four preset/picker cases in `InteractiveSessionServiceTest` removed (the two `playerResponse_*Avatar*` DTO cases + the no-avatarKey LINK-default case stay); `InteractiveSessionControllerTest` join stubs updated to the 3-arg `joinInteractiveSession`. **Mock data left as-is:** the `mockFellowshipPlayers` `avatar: { avatarType: "KEY", … }` fixtures still type-check and simply render the initial (KEY dormant); flip to LINK if a real picture is wanted.

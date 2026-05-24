@@ -1,17 +1,46 @@
-// Dropdown panel anchored to a trigger element; owns open state and click-outside detection
+// Dropdown panel anchored to a trigger element. Positioning, viewport
+// flipping/shifting, click-outside + Escape dismissal, and keyboard menu
+// navigation (roving tabindex, focus-into-menu on open, focus-return to the
+// trigger on close) are all provided by @floating-ui/react. The panel is
+// rendered through a FloatingPortal so it escapes `overflow: hidden` ancestors.
 import React, {
   createContext,
   use,
-  useEffect,
   useRef,
   useState,
-  type CSSProperties,
   type ReactElement,
   type ReactNode,
 } from "react";
+import {
+  autoUpdate,
+  flip,
+  FloatingFocusManager,
+  FloatingList,
+  FloatingPortal,
+  offset,
+  shift,
+  useDismiss,
+  useFloating,
+  useInteractions,
+  useListItem,
+  useListNavigation,
+  useRole,
+  type Placement,
+  type UseInteractionsReturn,
+} from "@floating-ui/react";
 import styles from "./DropdownMenu.module.css";
 
-const DropdownMenuContext = createContext<() => void>(() => undefined);
+interface DropdownMenuContextValue {
+  closeMenu: () => void;
+  getItemProps: UseInteractionsReturn["getItemProps"];
+  activeIndex: number | null;
+}
+
+const DropdownMenuContext = createContext<DropdownMenuContextValue>({
+  closeMenu: () => undefined,
+  getItemProps: () => ({}),
+  activeIndex: null,
+});
 
 type DropdownPosition =
   | "bottom-right"
@@ -38,11 +67,14 @@ interface DropdownMenuProps {
   anchorToCursor?: boolean;
 }
 
-const positionClassMap: Record<DropdownPosition, string> = {
-  "bottom-right": styles.bottomRight,
-  "bottom-left": styles.bottomLeft,
-  "top-right": styles.topRight,
-  "top-left": styles.topLeft,
+// `position` names the corner of the panel that meets the trigger: top-* opens
+// below the trigger, bottom-* above; -right/-left aligns that edge. Translated
+// to floating-ui placements (LTR: start = left edge, end = right edge).
+const placementMap: Record<DropdownPosition, Placement> = {
+  "top-right": "bottom-end",
+  "top-left": "bottom-start",
+  "bottom-right": "top-end",
+  "bottom-left": "top-start",
 };
 
 const DropdownMenu = ({
@@ -53,74 +85,98 @@ const DropdownMenu = ({
   anchorToCursor = false,
 }: DropdownMenuProps) => {
   const [open, setOpen] = useState(false);
-  const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  // Shared with FloatingList (populated via useListItem) and read by
+  // useListNavigation to move focus between items with the arrow keys.
+  const elementsRef = useRef<(HTMLElement | null)[]>([]);
+
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: setOpen,
+    placement: placementMap[position],
+    strategy: "fixed",
+    middleware: [offset(8), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+
+  const role = useRole(context, { role: "menu" });
+  const dismiss = useDismiss(context);
+  const listNavigation = useListNavigation(context, {
+    listRef: elementsRef,
+    activeIndex,
+    onNavigate: setActiveIndex,
+    loop: true,
+  });
+  const { getReferenceProps, getFloatingProps, getItemProps } = useInteractions([
+    role,
+    dismiss,
+    listNavigation,
+  ]);
+
   const toggle: ToggleFn = (anchor) => {
     if (anchorToCursor && anchor) {
-      setCursor({ x: anchor.clientX, y: anchor.clientY });
+      // Anchor to a zero-size virtual element at the click point so floating-ui
+      // positions the panel from the cursor (context-menu behaviour).
+      const { clientX: x, clientY: y } = anchor;
+      refs.setPositionReference({
+        getBoundingClientRect: () => ({
+          width: 0,
+          height: 0,
+          x,
+          y,
+          top: y,
+          left: x,
+          right: x,
+          bottom: y,
+        }),
+      });
       setOpen(true);
       return;
     }
-    setCursor(null);
+    // Non-cursor menus never set a position reference, so floating-ui anchors
+    // to the wrapper element. (Calling setPositionReference(null) here would
+    // wipe the wrapper reference and pin the panel to the viewport origin.)
     setOpen((prev) => !prev);
   };
+
   const closeMenu = () => {
     setOpen(false);
-    setCursor(null);
   };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-        setCursor(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // In cursor mode the panel is fixed-positioned at the click point. Layout
-  // decisions (position: fixed, which corner attaches where) live in the CSS
-  // module; we only pass the click coordinates through as CSS custom
-  // properties so the structural rules can consume them.
-  const cursorStyle: CSSProperties | undefined = cursor
-    ? ({
-        "--cursor-x": `${String(cursor.x)}px`,
-        "--cursor-y": `${String(cursor.y)}px`,
-      } as CSSProperties)
-    : undefined;
-
-  const panelClassName = [
-    styles.panel,
-    cursor && styles.panelAtCursor,
-    positionClassMap[position],
-  ]
-    .filter(Boolean)
-    .join(" ");
 
   return (
     <div
-      ref={wrapperRef}
-      className={[styles.wrapper, className].filter(Boolean).join(" ")}>
+      ref={(node) => {
+        refs.setReference(node);
+      }}
+      className={[styles.wrapper, className].filter(Boolean).join(" ")}
+      {...getReferenceProps()}>
       {trigger(toggle)}
       {open && (
-        <DropdownMenuContext value={closeMenu}>
-          <div className={panelClassName} style={cursorStyle}>
-            {children}
-          </div>
-        </DropdownMenuContext>
+        <FloatingPortal>
+          <FloatingFocusManager context={context} modal={false}>
+            <div
+              ref={(node) => {
+                refs.setFloating(node);
+              }}
+              className={styles.panel}
+              style={floatingStyles}
+              {...getFloatingProps()}>
+              <DropdownMenuContext
+                value={{ closeMenu, getItemProps, activeIndex }}>
+                <FloatingList elementsRef={elementsRef}>
+                  {children}
+                </FloatingList>
+              </DropdownMenuContext>
+            </div>
+          </FloatingFocusManager>
+        </FloatingPortal>
       )}
     </div>
   );
 };
 
-interface DropdownMenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface DropdownMenuItemProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode;
   centered?: boolean;
 }
@@ -132,18 +188,24 @@ const DropdownMenuItem = ({
   onClick,
   ...rest
 }: DropdownMenuItemProps) => {
-  const closeMenu = use(DropdownMenuContext);
+  const { closeMenu, getItemProps, activeIndex } = use(DropdownMenuContext);
+  const { ref, index } = useListItem();
   return (
     <button
       type='button'
+      ref={ref}
       className={[styles.item, centered && styles.center, className]
         .filter(Boolean)
         .join(" ")}
-      onClick={(e) => {
-        closeMenu();
-        onClick?.(e);
-      }}
-      {...rest}>
+      {...rest}
+      {...getItemProps({
+        onClick: (event) => {
+          closeMenu();
+          onClick?.(event as React.MouseEvent<HTMLButtonElement>);
+        },
+      })}
+      role='menuitem'
+      tabIndex={activeIndex === index ? 0 : -1}>
       {children}
     </button>
   );
@@ -156,12 +218,28 @@ interface DropdownMenuLinkProps {
 }
 
 const DropdownMenuLink = ({ children, className }: DropdownMenuLinkProps) => {
-  const closeMenu = use(DropdownMenuContext);
+  const { closeMenu, getItemProps, activeIndex } = use(DropdownMenuContext);
+  const { ref, index } = useListItem();
   return (
     <div
-      role='none'
+      ref={ref}
       className={[styles.item, className].filter(Boolean).join(" ")}
-      onClick={closeMenu}>
+      {...getItemProps({
+        onClick: () => {
+          closeMenu();
+        },
+        // The wrapper is the focusable menuitem; relay keyboard activation to
+        // the inner anchor so Enter/Space navigates like a mouse click.
+        onKeyDown: (event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            closeMenu();
+            event.currentTarget.querySelector("a")?.click();
+          }
+        },
+      })}
+      role='menuitem'
+      tabIndex={activeIndex === index ? 0 : -1}>
       {children}
     </div>
   );

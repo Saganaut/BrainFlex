@@ -7,17 +7,15 @@
  */
 package cephadex.brainflex.dto.deck;
 
-import cephadex.brainflex.dto.shared.Page;
-
 import java.util.List;
 
 public record DeckRatingsPage(
-        List<DeckRatingResponse> items,
-        int page,
-        int size,
-        long totalElements,
-        boolean hasMore,
-        double averageRating,
-        int ratingCount,
-        int[] starDistribution) {
+                List<DeckRatingResponse> items,
+                int page,
+                int size,
+                long totalElements,
+                boolean hasMore,
+                double averageRating,
+                int ratingCount,
+                int[] starDistribution) {
 }

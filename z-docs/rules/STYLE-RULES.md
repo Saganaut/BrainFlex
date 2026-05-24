@@ -8,7 +8,7 @@ Short rules. See [frontend/STYLES.md](../../frontend/STYLES.md) for the full exp
 - Class names are lowerCamelCase. Stylelint enforces this.
 - No global styles. The only exception is the modifier rules in `tokens.css` (theme classes + `data-*` selectors).
 - Each module has a small number of top-level classes with sub-classes nested inside.
-- Use container queries for responsive layout — not media queries on the viewport.
+- Use container queries for responsive layout, not viewport media queries — see [LAYOUT-RULES.md](LAYOUT-RULES.md).
 - Never translate a component's position on hover unless it serves a specific purpose.
 
 ## Tokens

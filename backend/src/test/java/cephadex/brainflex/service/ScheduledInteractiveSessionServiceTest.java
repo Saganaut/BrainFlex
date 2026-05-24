@@ -13,17 +13,16 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import static org.mockito.Mockito.lenient;
@@ -35,17 +34,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import cephadex.brainflex.dto.session.AddInviteRequest;
 import cephadex.brainflex.dto.session.CreateScheduledInteractiveSessionRequest;
 import cephadex.brainflex.dto.session.RedeemInviteResponse;
 import cephadex.brainflex.dto.session.UpdateScheduledInteractiveSessionRequest;
 import cephadex.brainflex.model.deck.Deck;
+import cephadex.brainflex.model.enums.ScheduleStatus;
 import cephadex.brainflex.model.session.InteractiveSession;
 import cephadex.brainflex.model.session.InteractiveSessionInvite;
 import cephadex.brainflex.model.session.InteractiveSessionSettings;
 import cephadex.brainflex.model.session.ScheduledInteractiveSession;
 import cephadex.brainflex.model.user.User;
-import cephadex.brainflex.model.enums.ScheduleStatus;
 import cephadex.brainflex.repository.DeckRepository;
 import cephadex.brainflex.repository.InteractiveSessionInviteRepository;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
@@ -58,14 +56,22 @@ import cephadex.brainflex.service.email.EmailTemplate;
 @ExtendWith(MockitoExtension.class)
 class ScheduledInteractiveSessionServiceTest {
 
-    @Mock private ScheduledInteractiveSessionRepository scheduleRepository;
-    @Mock private InteractiveSessionInviteRepository inviteRepository;
-    @Mock private InteractiveSessionRepository interactiveSessionRepository;
-    @Mock private DeckRepository deckRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private InteractiveSessionService interactiveSessionService;
-    @Mock private EmailService emailService;
-    @Mock private org.springframework.context.ApplicationEventPublisher events;
+    @Mock
+    private ScheduledInteractiveSessionRepository scheduleRepository;
+    @Mock
+    private InteractiveSessionInviteRepository inviteRepository;
+    @Mock
+    private InteractiveSessionRepository interactiveSessionRepository;
+    @Mock
+    private DeckRepository deckRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private InteractiveSessionService interactiveSessionService;
+    @Mock
+    private EmailService emailService;
+    @Mock
+    private org.springframework.context.ApplicationEventPublisher events;
 
     @InjectMocks
     private ScheduledInteractiveSessionService service;
@@ -74,6 +80,7 @@ class ScheduledInteractiveSessionServiceTest {
     private Deck deck;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         host = new User();
         host.setId("host1");
@@ -143,8 +150,8 @@ class ScheduledInteractiveSessionServiceTest {
     void schedule_404_WhenDeckMissing() {
         when(deckRepository.findById(anyString())).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.schedule(host, new CreateScheduledInteractiveSessionRequest(
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> service.schedule(host, new CreateScheduledInteractiveSessionRequest(
                         "missing", Instant.now().plus(Duration.ofHours(1)), null, null, null, List.of())));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
@@ -177,10 +184,11 @@ class ScheduledInteractiveSessionServiceTest {
     void cancel_RejectsNonHosts() {
         ScheduledInteractiveSession schedule = buildSchedule(ScheduleStatus.SCHEDULED);
         when(scheduleRepository.findById("sched1")).thenReturn(Optional.of(schedule));
-        User intruder = new User(); intruder.setId("other");
+        User intruder = new User();
+        intruder.setId("other");
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.cancel("sched1", intruder));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> service.cancel("sched1", intruder));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
     }
 
@@ -189,8 +197,7 @@ class ScheduledInteractiveSessionServiceTest {
         ScheduledInteractiveSession schedule = buildSchedule(ScheduleStatus.LIVE);
         when(scheduleRepository.findById("sched1")).thenReturn(Optional.of(schedule));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.cancel("sched1", host));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> service.cancel("sched1", host));
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
@@ -217,8 +224,8 @@ class ScheduledInteractiveSessionServiceTest {
         InteractiveSession result = service.boot("sched1");
 
         assertEquals("live1", result.getId());
-        ArgumentCaptor<ScheduledInteractiveSession> scheduleCaptor =
-                ArgumentCaptor.forClass(ScheduledInteractiveSession.class);
+        ArgumentCaptor<ScheduledInteractiveSession> scheduleCaptor = ArgumentCaptor
+                .forClass(ScheduledInteractiveSession.class);
         verify(scheduleRepository).save(scheduleCaptor.capture());
         assertEquals(ScheduleStatus.LIVE, scheduleCaptor.getValue().getStatus());
         assertEquals("live1", scheduleCaptor.getValue().getCreatedInteractiveSessionId());
@@ -252,8 +259,7 @@ class ScheduledInteractiveSessionServiceTest {
         ScheduledInteractiveSession schedule = buildSchedule(ScheduleStatus.CANCELLED);
         when(scheduleRepository.findById("sched1")).thenReturn(Optional.of(schedule));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.boot("sched1"));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> service.boot("sched1"));
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
@@ -268,8 +274,7 @@ class ScheduledInteractiveSessionServiceTest {
 
         service.markComplete("live1");
 
-        ArgumentCaptor<ScheduledInteractiveSession> captor =
-                ArgumentCaptor.forClass(ScheduledInteractiveSession.class);
+        ArgumentCaptor<ScheduledInteractiveSession> captor = ArgumentCaptor.forClass(ScheduledInteractiveSession.class);
         verify(scheduleRepository).save(captor.capture());
         assertEquals(ScheduleStatus.COMPLETED, captor.getValue().getStatus());
     }
@@ -339,8 +344,7 @@ class ScheduledInteractiveSessionServiceTest {
         invite.setExpiresAt(Instant.now().minus(Duration.ofHours(1)));
         when(inviteRepository.findByInviteToken("tok")).thenReturn(Optional.of(invite));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.redeem("tok", null));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> service.redeem("tok", null));
         assertEquals(HttpStatus.GONE, ex.getStatusCode());
     }
 
@@ -348,8 +352,7 @@ class ScheduledInteractiveSessionServiceTest {
     void redeem_404_WhenTokenUnknown() {
         when(inviteRepository.findByInviteToken("missing")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.redeem("missing", null));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> service.redeem("missing", null));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
 
@@ -383,8 +386,8 @@ class ScheduledInteractiveSessionServiceTest {
         when(inviteRepository.existsByEmailAndScheduledInteractiveSessionId("frodo@shire.org", "sched1"))
                 .thenReturn(true);
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.addInvite("sched1", host, "frodo@shire.org"));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> service.addInvite("sched1", host, "frodo@shire.org"));
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
@@ -393,8 +396,8 @@ class ScheduledInteractiveSessionServiceTest {
         ScheduledInteractiveSession schedule = buildSchedule(ScheduleStatus.LIVE);
         when(scheduleRepository.findById("sched1")).thenReturn(Optional.of(schedule));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.addInvite("sched1", host, "frodo@shire.org"));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> service.addInvite("sched1", host, "frodo@shire.org"));
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 
@@ -420,9 +423,8 @@ class ScheduledInteractiveSessionServiceTest {
         ScheduledInteractiveSession schedule = buildSchedule(ScheduleStatus.LIVE);
         when(scheduleRepository.findById("sched1")).thenReturn(Optional.of(schedule));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () ->
-                service.update("sched1", host,
-                        new UpdateScheduledInteractiveSessionRequest(null, null, null, null)));
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> service.update("sched1", host,
+                new UpdateScheduledInteractiveSessionRequest(null, null, null, null)));
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
     }
 

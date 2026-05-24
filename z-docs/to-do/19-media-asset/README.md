@@ -105,6 +105,7 @@ These came out of chunk 19 and need their own threads of work — they are out o
 - **Image slot still routed through `GalleryPicker`.** Slide / element image and background fields keep using the legacy `gallery_images` collection. Migrating those to `MediaAsset where kind=IMAGE` requires a one-time data backfill (see deferred checkbox above) and is a separate task.
 - **Audio/video metadata.** `durationMs` and pixel dimensions for audio + video remain null. Pulling them out at upload time needs `jaudiotagger` (audio) and an ffmpeg-style probe (video) — both add real binary dependencies, so they're deliberately deferred.
 - **Lobby music dropdown.** Waits on chunk 13 — once `InteractiveSession` carries `lobbyMusicAssetId`, the create form needs a `MediaPicker` invoked with `kind="AUDIO"`.
+- **Preset avatar images.** `AvatarService` (chunk 13) advertises preset `imageUrl`s under `/assets/images/avatars/*.svg` that don't exist, so lobby KEY avatars 404 and fall back to initials. When the media library lands, migrate the static preset pool to `MediaAsset`-backed assets (or otherwise serve the images from S3/Garage) so preset avatars render. See the [chunk-13 avatar follow-up](../13-interactive-session-settings-and-player-additions/README.md#follow-up--avatar-unification--deferred-preset-assets).
 
 ## Implementation notes
 

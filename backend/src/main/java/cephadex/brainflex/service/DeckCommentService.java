@@ -32,9 +32,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.model.deck.DeckComment;
+import cephadex.brainflex.model.shared.UserSnapshot;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.repository.DeckCommentRepository;
-import cephadex.brainflex.model.shared.UserSnapshot;
 
 @Service
 public class DeckCommentService {
@@ -159,7 +159,6 @@ public class DeckCommentService {
                 DeckComment.class);
         row.setUpvoterUserIds(voters);
         row.setUpvotes(voters.size());
-        row.setUpdatedAt(Instant.now());
         return row;
     }
 

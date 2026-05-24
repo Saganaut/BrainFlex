@@ -24,36 +24,39 @@ import org.springframework.web.server.ResponseStatusException;
 
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckCollaborator;
+import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.model.org.Organization;
 import cephadex.brainflex.model.session.InteractiveSession;
 import cephadex.brainflex.model.theme.Theme;
 import cephadex.brainflex.model.user.User;
-import cephadex.brainflex.model.enums.CollaboratorRole;
 import cephadex.brainflex.repository.DeckCollaboratorRepository;
 import cephadex.brainflex.repository.DeckRepository;
-import cephadex.brainflex.repository.GalleryImageRepository;
-import cephadex.brainflex.repository.MediaAssetRepository;
-import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.InteractiveSessionRepository;
+import cephadex.brainflex.repository.OrganizationRepository;
 import cephadex.brainflex.repository.ThemeRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AuthorizationServiceTest {
 
-    @Mock private DeckRepository deckRepository;
-    @Mock private ThemeRepository themeRepository;
-    @Mock private InteractiveSessionRepository interactiveSessionRepository;
-    @Mock private OrganizationRepository organizationRepository;
-    @Mock private GalleryImageRepository galleryImageRepository;
-    @Mock private MediaAssetRepository mediaAssetRepository;
-    @Mock private DeckCollaboratorRepository deckCollaboratorRepository;
+    @Mock
+    private DeckRepository deckRepository;
+    @Mock
+    private ThemeRepository themeRepository;
+    @Mock
+    private InteractiveSessionRepository interactiveSessionRepository;
+    @Mock
+    private OrganizationRepository organizationRepository;
+    @Mock
+    private DeckCollaboratorRepository deckCollaboratorRepository;
 
-    @InjectMocks private AuthorizationService authorizationService;
+    @InjectMocks
+    private AuthorizationService authorizationService;
 
     private User owner;
     private User other;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         owner = new User();
         owner.setId("user-owner");

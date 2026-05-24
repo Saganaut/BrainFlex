@@ -9,24 +9,17 @@
  */
 package cephadex.brainflex.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -38,6 +31,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckCollection;
@@ -45,8 +44,6 @@ import cephadex.brainflex.model.enums.DeckVisibility;
 import cephadex.brainflex.model.user.User;
 import cephadex.brainflex.service.DeckCollectionService;
 import cephadex.brainflex.service.DeckFavoriteService;
-import cephadex.brainflex.service.DeckImageHydrationService;
-import cephadex.brainflex.service.DeckTagHydrationService;
 import cephadex.brainflex.service.UserService;
 
 @SpringBootTest
@@ -63,15 +60,12 @@ class DeckCollectionControllerTest {
     @MockitoBean
     private UserService userService;
     @MockitoBean
-    private DeckImageHydrationService deckImageHydrationService;
-    @MockitoBean
-    private DeckTagHydrationService deckTagHydrationService;
-    @MockitoBean
     private DeckFavoriteService deckFavoriteService;
 
     private User caller;
 
     @BeforeEach
+    @SuppressWarnings("unused")
     void setUp() {
         caller = new User();
         caller.setId("user-1");

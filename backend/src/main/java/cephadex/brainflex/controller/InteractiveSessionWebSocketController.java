@@ -45,6 +45,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.exception.ApiErrors;
+import cephadex.brainflex.exception.ApiException;
 import cephadex.brainflex.dto.session.AnswerSubmitRequest;
 import cephadex.brainflex.dto.session.BootPlayerRequest;
 import cephadex.brainflex.dto.session.ChatSendRequest;
@@ -265,20 +267,39 @@ public class InteractiveSessionWebSocketController {
             Principal principal,
             SimpMessageHeaderAccessor headers,
             @Header(value = "simpDestination", required = false) String destination) {
-        int status = 500;
-        String message = ex.getMessage() != null ? ex.getMessage() : "Internal error";
-        if (ex instanceof ResponseStatusException rse) {
+        int status;
+        String code;
+        String message;
+        if (ex instanceof ApiException apiEx) {
+            status = apiEx.getStatus().value();
+            code = apiEx.getCode();
+            message = apiEx.getStatus().is5xxServerError()
+                    ? ApiErrors.GENERIC_5XX_MESSAGE
+                    : (ex.getMessage() != null ? ex.getMessage() : code);
+        } else if (ex instanceof ResponseStatusException rse) {
             status = rse.getStatusCode().value();
-            if (rse.getReason() != null)
-                message = rse.getReason();
+            code = ApiErrors.defaultCodeFor(rse.getStatusCode());
+            message = rse.getStatusCode().is5xxServerError()
+                    ? ApiErrors.GENERIC_5XX_MESSAGE
+                    : (rse.getReason() != null ? rse.getReason() : code);
+        } else {
+            // Unexpected — never leak ex.getMessage() to the client (REST 5xx parity).
+            status = 500;
+            code = "INTERNAL_ERROR";
+            message = ApiErrors.GENERIC_5XX_MESSAGE;
         }
 
         String operation = parseOperation(destination);
         String roomCode = parseRoomCode(destination);
 
         InteractiveSessionErrorMessage payload = new InteractiveSessionErrorMessage(operation, roomCode, status,
-                message);
-        log.warn("WS handler error: op={} room={} status={} msg={}", operation, roomCode, status, message);
+                message, code);
+        if (status >= 500) {
+            log.error("WS handler error: op={} room={} status={} code={}", operation, roomCode, status, code, ex);
+        } else {
+            log.warn("WS handler error: op={} room={} status={} code={} msg={}",
+                    operation, roomCode, status, code, message);
+        }
 
         if (principal != null) {
             messagingTemplate.convertAndSendToUser(

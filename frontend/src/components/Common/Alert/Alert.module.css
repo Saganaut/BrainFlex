@@ -15,6 +15,22 @@
   background-color: var(--background-color);
   color: var(--color);
 
+  .body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .title {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--color);
+  }
+
   &.info {
     --color: var(--text-info);
     --background-color: var(--bg-info);
@@ -67,22 +83,6 @@
   .severityIcon {
     width: 1.25rem;
     height: 1.25rem;
-  }
-
-  .body {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-    flex: 1;
-    min-width: 0;
-  }
-
-  .title {
-    margin: 0;
-    font-family: var(--font-mono);
-    font-size: var(--font-size-sm);
-    font-weight: 700;
-    color: var(--color);
   }
 
   .message {

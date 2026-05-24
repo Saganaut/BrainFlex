@@ -24,6 +24,7 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2UserAuthority;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
@@ -34,6 +35,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import cephadex.brainflex.repository.UserRepository;
 import cephadex.brainflex.service.AuthoritiesService;
+import cephadex.brainflex.web.MdcLoggingFilter;
 import cephadex.brainflex.service.OAuthProviderService;
 import cephadex.brainflex.service.OAuthProviderService.ProviderProfile;
 import cephadex.brainflex.service.OrganizationService;
@@ -132,6 +134,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
                 .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
+                // Runs after authorization so the authenticated principal is
+                // resolved — it enriches the MDC with traceId + userId for every
+                // request that reaches a controller. See MdcLoggingFilter.
+                .addFilterAfter(new MdcLoggingFilter(), AuthorizationFilter.class)
                 // Per-endpoint role rules live with the controller methods as
                 // @PreAuthorize annotations. SecurityConfig only decides what
                 // is public vs. what requires *any* authentication.
@@ -182,6 +188,9 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        // Let the browser read back the request-correlation id the MdcLoggingFilter
+        // echoes, so the frontend can show/log the traceId it shares with the server.
+        configuration.setExposedHeaders(List.of(MdcLoggingFilter.REQUEST_ID_HEADER));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

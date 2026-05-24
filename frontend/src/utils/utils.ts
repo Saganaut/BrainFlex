@@ -1,17 +1,20 @@
 /**
  * Pulls a user-readable message out of an RTK Query error.
- * Spring sends 4xx/5xx bodies as `{ message, status, ... }` (via Spring Boot's default
- * error JSON), which RTK Query exposes on `error.data`. Falls back to the network
- * status code, and finally to the supplied fallback string.
+ * The backend sends errors as RFC 9457 ProblemDetail (`{ detail, code, status, ... }`),
+ * which RTK Query exposes on `error.data` — `detail` is the user-facing message.
+ * The legacy `{ message }` / `{ error }` shapes are still read so any not-yet-migrated
+ * path keeps working. Falls back to the network status code, then the supplied string.
+ * See z-docs/features/exceptions.md.
  */
 export function extractErrorMessage(error: unknown, fallback: string): string {
   if (!error || typeof error !== "object") return fallback;
   const e = error as {
-    data?: { message?: string; error?: string };
+    data?: { detail?: string; message?: string; error?: string; code?: string };
     error?: string;
     message?: string;
     status?: number | string;
   };
+  if (e.data?.detail) return e.data.detail;
   if (e.data?.message) return e.data.message;
   if (e.data?.error) return e.data.error;
   if (typeof e.error === "string") return e.error;

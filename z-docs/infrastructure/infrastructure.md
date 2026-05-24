@@ -361,9 +361,11 @@ Weekly and monthly archives are produced by the same script; a day-of-week / day
 
 ## Observability
 
-### Error tracking — Sentry
+The backbone and its rationale are recorded in [ADR 001 — Observability & logging stack](../decisions/001-observability-stack.md): a **hybrid** of CloudWatch (logs + metrics, via the container log driver) and Sentry (errors + frontend Web Vitals/replay), with **LocalStack** providing local CloudWatch parity. The **vendor-agnostic foundation is implemented** (structured JSON logging, `X-Request-Id`→`traceId`→`userId` correlation, frontend logger + error boundary, Actuator metrics); the **Sentry/X-Ray vendor wiring is deferred** until needed, behind clearly-marked seams.
 
-Sentry is used across all three layers of the stack. All layers share the same Sentry org; use separate DSNs per project (frontend / backend / workers) for clean grouping.
+### Error tracking — Sentry _(deferred vendor phase)_
+
+Sentry is the chosen error-tracking vendor across all three layers, wired later via the seams left in `logger.ts` (frontend) and `pom.xml` (backend). All layers share the same Sentry org; use separate DSNs per project (frontend / backend / workers) for clean grouping. Backend error→HTTP mapping already lives in the [exception system](../features/exceptions.md) and stamps the shared `traceId`, so Sentry slots in alongside it.
 
 | Layer              | SDK / integration                         | What it captures                                        |
 | ------------------ | ----------------------------------------- | ------------------------------------------------------- |
@@ -381,9 +383,9 @@ Sentry is used across all three layers of the stack. All layers share the same S
 
 **DLQ → Sentry alert:** when a message lands in the DLQ (locally: a monitor process tails `jobs:dlq`; on AWS: CloudWatch alarm on DLQ depth → Lambda → Sentry `capture_message`), a Sentry issue is raised with the full job payload attached.
 
-### Structured logging
+### Structured logging _(implemented)_
 
-Spring Boot emits JSON via Logback + `logstash-logback-encoder`. Each log record includes `traceId` and `userId` so log lines can be correlated with Sentry issues.
+Under the `prod` Spring profile, Spring Boot emits one-line JSON via Logback + `logstash-logback-encoder` (`logback-spring.xml`); the default/local profile keeps the readable coloured console. Each record includes `traceId` and `userId` so log lines correlate with each other (and, later, Sentry issues). The ids are set by `MdcLoggingFilter`: the frontend stamps each request with an `X-Request-Id` (`emptyApi.ts`), the filter adopts it as the MDC `traceId` (minting one if absent) and adds `userId` (the authenticated principal name), then echoes the id back on the response. Example record:
 
 ```json
 {
@@ -398,7 +400,7 @@ Spring Boot emits JSON via Logback + `logstash-logback-encoder`. Each log record
 
 Python workers use `structlog` (or stdlib `logging` with a JSON formatter). Every log record includes `job_id`, `job_type`, and `attempt`.
 
-Locally logs go to stdout. On AWS, logs stream to CloudWatch Logs; CloudWatch Logs Insights queries across log groups.
+Logs always go to **stdout**; the app makes no CloudWatch API calls itself. On AWS the container log driver (awslogs on ECS / CloudWatch agent on EC2) ships stdout to CloudWatch Logs, queried with CloudWatch Logs Insights. Locally, the `localstack` container (`compose.yaml`, scoped to `cloudwatch,logs`) lets that path be exercised in dev; Actuator metrics feed `micrometer-registry-cloudwatch2` in prod (deferred dependency).
 
 ### Health endpoint
 

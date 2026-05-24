@@ -33,6 +33,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.exception.NotFoundException;
 import cephadex.brainflex.dto.session.AnswerSubmitRequest;
 import cephadex.brainflex.dto.session.ChatSendRequest;
 import cephadex.brainflex.dto.session.CreateInteractiveSessionRequest;
@@ -375,17 +376,19 @@ class InteractiveSessionServiceTest {
         }
 
         @Test
-        void cancelInteractiveSession_AsNonHost_ThrowsForbidden() {
+        void cancelInteractiveSession_AsNonHost_ThrowsMaskedNotFound() {
                 User nonHost = new User();
                 nonHost.setId("other");
+                // Room codes are guessable, so requireInteractiveSessionHost masks a
+                // non-host as a 404 SESSION_NOT_FOUND; the service just propagates it.
                 when(authorizationService.requireInteractiveSessionHost("ABCD12", nonHost))
-                                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN,
-                                                "Only the host can perform this action"));
+                                .thenThrow(new NotFoundException("SESSION_NOT_FOUND",
+                                                "Interactive session not found"));
 
-                ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                NotFoundException ex = assertThrows(NotFoundException.class,
                                 () -> interactiveSessionService.cancelInteractiveSession("ABCD12", nonHost));
 
-                assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+                assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
         }
 
         @Test

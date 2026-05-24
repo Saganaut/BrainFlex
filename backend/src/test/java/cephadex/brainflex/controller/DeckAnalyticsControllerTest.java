@@ -31,13 +31,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.exception.ForbiddenException;
+import cephadex.brainflex.exception.NotFoundException;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckAnalytics;
 import cephadex.brainflex.model.session.ElementStats;
@@ -126,19 +126,21 @@ class DeckAnalyticsControllerTest {
         @Test
         void getDeckAnalytics_NotEditable_Returns403() throws Exception {
                 when(authorizationService.requireDeckEditable(eq("deck-2"), eq(caller)))
-                                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "no access"));
+                                .thenThrow(new ForbiddenException("DECK_EDIT_FORBIDDEN", "no access"));
 
                 mockMvc.perform(get("/api/decks/deck-2/analytics"))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.code").value("DECK_EDIT_FORBIDDEN"));
         }
 
         @Test
         void getDeckAnalytics_DeckMissing_Returns404() throws Exception {
                 when(authorizationService.requireDeckEditable(eq("missing"), eq(caller)))
-                                .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found"));
+                                .thenThrow(new NotFoundException("DECK_NOT_FOUND", "Deck not found"));
 
                 mockMvc.perform(get("/api/decks/missing/analytics"))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.code").value("DECK_NOT_FOUND"));
         }
 
         // ── CSV export ──────────────────────────────────────────────────────
@@ -186,9 +188,10 @@ class DeckAnalyticsControllerTest {
         @Test
         void getDeckAnalyticsCsv_NotEditable_Returns403() throws Exception {
                 when(authorizationService.requireDeckEditable(eq("deck-2"), eq(caller)))
-                                .thenThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "no access"));
+                                .thenThrow(new ForbiddenException("DECK_EDIT_FORBIDDEN", "no access"));
 
                 mockMvc.perform(get("/api/decks/deck-2/analytics/csv"))
-                                .andExpect(status().isForbidden());
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.code").value("DECK_EDIT_FORBIDDEN"));
         }
 }

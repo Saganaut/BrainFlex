@@ -16,6 +16,12 @@ export default defineConfig({
   css: {
     devSourcemap: true,
   },
+  build: {
+    // "hidden" emits source maps (so Sentry can symbolicate prod stack traces
+    // once wired) without appending the //# sourceMappingURL comment, keeping
+    // them out of the shipped bundle. See z-docs/decisions/001-observability-stack.md.
+    sourcemap: "hidden",
+  },
   resolve: {
     tsconfigPaths: true,
   },

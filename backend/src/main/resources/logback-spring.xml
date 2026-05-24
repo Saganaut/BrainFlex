@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback configuration for BrainFlex.
+
+  WHY THIS EXISTS: out of the box Spring Boot logs an unstructured console line,
+  which is fine for a terminal but useless for CloudWatch Logs Insights queries
+  in production. This file makes logging profile-aware so the same code produces
+  the right shape in each environment (see
+  z-docs/decisions/001-observability-stack.md):
+
+    * non-prod (default / local / test) — the familiar human-readable, coloured
+      console line, with the request `traceId` appended so a dev can correlate a
+      log line with the X-Request-Id echoed to the browser.
+    * prod — one-line JSON on stdout. The container log driver (awslogs on ECS /
+      the CloudWatch agent on EC2) ships stdout to CloudWatch Logs; the app makes
+      no AWS calls itself. MDC fields (traceId, userId) set by MdcLoggingFilter
+      are emitted on every record so logs correlate with errors and, later,
+      Sentry issues.
+
+  Per-package levels (e.g. logging.level.org.springframework.security) are still
+  driven from application.properties — Spring applies them on top of this file.
+-->
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <!-- Everything except prod: readable console, traceId appended. -->
+    <springProfile name="!prod">
+        <property name="CONSOLE_LOG_PATTERN"
+                  value="%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd'T'HH:mm:ss.SSSXXX}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr([%X{traceId:-no-trace}]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"/>
+        <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- prod: structured JSON to stdout for CloudWatch Logs. -->
+    <springProfile name="prod">
+        <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                <!-- Trim the noisy defaults; keep timestamp/level/logger/message + MDC. -->
+                <fieldNames>
+                    <timestamp>timestamp</timestamp>
+                    <logger>logger</logger>
+                    <version>[ignore]</version>
+                    <levelValue>[ignore]</levelValue>
+                    <thread>[ignore]</thread>
+                </fieldNames>
+            </encoder>
+        </appender>
+        <root level="INFO">
+            <appender-ref ref="JSON"/>
+        </root>
+    </springProfile>
+</configuration>

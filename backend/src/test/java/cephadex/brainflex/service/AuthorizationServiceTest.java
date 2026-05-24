@@ -1,9 +1,11 @@
 /**
  * Unit tests for AuthorizationService.
  *
- * Each require* method has three test cases: owner happy path, non-owner →
- * FORBIDDEN, missing id → NOT_FOUND. Repositories are mocked so no real
- * MongoDB is required.
+ * Each require* method covers: owner happy path, non-owner → ForbiddenException
+ * (403), missing id → NotFoundException (404). The interactive-session host
+ * check is special: room codes are guessable, so a non-host is MASKED as a 404
+ * SESSION_NOT_FOUND rather than a 403 (see z-docs/features/exceptions.md).
+ * Repositories are mocked so no real MongoDB is required.
  */
 package cephadex.brainflex.service;
 
@@ -20,8 +22,9 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.exception.ForbiddenException;
+import cephadex.brainflex.exception.NotFoundException;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;
@@ -103,10 +106,11 @@ class AuthorizationServiceTest {
         when(deckCollaboratorRepository.findByDeckIdAndUserId("deck-1", other.getId()))
                 .thenReturn(Optional.of(viewerRow("deck-1", other.getId())));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
                 () -> authorizationService.requireDeckEditable("deck-1", other));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertEquals("DECK_EDIT_FORBIDDEN", ex.getCode());
     }
 
     @Test
@@ -120,10 +124,11 @@ class AuthorizationServiceTest {
         when(deckCollaboratorRepository.findByDeckId("deck-1"))
                 .thenReturn(java.util.List.of(ownerRow("deck-1", owner.getId())));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
                 () -> authorizationService.requireDeckEditable("deck-1", other));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertEquals("DECK_EDIT_FORBIDDEN", ex.getCode());
     }
 
     @Test
@@ -150,20 +155,22 @@ class AuthorizationServiceTest {
         deck.setSystem(true);
         when(deckRepository.findById("deck-sys")).thenReturn(Optional.of(deck));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
                 () -> authorizationService.requireDeckEditable("deck-sys", owner));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertEquals("DECK_SYSTEM_LOCKED", ex.getCode());
     }
 
     @Test
     void requireDeckEditable_WhenMissing_ThrowsNotFound() {
         when(deckRepository.findById("missing")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> authorizationService.requireDeckEditable("missing", owner));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
+        assertEquals("DECK_NOT_FOUND", ex.getCode());
     }
 
     private DeckCollaborator ownerRow(String deckId, String userId) {
@@ -208,23 +215,25 @@ class AuthorizationServiceTest {
         theme.setOwnerId(owner.getId());
         when(themeRepository.findById("theme-1")).thenReturn(Optional.of(theme));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
                 () -> authorizationService.requireThemeEditable("theme-1", other));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertEquals("THEME_FORBIDDEN", ex.getCode());
     }
 
     @Test
     void requireThemeEditable_WhenMissing_ThrowsNotFound() {
         when(themeRepository.findById("missing")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> authorizationService.requireThemeEditable("missing", owner));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
+        assertEquals("THEME_NOT_FOUND", ex.getCode());
     }
 
-    // ---- requireInteractiveSessionHost ----
+    // ---- requireInteractiveSessionHost (room-code → 404-masked) ----
 
     @Test
     void requireInteractiveSessionHost_AsHost_ReturnsInteractiveSession() {
@@ -251,26 +260,30 @@ class AuthorizationServiceTest {
     }
 
     @Test
-    void requireInteractiveSessionHost_AsNonHost_ThrowsForbidden() {
+    void requireInteractiveSessionHost_AsNonHost_MaskedAsNotFound() {
         InteractiveSession interactiveSession = new InteractiveSession();
         interactiveSession.setRoomCode("ABCD12");
         interactiveSession.setHostUserId(owner.getId());
         when(interactiveSessionRepository.findByRoomCode("ABCD12")).thenReturn(Optional.of(interactiveSession));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        // A non-host must not be able to tell a real room from a fake one: the
+        // 403 is masked as the same 404 SESSION_NOT_FOUND a missing room returns.
+        NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> authorizationService.requireInteractiveSessionHost("ABCD12", other));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
+        assertEquals("SESSION_NOT_FOUND", ex.getCode());
     }
 
     @Test
     void requireInteractiveSessionHost_WhenMissing_ThrowsNotFound() {
         when(interactiveSessionRepository.findByRoomCode("MISSIN")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> authorizationService.requireInteractiveSessionHost("MISSIN", owner));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
+        assertEquals("SESSION_NOT_FOUND", ex.getCode());
     }
 
     // ---- requireOrgOwner ----
@@ -294,19 +307,21 @@ class AuthorizationServiceTest {
         org.setOwnerId(owner.getId());
         when(organizationRepository.findById("org-1")).thenReturn(Optional.of(org));
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        ForbiddenException ex = assertThrows(ForbiddenException.class,
                 () -> authorizationService.requireOrgOwner("org-1", other));
 
-        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertEquals("ORG_OWNER_REQUIRED", ex.getCode());
     }
 
     @Test
     void requireOrgOwner_WhenMissing_ThrowsNotFound() {
         when(organizationRepository.findById("missing")).thenReturn(Optional.empty());
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+        NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> authorizationService.requireOrgOwner("missing", owner));
 
-        assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+        assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
+        assertEquals("ORG_NOT_FOUND", ex.getCode());
     }
 }

@@ -110,6 +110,9 @@ export interface WsErrorPayload {
   roomCode: string;
   status: number;
   message: string;
+  // Machine-readable code mirroring the REST ProblemDetail contract
+  // (e.g. SESSION_NOT_FOUND / INTERNAL_ERROR). See z-docs/features/exceptions.md.
+  code?: string;
 }
 
 export interface AnswerProgressPayload {

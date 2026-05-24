@@ -4,7 +4,7 @@ Short Architecture Decision Records (ADRs): "we chose X over Y because Z". One f
 
 ## Index
 
-_No ADRs recorded yet — write the first one when you make a non-obvious architectural call worth remembering._
+- [001 — Observability & logging stack](001-observability-stack.md) — hybrid CloudWatch (logs/metrics) + Sentry (errors/RUM, deferred), structured JSON, `X-Request-Id`→`traceId` correlation, LocalStack for local parity.
 
 ## Template
 

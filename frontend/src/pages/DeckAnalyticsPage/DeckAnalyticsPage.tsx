@@ -64,6 +64,19 @@ const DeckAnalyticsPage = () => {
   const loading = deckLoading || analyticsLoading;
   const fatalError = deckError ?? analyticsError;
 
+  // The backend now distinguishes these cases (decks use honest 403 vs 404 —
+  // see z-docs/features/exceptions.md), so we no longer have to conflate them.
+  const errorStatus =
+    fatalError && typeof fatalError === "object" && "status" in fatalError
+      ? (fatalError as { status?: number | string }).status
+      : undefined;
+  const fatalErrorMessage =
+    errorStatus === 403
+      ? "You don't have access to this deck's analytics."
+      : errorStatus === 404
+        ? "That deck doesn't exist."
+        : "We couldn't load this deck's analytics. Please try again.";
+
   const [segment, setSegment] = useState<SegmentId>("ALL");
 
   const orderedElements = useMemo(
@@ -121,8 +134,7 @@ const DeckAnalyticsPage = () => {
 
       {fatalError ? (
         <div className={styles.errorBanner} role='alert'>
-          You don&apos;t have permission to view this deck&apos;s analytics, or
-          the deck doesn&apos;t exist.
+          {fatalErrorMessage}
         </div>
       ) : loading ? (
         <div className={styles.loading}>Loading analytics…</div>

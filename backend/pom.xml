@@ -55,7 +55,7 @@
 		</dependency>
 
 		<!--
-		  Observability foundation (see z-docs/decisions/0001-observability-stack.md).
+		  Observability foundation (see z-docs/decisions/001-observability-stack.md).
 		  logstash-logback-encoder renders log events as one-line JSON under the
 		  `prod` Spring profile so stdout can be shipped to CloudWatch Logs by the
 		  container log driver. The MDC fields traceId/userId (set by

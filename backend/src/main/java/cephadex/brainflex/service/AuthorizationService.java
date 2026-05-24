@@ -7,9 +7,14 @@
  * and compares the stored owner field to {@code caller.id} — no
  * client-supplied ownership claim is trusted.
  *
- * Throws {@link ResponseStatusException}:
- *   - NOT_FOUND when the resource does not exist
- *   - FORBIDDEN when the caller is not the owner / host
+ * Throws the typed {@link cephadex.brainflex.exception.ApiException} hierarchy:
+ *   - {@link NotFoundException} (404) when the resource does not exist — and,
+ *     for guessable-key resources (interactive sessions, addressed by room
+ *     code), ALSO when the caller is not the host, so existence is masked.
+ *   - {@link ForbiddenException} (403) when a high-entropy-id resource (deck,
+ *     theme, org, media) exists but the caller is not the owner / editor.
+ * Each throw carries a resource-specific {@code code} the frontend branches on.
+ * See z-docs/features/exceptions.md (the 404-vs-403 policy).
  *
  * Previously these checks were scattered: {@code DeckService.requireOwned} (a
  * private helper), {@code ThemeController.resolveOwnedTheme} (an inline
@@ -22,10 +27,10 @@ package cephadex.brainflex.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+import cephadex.brainflex.exception.ForbiddenException;
+import cephadex.brainflex.exception.NotFoundException;
 import cephadex.brainflex.model.deck.Deck;
 import cephadex.brainflex.model.deck.DeckCollaborator;
 import cephadex.brainflex.model.enums.CollaboratorRole;
@@ -79,25 +84,25 @@ public class AuthorizationService {
      */
     public Deck requireDeckEditable(String deckId, User caller) {
         Deck deck = deckRepository.findById(deckId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found"));
+                .orElseThrow(() -> new NotFoundException("DECK_NOT_FOUND", "Deck not found"));
         if (deck.isSystem()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "System decks are not editable");
+            throw new ForbiddenException("DECK_SYSTEM_LOCKED", "System decks are not editable");
         }
         if (canEdit(deck, caller))
             return deck;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have edit access to this deck");
+        throw new ForbiddenException("DECK_EDIT_FORBIDDEN", "You do not have edit access to this deck");
     }
 
     /** Caller is OWNER on this deck — used by collaborator management endpoints. */
     public Deck requireDeckOwner(String deckId, User caller) {
         Deck deck = deckRepository.findById(deckId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found"));
+                .orElseThrow(() -> new NotFoundException("DECK_NOT_FOUND", "Deck not found"));
         if (deck.isSystem()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "System decks have no owner");
+            throw new ForbiddenException("DECK_SYSTEM_LOCKED", "System decks have no owner");
         }
         if (isOwner(deck, caller))
             return deck;
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the deck owner can do that");
+        throw new ForbiddenException("DECK_OWNER_REQUIRED", "Only the deck owner can do that");
     }
 
     /**
@@ -176,43 +181,50 @@ public class AuthorizationService {
 
     public Theme requireThemeEditable(String themeId, User caller) {
         Theme theme = themeRepository.findById(themeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Theme not found"));
+                .orElseThrow(() -> new NotFoundException("THEME_NOT_FOUND", "Theme not found"));
         if (!caller.getId().equals(theme.getOwnerId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this theme");
+            throw new ForbiddenException("THEME_FORBIDDEN", "You do not own this theme");
         }
         return theme;
     }
 
+    /**
+     * Room codes are short and human-typed, so existence itself is sensitive
+     * (see the 404-masking policy in z-docs/features/exceptions.md). Both "no
+     * such room" and "you are not the host" therefore collapse to the same
+     * masked 404 {@code SESSION_NOT_FOUND} — a non-host cannot tell a real room
+     * from a fake one through this path.
+     */
     public InteractiveSession requireInteractiveSessionHost(String roomCode, User caller) {
         InteractiveSession interactiveSession = interactiveSessionRepository.findByRoomCode(roomCode.toUpperCase())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "InteractiveSession not found"));
+                .orElseThrow(() -> new NotFoundException("SESSION_NOT_FOUND", "Interactive session not found"));
         if (!caller.getId().equals(interactiveSession.getHostUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the host can perform this action");
+            throw new NotFoundException("SESSION_NOT_FOUND", "Interactive session not found");
         }
         return interactiveSession;
     }
 
     public Organization requireOrgOwner(String orgId, User caller) {
         Organization org = organizationRepository.findById(orgId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Organization not found"));
+                .orElseThrow(() -> new NotFoundException("ORG_NOT_FOUND", "Organization not found"));
         if (!caller.getId().equals(org.getOwnerId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this organization");
+            throw new ForbiddenException("ORG_OWNER_REQUIRED", "You do not own this organization");
         }
         return org;
     }
 
     public GalleryImage requireGalleryImageEditable(String imageId, User caller) {
         GalleryImage image = galleryImageRepository.findById(imageId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gallery image not found"));
+                .orElseThrow(() -> new NotFoundException("GALLERY_IMAGE_NOT_FOUND", "Gallery image not found"));
         if (!caller.getId().equals(image.getOwnerId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this gallery image");
+            throw new ForbiddenException("GALLERY_IMAGE_FORBIDDEN", "You do not own this gallery image");
         }
         return image;
     }
 
     public GalleryImage requireGalleryImageVisible(String imageId, User caller) {
         GalleryImage image = galleryImageRepository.findById(imageId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Gallery image not found"));
+                .orElseThrow(() -> new NotFoundException("GALLERY_IMAGE_NOT_FOUND", "Gallery image not found"));
         if (caller.getId().equals(image.getOwnerId()))
             return image;
         String orgId = image.getOrganizationId();
@@ -221,21 +233,21 @@ public class AuthorizationService {
             if (memberships != null && memberships.contains(orgId))
                 return image;
         }
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this gallery image");
+        throw new ForbiddenException("GALLERY_IMAGE_FORBIDDEN", "You do not have access to this gallery image");
     }
 
     public MediaAsset requireMediaAssetEditable(String assetId, User caller) {
         MediaAsset asset = mediaAssetRepository.findById(assetId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media asset not found"));
+                .orElseThrow(() -> new NotFoundException("MEDIA_ASSET_NOT_FOUND", "Media asset not found"));
         if (!caller.getId().equals(asset.getOwnerId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not own this media asset");
+            throw new ForbiddenException("MEDIA_ASSET_FORBIDDEN", "You do not own this media asset");
         }
         return asset;
     }
 
     public MediaAsset requireMediaAssetVisible(String assetId, User caller) {
         MediaAsset asset = mediaAssetRepository.findById(assetId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Media asset not found"));
+                .orElseThrow(() -> new NotFoundException("MEDIA_ASSET_NOT_FOUND", "Media asset not found"));
         if (caller.getId().equals(asset.getOwnerId()))
             return asset;
         String orgId = asset.getOrganizationId();
@@ -244,6 +256,6 @@ public class AuthorizationService {
             if (memberships != null && memberships.contains(orgId))
                 return asset;
         }
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You do not have access to this media asset");
+        throw new ForbiddenException("MEDIA_ASSET_FORBIDDEN", "You do not have access to this media asset");
     }
 }

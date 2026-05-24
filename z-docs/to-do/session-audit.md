@@ -166,21 +166,41 @@ coupling.
 
 ## Action list (priority order)
 
-- [ ] **Collapse to one read path** — make `useSession` the complete live view (add
-  `roundResult`, `myAnswer`, `submissionsClosing`, derived `viewerIsHost`) and migrate
-  `SessionControls` / `SessionBoard` / `McqBoardContent` / `useFlushOnClosing` off direct
-  `state.interactiveSession` reads. Delete the now-stale "until useSession is wired"
-  comments. (§1a, §1b, §2)
-- [ ] **Wire reactions + chat end-to-end** — add `sendReaction` / `sendChat` (+ moderation)
-  to the connection hook, point `SessionChat` at the slice (`chat` / `liveReactions`) and
-  `useListChatQuery` instead of `mockFellowshipChat`, and confirm the
-  `store/enhancements/chat.ts` optimistic patches actually fire. (§3a, §3b, §3c)
-- [ ] **Surface/queue dropped sends on disconnect** — `send()` currently no-ops when the
-  STOMP client is mid-reconnect. (§1e)
+- [x] **Collapse to one read path** — `useSession` is now the complete live view
+  (`roundResult`, `myAnswer`, `submissionsClosing`, derived `viewerIsHost` exposed
+  alongside the merged `interactiveSession`), and `SessionControls` / `SessionBoard` /
+  `McqBoardContent` / `useFlushOnClosing` read everything through it — no component
+  touches `state.interactiveSession` directly. The only remaining slice read is the
+  base `useInteractiveSession` selector that `useSession` itself consumes (the
+  slice→useSession seam). Stale "until useSession is wired" comments removed. (§1a, §1b, §2)
+- [~] **Wire reactions + chat end-to-end** (§3a, §3b, §3c) — **live core done** via the
+  slice+STOMP architecture (Option A): `sendChat` / `sendReaction` added to the connection
+  hook (the server persists + echoes both back on `/chat` and `/reaction`, so the sender
+  sees their own through the normal slice path — no optimistic echo); `SessionChat` now
+  reads `chat` + `liveReactions` through `useSession` (reactions render inline as
+  chrome-less rows) instead of `mockFellowshipChat`; the dead `store/enhancements/chat.ts`
+  optimistic patches (which targeted the unread `listChat` cache via never-called
+  mutations) were **deleted** — STOMP is canonical, matching the backend's "STOMP
+  preferred" stance. **Deferred (by scope):** chat-history seed via `useListChatQuery` →
+  `chatHistoryLoaded`, host moderation UI → `sendChatModerate`, and a `ReactionRain`
+  overlay. The generated `useSendChat`/`useModerateChat`/`useSendReaction` mutations remain
+  intentionally unused (REST is the fallback path).
+- [x] **Surface/queue dropped sends on disconnect** — `send()` now buffers a publish when
+  the STOMP client is mid-reconnect (in a `pendingRef`) and flushes the queue in
+  `onConnect`, so a host action fired during the 3 s `reconnectDelay` window publishes on
+  reconnect instead of being silently dropped. The buffer is cleared on teardown so it
+  can't leak onto a different room's socket. (§1e)
 - [ ] **Add `deckName` to `InteractiveSessionResponse`** (backend) and drop the second
   `useGetDeckQuery` fetch in `useSession`. Regenerate `BrainFlexApi.ts`. (§3d)
-- [ ] **Table-drive the WS subscription block** to make topic coverage auditable. (§1d, §2)
-- [ ] Remove the dead no-snapshot throw in `mergeSessionView`; fix `||`→`??` on
-  `totalRounds`. (§1b, §1c)
+- [x] **Table-drive the WS subscription block** — the ~15 near-identical inline
+  subscriptions are now a `SESSION_TOPICS` map (suffix → slice action) iterated in a single
+  loop in `onConnect`; the two non-session-scoped destinations (`/topic/presence`,
+  `/user/queue/errors`) stay explicit. Topic coverage is now a one-glance diff against
+  `InteractiveSessionService`'s broadcast topics. (§1d, §2)
+- [x] Remove the dead no-snapshot throw in `mergeSessionView`; fix `||` on
+  `totalRounds`. (§1b, §1c) — `mergeSessionView` now takes a required snapshot (no
+  internal throw); the provider-contract guard moved up to the `useSession` boundary,
+  mirroring `useSessionConnection`. `totalRounds` reads `live.totalRounds` directly
+  (the slice owns it once seeded, so 0 is no longer swallowed by a snapshot fallback).
 - [ ] (Tracked elsewhere, noted for completeness) VOTE-phase board stage + per-kind board
   content (WordCloud, etc.) so the orphaned slice pipelines have renderers. (§3c)

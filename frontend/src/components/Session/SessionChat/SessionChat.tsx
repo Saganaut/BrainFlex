@@ -7,10 +7,10 @@
 // (e.g. SessionPlayerList): `SessionChatView` is presentation-only — open/close
 // and draft-text are local UI state and everything else arrives through props —
 // while `SessionChat` (the default export the page renders) is the thin
-// container that pulls the live session out of `useSession()` and feeds the
-// view. The view stays prop-driven so it can be pointed at the real STOMP /chat
-// socket later without touching its rendering; today the container is mock-
-// backed because the Gen-2 board runs entirely on mock data.
+// container. The container reads the live chat log + reaction bursts from
+// `useSession()` (fed by the STOMP /chat and /reaction topics into the session
+// slice) and sends over the shared session connection; the prop-driven view
+// stays unaware of the transport.
 import { useEffect, useRef, useState } from "react";
 import {
   ChatBubbleLeftRightIcon,
@@ -19,8 +19,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { IconBtn } from "@/components/Common/Buttons/IconBtn";
 import { useSession } from "@/pages/SessionPage/useSession";
-import { mockFellowshipChat } from "@/utils/MockData";
+import { useSessionConnection } from "@/pages/SessionPage/SessionConnectionContext";
 import type { InteractiveSessionChatMessageResponse } from "@/store/BrainFlexApi";
+import type { LiveReaction } from "@/store/interactiveSessionSlice";
 import styles from "./SessionChat.module.css";
 
 interface ChatMessage {
@@ -224,35 +225,39 @@ const toChatMessage = (
     viewerPlayerId !== undefined && message.authorPlayerId === viewerPlayerId,
 });
 
-const newClientId = () =>
-  `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+// A live reaction burst renders as a chrome-less emoji row. The slice keeps no
+// per-reaction sender identity beyond the display name, so reactions are never
+// flagged `isSelf` (alignment doesn't matter for the emoji-only rows).
+const toReactionMessage = (reaction: LiveReaction): ChatMessage => ({
+  id: reaction.id,
+  author: reaction.userName ?? "",
+  body: reaction.emoji,
+  kind: "reaction",
+});
 
 interface SessionChatProps {
   className?: string;
 }
 
 const SessionChat = ({ className }: SessionChatProps) => {
-  const { interactiveSession } = useSession();
+  const { interactiveSession, chat, liveReactions } = useSession();
+  const { sendChat, sendReaction } = useSessionConnection();
   const viewerPlayerId = interactiveSession.viewerPlayerId;
   const { chatEnabled, reactionsEnabled } = interactiveSession.settings;
-  const viewerName =
-    interactiveSession.players.find((p) => p.playerId === viewerPlayerId)?.user
-      .name ?? "You";
 
-  // Local, client-only message log. Seeded from the mock history and appended to
-  // on send/react. When the real socket lands this becomes the STOMP /chat feed
-  // (see ChatPanel's `chatHistoryLoaded` + optimistic-send pattern); the view
-  // below is already prop-driven so only this seam changes.
-  const [messages, setMessages] = useState<ChatMessage[]>(() =>
-    mockFellowshipChat.map((m) => toChatMessage(m, viewerPlayerId)),
-  );
-
-  const append = (body: string, kind: ChatMessage["kind"]) => {
-    setMessages((prev) => [
-      ...prev,
-      { id: newClientId(), author: viewerName, body, kind, isSelf: true },
-    ]);
-  };
+  // Chat messages and reaction bursts both arrive over STOMP into the slice;
+  // merge them into one time-ordered list so reactions appear inline between
+  // messages. Sends go straight to the connection — the server echoes them back
+  // on /chat and /reaction, so they land here through the same path.
+  const messages: ChatMessage[] = [
+    ...chat.map((m) => ({
+      at: m.sentAt ? new Date(m.sentAt).getTime() : 0,
+      msg: toChatMessage(m, viewerPlayerId),
+    })),
+    ...liveReactions.map((r) => ({ at: r.queuedAt, msg: toReactionMessage(r) })),
+  ]
+    .sort((a, b) => a.at - b.at)
+    .map((row) => row.msg);
 
   // `undefined` lets the view fall back to its DEFAULT_REACTIONS; an empty array
   // hides the reaction row when the host has disabled reactions.
@@ -264,12 +269,8 @@ const SessionChat = ({ className }: SessionChatProps) => {
       messages={messages}
       allowText={chatEnabled ?? true}
       reactions={reactions}
-      onSendMessage={(text) => {
-        append(text, "text");
-      }}
-      onReact={(emoji) => {
-        append(emoji, "reaction");
-      }}
+      onSendMessage={sendChat}
+      onReact={sendReaction}
     />
   );
 };

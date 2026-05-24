@@ -25,5 +25,4 @@ import "./enhancements/favorite";
 import "./enhancements/comment";
 import "./enhancements/rating";
 import "./enhancements/interactiveSession";
-import "./enhancements/chat";
 import "./enhancements/notification";

@@ -99,9 +99,12 @@ class DeckAnalyticsReportServiceTest {
                 String csv = service.buildCsv(deck, analytics);
                 String[] lines = csv.split("\n");
 
-                // Deck row carries the rollup's KPIs.
+                // Deck row carries the rollup's KPIs. The trailing Updated At cell is
+                // blank: it's a @LastModifiedDate audit field populated by Spring Data
+                // on persistence, so it has no value on this never-saved unit document
+                // (the blank-when-null path is shared with the never-played sibling).
                 assertTrue(lines[2].startsWith(
-                                "deck-1,Geography 101,3,10,78.5000,0.7000,420000,2026-05-19T10:00:00,2026-05-19T10:05:00"),
+                                "deck-1,Geography 101,3,10,78.5000,0.7000,420000,2026-05-19T10:00:00,"),
                                 "expected populated deck row, got: " + lines[2]);
 
                 // Per-element row sits below the by-format section (lines 4–7) and an

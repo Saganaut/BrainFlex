@@ -32,6 +32,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -51,6 +52,15 @@ class DeckCollaboratorServiceTest {
 
         @Mock
         private UserRepository userRepository;
+
+        // Inviting snapshots the invitee's avatar via the hydrator and publishes
+        // a notification event — both constructor deps; unstubbed defaults suffice
+        // (no test asserts the snapshot URL, publishEvent is a no-op).
+        @Mock
+        private UserImageHydrator userImageHydrator;
+
+        @Mock
+        private ApplicationEventPublisher events;
 
         @InjectMocks
         private DeckCollaboratorService service;

@@ -1,13 +1,16 @@
 /**
  * Manages the STOMP/WebSocket connection for an active InteractiveSession.
- * Subscribes to every session topic, dispatches payloads into the Redux session
- * slice, and exposes helper functions for sending host/player actions.
+ * Subscribes to every session topic (driven by the SESSION_TOPICS table below),
+ * dispatches payloads into the Redux session slice, and exposes helper functions
+ * for sending host/player actions. Sends fired while the socket is mid-reconnect
+ * are queued and flushed on connect rather than silently dropped.
  */
 import { useEffect, useRef, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import { apiBaseUrl } from "../store/emptyApi";
 import { useAppDispatch } from "../store/hooks";
+import type { AppDispatch } from "../store/store";
 import {
   setSession,
   roundStarted,
@@ -51,9 +54,90 @@ import type {
   VoteProgressPayload,
 } from "../types/bestAnswer";
 
+// Every session-scoped STOMP topic, mapped to the slice action its JSON payload
+// feeds. Kept as data (rather than ~15 near-identical inline subscribe blocks)
+// so verifying "is every backend broadcast subscribed?" is a one-glance diff
+// against the broadcast topics in InteractiveSessionService. All of these live
+// under `/topic/interactive-session/{roomCode}/<suffix>`; the two
+// non-session-scoped destinations (/topic/presence, /user/queue/errors) are
+// subscribed separately in onConnect.
+type TopicHandler = (dispatch: AppDispatch, body: unknown) => void;
+
+const SESSION_TOPICS: Record<string, TopicHandler> = {
+  lobby: (d, b) => {
+    d(setSession(b as InteractiveSessionResponse));
+  },
+  round: (d, b) => {
+    d(roundStarted(b as RoundStartPayload));
+  },
+  roundResult: (d, b) => {
+    d(roundResultReceived(b as RoundResultPayload));
+  },
+  ended: (d, b) => {
+    d(sessionEnded(b as SessionEndedPayload));
+  },
+  answered: (d, b) => {
+    d(answerProgressReceived(b as AnswerProgressPayload));
+  },
+  votePhase: (d, b) => {
+    d(votePhaseStarted(b as VotePhaseStartPayload));
+  },
+  voted: (d, b) => {
+    d(voteProgressReceived(b as VoteProgressPayload));
+  },
+  wordCloud: (d, b) => {
+    d(wordCloudUpdated(b as WordCloudUpdatePayload));
+  },
+  // Chunk 11 — chat carries both new sends AND moderation flips; the slice
+  // dedupes on message id so a moderated rebroadcast updates the row in place.
+  chat: (d, b) => {
+    d(chatMessageReceived(b as InteractiveSessionChatMessageResponse));
+  },
+  // Chunk 11 — emoji bursts feed ReactionRain on the host view.
+  reaction: (d, b) => {
+    d(reactionReceived(b as ReactionPayload));
+  },
+  // Chunk 12 — full team list + membership map on every change; clients
+  // replace state rather than merging deltas.
+  teams: (d, b) => {
+    d(teamUpdateReceived(b as TeamUpdatePayload));
+  },
+  // Chunk 24 — PRESENTATION end-of-session aggregation. Mutually exclusive with
+  // /ended on the wire: subscribing to both is safe because the server emits
+  // only one per session based on the frozen SessionFormat.
+  summary: (d, b) => {
+    d(sessionSummaryReceived(b as SessionSummaryPayload));
+  },
+  // Chunk 24 — host revealed an ON_CLICK round. One-shot per element per
+  // session; the slice keeps the elementId so UIs flip "waiting" → "showing".
+  responsesRevealed: (d, b) => {
+    d(responsesRevealed(b as ResponsesRevealedPayload));
+  },
+  // Chunk 25 — host admin controls. submissionsClosing tells participant devices
+  // to flush their drafts when the submit phase ends; timerState flips the
+  // countdown on pause/resume.
+  submissionsClosing: (d, b) => {
+    d(submissionsClosingReceived(b as SubmissionsClosingPayload));
+  },
+  timerState: (d, b) => {
+    d(timerStateReceived(b as TimerStatePayload));
+  },
+};
+
+const publishTo = (client: Client, destination: string, body?: object) => {
+  client.publish({
+    destination,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+};
+
 export function useInteractiveSessionWebSocket(roomCode: string | null) {
   const dispatch = useAppDispatch();
   const clientRef = useRef<Client | null>(null);
+  // Sends fired while the socket is down (e.g. a host hitting Start during the
+  // 3 s reconnect window) are buffered here and flushed on the next connect, so
+  // host control actions aren't silently lost (§1e).
+  const pendingRef = useRef<{ destination: string; body?: object }[]>([]);
 
   useEffect(() => {
     if (!roomCode) return;
@@ -62,151 +146,27 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
       webSocketFactory: () => new SockJS(`${apiBaseUrl}/ws`),
       reconnectDelay: 3000,
       onConnect: () => {
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/lobby`,
-          (msg) => {
-            dispatch(
-              setSession(JSON.parse(msg.body) as InteractiveSessionResponse),
-            );
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/round`,
-          (msg) => {
-            dispatch(roundStarted(JSON.parse(msg.body) as RoundStartPayload));
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/roundResult`,
-          (msg) => {
-            dispatch(
-              roundResultReceived(JSON.parse(msg.body) as RoundResultPayload),
-            );
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/ended`,
-          (msg) => {
-            dispatch(sessionEnded(JSON.parse(msg.body) as SessionEndedPayload));
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/answered`,
-          (msg) => {
-            dispatch(
-              answerProgressReceived(
-                JSON.parse(msg.body) as AnswerProgressPayload,
-              ),
-            );
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/votePhase`,
-          (msg) => {
-            dispatch(
-              votePhaseStarted(JSON.parse(msg.body) as VotePhaseStartPayload),
-            );
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/voted`,
-          (msg) => {
-            dispatch(
-              voteProgressReceived(JSON.parse(msg.body) as VoteProgressPayload),
-            );
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/wordCloud`,
-          (msg) => {
-            dispatch(
-              wordCloudUpdated(JSON.parse(msg.body) as WordCloudUpdatePayload),
-            );
-          },
-        );
-        // Audience engagement (chunk 11): emoji bursts feed ReactionRain on
-        // the host view, chat broadcasts feed ChatPanel for everyone. The
-        // chat topic carries both new sends AND moderation flips — the slice
-        // dedupes on message id so a moderated rebroadcast updates the
-        // existing row in place.
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/reaction`,
-          (msg) => {
-            dispatch(reactionReceived(JSON.parse(msg.body) as ReactionPayload));
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/chat`,
-          (msg) => {
-            dispatch(
-              chatMessageReceived(
-                JSON.parse(msg.body) as InteractiveSessionChatMessageResponse,
-              ),
-            );
-          },
-        );
-        // Team mode (chunk 12): full team list + membership map on every
-        // change; clients replace state rather than merging deltas.
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/teams`,
-          (msg) => {
-            dispatch(
-              teamUpdateReceived(JSON.parse(msg.body) as TeamUpdatePayload),
-            );
-          },
-        );
-        // Chunk 24 — PRESENTATION end-of-session aggregation. Mutually
-        // exclusive with /ended on the wire: subscribing to both is safe
-        // because the server only emits one per session based on the frozen
-        // SessionFormat.
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/summary`,
-          (msg) => {
-            dispatch(
-              sessionSummaryReceived(
-                JSON.parse(msg.body) as SessionSummaryPayload,
-              ),
-            );
-          },
-        );
-        // Chunk 24 — host clicked Reveal on an ON_CLICK round. One-shot per
-        // element per session; the slice keeps the elementId so the player
-        // and host UIs flip from "waiting" to "showing responses."
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/responsesRevealed`,
-          (msg) => {
-            dispatch(
-              responsesRevealed(
-                JSON.parse(msg.body) as ResponsesRevealedPayload,
-              ),
-            );
-          },
-        );
-        // Chunk 25 — host admin controls. submissionsClosing tells participant
-        // devices to flush their drafts when the host ends the submit phase;
-        // timerState flips the countdown on pause/resume.
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/submissionsClosing`,
-          (msg) => {
-            dispatch(
-              submissionsClosingReceived(
-                JSON.parse(msg.body) as SubmissionsClosingPayload,
-              ),
-            );
-          },
-        );
-        client.subscribe(
-          `/topic/interactive-session/${roomCode}/timerState`,
-          (msg) => {
-            dispatch(timerStateReceived(JSON.parse(msg.body) as TimerStatePayload));
-          },
-        );
+        for (const [suffix, toAction] of Object.entries(SESSION_TOPICS)) {
+          client.subscribe(
+            `/topic/interactive-session/${roomCode}/${suffix}`,
+            (msg) => {
+              const body: unknown = JSON.parse(msg.body);
+              toAction(dispatch, body);
+            },
+          );
+        }
+        // Not session-scoped: the global presence stream and this client's
+        // private error queue.
         client.subscribe(`/topic/presence`, (msg) => {
           dispatch(presenceUpdated(JSON.parse(msg.body) as PresencePayload));
         });
         client.subscribe(`/user/queue/errors`, (msg) => {
           dispatch(wsErrorReceived(JSON.parse(msg.body) as WsErrorPayload));
         });
+        // Flush anything queued while we were disconnected.
+        const queued = pendingRef.current;
+        pendingRef.current = [];
+        for (const msg of queued) publishTo(client, msg.destination, msg.body);
       },
     });
 
@@ -216,16 +176,18 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
     return () => {
       void client.deactivate();
       clientRef.current = null;
+      // Drop buffered sends so they can't leak onto a different room's socket.
+      pendingRef.current = [];
     };
   }, [roomCode, dispatch]);
 
   const send = useCallback((destination: string, body?: object) => {
     const client = clientRef.current;
     if (client?.connected) {
-      client.publish({
-        destination,
-        body: body !== undefined ? JSON.stringify(body) : undefined,
-      });
+      publishTo(client, destination, body);
+    } else {
+      // Mid-(re)connect: queue and flush on connect instead of dropping.
+      pendingRef.current.push({ destination, body });
     }
   }, []);
 
@@ -340,5 +302,24 @@ export function useInteractiveSessionWebSocket(roomCode: string | null) {
     sendResumeTimer: useCallback(() => {
       send(`/app/interactive-session/${roomCode}/resumeTimer`);
     }, [roomCode, send]),
+
+    /**
+     * Chunk 11 — audience engagement. The server persists and broadcasts both
+     * of these back over /chat and /reaction, so the sender sees their own
+     * message/burst via the normal slice path (no optimistic local echo needed).
+     */
+    sendChat: useCallback(
+      (body: string) => {
+        send(`/app/interactive-session/${roomCode}/chat`, { body });
+      },
+      [roomCode, send],
+    ),
+
+    sendReaction: useCallback(
+      (emoji: string) => {
+        send(`/app/interactive-session/${roomCode}/reaction`, { emoji });
+      },
+      [roomCode, send],
+    ),
   };
 }

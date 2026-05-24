@@ -7,13 +7,12 @@
 // flushes it through the normal answer path before the round freezes — then
 // clears the signal so it fires exactly once.
 //
-// NOTE: the board still runs on mock data and the content components are not yet
-// wired to `sendAnswer`, so `flush` is a no-op for now in practice. This hook is
-// the seam: it activates automatically once useSession is wired to live Redux
-// and the content components pass a real submit in `flush`.
+// The signal is read through useSession() (the one merged session view) rather
+// than off the slice directly; clearing it is a write, so that stays a dispatch.
 import { useEffect, useRef } from "react";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { submissionsClosingConsumed } from "@/store/interactiveSessionSlice";
+import { useSession } from "@/pages/SessionPage/useSession";
 
 /**
  * Run `flush` once when the host closes the submit phase for `elementId`.
@@ -26,9 +25,7 @@ export function useFlushOnClosing(
   flush: () => void,
 ): void {
   const dispatch = useAppDispatch();
-  const closing = useAppSelector(
-    (s) => s.interactiveSession.submissionsClosing,
-  );
+  const { submissionsClosing: closing } = useSession();
   // Latest-ref so `nonce` is the only effect trigger — we want the current
   // draft at fire time without re-running when the flush closure changes.
   const flushRef = useRef(flush);

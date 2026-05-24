@@ -97,6 +97,18 @@ class InteractiveSessionServiceTest {
         private InteractiveSessionCacheService interactiveSessionCache;
         @Mock
         private AuthorizationService authorizationService;
+        // Refresh-time avatar/deck-image refactor: createInteractiveSession hydrates
+        // the deck's images, every joining player's avatar URL is resolved through
+        // the hydrator, and endGame bumps the deck's play count. All three are
+        // constructor deps now; unstubbed defaults are correct here (hydrate is a
+        // no-op on images-free test decks, pictureUrlOf → null, incrementPlayCount
+        // → no-op — no test asserts on those side effects).
+        @Mock
+        private DeckImageHydrationService deckImageHydrationService;
+        @Mock
+        private DeckService deckService;
+        @Mock
+        private UserImageHydrator userImageHydrator;
         @Mock
         private ReactionRepository reactionRepository;
         @Mock
@@ -105,6 +117,13 @@ class InteractiveSessionServiceTest {
         private InteractiveSessionRateLimiter rateLimiter;
         @Mock
         private GameHistoryService gameHistoryService;
+        // endGame folds the finish into the per-deck analytics rollup, and
+        // updateStatsAfterGame evaluates lifetime-points achievements — both
+        // constructor deps reached once the deckService NPE no longer short-circuits.
+        @Mock
+        private DeckAnalyticsService deckAnalyticsService;
+        @Mock
+        private AchievementService achievementService;
         @Mock
         private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
         @Mock

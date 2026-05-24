@@ -4,7 +4,7 @@ Operational procedures: how to do a specific task in this project from a cold st
 
 ## Index
 
-_No runbooks recorded yet — add them as repeatable procedures emerge._
+- [Using the observability stack](using-the-observability-stack.md) — emit correlated logs front & back, run prod JSON logging locally, follow the `X-Request-Id`→`traceId` thread, exercise LocalStack CloudWatch.
 
 ## What belongs here
 

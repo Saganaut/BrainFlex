@@ -1,11 +1,14 @@
 // Tests for MCQ answering on the board: a participant drafts a selection and
 // submits (publishing an McqAnswer and locking the inputs), and the host's
 // end-submit flush auto-submits the current draft. The session connection is
-// mocked; a real slice-backed store drives the submitted/locked state.
+// mocked; a real slice-backed store still drives the submitted/locked state, and
+// useSession is mocked to read the live fields (myAnswer / submissionsClosing)
+// straight off that store — so the dispatch → slice → useSession → component
+// round-trip is exercised end to end.
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import interactiveSessionReducer, {
   submissionsClosingReceived,
@@ -16,6 +19,19 @@ const h = vi.hoisted(() => ({ sendAnswer: vi.fn() }));
 
 vi.mock("@/pages/SessionPage/SessionConnectionContext", () => ({
   useSessionConnection: () => ({ sendAnswer: h.sendAnswer }),
+}));
+vi.mock("@/pages/SessionPage/useSession", () => ({
+  useSession: () => {
+    const slice = useSelector(
+      (s: { interactiveSession: ReturnType<typeof interactiveSessionReducer> }) =>
+        s.interactiveSession,
+    );
+    return {
+      roundResult: slice.roundResult,
+      myAnswer: slice.myAnswer,
+      submissionsClosing: slice.submissionsClosing,
+    };
+  },
 }));
 
 import { McqBoardContent } from "./McqBoardContent";

@@ -24,6 +24,8 @@ import { getRouteApi } from "@tanstack/react-router";
 
 const routeApi = getRouteApi("/sessions/$sessionId/");
 
+type SliceState = ReturnType<typeof useInteractiveSession>;
+
 interface useSessionResponse {
   sessionId: string;
   interactiveSession: InteractiveSessionResponse;
@@ -31,22 +33,38 @@ interface useSessionResponse {
   // non-host participant may not be able to read the deck, and it is briefly
   // undefined while loading.
   currentDeck?: DeckResponse;
+  // Live, slice-only fields with no place on the REST DTO. Surfaced here so
+  // every consumer reads one session view instead of reaching back into the
+  // slice for these (which previously gave two sources for the same datum):
+  //   - roundResult: the current round's scored result, once it lands. The
+  //     reveal moment rides on /roundResult rather than a phase flip, so its
+  //     presence is what flips the board from prompt to results.
+  //   - myAnswer: this device's submitted payload for the round; null until
+  //     the participant answers (and cleared at the top of each round).
+  //   - submissionsClosing: the one-shot "host ended the submit phase" signal a
+  //     content component watches to flush an unsubmitted draft.
+  roundResult: SliceState["roundResult"];
+  myAnswer: SliceState["myAnswer"];
+  submissionsClosing: SliceState["submissionsClosing"];
+  // Live audience-engagement feeds (chunk 11), kept current by the STOMP /chat
+  // and /reaction topics: `chat` is the trimmed message history, `liveReactions`
+  // the rolling window of recent emoji bursts.
+  chat: SliceState["chat"];
+  liveReactions: SliceState["liveReactions"];
+  // Derived once here rather than recomputed per consumer. A projected host
+  // screen and a participant device read the same board; this flag is the only
+  // thing that differs between them.
+  viewerIsHost: boolean;
 }
-
-type SliceState = ReturnType<typeof useInteractiveSession>;
 
 const mergeSessionView = (
   roomCode: string,
-  snapshot: InteractiveSessionResponse | undefined,
+  snapshot: InteractiveSessionResponse,
   live: SliceState,
 ): InteractiveSessionResponse => {
   // The slice is "seeded" once setSession has run for this room; before that the
   // REST snapshot is authoritative for live fields too.
   const seeded = live.status !== null && live.roomCode === roomCode;
-
-  if (!snapshot) {
-    throw Error("No snapshot provided");
-  }
 
   if (!seeded) return snapshot;
 
@@ -55,7 +73,10 @@ const mergeSessionView = (
     status: live.status ?? snapshot.status,
     phase: live.phase,
     currentRound: live.round,
-    totalRounds: live.totalRounds || snapshot.totalRounds,
+    // Once seeded the slice owns totalRounds (setSession copies it from this
+    // same snapshot, roundStarted keeps it current); 0 is a legitimate value
+    // for an empty deck, so there is no snapshot fallback to swallow it.
+    totalRounds: live.totalRounds,
     players: live.players,
     teams: live.teams,
     revealedElementIds: live.revealedElementIds,
@@ -75,10 +96,32 @@ const useSession = (): useSessionResponse => {
     { skip: !snapshot?.deckId },
   );
 
+  // SessionConnectionProvider renders a loader until this snapshot resolves and
+  // only then mounts the children that call useSession, so it is always cached
+  // by the time we get here. We assert that contract at the hook boundary
+  // (mirroring useSessionConnection) instead of letting an undefined snapshot
+  // leak into the merged view.
+  if (!snapshot) {
+    throw new Error(
+      "useSession must be used within a loaded SessionConnectionProvider",
+    );
+  }
+
+  const interactiveSession = mergeSessionView(roomCode, snapshot, live);
+  const viewerIsHost =
+    !!interactiveSession.viewerPlayerId &&
+    interactiveSession.viewerPlayerId === interactiveSession.hostPlayerId;
+
   return {
     sessionId: roomCode,
-    interactiveSession: mergeSessionView(roomCode, snapshot, live),
+    interactiveSession,
     currentDeck,
+    roundResult: live.roundResult,
+    myAnswer: live.myAnswer,
+    submissionsClosing: live.submissionsClosing,
+    chat: live.chat,
+    liveReactions: live.liveReactions,
+    viewerIsHost,
   };
 };
 

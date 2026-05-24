@@ -5,15 +5,15 @@
 // nothing — moderation/control is the host's surface only (the board itself is
 // the shared display + answer surface).
 //
-// State (status / phase / current element / settings) is read from useSession()
-// for parity with SessionBoard; the host actions are sent through the session
-// connection (one shared STOMP client, provided by SessionConnectionProvider).
-// Live overlays (paused, revealed) come from the Redux slice, which the STOMP
-// subscriptions keep in sync.
+// Everything the bar reads — status / phase / current element / settings, the
+// live overlays (paused, revealed), the round result, and whether the viewer is
+// the host — comes from useSession(), the one merged session view (the slice is
+// still the source the STOMP subscriptions feed; consumers just don't reach into
+// it directly). Host actions are sent through the session connection (one shared
+// STOMP client, provided by SessionConnectionProvider).
 import { useSession } from "@/pages/SessionPage/useSession";
 import { useSessionConnection } from "@/pages/SessionPage/SessionConnectionContext";
 import { useConfirm } from "@/components/Common/ConfirmDialog/useConfirm";
-import { useAppSelector } from "@/store/hooks";
 import { resolveShowResponsesFor } from "@/utils/showResponsesResolver";
 import { Btn } from "@/components/Common/Buttons/Btn";
 import styles from "./SessionControls.module.css";
@@ -23,7 +23,12 @@ interface SessionControlsProps {
 }
 
 const SessionControls = ({ className }: SessionControlsProps) => {
-  const { interactiveSession } = useSession();
+  // The merged view carries the live overlays (timerPaused / revealedElementIds)
+  // too, so we read them from one place. roundResult is present once the round
+  // has completed and its result has been broadcast — the backend never flips to
+  // a REVEAL phase, so this is how we know we're in the between-rounds reveal
+  // window (and must stop offering submit-phase actions). Cleared next round.
+  const { interactiveSession, roundResult, viewerIsHost } = useSession();
   const {
     status,
     phase,
@@ -31,8 +36,8 @@ const SessionControls = ({ className }: SessionControlsProps) => {
     deckSnapshot,
     settings,
     players,
-    viewerPlayerId,
-    hostPlayerId,
+    timerPaused,
+    revealedElementIds,
   } = interactiveSession;
 
   const {
@@ -47,20 +52,7 @@ const SessionControls = ({ className }: SessionControlsProps) => {
   } = useSessionConnection();
   const confirm = useConfirm();
 
-  // Live overlays from the slice. Once useSession is wired to Redux these track
-  // the real session; until then they read the slice defaults (harmless).
-  const timerPaused = useAppSelector((s) => s.interactiveSession.timerPaused);
-  const revealedElementIds = useAppSelector(
-    (s) => s.interactiveSession.revealedElementIds,
-  );
-  // Present once the round has completed and its result has been broadcast.
-  // The backend never flips to a REVEAL phase, so this is how we know we're in
-  // the between-rounds reveal window (and must stop offering submit-phase
-  // actions). Cleared at the top of the next round.
-  const roundResult = useAppSelector((s) => s.interactiveSession.roundResult);
-
   // Controls are the host's surface only.
-  const viewerIsHost = !!viewerPlayerId && viewerPlayerId === hostPlayerId;
   if (!viewerIsHost) return null;
 
   // Pre-game: the only host action is to start. Starting flips the session to

@@ -27,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -45,6 +46,14 @@ class DeckCommentServiceTest {
     private DeckCommentRepository commentRepository;
     @Mock
     private MongoTemplate mongoTemplate;
+    // Comments snapshot the author's avatar via the hydrator and fire a
+    // notification event on create — both are constructor deps now, so the
+    // service NPEs without them mocked (unstubbed defaults are fine here:
+    // pictureUrlOf → null snapshot URL, publishEvent → no-op).
+    @Mock
+    private UserImageHydrator userImageHydrator;
+    @Mock
+    private ApplicationEventPublisher events;
 
     @InjectMocks
     private DeckCommentService deckCommentService;

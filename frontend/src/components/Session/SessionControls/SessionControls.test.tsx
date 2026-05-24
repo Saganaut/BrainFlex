@@ -1,16 +1,12 @@
 // Tests for the host admin control bar: host-gating and that each button sends
-// the right STOMP action. The session hooks are mocked so the test drives the
-// component off a controllable session shape; a minimal Redux store backs the
-// useAppSelector reads (timerPaused / revealedElementIds).
+// the right STOMP action. useSession is mocked so the test drives the component
+// off a controllable session view — SessionControls reads everything (session
+// fields, the live overlays, roundResult, viewerIsHost) from it, so no Redux
+// store is needed.
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Provider } from "react-redux";
-import { configureStore } from "@reduxjs/toolkit";
-import interactiveSessionReducer, {
-  roundResultReceived,
-  type RoundResultPayload,
-} from "@/store/interactiveSessionSlice";
+import type { RoundResultPayload } from "@/store/interactiveSessionSlice";
 import type { InteractiveSessionResponse } from "@/store/BrainFlexApi";
 import type { McqQuestion } from "@/types/elements";
 import { mockFellowshipSession } from "@/utils/MockData";
@@ -28,6 +24,7 @@ const h = vi.hoisted(() => ({
   },
   confirm: vi.fn(),
   sessionRef: { current: null as InteractiveSessionResponse | null },
+  roundResultRef: { current: null as RoundResultPayload | null },
 }));
 
 vi.mock("@/pages/SessionPage/SessionConnectionContext", () => ({
@@ -37,11 +34,21 @@ vi.mock("@/components/Common/ConfirmDialog/useConfirm", () => ({
   useConfirm: () => h.confirm,
 }));
 vi.mock("@/pages/SessionPage/useSession", () => ({
-  useSession: () => ({
-    sessionId: "s1",
-    interactiveSession: h.sessionRef.current,
-    currentDeck: {},
-  }),
+  useSession: () => {
+    const interactiveSession = h.sessionRef.current;
+    const viewerIsHost =
+      !!interactiveSession?.viewerPlayerId &&
+      interactiveSession.viewerPlayerId === interactiveSession.hostPlayerId;
+    return {
+      sessionId: "s1",
+      interactiveSession,
+      currentDeck: {},
+      roundResult: h.roundResultRef.current,
+      myAnswer: null,
+      submissionsClosing: null,
+      viewerIsHost,
+    };
+  },
 }));
 
 import { SessionControls } from "./SessionControls";
@@ -75,20 +82,13 @@ const baseSession = (
   ...overrides,
 });
 
-const makeStore = () =>
-  configureStore({ reducer: { interactiveSession: interactiveSessionReducer } });
-
-const renderControls = (store = makeStore()) =>
-  render(
-    <Provider store={store}>
-      <SessionControls />
-    </Provider>,
-  );
+const renderControls = () => render(<SessionControls />);
 
 describe("SessionControls", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     h.confirm.mockResolvedValue(true);
+    h.roundResultRef.current = null;
   });
 
   it("renders nothing for a non-host viewer", () => {
@@ -136,17 +136,11 @@ describe("SessionControls", () => {
     ).not.toBeInTheDocument();
     unmount();
 
-    // Once the round result is broadcast we're in the reveal window — Next round
+    // Once the round result lands we're in the reveal window — Next round
     // appears even in SIMULTANEOUS, and clicking it advances.
-    const store = makeStore();
-    const roundResult: RoundResultPayload = {
-      round: 0,
-      element: mcq,
-      playerResults: [],
-    };
-    store.dispatch(roundResultReceived(roundResult));
+    h.roundResultRef.current = { round: 0, element: mcq, playerResults: [] };
     h.sessionRef.current = baseSession();
-    renderControls(store);
+    renderControls();
     const next = screen.getByRole("button", { name: "Next round" });
     await userEvent.click(next);
     expect(h.send.sendNextRound).toHaveBeenCalled();

@@ -16,8 +16,9 @@ import { useState } from "react";
 import type { AnswerPayload, McqQuestion } from "@/types/elements";
 import type { BoardQuestionMode } from "../resolveBoardStage";
 import { useFlushOnClosing } from "./useFlushOnClosing";
+import { useSession } from "@/pages/SessionPage/useSession";
 import { useSessionConnection } from "@/pages/SessionPage/SessionConnectionContext";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   answerSubmittedLocally,
   type RoundResultPayload,
@@ -66,10 +67,10 @@ const McqBoardContent = ({
 
   const dispatch = useAppDispatch();
   const { sendAnswer } = useSessionConnection();
-  const myAnswer = useAppSelector((s) => s.interactiveSession.myAnswer);
-  const roundResult = useAppSelector((s) => s.interactiveSession.roundResult);
-  // myAnswer is cleared at the top of every round, so a non-null value here
-  // means this participant has already locked in their answer for this question.
+  // Live fields come through the one merged session view, not a direct slice
+  // read. myAnswer is cleared at the top of every round, so a non-null value
+  // here means this participant has already locked in their answer.
+  const { roundResult, myAnswer } = useSession();
   const submitted = myAnswer !== null;
 
   // Draft selection until the participant submits.
